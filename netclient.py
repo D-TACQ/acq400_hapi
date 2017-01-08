@@ -30,8 +30,8 @@ def receive_message(sock, termex, maxlen=4096):
         match = termex.search(buffer)
 
     # check error code. should raise exception
-    if int(match.group(2)) != 0:
-        print("ERROR response: %s" % (buffer))
+#    if int(match.group(2)) != 0:
+#        print("ERROR response: %s" % (buffer))
 
     # Remove the end message string
     buffer = buffer[:-len(match.group(1))]
@@ -67,13 +67,13 @@ class Siteclient(Netclient):
         self.knobs = dict((pat.sub(r"_", key), key) for key in knobstr.split())
 
     def __getattr__(self, name):
-        if self.knobs[name] != None:
-                return self.sr(name)
+        if self.knobs.get(name) != None:
+                return self.sr(self.knobs.get(name))
         else:
                 msg = "'{0}' object has no attribute '{1}'"
                 raise AttributeError(msg.format(type(self).__name__, name))
 
-           
+                
     def __init__(self, addr, port):
         Netclient.__init__(self,addr, port)
         self.termex = re.compile(r"(acq400.[0-9] ([0-9]+) >)")
@@ -96,6 +96,13 @@ if __name__ == '__main__':
     print("Model: %s" % (svc.MODEL))
     print("SITELIST: %s" % (svc.SITELIST))
     print("software_version: %s" % (svc.software_version))
+
+    for key in svc.knobs:
+        cmd = svc.knobs[key]
+        if cmd.startswith("help"):
+            continue
+        print("%s %s" % (cmd, svc.sr(cmd)))
+
     raise SystemExit
  
     while True:
