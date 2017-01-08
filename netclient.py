@@ -58,13 +58,29 @@ class Siteclient(Netclient):
 
     def recv(self):
         return receive_message(self.sock, self.termex)
-        
+      
+    def sr(self, message):
+        self.send(message)
+        return self.recv()
+ 
+    def build_knobs(self, knobstr):
+        self.knobs = dict((key, 1) for key in knobstr.split())
+
+    def __getattr__(self, name):
+        if self.knobs[name] != None:
+                return self.sr(name)
+        else:
+                msg = "'{0}' object has no attribute '{1}'"
+                raise AttributeError(msg.format(type(self).__name__, name))
+
+           
     def __init__(self, addr, port):
         Netclient.__init__(self,addr, port)
         self.termex = re.compile(r"(acq400.[0-9] [0-9]+ >)")
         self.send("prompt on")
         self.recv()
-        
+        self.send("help")
+        self.build_knobs(self.recv())        
 
 
 if __name__ == '__main__':
@@ -100,6 +116,8 @@ if __name__ == '__main__':
         
         print("Got this string from server:")
         print(data + '\n')
+
+        print("Model: %s" % (svc.MODEL))
 
 
     
