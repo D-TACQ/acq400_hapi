@@ -14,6 +14,7 @@ class Acq400:
     def __init__(self, _uut):
         self.uut = _uut
         self.svc["s0"] = netclient.Siteclient(self.uut, 4220)
+        
 
     def __getattr__(self, name):
         if self.svc.get(name) != None:
