@@ -57,9 +57,16 @@ class Netclient:
 
 
 class Siteclient(Netclient):
+    knobs = {}
+    trace = 0
     def sr(self, message):
+        if (self.trace):
+            print(">%s" % message)
         self.sock.send((message+"\n").encode())
-        return receive_message(self.sock, self.termex).rstrip()
+        rx = receive_message(self.sock, self.termex).rstrip()
+        if (self.trace):
+            print("<%s" % rx)
+        return rx
  
     def build_knobs(self, knobstr):
 # http://stackoverflow.com/questions/10967551/how-do-i-dynamically-create-properties-in-python
@@ -73,7 +80,12 @@ class Siteclient(Netclient):
                 msg = "'{0}' object has no attribute '{1}'"
                 raise AttributeError(msg.format(type(self).__name__, name))
 
-                
+    def __setattr__(self, name, value):        
+        if self.knobs.get(name) != None:
+                return self.sr("%s=%s" % (self.knobs.get(name), value))
+        else:
+                self.__dict__[name] = value
+
     def __init__(self, addr, port):
         Netclient.__init__(self,addr, port)
         self.termex = re.compile(r"(acq400.[0-9] ([0-9]+) >)")
@@ -93,10 +105,18 @@ if __name__ == '__main__':
     print("create Netclient %s %d" %(SERVER_ADDRESS, SERVER_PORT))
     svc = Siteclient(SERVER_ADDRESS, SERVER_PORT)
     
+    
     print("Model: %s" % (svc.MODEL))
     print("SITELIST: %s" % (svc.SITELIST))
     print("software_version: %s" % (svc.software_version))
-
+    svc.trace = True
+    print("spad1: %s" % (svc.spad1))
+    svc.spad1 = "0x1234"
+    print("spad1: %s" % (svc.spad1))
+    svc.spad1 = "0x5678"
+    print("spad1: %s" % (svc.spad1))
+    
+    raise SystemExit
     for key in svc.knobs:
         cmd = svc.knobs[key]
         if cmd.startswith("help"):
