@@ -29,8 +29,12 @@ def receive_message(sock, termex, maxlen=4096):
         buffer += data
         match = termex.search(buffer)
 
+    # check error code. should raise exception
+    if int(match.group(2)) != 0:
+        print("ERROR response: %s" % (buffer))
+
     # Remove the end message string
-    buffer = buffer[:-len(match.group(0))]
+    buffer = buffer[:-len(match.group(1))]
     #print("receive_message returns %s" % (buffer))
     return buffer
 
@@ -53,19 +57,14 @@ class Netclient:
 
 
 class Siteclient(Netclient):
-    def send(self, message):
-        self.sock.send((message+"\n").encode())
-
-    def recv(self):
-        return receive_message(self.sock, self.termex)
-      
     def sr(self, message):
-        self.send(message)
-        return self.recv()
+        self.sock.send((message+"\n").encode())
+        return receive_message(self.sock, self.termex).rstrip()
  
     def build_knobs(self, knobstr):
 # http://stackoverflow.com/questions/10967551/how-do-i-dynamically-create-properties-in-python
-        self.knobs = dict((key, 1) for key in knobstr.split())
+        pat = re.compile(r":")
+        self.knobs = dict((pat.sub(r"_", key), key) for key in knobstr.split())
 
     def __getattr__(self, name):
         if self.knobs[name] != None:
@@ -77,11 +76,9 @@ class Siteclient(Netclient):
            
     def __init__(self, addr, port):
         Netclient.__init__(self,addr, port)
-        self.termex = re.compile(r"(acq400.[0-9] [0-9]+ >)")
-        self.send("prompt on")
-        self.recv()
-        self.send("help")
-        self.build_knobs(self.recv())        
+        self.termex = re.compile(r"(acq400.[0-9] ([0-9]+) >)")
+        self.sr("prompt on")
+        self.build_knobs(self.sr("help"))        
 
 
 if __name__ == '__main__':
