@@ -80,8 +80,7 @@ class Siteclient(Netclient):
                 msg = "'{0}' object has no attribute '{1}'"
                 raise AttributeError(msg.format(type(self).__name__, name))
 
-    def __setattr__(self, name, value):
-        print("hello %s" %(name))
+    def __setattr__(self, name, value):        
         if self.knobs.get(name) != None:
                 return self.sr("%s=%s" % (self.knobs.get(name), value))
         else:
