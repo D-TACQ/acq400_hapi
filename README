@@ -2,4 +2,11 @@ acq400_hapi: acq400 Host API
 
 python module to connect to remote hosts
 
+class Acq400 nails up a socket connection to all the site servers at 4220+s
+
+each knob on the site is presented as a property of the connection, so that 
+simple bash-script-like syntax can be used
+
+uut.s0.set_arm=1
+
 
