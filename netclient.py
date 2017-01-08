@@ -64,6 +64,7 @@ class Siteclient(Netclient):
         return self.recv()
  
     def build_knobs(self, knobstr):
+# http://stackoverflow.com/questions/10967551/how-do-i-dynamically-create-properties-in-python
         self.knobs = dict((key, 1) for key in knobstr.split())
 
     def __getattr__(self, name):
@@ -95,6 +96,11 @@ if __name__ == '__main__':
     print("create Netclient %s %d" %(SERVER_ADDRESS, SERVER_PORT))
     svc = Siteclient(SERVER_ADDRESS, SERVER_PORT)
     
+    print("Model: %s" % (svc.MODEL))
+    print("SITELIST: %s" % (svc.SITELIST))
+    print("software_version: %s" % (svc.software_version))
+    raise SystemExit
+ 
     while True:
         try:
             data = raw_input("Enter some data: ")
@@ -117,7 +123,6 @@ if __name__ == '__main__':
         print("Got this string from server:")
         print(data + '\n')
 
-        print("Model: %s" % (svc.MODEL))
 
 
     
