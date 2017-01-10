@@ -1,3 +1,5 @@
-from . import netclient
-from . import acq400
+from netclient import Netclient
+from netclient import Siteclient
+from acq400 import Acq400
+
 
