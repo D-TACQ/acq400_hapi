@@ -9,4 +9,47 @@ simple bash-script-like syntax can be used
 
 uut.s0.set_arm=1
 
+The goal is to make it easy to remote-script multiple uut's.
+
+Example:
+
+from acq400_hapi import *
+uut1=acq400.Acq400("acq1001_144")
+uut2=acq400.Acq400("acq1001_145")
+
+for ii in range(0,10):
+	c1 = uut1.s1.SIG_SAMPLE_COUNT_COUNT.split(" ")[1]
+	c2 = uut2.s1.SIG_SAMPLE_COUNT_COUNT.split(" ")[1]
+	print("%s %s" % (c1, c2))
+11078689363247 11078689363247
+11078689363247 11078689363247
+11078739404360 11078739404360
+11078739404360 11078739404360
+11078739404360 11078789398809
+11078789398809 11078789398809
+11078789398809 11078789398809
+11078839399330 11078839399330
+11078839399330 11078839399330
+
+
+... and yes, these are EPICS PV's, so we could use capy.
+But, this way, it's all vanilla python, no other installs required.
+
+Note also, knob names eg
+SIG:SAMPLE_COUNT:COUNT are auto converted to valid python identifiers:
+SIG_SAMPLE_COUNT_COUNT
+
+
+
+The Acq400 class can be fairly slow to instantiate
+(imagine an ACQ2106 with 6 sites populated), but once the connections are 
+nailed up, then control links are fast. 
+=> The use case is: make the connection at the beginning, then operate over
+long periods.
+
+TODO:
+- extend socket clients for monitoring
+- add socket clients for transient data upload.
+- add a 4210 socket for live stream?. 
+
 
