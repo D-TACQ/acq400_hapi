@@ -39,26 +39,35 @@ def receive_message(sock, termex, maxlen=4096):
     return buffer
 
 class Netclient:
-    sock = False
-
     def __init__(self, addr, port) :
+        print("Netclient.init")
         self.__addr = addr
         self.__port = int(port)
         self.sock = socket.socket()
         self.sock.connect((self.__addr, self.__port))
 
-    @property
+    #@property
     def addr(self):
         return self.__addr
     
-    @property
+    #@property
     def port(self):
         return self.__port
 
-
-class Siteclient(Netclient):
+class Logclient(Netclient):
+    def __init__(self, addr, port):
+       Netclient.__init__(self,addr, port)
+       self.termex = re.compile("(\r\n)")
+       
+    def poll(self):
+        return receive_message(self.sock, self.termex)
+            
+class Siteclient(Netclient):   
+    
     knobs = {}
-    trace = 0
+    prevent_autocreate = False
+    pat = re.compile(r":")
+    
     def sr(self, message):
         if (self.trace):
             print(">%s" % message)
@@ -68,29 +77,45 @@ class Siteclient(Netclient):
             print("<%s" % rx)
         return rx
  
+    
     def build_knobs(self, knobstr):
 # http://stackoverflow.com/questions/10967551/how-do-i-dynamically-create-properties-in-python
-        pat = re.compile(r":")
-        self.knobs = dict((pat.sub(r"_", key), key) for key in knobstr.split())
+        self.knobs = dict((Siteclient.pat.sub(r"_", key), key) for key in knobstr.split())
 
     def __getattr__(self, name):
+        if self.knobs == None:
+            print("Houston, %s we have a problem" % (__getattr__))
+            return ""
         if self.knobs.get(name) != None:
                 return self.sr(self.knobs.get(name))
         else:
                 msg = "'{0}' object has no attribute '{1}'"
                 raise AttributeError(msg.format(type(self).__name__, name))
 
-    def __setattr__(self, name, value):        
+    def __setattr__(self, name, value):
+        if self.knobs == None:
+            return object.__setattr__(self, name, value)                 
         if self.knobs.get(name) != None:
-                return self.sr("%s=%s" % (self.knobs.get(name), value))
+            return self.sr("%s=%s" % (self.knobs.get(name), value))
+        elif not self.prevent_autocreate or self.__dict__.get(name) != None:
+            self.__dict__[name] = value
         else:
-                self.__dict__[name] = value
+            msg = "'{0}' object has no attribute '{1}'"
+            raise AttributeError(msg.format(type(self).__name__, name))          
+                
 
     def __init__(self, addr, port):
-        Netclient.__init__(self,addr, port)
+        print("Siteclient.init")
+        self.knobs = {}
+        self.trace = 0        
+        print("call Netclient.__init__")        
+        Netclient.__init__(self, addr, port) 
+    # no more new props once set
+        self.prevent_autocreate = False
         self.termex = re.compile(r"(acq400.[0-9] ([0-9]+) >)")
         self.sr("prompt on")
-        self.build_knobs(self.sr("help"))        
+        self.build_knobs(self.sr("help"))
+        self.prevent_autocreate = True
 
 
 if __name__ == '__main__':
@@ -115,6 +140,7 @@ if __name__ == '__main__':
     print("spad1: %s" % (svc.spad1))
     svc.spad1 = "0x5678"
     print("spad1: %s" % (svc.spad1))
+    svc.spad2 = "0x22222222"
     
     raise SystemExit
     for key in svc.knobs:

@@ -6,19 +6,53 @@ Created on Sun Jan  8 12:36:38 2017
 @author: pgm
 """
 
+import threading
+import re
+
 import sys
 import netclient
 
+TLC_PORT = 2235
 
+class Statusmonitor:
+    st_re = re.compile(r"([0-9]) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9])+" )
+  
+    def st_monitor(self):
+       while True:
+           st = self.logclient.poll()
+           match = self.st_re.search(st)
+           # status is a match. need to look at group(0). It's NOT a LIST!
+           if match:
+               status = match.groups()
+               print(status)
+               if self.status0 != None:
+                   print("Status check %s %s" % (self.status0[0], status[0]))
+                   if self.status0[0] != "0" and status[0] == "0":
+                       print("%s STOPPED!" % (self.uut))
+                       self.stopped.set()
+
+               self.status0 = status
+               
+    def __init__(self, _uut):
+        self.uut = _uut
+        self.status0 = None
+        self.stopped = threading.Event()
+        self.logclient = netclient.Logclient(_uut, TLC_PORT)
+        self.st_thread = threading.Thread(target=self.st_monitor)
+        self.st_thread.daemon = True
+        self.st_thread.start()      
+        # need some way to stop the thread.
+        
+        
 class Acq400:
-    svc = {}
-    __mod_count = 0
     @property 
     def mod_count(self):
         return self.__mod_count
-        
+                
     def __init__(self, _uut):
         self.uut = _uut
+        self.svc = {}
+        self.__mod_count = 0    
         s0 = self.svc["s0"] = netclient.Siteclient(self.uut, 4220)
         sl = s0.SITELIST.split(",")
         sl.pop(0)
@@ -27,7 +61,9 @@ class Acq400:
             self.svc["s%d" % site] = netclient.Siteclient(self.uut, 4220+site)
             self.__mod_count += 1
         
-
+        self.statmon = Statusmonitor(self.uut)        
+        
+        
     def __getattr__(self, name):
         if self.svc.get(name) != None:
                 return self.svc.get(name)
