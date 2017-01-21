@@ -11,36 +11,34 @@ import socket
 import re
 import sys
 
-def receive_message(sock, termex, maxlen=4096):
-    """
-    Read the information from the socket, in a buffered
-    fashion, receiving only 4096 bytes at a time.
 
-    Parameters:
-    sock - The socket object
-    termex - re for terminator
-    maxlen - max bytes to receive per read
-    """
-    buffer = ""
-    data = ""
-    match = None
-    while match == None:
-        data = sock.recv(maxlen)
-        buffer += data
-        match = termex.search(buffer)
 
-    # check error code. should raise exception
-#    if int(match.group(2)) != 0:
-#        print("ERROR response: %s" % (buffer))
-
-    # Remove the end message string
-    buffer = buffer[:-len(match.group(1))]
-    #print("receive_message returns %s" % (buffer))
-    return buffer
 
 class Netclient:
+    def receive_message(self, termex, maxlen=4096):
+        """
+        Read the information from the socket, in a buffered
+        fashion, receiving only 4096 bytes at a time.
+    
+        Parameters:
+        sock - The socket object
+        termex - re for terminator
+        maxlen - max bytes to receive per read
+        """        
+
+        match = termex.search(self.buffer)
+        while match == None:
+            self.buffer += self.sock.recv(maxlen)        
+            match = termex.search(self.buffer)
+            
+        rc = self.buffer[:match.start(1)]            
+        self.buffer = self.buffer[match.end(1):]
+        return rc
+        
+                
     def __init__(self, addr, port) :
-        print("Netclient.init")
+#        print("Netclient.init")
+        self.buffer = ""
         self.__addr = addr
         self.__port = int(port)
         self.sock = socket.socket()
@@ -60,7 +58,7 @@ class Logclient(Netclient):
        self.termex = re.compile("(\r\n)")
        
     def poll(self):
-        return receive_message(self.sock, self.termex)
+        return self.receive_message(self.termex)
             
 class Siteclient(Netclient):   
     
@@ -72,7 +70,9 @@ class Siteclient(Netclient):
         if (self.trace):
             print(">%s" % message)
         self.sock.send((message+"\n").encode())
-        rx = receive_message(self.sock, self.termex).rstrip()
+        rx = self.receive_message(self.termex).rstrip()
+        if self.show_responses and len(rx) > 1:
+            print(rx)
         if (self.trace):
             print("<%s" % rx)
         return rx
@@ -84,8 +84,7 @@ class Siteclient(Netclient):
 
     def __getattr__(self, name):
         if self.knobs == None:
-            print("Houston, %s we have a problem" % (__getattr__))
-            return ""
+            return object.__setattr__(self, name)
         if self.knobs.get(name) != None:
                 return self.sr(self.knobs.get(name))
         else:
@@ -105,17 +104,18 @@ class Siteclient(Netclient):
                 
 
     def __init__(self, addr, port):
-        print("Siteclient.init")
+#        print("Siteclient.init")
         self.knobs = {}
-        self.trace = 0        
-        print("call Netclient.__init__")        
+        self.trace = False        
+        self.show_responses = False
         Netclient.__init__(self, addr, port) 
     # no more new props once set
         self.prevent_autocreate = False
-        self.termex = re.compile(r"(acq400.[0-9] ([0-9]+) >)")
+        self.termex = re.compile(r"\n(acq400.[0-9] ([0-9]+) >)")
         self.sr("prompt on")
         self.build_knobs(self.sr("help"))
         self.prevent_autocreate = True
+        #self.show_responses = True
 
 
 if __name__ == '__main__':
