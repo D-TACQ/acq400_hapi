@@ -9,50 +9,74 @@ Created on Sun Jan  8 12:36:38 2017
 import threading
 import re
 
+import os
+import signal
 import sys
 import netclient
 
 TLC_PORT = 2235
 
+class ExitCommand(Exception):
+    pass
+
+
+def signal_handler(signal, frame):
+    raise ExitCommand()
+
 class Statusmonitor:
     st_re = re.compile(r"([0-9]) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9])+" )
 
     def st_monitor(self):
-        while True:
+        while self.quit_requested == False:
             st = self.logclient.poll()
             match = self.st_re.search(st)
             # status is a match. need to look at group(0). It's NOT a LIST!
             if match:
                 statuss = match.groups()
                 status = [int(x) for x in statuss]
-                print("uut:%s status:%s" % (self.uut, status))
+                if self.trace:
+                    print("uut:%s status:%s" % (self.uut, status))
                 if self.status0 != None:
-                    print("Status check %s %s" % (self.status0[0], status[0]))
+#                    print("Status check %s %s" % (self.status0[0], status[0]))
                     if self.status0[0] != 0 and status[0] == 0:
                         print("%s STOPPED!" % (self.uut))
                         self.stopped.set()
-                print("status[0] is %d" % (status[0]))
-                if status[0] == 1:
-                    print("%s ARMED!" % (self.uut))
-                    self.armed.set()
+#                print("status[0] is %d" % (status[0]))
+                    if status[0] == 1:
+                        print("%s ARMED!" % (self.uut))
+                        self.armed.set()
+                    if self.status0[0] == 0 and status[0] > 1:
+                        print("ERROR: skipped ARM %d -> %d" % (self.status0[0], status[0]))                        
+                        self.quit_requested = True
+                        os.kill(self.main_pid, signal.SIGINT)
+                        sys.exit(1)
+                        
                     
                 self.status0 = status
 
-# todo maybe more elegant to "curry" these two or somesuch pythonic cleverness?
+    def wait_event(self, ev, descr):
+        print("wait_%s 02 %d" % (descr, ev.is_set()))
+        while ev.wait(0.1) == False:
+            if self.quit_requested:
+                print("QUIT REQUEST call exit %s" % (descr))
+                sys.exit(1)
+                
+        print("wait_%s 88 %d" % (descr, ev.is_set()))
+        ev.clear()
+        print("wait_%s 99 %d" % (descr, ev.is_set()))        
+
     def wait_armed(self):
-        print("wait_armed02 %d" % (self.armed.is_set()))
-        self.armed.wait()
-        print("wait_armed88 %d" % (self.armed.is_set()))
-        self.armed.clear()
-        print("wait_armed99 %d" % (self.armed.is_set()))
+        self.wait_event(self.armed, "armed")
 
     def wait_stopped(self):
-        self.stopped.wait()
-        self.stopped.clear()
+        self.wait_event(self.stopped, "stopped")
 
 
     def __init__(self, _uut):
+        self.quit_requested = False        
+        self.trace = False
         self.uut = _uut
+        self.main_pid = os.getpid()
         self.status0 = None
         self.stopped = threading.Event()
         self.armed = threading.Event()
