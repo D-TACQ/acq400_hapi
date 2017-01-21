@@ -46,7 +46,7 @@ class Statusmonitor:
                         print("%s ARMED!" % (self.uut))
                         self.armed.set()
                     if self.status0[0] == 0 and status[0] > 1:
-                        print("ERROR: skipped ARM %d -> %d" % (self.status0[0], status[0]))                        
+                        print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status0[0], status[0]))                        
                         self.quit_requested = True
                         os.kill(self.main_pid, signal.SIGINT)
                         sys.exit(1)
@@ -55,15 +55,15 @@ class Statusmonitor:
                 self.status0 = status
 
     def wait_event(self, ev, descr):
-        print("wait_%s 02 %d" % (descr, ev.is_set()))
+ #       print("wait_%s 02 %d" % (descr, ev.is_set()))
         while ev.wait(0.1) == False:
             if self.quit_requested:
                 print("QUIT REQUEST call exit %s" % (descr))
                 sys.exit(1)
                 
-        print("wait_%s 88 %d" % (descr, ev.is_set()))
+#        print("wait_%s 88 %d" % (descr, ev.is_set()))
         ev.clear()
-        print("wait_%s 99 %d" % (descr, ev.is_set()))        
+#        print("wait_%s 99 %d" % (descr, ev.is_set()))        
 
     def wait_armed(self):
         self.wait_event(self.armed, "armed")
