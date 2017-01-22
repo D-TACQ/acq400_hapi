@@ -1,6 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+acq400.py interface to one acq400 appliance instance
+- enumerates all site services, available as uut.sX.knob
+- simply property interface allows natural "script-like" usage
+eg
+uut1.s0.set_arm = 1
+
+compared to 
+
+set.site1 set_arm=1
+
+- monitors transient status on uut, provides blocking events
+- read_channels() - reads all data from channel data service.
 Created on Sun Jan  8 12:36:38 2017
 
 @author: pgm

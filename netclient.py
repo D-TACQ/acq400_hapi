@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+netclient.py interface to client tcp socket with 
+- sr() send/receive a command
 Created on Sun Jan  8 12:36:38 2017
 
 @author: pgm
