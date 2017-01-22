@@ -132,12 +132,27 @@ class Acq400:
         else:
             msg = "'{0}' object has no attribute '{1}'"
             raise AttributeError(msg.format(type(self).__name__, name))
-        
+    
+    def post_samples(self):
+        __, nds = self.s0.TRANSIENT_POST.split(" ")
+        return int(nds)
+    
     def read_chan(self, chan):
         cc = Channelclient(self.uut, chan)
-        __, nds = self.s0.TRANSIENT_POST.split(" ")
-        ndata = int(nds)
-        return cc.read(ndata)
+        
+        return cc.read(self.post_samples())
+    
+    def nchan(self):
+        return int(self.s0.NCHAN)
+    
+    def read_channels(self):
+        nchan = self.nchan()
+        chx = []
+        for ch in range(1,nchan+1):
+            chx.append(self.read_chan(ch))
+            
+        return chx
+            
 
 if __name__ == '__main__':
     SERVER_ADDRESS = '10.12.132.22'
