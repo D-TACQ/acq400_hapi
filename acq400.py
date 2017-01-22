@@ -14,7 +14,11 @@ import signal
 import sys
 import netclient
 
-TLC_PORT = 2235
+class AcqPorts:
+    SITE0 = 4220
+    TSTAT = 2235
+    DATA0 = 53000
+    
 
 class ExitCommand(Exception):
     pass
@@ -80,7 +84,7 @@ class Statusmonitor:
         self.status0 = None
         self.stopped = threading.Event()
         self.armed = threading.Event()
-        self.logclient = netclient.Logclient(_uut, TLC_PORT)
+        self.logclient = netclient.Logclient(_uut, AcqPorts.TSTAT)
         self.st_thread = threading.Thread(target=self.st_monitor)
         self.st_thread.setDaemon(True)
         self.st_thread.start()      
@@ -96,12 +100,12 @@ class Acq400:
         self.uut = _uut
         self.svc = {}
         self.__mod_count = 0    
-        s0 = self.svc["s0"] = netclient.Siteclient(self.uut, 4220)
+        s0 = self.svc["s0"] = netclient.Siteclient(self.uut, AcqPorts.SITE0)
         sl = s0.SITELIST.split(",")
         sl.pop(0)
         for sm in sl:
             site = int(sm.split("=").pop(0))
-            self.svc["s%d" % site] = netclient.Siteclient(self.uut, 4220+site)
+            self.svc["s%d" % site] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
             self.__mod_count += 1
 
         self.statmon = Statusmonitor(self.uut)        
