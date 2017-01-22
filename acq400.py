@@ -13,13 +13,30 @@ import os
 import signal
 import sys
 import netclient
+import numpy
 
 class AcqPorts:
     SITE0 = 4220
     TSTAT = 2235
     DATA0 = 53000
-    
 
+class Channelclient(netclient.Netclient):
+    def __init__(self, addr, ch):
+        netclient.Netclient.__init__(self, addr, AcqPorts.DATA0+ch) 
+        
+    def read(self, ndata, data_size=2, maxbuf=4096):
+        buffer = self.sock.recv(maxbuf)
+        while len(buffer) < ndata*data_size:
+            buffer += self.sock.recv(maxbuf)
+            
+        if data_size == 4:
+            _dtype = numpy.dtype('i4')
+        else:
+            _dtype = numpy.dtype('i2')
+            
+        return numpy.frombuffer(buffer, dtype=_dtype, count=ndata)
+        
+        
 class ExitCommand(Exception):
     pass
 
@@ -53,11 +70,9 @@ class Statusmonitor:
                         print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status0[0], status[0]))                        
                         self.quit_requested = True
                         os.kill(self.main_pid, signal.SIGINT)
-                        sys.exit(1)
-                        
-                    
+                        sys.exit(1)                                            
                 self.status0 = status
-
+                
     def wait_event(self, ev, descr):
  #       print("wait_%s 02 %d" % (descr, ev.is_set()))
         while ev.wait(0.1) == False:
@@ -117,7 +132,12 @@ class Acq400:
         else:
             msg = "'{0}' object has no attribute '{1}'"
             raise AttributeError(msg.format(type(self).__name__, name))
-
+        
+    def read_chan(self, chan):
+        cc = Channelclient(self.uut, chan)
+        __, nds = self.s0.TRANSIENT_POST.split(" ")
+        ndata = int(nds)
+        return cc.read(ndata)
 
 if __name__ == '__main__':
     SERVER_ADDRESS = '10.12.132.22'

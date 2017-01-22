@@ -59,7 +59,8 @@ class Logclient(Netclient):
        
     def poll(self):
         return self.receive_message(self.termex)
-            
+
+
 class Siteclient(Netclient):   
     
     knobs = {}
