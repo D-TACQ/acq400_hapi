@@ -32,6 +32,13 @@ class AcqPorts:
     TSTAT = 2235
     DATA0 = 53000
 
+class SF:
+    STATE = 0
+    PRE = 1
+    POST = 2
+    ELAPSED = 3
+    DEMUX = 5
+    
 class Channelclient(netclient.Netclient):
     def __init__(self, addr, ch):
         netclient.Netclient.__init__(self, addr, AcqPorts.DATA0+ch) 
@@ -66,24 +73,24 @@ class Statusmonitor:
             # status is a match. need to look at group(0). It's NOT a LIST!
             if match:
                 statuss = match.groups()
-                status = [int(x) for x in statuss]
+                status1 = [int(x) for x in statuss]
                 if self.trace:
-                    print("uut:%s status:%s" % (self.uut, status))
-                if self.status0 != None:
+                    print("uut:%s status:%s" % (self.uut, status1))
+                if self.status != None:
 #                    print("Status check %s %s" % (self.status0[0], status[0]))
-                    if self.status0[0] != 0 and status[0] == 0:
+                    if self.status[SF.STATE] != 0 and status1[SF.STATE] == 0:
                         print("%s STOPPED!" % (self.uut))
                         self.stopped.set()
 #                print("status[0] is %d" % (status[0]))
-                    if status[0] == 1:
+                    if status1[SF.STATE] == 1:
                         print("%s ARMED!" % (self.uut))
                         self.armed.set()
-                    if self.status0[0] == 0 and status[0] > 1:
-                        print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status0[0], status[0]))                        
+                    if self.status[SF.STATE] == 0 and status1[SF.STATE] > 1:
+                        print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status[0], status1[0]))                        
                         self.quit_requested = True
                         os.kill(self.main_pid, signal.SIGINT)
                         sys.exit(1)                                            
-                self.status0 = status
+                self.status = status1
                 
     def wait_event(self, ev, descr):
  #       print("wait_%s 02 %d" % (descr, ev.is_set()))
@@ -103,12 +110,12 @@ class Statusmonitor:
         self.wait_event(self.stopped, "stopped")
 
 
-    def __init__(self, _uut):
+    def __init__(self, _uut, _status):
         self.quit_requested = False        
         self.trace = False
         self.uut = _uut
         self.main_pid = os.getpid()
-        self.status0 = None
+        self.status = _status
         self.stopped = threading.Event()
         self.armed = threading.Event()
         self.logclient = netclient.Logclient(_uut, AcqPorts.TSTAT)
@@ -135,7 +142,9 @@ class Acq400:
             self.svc["s%d" % site] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
             self.__mod_count += 1
 
-        self.statmon = Statusmonitor(self.uut)        
+# init _status so that values are valid even if this Acq400 doesn't run a shot ..
+        _status = [int(x) for x in s0.state.split(" ")]
+        self.statmon = Statusmonitor(self.uut, _status)        
 
 
     def __getattr__(self, name):
@@ -145,9 +154,16 @@ class Acq400:
             msg = "'{0}' object has no attribute '{1}'"
             raise AttributeError(msg.format(type(self).__name__, name))
     
+    def state(self):
+        return self.statmon.status[SF.STATE]
     def post_samples(self):
-        __, nds = self.s0.TRANSIENT_POST.split(" ")
-        return int(nds)
+        return self.statmon.status[SF.POST]
+    def pre_samples(self):
+        return self.statmon.status[SF.PRE]
+    def elapsed_samples(self):
+        return self.statmon.status[SF.ELAPSED]
+    def demux_status(self):
+        return self.statmon.status[SF.DEMUX]
     
     def read_chan(self, chan):
         cc = Channelclient(self.uut, chan)
@@ -178,6 +194,7 @@ def run_unit_test():
     print("MODEL %s" %(uut.s1.MODEL))
 
     print("Module count %d" % (uut.mod_count))
+    print("POST SAMPLES %d" % uut.post_samples())
 
     for sx in sorted(uut.svc):
         print("SITE:%s MODEL:%s" % (sx, uut.svc[sx].sr("MODEL")) )
