@@ -121,7 +121,7 @@ class Siteclient(Netclient):
         #self.show_responses = True
 
 
-if __name__ == '__main__':
+def run_unit_test():
     SERVER_ADDRESS = '10.12.132.18'
     SERVER_PORT=4220
 
@@ -175,6 +175,11 @@ if __name__ == '__main__':
         
         print("Got this string from server:")
         print(data + '\n')
+
+# excution starts here        
+if __name__ == '__main__':
+    run_unit_test
+
 
 
 

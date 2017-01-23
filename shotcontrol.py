@@ -42,6 +42,9 @@ class ShotController:
             print("%s SHOT COMPLETE shot:%s" % (u.uut, u.s1.shot))
             
     def run_shot(self, soft_trigger=False):
+        """run_shot() control an entire shot from client
+           for more control, use the individual methods above.
+        """
         self.prep_shot()
         self.arm_shot()
         if soft_trigger:
@@ -53,5 +56,4 @@ class ShotController:
     def __init__(self, _uuts):
         self.uuts = _uuts
         for u in self.uuts:
-            u.s1.shot = 0
-            print("%s Kickoff shot %s" % (u.uut, u.s1.shot))        
+            u.s1.shot = 0                 

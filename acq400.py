@@ -166,7 +166,7 @@ class Acq400:
         return chx
             
 
-if __name__ == '__main__':
+def run_unit_test():
     SERVER_ADDRESS = '10.12.132.22'
     if len(sys.argv) > 1:
         SERVER_ADDRESS = sys.argv[1]
@@ -183,5 +183,6 @@ if __name__ == '__main__':
         print("SITE:%s MODEL:%s" % (sx, uut.svc[sx].sr("MODEL")) )
 
 
-
+if __name__ == '__main__':
+    run_unit_test()
 
