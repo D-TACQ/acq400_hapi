@@ -121,6 +121,11 @@ class Siteclient(Netclient):
             raise AttributeError(msg.format(type(self).__name__, name))          
                 
 
+    def get_knob(self, name):
+        return self.__getattr__(name)
+    def set_knob(self, name, value):
+        return self.__setattr__(name, value)
+    
     def __init__(self, addr, port):
 #        print("Siteclient.init")
         self.knobs = {}
