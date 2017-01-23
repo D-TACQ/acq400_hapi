@@ -44,6 +44,12 @@ class Channelclient(netclient.Netclient):
         netclient.Netclient.__init__(self, addr, AcqPorts.DATA0+ch) 
         
     def read(self, ndata, data_size=2, maxbuf=4096):
+        """read ndata from channnel data server, return as numpy array
+        @@todo buffer +=   # this is probably horribly ineffcient
+        # probably better: 
+            retbuf = numpy.array(dtype, ndata)
+            retbuf[cursor].                
+        """
         buffer = self.sock.recv(maxbuf)
         while len(buffer) < ndata*data_size:
             buffer += self.sock.recv(maxbuf)
@@ -118,19 +124,17 @@ class Statusmonitor:
         self.status = _status
         self.stopped = threading.Event()
         self.armed = threading.Event()
-        self.logclient = netclient.Logclient(_uut, AcqPorts.TSTAT)
+        self.logclient = netclient.Logclient(_uut, AcqPorts.TSTAT)        
         self.st_thread = threading.Thread(target=self.st_monitor)
         self.st_thread.setDaemon(True)
-        self.st_thread.start()      
-        # need some way to stop the thread.
-
+        self.st_thread.start()             
 
 class Acq400:
     @property 
     def mod_count(self):
         return self.__mod_count
 
-    def __init__(self, _uut):
+    def __init__(self, _uut, monitor=True):
         self.uut = _uut
         self.svc = {}
         self.__mod_count = 0    
@@ -144,7 +148,8 @@ class Acq400:
 
 # init _status so that values are valid even if this Acq400 doesn't run a shot ..
         _status = [int(x) for x in s0.state.split(" ")]
-        self.statmon = Statusmonitor(self.uut, _status)        
+        if monitor:
+            self.statmon = Statusmonitor(self.uut, _status)        
 
 
     def __getattr__(self, name):
