@@ -17,15 +17,22 @@ import sys
 
 
 class Netclient:
-    def receive_message(self, termex, maxlen=4096):
-        """
-        Read the information from the socket, in a buffered
-        fashion, receiving only 4096 bytes at a time.
+    """connects and holds open a socket to defined port.
     
-        Parameters:
-        sock - The socket object
-        termex - re for terminator
-        maxlen - max bytes to receive per read
+    Args:
+        addr (str) : ip-address or dns name on network
+        port (int) : server port number.
+        
+    """
+    def receive_message(self, termex, maxlen=4096):
+        """Read the information from the socket line at a time.
+    
+        Args:
+            termex (str): regex defines line terminator
+            maxlen (int): max read size
+            
+        Returns:
+            string representing message        
         """        
 
         match = termex.search(self.buffer)
@@ -55,6 +62,7 @@ class Netclient:
         return self.__port
 
 class Logclient(Netclient):
+    """Netclient optimised for logging, line by line"""
     def __init__(self, addr, port):
        Netclient.__init__(self,addr, port)
        self.termex = re.compile("(\r\n)")
@@ -64,12 +72,24 @@ class Logclient(Netclient):
 
 
 class Siteclient(Netclient):   
+    """Netclient optimised for site service, may be multi-line response.
     
+    Autodetects all knobs and holds them as properties for simple script-like
+    set/get syntax.
+    """
     knobs = {}
     prevent_autocreate = False
     pat = re.compile(r":")
     
     def sr(self, message):
+        """send a command and receive a reply
+        
+        Args:
+            message (str) : command (query) to send
+            
+        Returns:
+            rx (str): response string
+        """
         if (self.trace):
             print(">%s" % message)
         self.sock.send((message+"\n").encode())
@@ -86,11 +106,13 @@ class Siteclient(Netclient):
         self.knobs = dict((Siteclient.pat.sub(r"_", key), key) for key in knobstr.split())
         
     def help(self, regex = ".*"):
-        """list available knobs, optionally filtered by regex
-        eg 
-        help()  : list all
-        help("SIG) : list all knobs with SIG
-        help("SIG*FREQ") list all knobs SIG*FREQ        
+        """list available knobs, optionally filtered by regex.
+        
+        eg
+        
+        - help()  : list all
+        - help("SIG) : list all knobs with SIG
+        - help("SIG*FREQ") list all knobs SIG*FREQ        
         """
         regex = re.compile(regex)
         hr = []

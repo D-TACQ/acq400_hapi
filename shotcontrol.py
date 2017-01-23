@@ -38,12 +38,18 @@ class ShotController:
         self.wait_armed()
             
     def on_shot_complete(self):
+        """runs on completion, expect subclass override."""
         for u in self.uuts:
             print("%s SHOT COMPLETE shot:%s" % (u.uut, u.s1.shot))
             
     def run_shot(self, soft_trigger=False):
-        """run_shot() control an entire shot from client
+        """run_shot() control an entire shot from client.
+        
            for more control, use the individual methods above.
+           
+           Args:
+               soft_trigger=False (bool) : trigger when armed
+               
         """
         self.prep_shot()
         self.arm_shot()

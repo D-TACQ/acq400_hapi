@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 acq400.py interface to one acq400 appliance instance
+
 - enumerates all site services, available as uut.sX.knob
 - simply property interface allows natural "script-like" usage
-eg
-uut1.s0.set_arm = 1
 
-compared to 
-
-set.site1 set_arm=1
+ - eg
+  - uut1.s0.set_arm = 1
+ - compared to 
+  - set.site1 set_arm=1
 
 - monitors transient status on uut, provides blocking events
 - read_channels() - reads all data from channel data service.
@@ -28,11 +28,13 @@ import netclient
 import numpy
 
 class AcqPorts:
+    """server port constants"""
     SITE0 = 4220
     TSTAT = 2235
     DATA0 = 53000
 
 class SF:
+    """state constants"""
     STATE = 0
     PRE = 1
     POST = 2
@@ -40,15 +42,32 @@ class SF:
     DEMUX = 5
     
 class Channelclient(netclient.Netclient):
-    def __init__(self, addr, ch):
+    """handles post shot data for one channel.
+    
+    Args:
+        addr (str) : ip address or dns name
+        ch (int) : channel number 1..N
+        
+    """    
+    def __init__(self, addr, ch):        
         netclient.Netclient.__init__(self, addr, AcqPorts.DATA0+ch) 
         
     def read(self, ndata, data_size=2, maxbuf=4096):
-        """read ndata from channnel data server, return as numpy array
-        @@todo buffer +=   # this is probably horribly ineffcient
+        """read ndata from channel data server, return as numpy array.
+        
+        Args:
+            ndata (int): number of elements
+            data_size : 2|4 short or int
+            maxbuf=4096 : max bytes to read per packet
+            
+        Returns:
+            :numpy: data array 
+            
+        @@todo buffer +=   
+        # this is probably horribly inefficient
         # probably better: 
-            retbuf = numpy.array(dtype, ndata)
-            retbuf[cursor].                
+        - retbuf = numpy.array(dtype, ndata)
+        - retbuf[cursor].                
         """
         buffer = self.sock.recv(maxbuf)
         while len(buffer) < ndata*data_size:
@@ -110,9 +129,15 @@ class Statusmonitor:
 #        print("wait_%s 99 %d" % (descr, ev.is_set()))        
 
     def wait_armed(self):
+        """
+        blocks until uut is ARMED                    
+        """
         self.wait_event(self.armed, "armed")
 
     def wait_stopped(self):
+        """
+        blocks until uut is STOPPED                    
+        """        
         self.wait_event(self.stopped, "stopped")
 
 
@@ -130,6 +155,18 @@ class Statusmonitor:
         self.st_thread.start()             
 
 class Acq400:
+    """
+    host-side proxy for Acq400 uut.
+    
+    discovers and maintains all site servers
+    maintains a monitor thread on the monitor port
+    handles multiple channel post shot upload
+    
+    Args:
+        _uut (str) : ip-address or dns name
+        monitor=True (bool) : set false to stub monitor, 
+          useful for tracing on a second connection to an active system.
+    """     
     @property 
     def mod_count(self):
         return self.__mod_count
@@ -179,6 +216,11 @@ class Acq400:
         return int(self.s0.NCHAN)
     
     def read_channels(self):
+        """read all channels post shot data.
+        
+        Returns:
+            chx (list) of numpy arrays.
+        """
         nchan = self.nchan()
         chx = []
         for ch in range(1,nchan+1):
