@@ -84,6 +84,21 @@ class Siteclient(Netclient):
     def build_knobs(self, knobstr):
 # http://stackoverflow.com/questions/10967551/how-do-i-dynamically-create-properties-in-python
         self.knobs = dict((Siteclient.pat.sub(r"_", key), key) for key in knobstr.split())
+        
+    def help(self, regex = ".*"):
+        """list available knobs, optionally filtered by regex
+        eg 
+        help()  : list all
+        help("SIG) : list all knobs with SIG
+        help("SIG*FREQ") list all knobs SIG*FREQ        
+        """
+        regex = re.compile(regex)
+        hr = []
+        for key in sorted(self.knobs):
+            if regex.match(key):
+                hr.append(key)                
+        return hr
+            
 
     def __getattr__(self, name):
         if self.knobs == None:
