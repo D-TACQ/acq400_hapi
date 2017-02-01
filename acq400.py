@@ -22,6 +22,7 @@ import threading
 import re
 
 import os
+import errno
 import signal
 import sys
 import netclient
@@ -176,7 +177,7 @@ class Acq400:
     def __init__(self, _uut, monitor=True):
         self.uut = _uut
         self.trace = 0
-        self.save_data = 0
+        self.save_data = None
         self.svc = {}
         self.__mod_count = 0    
         s0 = self.svc["s0"] = netclient.Siteclient(self.uut, AcqPorts.SITE0)
@@ -216,7 +217,13 @@ class Acq400:
         ccraw = cc.read(self.pre_samples()+self.post_samples())
         
         if self.save_data:
-            with open("%s_CH%02d" % (self.uut, chan), 'w') as fid:            
+            try:                
+                os.makedirs(self.save_data)
+            except OSError as exception:
+                if exception.errno != errno.EEXIST:
+                    raise
+                
+            with open("%s/%s_CH%02d" % (self.save_data, self.uut, chan), 'w') as fid:            
                 ccraw.tofile(fid, '')
                 
         return ccraw
