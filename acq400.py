@@ -211,6 +211,8 @@ class Acq400:
         return self.statmon.status[SF.ELAPSED]
     def demux_status(self):
         return self.statmon.status[SF.DEMUX]
+    def samples(self):
+        return self.pre_samples() + self.post_samples()
     
     def read_chan(self, chan):
         cc = Channelclient(self.uut, chan)

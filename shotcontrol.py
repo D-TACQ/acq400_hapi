@@ -59,6 +59,18 @@ class ShotController:
         self.wait_complete()
         self.on_shot_complete()
         
+    def read_channels(self):
+        uuts = self.uuts
+        chx = [u.read_channels() for u in uuts]
+        
+        if uuts[0].save_data:
+            with open("%s/format" % (uuts[0].save_data), 'w') as fid:            
+                for u in uuts:                    
+                    for ch in range(1,u.nchan()+1):
+                        fid.write("%s_CH%02d RAW %s 1\n" % (u.uut, ch, 's'))
+        
+        return (chx, len(uuts), uuts[0].nchan(), uuts[0].samples())
+        
     def __init__(self, _uuts):
         self.uuts = _uuts
         for u in self.uuts:
