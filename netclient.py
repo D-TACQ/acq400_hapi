@@ -53,6 +53,13 @@ class Netclient:
         self.sock = socket.socket()
         self.sock.connect((self.__addr, self.__port))
 
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.sock.shutdown(socket.SHUT_RDWR)        
+        self.sock.close()
+            
     #@property
     def addr(self):
         return self.__addr

@@ -33,6 +33,8 @@ import timeit
 class AcqPorts:
     """server port constants"""
     SITE0 = 4220
+    SEGSW = 4250
+    SEGSR = 4251
     TSTAT = 2235
     DATA0 = 53000
 
@@ -254,7 +256,21 @@ class Acq400:
                       (self.uut, ch, tt, len(chx[-1])*2/1000000/tt))
             
         return chx
-            
+    
+    def load_segments(self, segs):
+        with netclient.Netclient(self.uut, AcqPorts.SEGSW) as nc:
+            for seg in segs:
+                nc.sock.send((seg+"\n").encode())
+    
+    def show_segments(self):
+        with netclient.Netclient(self.uut, AcqPorts.SEGSR) as nc:
+            while True:
+                buf = nc.sock.recv(1024)
+                if buf:
+                    print(buf)
+                else:
+                    break            
+                
 
 def run_unit_test():
     SERVER_ADDRESS = '10.12.132.22'
