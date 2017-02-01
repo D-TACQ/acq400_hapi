@@ -27,6 +27,8 @@ import sys
 import netclient
 import numpy
 
+import timeit
+
 class AcqPorts:
     """server port constants"""
     SITE0 = 4220
@@ -173,6 +175,8 @@ class Acq400:
 
     def __init__(self, _uut, monitor=True):
         self.uut = _uut
+        self.trace = 0
+        self.save_data = 0
         self.svc = {}
         self.__mod_count = 0    
         s0 = self.svc["s0"] = netclient.Siteclient(self.uut, AcqPorts.SITE0)
@@ -209,8 +213,13 @@ class Acq400:
     
     def read_chan(self, chan):
         cc = Channelclient(self.uut, chan)
+        ccraw = cc.read(self.pre_samples()+self.post_samples())
         
-        return cc.read(self.post_samples())
+        if self.save_data:
+            with open("%s_CH%02d" % (self.uut, chan), 'w') as fid:            
+                ccraw.tofile(fid, '')
+                
+        return ccraw
     
     def nchan(self):
         return int(self.s0.NCHAN)
@@ -224,7 +233,16 @@ class Acq400:
         nchan = self.nchan()
         chx = []
         for ch in range(1,nchan+1):
+            if self.trace:
+                print("%s CH%02d start.." % (self.uut, ch))
+                start = timeit.default_timer()
+                
             chx.append(self.read_chan(ch))
+            
+            if self.trace:
+                tt = timeit.default_timer() - start
+                print("%s CH%02d complete.. %.3f s %.2f MB/s" % 
+                      (self.uut, ch, tt, len(chx[-1])*2/1000000/tt))
             
         return chx
             
