@@ -245,8 +245,10 @@ class Acq400:
         
         if channels == ():
             channels = range(1, self.nchan()+1)
+        elif type(channels) == int:
+            channels = (channels,)
             
-        print("channels {}".format(channels))
+  #      print("channels {}".format(channels))
             
         chx = []
         for ch in channels:

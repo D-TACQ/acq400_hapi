@@ -54,22 +54,45 @@ class ShotController:
         self.prep_shot()
         self.arm_shot()
         if soft_trigger:
+            if soft_trigger > 1:
+                print("hit return for soft_trigger")
+                sys.stdin.readline()                
             print("%s soft_trigger" % (self.uuts[0].uut))
             self.uuts[0].s0.soft_trigger = 1
         self.wait_complete()
         self.on_shot_complete()
         
+    def map_channels(self, channels):
+        cmap = {}
+        #print("map_channels {}".format(channels))
+        ii = 0        
+        for u in self.uuts:
+            if channels == ():
+                cmap[u] = channels                  # default : ALL
+            elif type(channels) == int:             
+                cmap[u] = channels                  # single value
+            elif type(channels[0]) != tuple:                
+                cmap[u] = channels                  # same tuple all UUTS
+            else:                
+                try:                    
+                    cmap[u] = channels[ii]          # dedicated tuple
+                except:
+                    cmap[u] = 1                     # fallback, ch1
+                
+            ii = ii + 1
+        return cmap
+    
     def read_channels(self, channels=()):
-        uuts = self.uuts        
-        chx = [u.read_channels(channels) for u in uuts]
+        cmap = self.map_channels(channels)                
+        chx = [u.read_channels(cmap[u]) for u in self.uuts]
         
-        if uuts[0].save_data:
+        if self.uuts[0].save_data:
             with open("%s/format" % (uuts[0].save_data), 'w') as fid:            
-                for u in uuts:                    
+                for u in self.uuts:                    
                     for ch in range(1,u.nchan()+1):
                         fid.write("%s_CH%02d RAW %s 1\n" % (u.uut, ch, 's'))
         
-        return (chx, len(uuts), len(chx[0]), len(chx[0][0]))
+        return (chx, len(self.uuts), len(chx[0]), len(chx[0][0]))
         
     def __init__(self, _uuts):
         self.uuts = _uuts
