@@ -235,15 +235,21 @@ class Acq400:
     def nchan(self):
         return int(self.s0.NCHAN)
     
-    def read_channels(self):
+    def read_channels(self, channels=()):
         """read all channels post shot data.
         
         Returns:
             chx (list) of numpy arrays.
         """
-        nchan = self.nchan()
+        
+        
+        if channels == ():
+            channels = range(1, self.nchan()+1)
+            
+        print("channels {}".format(channels))
+            
         chx = []
-        for ch in range(1,nchan+1):
+        for ch in channels:
             if self.trace:
                 print("%s CH%02d start.." % (self.uut, ch))
                 start = timeit.default_timer()
