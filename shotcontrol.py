@@ -54,9 +54,15 @@ class ShotController:
         self.prep_shot()
         self.arm_shot()
         if soft_trigger:
-            if soft_trigger > 1:
+            if soft_trigger < 0:
                 print("hit return for soft_trigger")
-                sys.stdin.readline()                
+                sys.stdin.readline()
+            else:
+                while soft_trigger > 1:
+                    print("sleep {}".format(soft_trigger))
+                    time.sleep(1)
+                    soft_trigger = soft_trigger - 1
+            
             print("%s soft_trigger" % (self.uuts[0].uut))
             self.uuts[0].s0.soft_trigger = 1
         self.wait_complete()
