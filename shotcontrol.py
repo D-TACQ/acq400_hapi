@@ -36,13 +36,18 @@ class ShotController:
             print("%s set_arm" % (u.uut))
             u.s0.set_arm = 1
         self.wait_armed()
-            
+
+    def abort_shot(self):
+        for u in self.uuts:
+            print("%s set_abort" % (u.uut))
+            u.s0.set_abort = 1
+   
     def on_shot_complete(self):
         """runs on completion, expect subclass override."""
         for u in self.uuts:
             print("%s SHOT COMPLETE shot:%s" % (u.uut, u.s1.shot))
             
-    def run_shot(self, soft_trigger=False):
+    def run_shot(self, soft_trigger=False, acq1014_ext_trigger=0):
         """run_shot() control an entire shot from client.
         
            for more control, use the individual methods above.
@@ -51,6 +56,9 @@ class ShotController:
                soft_trigger=False (bool) : trigger when armed
                
         """
+        if acq1014_ext_trigger:
+            # block external triggers with temp switch to soft trigger
+            self.uuts[0].s2.acq1014_trg = 1       
         self.prep_shot()
         self.arm_shot()
         if soft_trigger:
@@ -65,6 +73,11 @@ class ShotController:
             
             print("%s soft_trigger" % (self.uuts[0].uut))
             self.uuts[0].s0.soft_trigger = 1
+            
+        if acq1014_ext_trigger > 0:
+            time.sleep(acq1014_ext_trigger)
+            self.uuts[0].s2.acq1014_trg = 0
+            
         self.wait_complete()
         self.on_shot_complete()
         
