@@ -278,7 +278,32 @@ class Acq400:
                     print(buf)
                 else:
                     break            
-                
+      
+    def _set_sync_routing_master(self):
+	self.s0.SIG_SYNC_OUT_CLK = "CLK"
+	self.s0.SIG_SYNC_OUT_CLK_DX = "d1"
+	self.s0.SIG_SYNC_OUT_TRG = "TRG"
+	self.s0.SIG_SYNC_OUT_TRG_DX = "d0"
+		      
+		
+    def _set_sync_routing_slave(self):
+	self.s0.SIG_SRC_CLK_1 = "HDMI"
+	self.s0.SIG_SRC_TRG_0 = "HDMI"
+	self.s0.SYS_CLK_DIST_CLK_SRC = "HDMI"
+	    
+    def set_sync_routing(self, role):
+	# set sync mode on HDMI daisychain
+	# valid roles: master or slave
+	if role == "master":
+	    self._set_sync_routing_master()
+	elif role == "slave":
+	    self._set_sync_routing_master()
+	    self._set_sync_routing_slave()
+	else:
+	    raise ValueError("undefined role {}".format(role))
+			  
+              
+              
 
 def run_unit_test():
     SERVER_ADDRESS = '10.12.132.22'
