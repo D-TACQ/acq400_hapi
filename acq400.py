@@ -305,6 +305,7 @@ class Acq400:
 
 class Acq2106(Acq400):
     def __init__(self, _uut, monitor=True):
+	print("Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         site = 13
         for sm in [ 'cA', 'cB']:                
