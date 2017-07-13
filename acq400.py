@@ -45,29 +45,29 @@ class SF:
     POST = 2
     ELAPSED = 3
     DEMUX = 5
-    
+
 class Channelclient(netclient.Netclient):
     """handles post shot data for one channel.
-    
+
     Args:
         addr (str) : ip address or dns name
         ch (int) : channel number 1..N
-        
+
     """    
     def __init__(self, addr, ch):        
         netclient.Netclient.__init__(self, addr, AcqPorts.DATA0+ch) 
-        
+
     def read(self, ndata, data_size=2, maxbuf=4096):
         """read ndata from channel data server, return as numpy array.
-        
+
         Args:
             ndata (int): number of elements
             data_size : 2|4 short or int
             maxbuf=4096 : max bytes to read per packet
-            
+
         Returns:
             :numpy: data array 
-            
+
         @@todo buffer +=   
         # this is probably horribly inefficient
         # probably better: 
@@ -77,15 +77,15 @@ class Channelclient(netclient.Netclient):
         buffer = self.sock.recv(maxbuf)
         while len(buffer) < ndata*data_size:
             buffer += self.sock.recv(maxbuf)
-            
+
         if data_size == 4:
             _dtype = numpy.dtype('i4')
         else:
             _dtype = numpy.dtype('i2')
-            
+
         return numpy.frombuffer(buffer, dtype=_dtype, count=ndata)
-        
-        
+
+
 class ExitCommand(Exception):
     pass
 
@@ -121,14 +121,14 @@ class Statusmonitor:
                         os.kill(self.main_pid, signal.SIGINT)
                         sys.exit(1)                                            
                 self.status = status1
-                
+
     def wait_event(self, ev, descr):
- #       print("wait_%s 02 %d" % (descr, ev.is_set()))
+    #       print("wait_%s 02 %d" % (descr, ev.is_set()))
         while ev.wait(0.1) == False:
             if self.quit_requested:
                 print("QUIT REQUEST call exit %s" % (descr))
                 sys.exit(1)
-                
+
 #        print("wait_%s 88 %d" % (descr, ev.is_set()))
         ev.clear()
 #        print("wait_%s 99 %d" % (descr, ev.is_set()))        
@@ -162,11 +162,11 @@ class Statusmonitor:
 class Acq400:
     """
     host-side proxy for Acq400 uut.
-    
+
     discovers and maintains all site servers
     maintains a monitor thread on the monitor port
     handles multiple channel post shot upload
-    
+
     Args:
         _uut (str) : ip-address or dns name
         monitor=True (bool) : set false to stub monitor, 
@@ -202,7 +202,7 @@ class Acq400:
         else:
             msg = "'{0}' object has no attribute '{1}'"
             raise AttributeError(msg.format(type(self).__name__, name))
-    
+
     def state(self):
         return self.statmon.status[SF.STATE]
     def post_samples(self):
@@ -215,61 +215,61 @@ class Acq400:
         return self.statmon.status[SF.DEMUX]
     def samples(self):
         return self.pre_samples() + self.post_samples()
-    
+
     def read_chan(self, chan):
         cc = Channelclient(self.uut, chan)
         ccraw = cc.read(self.pre_samples()+self.post_samples())
-        
+
         if self.save_data:
             try:                
                 os.makedirs(self.save_data)
             except OSError as exception:
                 if exception.errno != errno.EEXIST:
                     raise
-                
+
             with open("%s/%s_CH%02d" % (self.save_data, self.uut, chan), 'w') as fid:            
                 ccraw.tofile(fid, '')
-                
+
         return ccraw
-    
+
     def nchan(self):
         return int(self.s0.NCHAN)
-    
+
     def read_channels(self, channels=()):
         """read all channels post shot data.
-        
+
         Returns:
             chx (list) of numpy arrays.
         """
-        
-        
+
+
         if channels == ():
             channels = range(1, self.nchan()+1)
         elif type(channels) == int:
             channels = (channels,)
-            
-  #      print("channels {}".format(channels))
-            
+
+    #      print("channels {}".format(channels))
+
         chx = []
         for ch in channels:
             if self.trace:
                 print("%s CH%02d start.." % (self.uut, ch))
                 start = timeit.default_timer()
-                
+
             chx.append(self.read_chan(ch))
-            
+
             if self.trace:
                 tt = timeit.default_timer() - start
                 print("%s CH%02d complete.. %.3f s %.2f MB/s" % 
                       (self.uut, ch, tt, len(chx[-1])*2/1000000/tt))
-            
+
         return chx
-    
+
     def load_segments(self, segs):
         with netclient.Netclient(self.uut, AcqPorts.SEGSW) as nc:
             for seg in segs:
                 nc.sock.send((seg+"\n").encode())
-    
+
     def show_segments(self):
         with netclient.Netclient(self.uut, AcqPorts.SEGSR) as nc:
             while True:
@@ -278,32 +278,40 @@ class Acq400:
                     print(buf)
                 else:
                     break            
-      
+
     def _set_sync_routing_master(self):
-	self.s0.SIG_SYNC_OUT_CLK = "CLK"
-	self.s0.SIG_SYNC_OUT_CLK_DX = "d1"
-	self.s0.SIG_SYNC_OUT_TRG = "TRG"
-	self.s0.SIG_SYNC_OUT_TRG_DX = "d0"
-		      
-		
+        self.s0.SIG_SYNC_OUT_CLK = "CLK"
+        self.s0.SIG_SYNC_OUT_CLK_DX = "d1"
+        self.s0.SIG_SYNC_OUT_TRG = "TRG"
+        self.s0.SIG_SYNC_OUT_TRG_DX = "d0"
+
+
     def _set_sync_routing_slave(self):
-	self.s0.SIG_SRC_CLK_1 = "HDMI"
-	self.s0.SIG_SRC_TRG_0 = "HDMI"
-	self.s0.SYS_CLK_DIST_CLK_SRC = "HDMI"
-	    
+        self.s0.SIG_SRC_CLK_1 = "HDMI"
+        self.s0.SIG_SRC_TRG_0 = "HDMI"
+        self.s0.SYS_CLK_DIST_CLK_SRC = "HDMI"
+
     def set_sync_routing(self, role):
-	# set sync mode on HDMI daisychain
-	# valid roles: master or slave
-	if role == "master":
-	    self._set_sync_routing_master()
-	elif role == "slave":
-	    self._set_sync_routing_master()
-	    self._set_sync_routing_slave()
-	else:
-	    raise ValueError("undefined role {}".format(role))
-			  
-              
-              
+        # set sync mode on HDMI daisychain
+        # valid roles: master or slave
+        if role == "master":
+            self._set_sync_routing_master()
+        elif role == "slave":
+            self._set_sync_routing_master()
+            self._set_sync_routing_slave()
+        else:
+            raise ValueError("undefined role {}".format(role))
+
+
+class Acq2106(Acq400):
+    def __init__(self, _uut, monitor=True):
+        Acq400.__init__(self, _uut, monitor)
+        site = 13
+        for sm in [ 'cA', 'cB']:                
+            self.svc[sm] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
+            self.mod_count += 1
+            site = site - 1                           
+
 
 def run_unit_test():
     SERVER_ADDRESS = '10.12.132.22'

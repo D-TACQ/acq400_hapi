@@ -163,7 +163,7 @@ class Siteclient(Netclient):
         Netclient.__init__(self, addr, port) 
     # no more new props once set
         self.prevent_autocreate = False
-        self.termex = re.compile(r"\n(acq400.[0-9] ([0-9]+) >)")
+        self.termex = re.compile(r"\n(acq400.[0-9]+ ([0-9]+) >)")
         self.sr("prompt on")
         self.build_knobs(self.sr("help"))
         self.prevent_autocreate = True
@@ -171,8 +171,8 @@ class Siteclient(Netclient):
 
 
 def run_unit_test():
-    SERVER_ADDRESS = '10.12.132.18'
-    SERVER_PORT=4220
+    SERVER_ADDRESS = 'acq2106_066'
+    SERVER_PORT=4233
 
     if len(sys.argv) > 1:
         SERVER_ADDRESS = sys.argv[1]
