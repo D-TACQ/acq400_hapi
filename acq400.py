@@ -181,13 +181,16 @@ class Acq400:
         self.trace = 0
         self.save_data = None
         self.svc = {}
+        self.modules = {}
         self.__mod_count = 0    
         s0 = self.svc["s0"] = netclient.Siteclient(self.uut, AcqPorts.SITE0)
         sl = s0.SITELIST.split(",")
         sl.pop(0)
         for sm in sl:
             site = int(sm.split("=").pop(0))
-            self.svc["s%d" % site] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
+            svc = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
+            self.svc["s%d" % site] = svc
+            self.modules[site] = svc
             self.__mod_count += 1
 
 # init _status so that values are valid even if this Acq400 doesn't run a shot ..
