@@ -35,6 +35,7 @@ class AcqPorts:
     SITE0 = 4220
     SEGSW = 4250
     SEGSR = 4251
+    GPGSTL= 4541
     TSTAT = 2235
     DATA0 = 53000
 
@@ -282,33 +283,60 @@ class Acq400:
                 else:
                     break            
 
-    def _set_sync_routing_master(self):
+    def set_sync_routing_master(self, clk_dx="d1", trg_dx="d0"):
         self.s0.SIG_SYNC_OUT_CLK = "CLK"
-        self.s0.SIG_SYNC_OUT_CLK_DX = "d1"
+        self.s0.SIG_SYNC_OUT_CLK_DX = clk_dx
         self.s0.SIG_SYNC_OUT_TRG = "TRG"
-        self.s0.SIG_SYNC_OUT_TRG_DX = "d0"
+        self.s0.SIG_SYNC_OUT_TRG_DX = trg_dx
 
 
-    def _set_sync_routing_slave(self):
+    def set_sync_routing_slave(self):
+        self.set_sync_routing_master()
         self.s0.SIG_SRC_CLK_1 = "HDMI"
         self.s0.SIG_SRC_TRG_0 = "HDMI"
-        self.s0.SYS_CLK_DIST_CLK_SRC = "HDMI"
 
     def set_sync_routing(self, role):
+        # deprecated
         # set sync mode on HDMI daisychain
         # valid roles: master or slave
         if role == "master":
-            self._set_sync_routing_master()
-        elif role == "slave":
-            self._set_sync_routing_master()
-            self._set_sync_routing_slave()
+            self.set_sync_routing_master()
+        elif role == "slave":            
+            self.set_sync_routing_slave()
         else:
             raise ValueError("undefined role {}".format(role))
+        
+    def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
+        # valid ACQ1001
+        if src == "zclk":
+            self.s0.SIG_ZCLK_SRC = "INT33M"
+            self.s0.SYS_CLK_FPMUX = "ZCLK"
+            self.s0.SIG_CLK_MB_FIN = 33333000
+        elif src == "xclk":
+            self.s0.SYS_CLK_FPMUX = "XCLK"
+            self.s0.SIG_CLK_MB_FIN = 32768000
+        else:
+            self.s0.SYS_CLK_FPMUX = "FPCLK"
+            self.s0.SIG_CLK_MB_FIN = fin
+            
+        if hz >= 4000000:
+            self.s0.SIG_CLK_MB_SET = hz
+            return
+        else:
+            for clkdiv in range(1,2000):
+                if hz*clkdiv >= 4000000:
+                    self.s0.SIG_CLK_MB_SET = hz*clkdiv
+                    self.s1.CLKDIV = clkdiv
+                    return
+            raise ValueError("frequency out of range {}".format(hz))
+    def load_gpg(self, stl):
+        with netclient.Netclient(self.uut, AcqPorts.GPGSTL) as nc:
+            nc.sock.send((stl+"\n").encode())
 
 
 class Acq2106(Acq400):
     def __init__(self, _uut, monitor=True):
-	print("Acq2106 %s" % (_uut))
+        print("Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         site = 13
         for sm in [ 'cA', 'cB']:                
