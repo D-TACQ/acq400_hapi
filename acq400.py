@@ -27,7 +27,7 @@ import signal
 import sys
 import netclient
 import numpy
-
+import socket
 import timeit
 
 class AcqPorts:
@@ -38,6 +38,8 @@ class AcqPorts:
     GPGSTL= 4541
     TSTAT = 2235
     DATA0 = 53000
+    AWG_ONCE = 54201
+    AWG_AUTOREARM = 54202
 
 class SF:
     """state constants"""
@@ -332,6 +334,17 @@ class Acq400:
     def load_gpg(self, stl):
         with netclient.Netclient(self.uut, AcqPorts.GPGSTL) as nc:
             nc.sock.send((stl+"\n").encode())
+            
+    def load_awg(self, data):
+        with netclient.Netclient(self.uut, AcqPorts.AWG_ONCE) as nc:
+            nc.sock.send(data)
+            nc.sock.shutdown(socket.SHUT_WR) 
+            while True:
+                rx = nc.sock.recv(128)
+                if not rx or rx.startswith("DONE"):
+                    break
+                    
+                    
 
 
 class Acq2106(Acq400):

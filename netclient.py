@@ -57,7 +57,10 @@ class Netclient:
         return self
     
     def __exit__(self, exc_type, exc_value, traceback):
-        self.sock.shutdown(socket.SHUT_RDWR)        
+        try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+        except socket.error:
+            pass
         self.sock.close()
             
     #@property
