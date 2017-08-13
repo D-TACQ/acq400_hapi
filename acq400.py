@@ -38,6 +38,7 @@ class AcqPorts:
     GPGSTL= 4541
     TSTAT = 2235
     DATA0 = 53000
+    ONESHOT = 53999
     AWG_ONCE = 54201
     AWG_AUTOREARM = 54202
 
@@ -222,9 +223,11 @@ class Acq400:
     def samples(self):
         return self.pre_samples() + self.post_samples()
 
-    def read_chan(self, chan):
+    def read_chan(self, chan, nsam = 0):
+        if nsam == 0:
+            nsam = self.pre_samples()+self.post_samples()
         cc = Channelclient(self.uut, chan)
-        ccraw = cc.read(self.pre_samples()+self.post_samples())
+        ccraw = cc.read(nsam)
 
         if self.save_data:
             try:                
@@ -343,8 +346,16 @@ class Acq400:
                 rx = nc.sock.recv(128)
                 if not rx or rx.startswith("DONE"):
                     break
-                    
-                    
+      
+    def run_oneshot(self):
+        NL = re.compile(r"(\n)")
+        with netclient.Netclient(self.uut, AcqPorts.ONESHOT) as nc:
+            while True:
+                rx = nc.receive_message(NL, 256)
+                print(rx)
+                if rx.startswith("SHOT_COMPLETE"):
+                    break
+                 
 
 
 class Acq2106(Acq400):
