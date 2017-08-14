@@ -190,11 +190,15 @@ class Acq400:
         s0 = self.svc["s0"] = netclient.Siteclient(self.uut, AcqPorts.SITE0)
         sl = s0.SITELIST.split(",")
         sl.pop(0)
+        self.awg_site = 0
         for sm in sl:
             site = int(sm.split("=").pop(0))
             svc = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
             self.svc["s%d" % site] = svc
             self.modules[site] = svc
+            
+            if self.awg_site == 0 and svc.module_name.startswith("ao"):
+                self.awg_site = site
             self.__mod_count += 1
 
 # init _status so that values are valid even if this Acq400 doesn't run a shot ..
@@ -337,8 +341,18 @@ class Acq400:
     def load_gpg(self, stl):
         with netclient.Netclient(self.uut, AcqPorts.GPGSTL) as nc:
             nc.sock.send((stl+"\n").encode())
-            
+      
+    class AwgBusyError(Exception):
+        def __init__(self, value):
+             self.value = value
+        def __str__(self):
+             return repr(self.value)
+         
     def load_awg(self, data):
+        if self.awg_site > 0:
+            if self.modules[self.awg_site].task_active == '1':
+                raise self.AwgBusyError("awg busy")
+                
         with netclient.Netclient(self.uut, AcqPorts.AWG_ONCE) as nc:
             nc.sock.send(data)
             nc.sock.shutdown(socket.SHUT_WR) 
