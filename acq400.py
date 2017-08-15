@@ -38,6 +38,7 @@ class AcqPorts:
     GPGSTL= 4541
     TSTAT = 2235
     DATA0 = 53000
+    LIVETOP = 53998
     ONESHOT = 53999
     AWG_ONCE = 54201
     AWG_AUTOREARM = 54202
@@ -181,6 +182,7 @@ class Acq400:
         return self.__mod_count
 
     def __init__(self, _uut, monitor=True):
+        self.NL = re.compile(r"(\n)")
         self.uut = _uut
         self.trace = 0
         self.save_data = None
@@ -360,16 +362,23 @@ class Acq400:
                 rx = nc.sock.recv(128)
                 if not rx or rx.startswith("DONE"):
                     break
+            nc.sock.close()
       
-    def run_oneshot(self):
-        NL = re.compile(r"(\n)")
+    def run_oneshot(self):        
         with netclient.Netclient(self.uut, AcqPorts.ONESHOT) as nc:
             while True:
-                rx = nc.receive_message(NL, 256)
+                rx = nc.receive_message(self.NL, 256)
                 print(rx)
                 if rx.startswith("SHOT_COMPLETE"):
                     break
-                 
+            nc.sock.shutdown(socket.SHUT_RDWR)
+            nc.sock.close()            
+                
+    def run_livetop(self):
+        with netclient.Netclient(self.uut, AcqPorts.LIVETOP) as nc:
+            print(nc.receive_message(self.NL, 256))             
+            nc.sock.shutdown(socket.SHUT_RDWR)
+            nc.sock.close()
 
 
 class Acq2106(Acq400):
