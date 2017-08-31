@@ -301,10 +301,12 @@ class Acq400:
         self.s0.SIG_SYNC_OUT_TRG_DX = trg_dx
 
 
+        
+
     def set_sync_routing_slave(self):
         self.set_sync_routing_master()
         self.s0.SIG_SRC_CLK_1 = "HDMI"
-        self.s0.SIG_SRC_TRG_0 = "HDMI"
+        self.s0.SIG_SRC_TRG_0 = "HDMI_TRG"
 
     def set_sync_routing(self, role):
         # deprecated
@@ -389,7 +391,18 @@ class Acq2106(Acq400):
         for sm in [ 'cA', 'cB']:                
             self.svc[sm] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
             self.mod_count += 1
-            site = site - 1                           
+            site = site - 1
+            
+    def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
+        Acq400.set_mb_clk(self, hz, src, fin)
+        self.s0.SYS_CLK_DIST_CLK_SRC = 'Si5326'
+        self.s0.SYS_CLK_OE_CLK1_ZYNQ = '1'
+    def set_master_trg(self, trg, edge = "rising", enabled=True):        
+        if trg == "fp":
+            self.s0.SIG_SRC_TRG_0 = "EXT" if enabled else "HOSTB"
+
+        
+            
 
 
 def run_unit_test():
