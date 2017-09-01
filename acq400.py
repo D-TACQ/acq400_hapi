@@ -342,9 +342,18 @@ class Acq400:
                     self.s1.CLKDIV = clkdiv
                     return
             raise ValueError("frequency out of range {}".format(hz))
-    def load_gpg(self, stl):
-        with netclient.Netclient(self.uut, AcqPorts.GPGSTL) as nc:
-            nc.sock.send((stl+"\n").encode())
+        
+    def load_gpg(self, stl, trace = False):
+        termex = re.compile("\n")
+        with netclient.Netclient(self.uut, AcqPorts.GPGSTL) as nc:            
+            lines = stl.split("\n")
+            for ll in lines:
+                if trace:
+                    print("> {}".format(ll))
+                nc.sock.send((ll+"\n").encode())
+                rx = nc.sock.recv(4096) 
+                if trace:
+                    print("< {}".format(rx))
       
     class AwgBusyError(Exception):
         def __init__(self, value):
