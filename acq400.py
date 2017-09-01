@@ -352,12 +352,13 @@ class Acq400:
         def __str__(self):
              return repr(self.value)
          
-    def load_awg(self, data):
+    def load_awg(self, data, autorearm=False):
         if self.awg_site > 0:
             if self.modules[self.awg_site].task_active == '1':
                 raise self.AwgBusyError("awg busy")
-                
-        with netclient.Netclient(self.uut, AcqPorts.AWG_ONCE) as nc:
+        port = AcqPorts.AWG_AUTOREARM if autorearm else AcqPorts.AWG_ONCE
+        
+        with netclient.Netclient(self.uut, port) as nc:
             nc.sock.send(data)
             nc.sock.shutdown(socket.SHUT_WR) 
             while True:
