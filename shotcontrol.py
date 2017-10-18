@@ -120,7 +120,7 @@ class ShotController:
         chx = [u.read_channels(cmap[u]) for u in self.uuts]
         
         if self.uuts[0].save_data:
-            with open("%s/format" % (uuts[0].save_data), 'w') as fid:            
+            with open("%s/format" % (self.uuts[0].save_data), 'w') as fid:            
                 for u in self.uuts:                    
                     for ch in range(1,u.nchan()+1):
                         fid.write("%s_CH%02d RAW %s 1\n" % (u.uut, ch, 's'))
