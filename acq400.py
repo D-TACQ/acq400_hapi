@@ -350,6 +350,14 @@ class Acq400:
             for ll in lines:
                 if trace:
                     print("> {}".format(ll))
+                if len(ll) < 2:
+                    if trace:
+                        print("skip blank")
+                    continue
+                if ll.startswith('#'):
+                    if trace:
+                        print("skip comment")
+                    continue
                 nc.sock.send((ll+"\n").encode())
                 rx = nc.sock.recv(4096) 
                 if trace:
