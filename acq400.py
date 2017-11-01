@@ -388,7 +388,7 @@ class Acq400:
         with netclient.Netclient(self.uut, AcqPorts.ONESHOT) as nc:
             while True:
                 rx = nc.receive_message(self.NL, 256)
-                print(rx)
+                print("{}> {}".format(self.s0.HN, rx))
                 if rx.startswith("SHOT_COMPLETE"):
                     break
             nc.sock.shutdown(socket.SHUT_RDWR)
