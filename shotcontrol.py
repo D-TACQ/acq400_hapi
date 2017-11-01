@@ -61,7 +61,8 @@ class ShotController:
         for u in self.uuts:
             print("%s SHOT COMPLETE shot:%s" % (u.uut, u.s1.shot))
             
-    def run_shot(self, soft_trigger=False, acq1014_ext_trigger=0):
+    def run_shot(self, soft_trigger=False, acq1014_ext_trigger=0, 
+                remote_trigger=None):
         """run_shot() control an entire shot from client.
         
            for more control, use the individual methods above.
@@ -87,6 +88,8 @@ class ShotController:
             
             print("%s soft_trigger" % (self.uuts[0].uut))
             self.uuts[0].s0.soft_trigger = 1
+        elif remote_trigger != None:
+            remote_trigger()
             
         if acq1014_ext_trigger > 0:
             time.sleep(acq1014_ext_trigger)
