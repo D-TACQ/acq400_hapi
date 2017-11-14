@@ -39,6 +39,7 @@ class AcqPorts:
     ONESHOT = 53999
     AWG_ONCE = 54201
     AWG_AUTOREARM = 54202
+    MGTDRAM = 53990
 
 class SF:
     """state constants"""
@@ -161,6 +162,25 @@ class Statusmonitor:
         self.st_thread.setDaemon(True)
         self.st_thread.start()             
 
+class ProcessMonitor:
+    st_re = re.compile(r"^END" )
+    
+    def st_monitor(self):
+        while self.quit_requested == False:
+            st = self.logclient.poll()
+            print st
+            match = self.st_re.search(st)
+            if match:
+                self.quit_requested = True
+            
+    def __init__(self, _uut):
+        self.quit_requested = False
+        self.logclient = netclient.Logclient(_uut, AcqPorts.MGTDRAM)
+        self.logclient.termex = re.compile("(\n)")
+        self.st_thread = threading.Thread(target=self.st_monitor)
+        self.st_thread.setDaemon(True)
+        self.st_thread.start()
+        
 class Acq400:
     """
     host-side proxy for Acq400 uut.
@@ -399,7 +419,7 @@ class Acq400:
 
 
 class Acq2106(Acq400):
-    def __init__(self, _uut, monitor=True):
+    def __init__(self, _uut, monitor=True, has_mgtdram=False):
         print("Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         site = 13
@@ -407,6 +427,8 @@ class Acq2106(Acq400):
             self.svc[sm] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
             self.mod_count += 1
             site = site - 1
+        if (has_mgtdram):
+            self.svc['s14'] = netclient.Siteclient(self.uut, AcqPorts.SITE0+14)
             
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
         Acq400.set_mb_clk(self, hz, src, fin)
@@ -415,7 +437,12 @@ class Acq2106(Acq400):
     def set_master_trg(self, trg, edge = "rising", enabled=True):        
         if trg == "fp":
             self.s0.SIG_SRC_TRG_0 = "EXT" if enabled else "HOSTB"
-
+    
+    def run_mgt(self):
+        pm = ProcessMonitor(self.uut)
+        pm.st_thread.join()
+        
+        
         
             
 
