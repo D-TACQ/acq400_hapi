@@ -162,19 +162,27 @@ class Statusmonitor:
         self.st_thread.setDaemon(True)
         self.st_thread.start()             
 
+
+class NullFilter:
+    def __call__ (self, st):
+        print st
+ 
+null_filter = NullFilter()
+
 class ProcessMonitor:
     st_re = re.compile(r"^END" )
     
     def st_monitor(self):
         while self.quit_requested == False:
             st = self.logclient.poll()
-            print st
+            self.output_filter(st)            
             match = self.st_re.search(st)
             if match:
                 self.quit_requested = True
-            
-    def __init__(self, _uut):
+        
+    def __init__(self, _uut, _filter):
         self.quit_requested = False
+        self.output_filter = _filter
         self.logclient = netclient.Logclient(_uut, AcqPorts.MGTDRAM)
         self.logclient.termex = re.compile("(\n)")
         self.st_thread = threading.Thread(target=self.st_monitor)
@@ -438,8 +446,8 @@ class Acq2106(Acq400):
         if trg == "fp":
             self.s0.SIG_SRC_TRG_0 = "EXT" if enabled else "HOSTB"
     
-    def run_mgt(self):
-        pm = ProcessMonitor(self.uut)
+    def run_mgt(self, _filter = null_filter):
+        pm = ProcessMonitor(self.uut, _filter)
         pm.st_thread.join()
         
         
