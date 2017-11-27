@@ -267,7 +267,7 @@ class Acq400:
                 if exception.errno != errno.EEXIST:
                     raise
 
-            with open("%s/%s_CH%02d" % (self.save_data, self.uut, chan), 'w') as fid:            
+            with open("%s/%s_CH%02d" % (self.save_data, self.uut, chan), 'wb') as fid:
                 ccraw.tofile(fid, '')
 
         return ccraw
