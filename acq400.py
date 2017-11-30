@@ -26,6 +26,7 @@ import netclient
 import numpy
 import socket
 import timeit
+import time
 
 class AcqPorts:
     """server port constants"""
@@ -33,6 +34,7 @@ class AcqPorts:
     SEGSW = 4250
     SEGSR = 4251
     GPGSTL= 4541
+    GPGDUMP = 4543
     TSTAT = 2235
     DATA0 = 53000
     LIVETOP = 53998
@@ -48,6 +50,30 @@ class SF:
     POST = 2
     ELAPSED = 3
     DEMUX = 5
+    
+class STATE:
+    """transient states"""
+    IDLE = 0
+    ARM = 1
+    RUNPRE = 2
+    RUNPOST = 3
+    POPROCESS = 4
+    CLEANUP = 5
+    @staticmethod
+    def str(st):
+        if st==STATE.IDLE:
+            return "IDLE"
+        if st==STATE.ARM:
+            return "ARM"
+        if st==STATE.RUNPRE:
+            return "RUNPRE"
+        if st==STATE.RUNPOST:
+            return "RUNPOST"
+        if st==STATE.POPROCESS:
+            return "POPROCESS"
+        if st==STATE.CLEANUP:
+            return "CLEANUP"
+        return "UNDEF"
 
 class Channelclient(netclient.Netclient):
     """handles post shot data for one channel.
@@ -305,11 +331,12 @@ class Acq400:
 
         return chx
 
+    # DEPRECATED
     def load_segments(self, segs):
         with netclient.Netclient(self.uut, AcqPorts.SEGSW) as nc:
             for seg in segs:
                 nc.sock.send((seg+"\n").encode())
-
+    # DEPRECATED
     def show_segments(self):
         with netclient.Netclient(self.uut, AcqPorts.SEGSR) as nc:
             while True:
@@ -319,6 +346,10 @@ class Acq400:
                 else:
                     break            
 
+    def clear_counters(self):
+        for s in self.svc:
+            self.svc[s].sr('*RESET=1')
+        
     def set_sync_routing_master(self, clk_dx="d1", trg_dx="d0"):
         self.s0.SIG_SYNC_OUT_CLK = "CLK"
         self.s0.SIG_SYNC_OUT_CLK_DX = clk_dx
@@ -387,6 +418,18 @@ class Acq400:
                 rx = nc.sock.recv(4096) 
                 if trace:
                     print("< {}".format(rx))
+            nc.sock.send("EOF\n".encode())
+        
+        with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
+            while True:
+                txt = nc.sock.recv(4096)
+                if txt:
+                    print(">{}".format(txt))
+                    if txt.find("EOF") != -1:
+                        break
+                else:
+                    break
+                
       
     class AwgBusyError(Exception):
         def __init__(self, value):

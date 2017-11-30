@@ -14,7 +14,15 @@ def intSI(x):
             return int(x[0:units])*1000
         else:
             return int(x)
-        
+   
+class ActionScript:
+    def __init__(self, script_and_args):
+        self.sas = script_and_args.split()
+        print("ActionScript creates {}".format(self.sas))
+    def __call__(self):
+        print("ActionScript: call()")
+        call(self.sas)
+     
     
 
 class ShotController:
@@ -124,9 +132,10 @@ class ShotController:
         
         if self.uuts[0].save_data:
             with open("%s/format" % (self.uuts[0].save_data), 'w') as fid:            
-                for u in self.uuts:                    
-                    for ch in range(1,u.nchan()+1):
+                for u in self.uuts:                     
+                    for ch in channels if len(channels) > 0 else range(1,u.nchan()+1):
                         fid.write("%s_CH%02d RAW %s 1\n" % (u.uut, ch, 's'))
+                    
         
         return (chx, len(self.uuts), len(chx[0]), len(chx[0][0]))
         
