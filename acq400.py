@@ -356,9 +356,6 @@ class Acq400:
         self.s0.SIG_SYNC_OUT_TRG = "TRG"
         self.s0.SIG_SYNC_OUT_TRG_DX = trg_dx
 
-
-        
-
     def set_sync_routing_slave(self):
         self.set_sync_routing_master()
         self.s0.SIG_SRC_CLK_1 = "HDMI"
@@ -419,12 +416,16 @@ class Acq400:
                 if trace:
                     print("< {}".format(rx))
             nc.sock.send("EOF\n".encode())
+            nc.sock.shutdown(socket.SHUT_WR)
+            rx = nc.sock.recv(4096) 
+            if trace:
+                print("< {}".format(rx))            
         
         with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
             while True:
                 txt = nc.sock.recv(4096)
-                if txt:
-                    print(">{}".format(txt))
+                if txt: 
+                    sys.stdout.write(txt)                    
                     if txt.find("EOF") != -1:
                         break
                 else:
@@ -488,6 +489,9 @@ class Acq2106(Acq400):
     def set_master_trg(self, trg, edge = "rising", enabled=True):        
         if trg == "fp":
             self.s0.SIG_SRC_TRG_0 = "EXT" if enabled else "HOSTB"
+        elif trg == "int":
+            self.s0.SIG_SRC_TRG_1 = "STRIG"
+            
     
     def run_mgt(self, _filter = null_filter):
         pm = ProcessMonitor(self.uut, _filter)
