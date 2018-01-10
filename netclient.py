@@ -12,7 +12,7 @@ Created on Sun Jan  8 12:36:38 2017
 import socket
 import re
 import sys
-
+import os
 
 
 
@@ -43,7 +43,8 @@ class Netclient:
         rc = self.buffer[:match.start(1)]            
         self.buffer = self.buffer[match.end(1):]
         return rc
-        
+    
+    trace = int(os.getenv("NETCLIENT_TRACE", "0"))   
                 
     def __init__(self, addr, port) :
 #        print("Netclient.init")
@@ -51,6 +52,8 @@ class Netclient:
         self.__addr = addr
         self.__port = int(port)
         self.sock = socket.socket()
+        if Netclient.trace:
+            print("Netclient(%s, %d) connect" % (self.__addr, self.__port))
         self.sock.connect((self.__addr, self.__port))
 
     def __enter__(self):
@@ -70,6 +73,9 @@ class Netclient:
     #@property
     def port(self):
         return self.__port
+    
+    def __repr__(self):
+        return 'Netclient(%s, %d)' % (self.__addr, self.__port)
 
 class Logclient(Netclient):
     """Netclient optimised for logging, line by line"""
@@ -101,13 +107,13 @@ class Siteclient(Netclient):
             rx (str): response string
         """
         if (self.trace):
-            print(">%s" % message)
+            print("%s >%s" % (repr(self), message.rstrip()))
         self.sock.send((message+"\n").encode())
         rx = self.receive_message(self.termex).rstrip()
         if self.show_responses and len(rx) > 1:
             print(rx)
         if (self.trace):
-            print("<%s" % rx)
+            print("%s <%s" % (repr(self), rx))
         return rx
  
     
@@ -158,17 +164,21 @@ class Siteclient(Netclient):
     def set_knob(self, name, value):
         return self.__setattr__(name, value)
     
+    trace = int(os.getenv("SITECLIENT_TRACE", "0"))
+    
     def __init__(self, addr, port):
 #        print("Siteclient.init")
         self.knobs = {}
-        self.trace = False        
+        
         self.show_responses = False
         Netclient.__init__(self, addr, port) 
     # no more new props once set
         self.prevent_autocreate = False
         self.termex = re.compile(r"\n(acq400.[0-9]+ ([0-9]+) >)")
+        self.trace = 1 if Siteclient.trace > 1 else 0
         self.sr("prompt on")
         self.build_knobs(self.sr("help"))
+        self.trace = Siteclient.trace
         self.prevent_autocreate = True
         #self.show_responses = True
 

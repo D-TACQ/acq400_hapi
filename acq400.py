@@ -30,6 +30,7 @@ import time
 
 class AcqPorts:
     """server port constants"""
+    STREAM = 4210
     SITE0 = 4220
     SEGSW = 4250
     SEGSR = 4251
@@ -75,6 +76,11 @@ class STATE:
             return "CLEANUP"
         return "UNDEF"
 
+class StreamClient(netclient.Netclient):
+    """handles live streaming data"""
+    def __init__(self, addr):
+        print("worktodo")
+        
 class Channelclient(netclient.Netclient):
     """handles post shot data for one channel.
 
@@ -125,6 +131,8 @@ def signal_handler(signal, frame):
 class Statusmonitor:
     st_re = re.compile(r"([0-9]) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9])+" )
 
+    def __repr__(self):
+        return repr(self.logclient)
     def st_monitor(self):
         while self.quit_requested == False:
             st = self.logclient.poll()
@@ -134,7 +142,7 @@ class Statusmonitor:
                 statuss = match.groups()
                 status1 = [int(x) for x in statuss]
                 if self.trace:
-                    print("uut:%s status:%s" % (self.uut, status1))
+                    print("%s <%s" % (repr(self), status1))
                 if self.status != None:
 #                    print("Status check %s %s" % (self.status0[0], status[0]))
                     if self.status[SF.STATE] != 0 and status1[SF.STATE] == 0:
@@ -150,6 +158,8 @@ class Statusmonitor:
                         os.kill(self.main_pid, signal.SIGINT)
                         sys.exit(1)                                            
                 self.status = status1
+            elif self.trace > 1:
+                print("%s <%s>" % (repr(self), st))
 
     def wait_event(self, ev, descr):
     #       print("wait_%s 02 %d" % (descr, ev.is_set()))
@@ -174,10 +184,11 @@ class Statusmonitor:
         """        
         self.wait_event(self.stopped, "stopped")
 
-
+    trace = int(os.getenv("STATUSMONITOR_TRACE", "0"))
+    
     def __init__(self, _uut, _status):
         self.quit_requested = False        
-        self.trace = False
+        self.trace = Statusmonitor.trace
         self.uut = _uut
         self.main_pid = os.getpid()
         self.status = _status
