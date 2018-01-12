@@ -30,19 +30,22 @@ import time
 
 class AcqPorts:
     """server port constants"""
+    TSTAT = 2235
     STREAM = 4210
     SITE0 = 4220
     SEGSW = 4250
     SEGSR = 4251
     GPGSTL= 4541
     GPGDUMP = 4543
-    TSTAT = 2235
+        
+    BOLO8_CAL = 45072
     DATA0 = 53000
     LIVETOP = 53998
     ONESHOT = 53999
     AWG_ONCE = 54201
     AWG_AUTOREARM = 54202
     MGTDRAM = 53990
+    
 
 class SF:
     """state constants"""
@@ -463,7 +466,21 @@ class Acq400:
                 if not rx or rx.startswith("DONE"):
                     break
             nc.sock.close()
-      
+    
+    def run_service(self.uut, port, eof="EOF"):
+        txt = ""
+        with netclient.Netclient(self.uut, port) as nc:
+            while True:
+                rx = nc.receive_message(self.NL, 256)
+                txt += rx
+                print("{}> {}".format(self.s0.HN, rx))
+                if rx.startswith("SHOT_COMPLETE"):
+                    break
+            nc.sock.shutdown(socket.SHUT_RDWR)
+            nc.sock.close() 
+        
+        return txt
+    
     def run_oneshot(self):        
         with netclient.Netclient(self.uut, AcqPorts.ONESHOT) as nc:
             while True:
