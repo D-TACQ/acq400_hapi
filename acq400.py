@@ -467,14 +467,14 @@ class Acq400:
                     break
             nc.sock.close()
     
-    def run_service(self, port, eof="EOF", prompt=''):
+    def run_service(self, port, eof="EOF", prompt='>'):
         txt = ""
         with netclient.Netclient(self.uut, port) as nc:
             while True:
                 rx = nc.receive_message(self.NL, 256)
                 txt += rx
-                print("{}> {}".format(prompt, rx))
-                if rx.startswith("SHOT_COMPLETE"):
+                print("{}{}".format(prompt, rx))
+                if rx.startswith(eof):
                     break
             nc.sock.shutdown(socket.SHUT_RDWR)
             nc.sock.close() 
