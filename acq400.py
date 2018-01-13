@@ -151,10 +151,12 @@ class Statusmonitor:
                     if self.status[SF.STATE] != 0 and status1[SF.STATE] == 0:
                         print("%s STOPPED!" % (self.uut))
                         self.stopped.set()
+			self.armed.clear()
 #                print("status[0] is %d" % (status[0]))
                     if status1[SF.STATE] == 1:
                         print("%s ARMED!" % (self.uut))
                         self.armed.set()
+			self.stopped.clear()
                     if self.status[SF.STATE] == 0 and status1[SF.STATE] > 1:
                         print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status[0], status1[0]))                        
                         self.quit_requested = True
@@ -163,6 +165,9 @@ class Statusmonitor:
                 self.status = status1
             elif self.trace > 1:
                 print("%s <%s>" % (repr(self), st))
+
+    def get_state(self):
+	return self.status[SF.STATE]
 
     def wait_event(self, ev, descr):
     #       print("wait_%s 02 %d" % (descr, ev.is_set()))
@@ -473,6 +478,7 @@ class Acq400:
             while True:
                 rx = nc.receive_message(self.NL, 256)
                 txt += rx
+                txt += "\n"
                 print("{}{}".format(prompt, rx))
                 if rx.startswith(eof):
                     break
