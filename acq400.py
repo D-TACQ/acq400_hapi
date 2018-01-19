@@ -37,7 +37,7 @@ class AcqPorts:
     SEGSR = 4251
     GPGSTL= 4541
     GPGDUMP = 4543
-        
+
     BOLO8_CAL = 45072
     DATA0 = 53000
     LIVETOP = 53998
@@ -45,7 +45,7 @@ class AcqPorts:
     AWG_ONCE = 54201
     AWG_AUTOREARM = 54202
     MGTDRAM = 53990
-    
+
 
 class SF:
     """state constants"""
@@ -54,7 +54,7 @@ class SF:
     POST = 2
     ELAPSED = 3
     DEMUX = 5
-    
+
 class STATE:
     """transient states"""
     IDLE = 0
@@ -83,7 +83,7 @@ class StreamClient(netclient.Netclient):
     """handles live streaming data"""
     def __init__(self, addr):
         print("worktodo")
-        
+
 class Channelclient(netclient.Netclient):
     """handles post shot data for one channel.
 
@@ -97,7 +97,6 @@ class Channelclient(netclient.Netclient):
 
     def read(self, ndata, data_size=2, maxbuf=4096):
         """read ndata from channel data server, return as numpy array.
-
         Args:
             ndata (int): number of elements
             data_size : 2|4 short or int
@@ -115,13 +114,10 @@ class Channelclient(netclient.Netclient):
         buffer = self.sock.recv(maxbuf)
         while len(buffer) < ndata*data_size:
             buffer += self.sock.recv(maxbuf)
-
-        if data_size == 4:
-            _dtype = numpy.dtype('i4')
-        else:
-            _dtype = numpy.dtype('i2')
-
-        return numpy.frombuffer(buffer, dtype=_dtype, count=ndata)
+            
+        _dtype = numpy.dtype('i4' if data_size == 4 else 'i2')
+        
+        return numpy.frombuffer(buffer, dtype=_dtype, count=ndata)        
 
 
 class ExitCommand(Exception):
@@ -151,12 +147,12 @@ class Statusmonitor:
                     if self.status[SF.STATE] != 0 and status1[SF.STATE] == 0:
                         print("%s STOPPED!" % (self.uut))
                         self.stopped.set()
-			self.armed.clear()
+                        self.armed.clear()
 #                print("status[0] is %d" % (status[0]))
                     if status1[SF.STATE] == 1:
                         print("%s ARMED!" % (self.uut))
                         self.armed.set()
-			self.stopped.clear()
+                        self.stopped.clear()
                     if self.status[SF.STATE] == 0 and status1[SF.STATE] > 1:
                         print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status[0], status1[0]))                        
                         self.quit_requested = True
@@ -167,7 +163,7 @@ class Statusmonitor:
                 print("%s <%s>" % (repr(self), st))
 
     def get_state(self):
-	return self.status[SF.STATE]
+        return self.status[SF.STATE]
 
     def wait_event(self, ev, descr):
     #       print("wait_%s 02 %d" % (descr, ev.is_set()))
@@ -193,7 +189,7 @@ class Statusmonitor:
         self.wait_event(self.stopped, "stopped")
 
     trace = int(os.getenv("STATUSMONITOR_TRACE", "0"))
-    
+
     def __init__(self, _uut, _status):
         self.quit_requested = False        
         self.trace = Statusmonitor.trace
@@ -211,12 +207,12 @@ class Statusmonitor:
 class NullFilter:
     def __call__ (self, st):
         print st
- 
+
 null_filter = NullFilter()
 
 class ProcessMonitor:
     st_re = re.compile(r"^END" )
-    
+
     def st_monitor(self):
         while self.quit_requested == False:
             st = self.logclient.poll()
@@ -224,7 +220,7 @@ class ProcessMonitor:
             match = self.st_re.search(st)
             if match:
                 self.quit_requested = True
-        
+
     def __init__(self, _uut, _filter):
         self.quit_requested = False
         self.output_filter = _filter
@@ -233,7 +229,7 @@ class ProcessMonitor:
         self.st_thread = threading.Thread(target=self.st_monitor)
         self.st_thread.setDaemon(True)
         self.st_thread.start()
-        
+
 class Acq400:
     """
     host-side proxy for Acq400 uut.
@@ -268,7 +264,7 @@ class Acq400:
             svc = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
             self.svc["s%d" % site] = svc
             self.modules[site] = svc
-            
+
             if self.awg_site == 0 and svc.module_name.startswith("ao"):
                 self.awg_site = site
             self.__mod_count += 1
@@ -303,7 +299,8 @@ class Acq400:
         if nsam == 0:
             nsam = self.pre_samples()+self.post_samples()
         cc = Channelclient(self.uut, chan)
-        ccraw = cc.read(nsam)
+        
+        ccraw = cc.read(nsam, data_size = 4 if self.s0.data32 == '1' else 2)
 
         if self.save_data:
             try:                
@@ -368,7 +365,7 @@ class Acq400:
     def clear_counters(self):
         for s in self.svc:
             self.svc[s].sr('*RESET=1')
-        
+
     def set_sync_routing_master(self, clk_dx="d1", trg_dx="d0"):
         self.s0.SIG_SYNC_OUT_CLK = "CLK"
         self.s0.SIG_SYNC_OUT_CLK_DX = clk_dx
@@ -390,7 +387,7 @@ class Acq400:
             self.set_sync_routing_slave()
         else:
             raise ValueError("undefined role {}".format(role))
-        
+
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
         # valid ACQ1001
         if src == "zclk":
@@ -403,7 +400,7 @@ class Acq400:
         else:
             self.s0.SYS_CLK_FPMUX = "FPCLK"
             self.s0.SIG_CLK_MB_FIN = fin
-            
+
         if hz >= 4000000:
             self.s0.SIG_CLK_MB_SET = hz
             return
@@ -414,7 +411,7 @@ class Acq400:
                     self.s1.CLKDIV = clkdiv
                     return
             raise ValueError("frequency out of range {}".format(hz))
-        
+
     def load_gpg(self, stl, trace = False):
         termex = re.compile("\n")
         with netclient.Netclient(self.uut, AcqPorts.GPGSTL) as nc:            
@@ -439,7 +436,7 @@ class Acq400:
             rx = nc.sock.recv(4096) 
             if trace:
                 print("< {}".format(rx))            
-        
+
         with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
             while True:
                 txt = nc.sock.recv(4096)
@@ -449,20 +446,20 @@ class Acq400:
                         break
                 else:
                     break
-                
-      
+
+
     class AwgBusyError(Exception):
         def __init__(self, value):
-             self.value = value
+            self.value = value
         def __str__(self):
-             return repr(self.value)
-         
+            return repr(self.value)
+
     def load_awg(self, data, autorearm=False):
         if self.awg_site > 0:
             if self.modules[self.awg_site].task_active == '1':
                 raise self.AwgBusyError("awg busy")
         port = AcqPorts.AWG_AUTOREARM if autorearm else AcqPorts.AWG_ONCE
-        
+
         with netclient.Netclient(self.uut, port) as nc:
             nc.sock.send(data)
             nc.sock.shutdown(socket.SHUT_WR) 
@@ -471,7 +468,7 @@ class Acq400:
                 if not rx or rx.startswith("DONE"):
                     break
             nc.sock.close()
-    
+
     def run_service(self, port, eof="EOF", prompt='>'):
         txt = ""
         with netclient.Netclient(self.uut, port) as nc:
@@ -484,9 +481,9 @@ class Acq400:
                     break
             nc.sock.shutdown(socket.SHUT_RDWR)
             nc.sock.close() 
-        
+
         return txt
-    
+
     def run_oneshot(self):        
         with netclient.Netclient(self.uut, AcqPorts.ONESHOT) as nc:
             while True:
@@ -496,7 +493,7 @@ class Acq400:
                     break
             nc.sock.shutdown(socket.SHUT_RDWR)
             nc.sock.close()            
-                
+
     def run_livetop(self):
         with netclient.Netclient(self.uut, AcqPorts.LIVETOP) as nc:
             print(nc.receive_message(self.NL, 256))             
@@ -515,7 +512,7 @@ class Acq2106(Acq400):
             site = site - 1
         if (has_mgtdram):
             self.svc['s14'] = netclient.Siteclient(self.uut, AcqPorts.SITE0+14)
-            
+
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
         Acq400.set_mb_clk(self, hz, src, fin)
         self.s0.SYS_CLK_DIST_CLK_SRC = 'Si5326'
@@ -525,15 +522,15 @@ class Acq2106(Acq400):
             self.s0.SIG_SRC_TRG_0 = "EXT" if enabled else "HOSTB"
         elif trg == "int":
             self.s0.SIG_SRC_TRG_1 = "STRIG"
-            
-    
+
+
     def run_mgt(self, _filter = null_filter):
         pm = ProcessMonitor(self.uut, _filter)
         pm.st_thread.join()
-        
-        
-        
-            
+
+
+
+
 
 
 def run_unit_test():
