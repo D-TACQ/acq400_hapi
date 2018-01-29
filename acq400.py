@@ -299,9 +299,17 @@ class Acq400:
         if nsam == 0:
             nsam = self.pre_samples()+self.post_samples()
         cc = Channelclient(self.uut, chan)
-        
-        ccraw = cc.read(nsam, data_size = 4 if self.s0.data32 == '1' else 2)
+        data_size = 4 if self.s0.data32 == '1' else 2
+        ccraw = cc.read(nsam, data_size = data_size)
 
+        if data_size == 4:
+            try:
+                if self.s1.adc_18b == '1':
+                    print("scale ccraw >> 14")
+                    ccraw = ccraw >> 14
+            except AttributeError:
+                pass
+                 
         if self.save_data:
             try:                
                 os.makedirs(self.save_data)
