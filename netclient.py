@@ -163,6 +163,8 @@ class Siteclient(Netclient):
         return self.__getattr__(name)
     def set_knob(self, name, value):
         return self.__setattr__(name, value)
+    def __repr__(self):
+        return 'Siteclient(%s, %d)' % (self.addr(), self.port())   
     
     trace = int(os.getenv("SITECLIENT_TRACE", "0"))
     
