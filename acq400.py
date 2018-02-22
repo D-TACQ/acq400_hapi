@@ -525,6 +525,11 @@ class Acq2106(Acq400):
         Acq400.set_mb_clk(self, hz, src, fin)
         self.s0.SYS_CLK_DIST_CLK_SRC = 'Si5326'
         self.s0.SYS_CLK_OE_CLK1_ZYNQ = '1'
+
+    def set_sync_routing_slave(self):
+        Acq400.set_sync_routing_slave(self)
+        self.s0.SYS_CLK_OE_CLK1_ZYNQ = '1'
+
     def set_master_trg(self, trg, edge = "rising", enabled=True):        
         if trg == "fp":
             self.s0.SIG_SRC_TRG_0 = "EXT" if enabled else "HOSTB"
