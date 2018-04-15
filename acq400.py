@@ -539,7 +539,8 @@ class Acq2106(Acq400):
 
     def run_mgt(self, _filter = null_filter):
         pm = ProcessMonitor(self.uut, _filter)
-        pm.st_thread.join()
+        while pm.quit_requested != True:
+            time.sleep(1)
 
 
 
