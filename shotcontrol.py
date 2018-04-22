@@ -133,9 +133,7 @@ class ShotController:
         if self.uuts[0].save_data:
             with open("%s/format" % (self.uuts[0].save_data), 'w') as fid:            
                 for u in self.uuts:                     
-                    print("hello u {}".format(u))
                     for ch in cmap[u]: 
-                        print("hello ch {}".format(ch))
                         fid.write("%s_CH%02d RAW %s 1\n" % (u.uut, ch, 's'))
                     
         
