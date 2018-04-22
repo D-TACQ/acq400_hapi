@@ -112,7 +112,7 @@ class ShotController:
         ii = 0        
         for u in self.uuts:
             if channels == ():
-                cmap[u] = channels                  # default : ALL
+                cmap[u] = range(1, u.nchan()+1)  # default : ALL
             elif type(channels) == int:             
                 cmap[u] = channels                  # single value
             elif type(channels[0]) != tuple:                
@@ -133,7 +133,9 @@ class ShotController:
         if self.uuts[0].save_data:
             with open("%s/format" % (self.uuts[0].save_data), 'w') as fid:            
                 for u in self.uuts:                     
-                    for ch in channels if len(channels) > 0 else range(1,u.nchan()+1):
+                    print("hello u {}".format(u))
+                    for ch in cmap[u]: 
+                        print("hello ch {}".format(ch))
                         fid.write("%s_CH%02d RAW %s 1\n" % (u.uut, ch, 's'))
                     
         
