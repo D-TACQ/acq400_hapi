@@ -95,7 +95,9 @@ class Channelclient(netclient.Netclient):
     def __init__(self, addr, ch):        
         netclient.Netclient.__init__(self, addr, AcqPorts.DATA0+ch) 
 
-    def read(self, ndata, data_size=2, maxbuf=4096):
+# on Linux, recv returns on ~mtu
+# on Windows, it may buffer up, and it's very slow unless we use a larger buffer
+    def read(self, ndata, data_size=2, maxbuf=0x400000):
         """read ndata from channel data server, return as numpy array.
         Args:
             ndata (int): number of elements
