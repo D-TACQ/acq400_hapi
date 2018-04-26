@@ -247,6 +247,15 @@ class Acq400:
     def mod_count(self):
         return self.__mod_count
 
+    def init_site_client(self, site):
+        svc = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
+        self.svc["s%d" % site] = svc
+        self.modules[site] = svc
+
+        if self.awg_site == 0 and svc.module_name.startswith("ao"):
+            self.awg_site = site
+        self.__mod_count += 1
+
     def __init__(self, _uut, monitor=True):
         self.NL = re.compile(r"(\n)")
         self.uut = _uut
@@ -260,14 +269,7 @@ class Acq400:
         sl.pop(0)
         self.awg_site = 0
         for sm in sl:
-            site = int(sm.split("=").pop(0))
-            svc = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
-            self.svc["s%d" % site] = svc
-            self.modules[site] = svc
-
-            if self.awg_site == 0 and svc.module_name.startswith("ao"):
-                self.awg_site = site
-            self.__mod_count += 1
+            self.init_site_client(int(sm.split("=").pop(0)))
 
 # init _status so that values are valid even if this Acq400 doesn't run a shot ..
         _status = [int(x) for x in s0.state.split(" ")]
