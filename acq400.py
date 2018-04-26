@@ -256,6 +256,24 @@ class Acq400:
             self.awg_site = site
         self.__mod_count += 1
 
+# factory .. create them in parallel
+    @classmethod
+    def create_uuts(cls, uut_names):
+        uuts = []
+        uut_threads = {}
+        for uname in uut_names:
+            uut_threads[uname] = \
+                    threading.Thread(\
+                        target=lambda u, l: l.append(cls(u)), \
+                        args=(uname, uuts))
+        for uname in uut_names:
+            uut_threads[uname].start()
+        for t in uut_threads:
+            uut_threads[t].join(10.0)
+
+        return uuts
+
+    
     def __init__(self, _uut, monitor=True):
         self.NL = re.compile(r"(\n)")
         self.uut = _uut
@@ -274,13 +292,12 @@ class Acq400:
                     threading.Thread(target=self.init_site_client,\
                         args=(int(sm.split("=").pop(0)),)\
                     )
-#            print("create {}".format(site_enumerators[sm]))
+        for sm in sl:
             site_enumerators[sm].start()
-#            print("start {}".format(site_enumerators[sm]))
 
         for sm in sl:
 #            print("join {}".format(site_enumerators[sm]))
-            site_enumerators[sm].join()
+            site_enumerators[sm].join(10.0)
 
 # init _status so that values are valid even if this Acq400 doesn't run a shot ..
         _status = [int(x) for x in s0.state.split(" ")]
