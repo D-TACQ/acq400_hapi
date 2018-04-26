@@ -268,8 +268,19 @@ class Acq400:
         sl = s0.SITELIST.split(",")
         sl.pop(0)
         self.awg_site = 0
+        site_enumerators = {} 
         for sm in sl:
-            self.init_site_client(int(sm.split("=").pop(0)))
+            site_enumerators[sm] = \
+                    threading.Thread(target=self.init_site_client,\
+                        args=(int(sm.split("=").pop(0)),)\
+                    )
+#            print("create {}".format(site_enumerators[sm]))
+            site_enumerators[sm].start()
+#            print("start {}".format(site_enumerators[sm]))
+
+        for sm in sl:
+#            print("join {}".format(site_enumerators[sm]))
+            site_enumerators[sm].join()
 
 # init _status so that values are valid even if this Acq400 doesn't run a shot ..
         _status = [int(x) for x in s0.state.split(" ")]
