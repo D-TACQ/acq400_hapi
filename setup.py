@@ -9,17 +9,19 @@ from setuptools import setup, find_packages
 
 setup(
 
-    name='acq400_hapi_beta',
+    name='acq400_hapi',
 
-    description='A python package for use with ACQ400 series D-TACQ modules.',
+    version='1.0.0',
 
-    url='https://github.com/seanalsop/acq400_hapi',
+    description='A python package for connection ACQ400 series D-TACQ products.',
+
+    url='https://github.com/D-TACQ/acq400_hapi',
 
     classifiers=[
 
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
 
-        'Intended Audience :: Researchers/Developers',
+        'Intended Audience :: Developers',
 
         'Topic :: Software Development :: Build Tools',
 
@@ -29,9 +31,9 @@ setup(
     ],
 
 
-    keywords='sample setuptools development',  # Optional
+    keywords='D-TACQ',  
 
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
+    packages=find_packages(exclude=['contrib', 'docs', 'tests']),  
 
     install_requires=['numpy'],
 
