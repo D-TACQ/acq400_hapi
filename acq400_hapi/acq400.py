@@ -284,6 +284,9 @@ class Acq400:
         self.svc = {}
         self.modules = {}
         self.__mod_count = 0    
+        self.cal_eslo = [0, ]
+        self.cal_eoff = [0, ]
+
         s0 = self.svc["s0"] = netclient.Siteclient(self.uut, AcqPorts.SITE0)
         sl = s0.SITELIST.split(",")
         sl.pop(0)
@@ -326,6 +329,24 @@ class Acq400:
         return self.statmon.status[SF.DEMUX]
     def samples(self):
         return self.pre_samples() + self.post_samples()
+
+    def get_aggregator_sites(self):
+        return self.s0.aggregator.split(' ')[1].split('=')[1].split(',')
+
+    def fetch_all_calibration(self):
+        print("Fetching calibration data")
+        for s in self.get_aggregator_sites():
+            self.cal_eslo.extend(self.modules[int(s)].AI_CAL_ESLO.split(' ')[3:])
+            self.cal_eoff.extend(self.modules[int(s)].AI_CAL_EOFF.split(' ')[3:])
+
+    def chan2volts(self, chan, raw):
+        if len(self.cal_eslo) == 1:
+            self.fetch_all_calibration()
+
+        eslo = float(self.cal_eslo[chan])
+        eoff = float(self.cal_eoff[chan])
+        return numpy.add(numpy.multiply(raw, eslo), eoff)
+
 
     def read_chan(self, chan, nsam = 0):
         if nsam == 0:
