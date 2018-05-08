@@ -23,7 +23,7 @@ import errno
 import signal
 import sys
 import netclient
-import numpy
+import numpy as np
 import socket
 import timeit
 import time
@@ -98,28 +98,28 @@ class Channelclient(netclient.Netclient):
 # on Linux, recv returns on ~mtu
 # on Windows, it may buffer up, and it's very slow unless we use a larger buffer
     def read(self, ndata, data_size=2, maxbuf=0x400000):
-        """read ndata from channel data server, return as numpy array.
+        """read ndata from channel data server, return as np array.
         Args:
             ndata (int): number of elements
             data_size : 2|4 short or int
             maxbuf=4096 : max bytes to read per packet
 
         Returns:
-            :numpy: data array 
+            :np: data array 
 
         @@todo buffer +=   
         # this is probably horribly inefficient
         # probably better: 
-        - retbuf = numpy.array(dtype, ndata)
+        - retbuf = np.array(dtype, ndata)
         - retbuf[cursor].                
         """
         buffer = self.sock.recv(maxbuf)
         while len(buffer) < ndata*data_size:
             buffer += self.sock.recv(maxbuf)
             
-        _dtype = numpy.dtype('i4' if data_size == 4 else 'i2')
+        _dtype = np.dtype('i4' if data_size == 4 else 'i2')
         
-        return numpy.frombuffer(buffer, dtype=_dtype, count=ndata)        
+        return np.frombuffer(buffer, dtype=_dtype, count=ndata)        
 
 
 class ExitCommand(Exception):
@@ -339,35 +339,40 @@ class Acq400:
             self.cal_eslo.extend(m.AI_CAL_ESLO.split(' ')[3:])
             self.cal_eoff.extend(m.AI_CAL_EOFF.split(' ')[3:])
 
-    def chan2volts(self, chan, raw):
-    """ chan2volts(self, chan, raw) returns calibrated volts for channel
-        chan: 1..nchan
-        raw:  raw bits to convert.
+    def scale_raw(self, raw, volts=False):
+        for (sx, m) in self.modules.items():
+            if m.MODEL.startswith("ACQ43"):
+                rshift = 8
+            elif m.data32 == '1':
+                # volts calibration is normalised to 24b
+                if m.adc_18b == '1':
+                    rshift = 14 - (8 if volts else 0)
+                else:
+                    rshift = 16 - (8 if volts else 0)
+            else:
+                rshift = 0
+            break
+        return np.right_shift(raw, rshift)
 
-    """
+    def chan2volts(self, chan, raw):
+        """ chan2volts(self, chan, raw) returns calibrated volts for channel
+            chan: 1..nchan
+            raw:  raw bits to convert.
+        """
         if len(self.cal_eslo) == 1:
             self.fetch_all_calibration()
 
         eslo = float(self.cal_eslo[chan])
         eoff = float(self.cal_eoff[chan])
-        return numpy.add(numpy.multiply(raw, eslo), eoff)
+        return np.add(np.multiply(raw, eslo), eoff)
 
 
     def read_chan(self, chan, nsam = 0):
         if nsam == 0:
             nsam = self.pre_samples()+self.post_samples()
         cc = Channelclient(self.uut, chan)
-        data_size = 4 if self.s0.data32 == '1' else 2
-        ccraw = cc.read(nsam, data_size = data_size)
+        ccraw = cc.read(nsam, data_size=(4 if self.s0.data32 == '1' else 2))
 
-        if data_size == 4:
-            try:
-                if self.s1.adc_18b == '1':
-                    print("scale ccraw >> 14")
-                    ccraw = ccraw >> 14
-            except AttributeError:
-                pass
-                 
         if self.save_data:
             try:                
                 os.makedirs(self.save_data)
@@ -387,7 +392,7 @@ class Acq400:
         """read all channels post shot data.
 
         Returns:
-            chx (list) of numpy arrays.
+            chx (list) of np arrays.
         """
 
 
