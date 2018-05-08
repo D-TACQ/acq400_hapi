@@ -1,0 +1,13 @@
+#!/bin/bash
+REL=$(git describe --tags --abbrev=0)
+DIFFS=$(git diff $REF | wc -w)
+
+echo $REL
+if [ "x$DIFS" != "x0" ]; then
+	echo >&2 "ERROR: not a clean git release"
+	echo >&2 "git fetch --all"
+	exit 1
+else 
+	exit 0
+fi
+

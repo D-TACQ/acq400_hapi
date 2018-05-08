@@ -7,11 +7,20 @@ https://github.com/pypa/sampleproject
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 
+from subprocess import Popen, PIPE
+
+p = Popen("./git-get-release", stdout=PIPE, stderr=PIPE)
+(GITVERSION, ERR) = p.communicate()
+
+if ERR:
+	print(ERR)
+	raise SystemExit
+
 setup(
 
     name='acq400_hapi',
 
-    version='1.0.0',
+    version=GITVERSION,
 
     description='A python package for connection ACQ400 series D-TACQ products.',
 
