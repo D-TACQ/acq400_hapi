@@ -13,8 +13,10 @@ p = Popen("./git-get-release", stdout=PIPE, stderr=PIPE)
 (GITVERSION, ERR) = p.communicate()
 
 if ERR:
-	print(ERR)
-	raise SystemExit
+    print(ERR)
+    raise SystemExit
+else:
+    GITVERSION=GITVERSION.rstrip()
 
 setup(
 
