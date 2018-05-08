@@ -4,6 +4,13 @@ python module to connect to remote hosts
 
 NB: works with Python 2.7. Does not work with Python 3.x
 
+RECOMMENDATION: install with PIP:
+pip install acq400_hapi
+
+That way, "import acq400_hapi" is available from wherever the program is run.
+Alternatively, clone this git repo, and ensure acq400_hapi/acq400_hapi is in
+PYTHONPATH
+
 class Acq400 nails up a socket connection to all the site servers at 4220+s,
 as well as running a status monitor thread on 2235 and 
 allowing access to post-shot data on 53000+ch
