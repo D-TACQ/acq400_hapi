@@ -340,6 +340,11 @@ class Acq400:
             self.cal_eoff.extend(m.AI_CAL_EOFF.split(' ')[3:])
 
     def chan2volts(self, chan, raw):
+    """ chan2volts(self, chan, raw) returns calibrated volts for channel
+        chan: 1..nchan
+        raw:  raw bits to convert.
+
+    """
         if len(self.cal_eslo) == 1:
             self.fetch_all_calibration()
 
