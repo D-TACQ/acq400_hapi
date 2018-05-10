@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 
 from subprocess import Popen, PIPE
 
-p = Popen("./git-get-release", stdout=PIPE, stderr=PIPE)
+p = Popen("./package/git-get-release", stdout=PIPE, stderr=PIPE)
 (GITVERSION, ERR) = p.communicate()
 
 if ERR:
