@@ -28,7 +28,7 @@ allowing access to post-shot data on 53000+ch
 each knob on the site is presented as a property of the connection, so that 
 simple bash-script-like syntax can be used
 
-```text
+```python
 uut.s0.set_arm=1
 
 Example: running a session interactively while a test loop is running:
@@ -69,11 +69,12 @@ for ii in range(0,10):
 But, this way, it's all vanilla python, no other installs required.
 
 Note also, knob names eg
+```text
 SIG:SAMPLE_COUNT:COUNT are auto converted to valid python identifiers:
 SIG_SAMPLE_COUNT_COUNT
-
+```
 You can enumerate all the knobs with
-
+```python
 uut.s0.help()
 ..
 uut.s6.help()
@@ -94,7 +95,7 @@ Example:
 'SIG:EVT_EXT:FREQ 0'
 'SIG:EVT_MB:FREQ 0'
 'SIG:EVT_S1:FREQ 0'
-
+```
 
 The Acq400 class can be fairly slow to instantiate
 (imagine an ACQ2106 with 6 sites populated), but once the connections are 
@@ -102,7 +103,8 @@ nailed up, then control links are fast.
 => The use case is: make the connection at the beginning, then operate over
 long periods.
 
-TODO:
-- add a 4210 socket for live stream?. 
+## TODO:
+* add a 4210 socket for live stream?. 
+* instantiate the uut, site clients in parallel
 
 
