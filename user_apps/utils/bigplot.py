@@ -18,7 +18,7 @@ def get_uut():
     
 
 uut = "acq2106_000"
-(host, uut) = get_uut()
+#(host, uut) = get_uut()
 
 def load3(lun=0, uut=uut, cycle=1, buf0=0, nchan=48):
     if buf0 % 3 != 0:

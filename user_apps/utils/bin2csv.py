@@ -64,7 +64,7 @@ def run_main():
     parser.add_argument('--word', default='int16', help="int16|int32")
     parser.add_argument('--outroot', default='', help="output root directory")
     parser.add_argument('--out', default='', help="explicit output name")
-    parser.add_argument('--paste', default=0, type=int, "1: paste multiple files * 1 chan")
+    parser.add_argument('--paste', default=0, type=int, help="1: paste multiple files * 1 chan")
     parser.add_argument('binfiles', nargs='+', help="file[s] to convert")
     bin2csv(parser.parse_args())
      
