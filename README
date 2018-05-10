@@ -1,11 +1,12 @@
-acq400_hapi: acq400 Host API
+# acq400_hapi: acq400 Host API
 
 python module to connect to remote hosts
 
-acq400_hapi: source code for the connectivity package
-user_apps : example user client applications
-test_apps : more detailed validations
+* acq400_hapi: source code for the connectivity package
+* user_apps : example user client applications
+* test_apps : more detailed validations
 
+## Installation
 
 NB: works with Python 2.7. Does not work with Python 3.x
 
@@ -17,6 +18,8 @@ That way, "import acq400_hapi" is available from wherever the program is run.
 To run the apps, user_apps or test_apps, clone this repo.
 The connectivity package is available globally as a library from pip, or you can
 run the code in acq400_hapi directly, by using PYTHONPATH
+
+## How it works
 
 class Acq400 nails up a socket connection to all the site servers at 4220+s,
 as well as running a status monitor thread on 2235 and 
