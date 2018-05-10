@@ -1,0 +1,97 @@
+#!/bin/bash
+
+#How to use this shell script:
+
+# This shell script will auto generate sphinx documentation.
+# To generate entirely new documentation make sure that the 
+# working directory contains only a directory containing the code 
+# that is to be documented (hapi or hapi_tests), the sphinx-answers 
+# file and this script. If this is what is required the directory 
+# should look like this: 
+
+	# [sean@eigg sphinx_hapi]$ ls
+	# acq400_hapi  auto-sphinx.sh  sphinx-answers
+
+
+# If documentation has already been created then this 
+# script can be used to generate new documentation without 
+# the need to rerun sphinx-quickstart. Just run this script and 
+# new html will be generated. Note that this will not change
+# the project name inside conf.py.
+
+# Terminal Example: source auto-sphinx.sh 
+# No parameters are taken by this script. 
+
+
+export PYTHONPATH=$PYTHONPATH:$PWD/acq400_hapi
+
+SDIR=$(dirname $0)
+ANS=$SDIR/sphinx-answers
+
+
+
+run_sphinx_build()
+{
+dir=$1
+if [ ! -e $dir ]; then
+	echo ERROR $dir does not exist
+	exit 1
+fi
+# run_sphinx_build will always execute when this script is 
+# called from the command line. It removes any default html and 
+# rst files, makes sure that the correct paramters exist inside conf.py 
+# and runs sphinx-apidoc and sphinx-build. 
+
+VER=$(./package/git-get-release 2>&1 | head -n 1)
+sed -e "s:PACKNAME:$dir:" -e "s:PACKVER:$VER:" $ANS > $ANS.active
+
+sphinx-quickstart < $ANS.active
+echo ""
+echo "Sphinx Build Starting"
+echo ""
+
+rm -rf ./html/$dir
+mkdir -p html/$dir
+rm -rf ./rst
+mkdir rst
+
+sed -i -e 's/alabaster/default/g' ./conf.py
+sed -i -e 's/# import os/import os/g' ./conf.py
+sed -i -e 's/# import sys/import sys/g' ./conf.py
+
+SRC=$PWD/$dir
+sed -i -e "s:# sys.path.insert(0, os.path.abspath('.')):sys.path.insert(0, os.path.abspath('$SRC')):g" ./conf.py
+
+make html
+sphinx-apidoc -o ./rst $dir
+cd rst
+cp modules.rst index.rst
+cp ../conf.py .
+mkdir _static
+cd ..
+sphinx-build -b html ./rst ./html/$dir
+touch ./html/.nojeckyll
+
+mv conf.py __conf.py
+mv index.rst __index.rst
+
+
+echo ""
+echo "Sphinx Build Finished"
+echo ""
+}
+
+
+if [ "x$1" != "x" ]; then
+	for mod in $*
+	do
+		run_sphinx_build $mod
+	done
+else
+	for dir in acq400_hapi test_apps user_apps/acq1001 user_apps/acq1014 user_apps/acq2106 user_apps/acq400 user_apps/hil user_apps/special user_apps/utils
+	do
+		run_sphinx_build $dir
+	done
+fi
+
+
