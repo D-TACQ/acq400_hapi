@@ -6,7 +6,7 @@
 
 import sys
 import acq400_hapi
-import awg_data
+from acq400_hapi import awg_data
 import argparse
 
 def store_file(it, rdata, nchan, nsam):
