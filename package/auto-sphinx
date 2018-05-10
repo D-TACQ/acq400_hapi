@@ -1,27 +1,14 @@
 #!/bin/bash
 
+# from original https://github.com/seanalsop/auto-sphinx.git
 #How to use this shell script:
 
 # This shell script will auto generate sphinx documentation.
-# To generate entirely new documentation make sure that the 
-# working directory contains only a directory containing the code 
-# that is to be documented (hapi or hapi_tests), the sphinx-answers 
-# file and this script. If this is what is required the directory 
-# should look like this: 
-
-	# [sean@eigg sphinx_hapi]$ ls
-	# acq400_hapi  auto-sphinx.sh  sphinx-answers
-
-
-# If documentation has already been created then this 
-# script can be used to generate new documentation without 
-# the need to rerun sphinx-quickstart. Just run this script and 
-# new html will be generated. Note that this will not change
-# the project name inside conf.py.
-
-# Terminal Example: source auto-sphinx.sh 
-# No parameters are taken by this script. 
-
+# It will generate new doc every time in multiple subdirectories
+# Usage ./package/auto-sphinx
+#     build all
+# ./package/auto-sphinc subdirectory
+#     build specified
 
 export PYTHONPATH=$PYTHONPATH:$PWD/acq400_hapi
 
@@ -74,6 +61,7 @@ touch ./html/.nojeckyll
 
 mv conf.py __conf.py
 mv index.rst __index.rst
+echo "delete me " $(ls -l __*)
 
 
 echo ""
