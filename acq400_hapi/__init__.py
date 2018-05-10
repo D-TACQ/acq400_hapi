@@ -9,6 +9,6 @@ from shotcontrol import intSI as intSI
 import cleanup 
 import awg_data
 from acq400_ui import Acq400UI
-
+import awg_data
 
 

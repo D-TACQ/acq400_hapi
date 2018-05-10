@@ -1,0 +1,20 @@
+# 1: d0 trigger, 2: d1 SYNC->GATE d2 INDEX pulse
+# minimum step: 2
+# STL: "at count, output X"
+# translated in hardware as "output X until count"
+2,0
+1000000,6
+1000002,2
+1500000,0
+2000000,6
+2000002,2
+2500000,0
+3000000,6
+3000002,2
+3500000,0
+4000000,6
+4000002,2
+4500000,0
+5000000,2
+10000000,0
+10000002,0
