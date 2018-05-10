@@ -8,6 +8,6 @@ from shotcontrol import ShotController, ActionScript
 from shotcontrol import intSI as intSI
 import cleanup
 from acq400_ui import Acq400UI
-
+import awg_data
 
 
