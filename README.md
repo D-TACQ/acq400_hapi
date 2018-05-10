@@ -28,6 +28,7 @@ allowing access to post-shot data on 53000+ch
 each knob on the site is presented as a property of the connection, so that 
 simple bash-script-like syntax can be used
 
+```text
 uut.s0.set_arm=1
 
 Example: running a session interactively while a test loop is running:
@@ -39,12 +40,12 @@ Example: running a session interactively while a test loop is running:
 '348'
 >>> uut.s1.shot
 '349'
-
+```
 
 The goal is to make it easy to remote-script multiple uut's.
 
 Example:
-
+```python
 from acq400_hapi import *
 uut1=acq400.Acq400("acq1001_144")
 uut2=acq400.Acq400("acq1001_145")
@@ -62,7 +63,7 @@ for ii in range(0,10):
 11078789398809 11078789398809
 11078839399330 11078839399330
 11078839399330 11078839399330
-
+```
 
 ... and yes, these are EPICS PV's, so we could use capy.
 But, this way, it's all vanilla python, no other installs required.
