@@ -19,6 +19,9 @@ To run the apps, user_apps or test_apps, clone this repo.
 The connectivity package is available globally as a library from pip, or you can
 run the code in acq400_hapi directly, by using PYTHONPATH
 
+## API Documentation
+https://petermilne.github.io/acq400_hapi/html/index.html
+
 ## How it works
 
 class Acq400 nails up a socket connection to all the site servers at 4220+s,
