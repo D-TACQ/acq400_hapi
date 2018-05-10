@@ -1,0 +1,7 @@
+eats\_shoots\_leaves module
+===========================
+
+.. automodule:: eats_shoots_leaves
+    :members:
+    :undoc-members:
+    :show-inheritance:

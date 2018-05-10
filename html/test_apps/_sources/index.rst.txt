@@ -1,0 +1,10 @@
+test_apps
+=========
+
+.. toctree::
+   :maxdepth: 4
+
+   eats_shoots_leaves
+   multivent_client
+   radcelf-chirp-init
+   radcelf-freq-test

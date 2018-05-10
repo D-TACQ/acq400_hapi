@@ -1,0 +1,7 @@
+acq1014\_check\_config module
+=============================
+
+.. automodule:: acq1014_check_config
+    :members:
+    :undoc-members:
+    :show-inheritance:
