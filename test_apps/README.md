@@ -6,3 +6,5 @@
 * radcelf-chirp-init.py : radcelf test routine
 * radcelf-freq-test.py  : radcelf test routine
 
+## source doc
+https://d-tacq.github.io/acq400_hapi/html/test_apps/index.html

@@ -21,8 +21,6 @@ run the code in acq400_hapi directly, by using PYTHONPATH
 
 ## API Documentation
 https://D-TACQ.github.io/acq400_hapi/html/acq400_hapi/index.html
-### All the docs
-https://D-TACQ.github.io/acq400_hapi/html/
 
 
 ## How it works
