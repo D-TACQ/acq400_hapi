@@ -6,16 +6,17 @@
 
 import sys
 import acq400_hapi
-from acq400_hapi import awg_data
+#from acq400_hapi import awg_data
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import hil_plot_support as pltsup
 import zero_offset
 
+
 def run_target(uut, args):
     args.plot_volts = True if args.set_volts != None else False
-    work = awg_data.ZeroOffset(uut, args.nchan, args.awglen, 
+    work = zero_offset.ZeroOffset(uut, args.nchan, args.awglen,
                                target=(args.set_volts if args.plot_volts else 0),
                                aochan = int(args.aochan), 
                                gain = args.gain*(0.95*32768/10 if args.plot_volts else 1),
@@ -60,6 +61,7 @@ def run_target(uut, args):
         raise SystemExit
     return work
 
+
 def run_transfer_function(uut, args):
     targets = np.arange(-10, 10, args.transfer_function, dtype=float)
     tf = []
@@ -67,9 +69,8 @@ def run_transfer_function(uut, args):
         print("Target set {}".format(t))
         args.set_volts = t
         w = run_target(uut, args)
-	tf.append(np.append([t], w.newset))
-    
-     
+    tf.append(np.append([t], w.newset))
+
     np.savetxt("transfer_function.csv", np.array(tf), fmt="%6d", delimiter=',')
 
 
@@ -100,7 +101,7 @@ def run_main():
     parser.add_argument('--nchan', type=int, default=32, help='channel count for pattern')    
     parser.add_argument('--awglen', type=int, default=2048, help='samples in AWG waveform')
     parser.add_argument('--ao0', type=int, default=0, help='first ao in set')
-    parser.add_argument('--passvalue', type=int, default=1, help='acceptable error')
+    parser.add_argument('--passvalue', type=float, default=1, help='acceptable error')
     parser.add_argument('--aochan', type=int, default=0, help='AO channel count, if different to AI (it happens)')
     parser.add_argument('--post', type=int, default=100000, help='samples in ADC waveform')
     parser.add_argument('--trg', default="int", help='trg "int|ext rising|falling"')
