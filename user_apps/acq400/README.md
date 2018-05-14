@@ -9,7 +9,11 @@
 * acq400_remote_script.py : run a remote script
 * acq400_stream.py : stream data and optionally store to disk
 * acq400_upload.py : postshot data uploader
+* delay_trigger_setup.py : configure delay trigger
 * hdmi_master_trg.py : sets up clock/trigger daisychain
 * make_clktrg_chain.py : ditto
 * set_burst.py : enables burst mode
+
+## source doc
+https://d-tacq.github.io/acq400_hapi/html/user_apps/acq400/
 

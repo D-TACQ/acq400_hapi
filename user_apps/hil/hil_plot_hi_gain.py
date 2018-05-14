@@ -6,7 +6,7 @@
 
 import sys
 import acq400_hapi
-import acq400_hapi.awg_data as awg_data
+from acq400_hapi import awg_data
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
