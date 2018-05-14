@@ -1,0 +1,7 @@
+hil\_plot\_hi\_gain module
+==========================
+
+.. automodule:: hil_plot_hi_gain
+    :members:
+    :undoc-members:
+    :show-inheritance:

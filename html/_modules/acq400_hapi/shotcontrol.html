@@ -1,0 +1,225 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>acq400_hapi.shotcontrol &#8212; acq400_hapi 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for acq400_hapi.shotcontrol</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<div class="viewcode-block" id="intSI"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.intSI">[docs]</a><span class="k">def</span> <span class="nf">intSI</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">units</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;M&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">units</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">units</span><span class="p">])</span><span class="o">*</span><span class="mi">1000000</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">units</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">units</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">units</span><span class="p">])</span><span class="o">*</span><span class="mi">1000</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+   
+<div class="viewcode-block" id="ActionScript"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ActionScript">[docs]</a><span class="k">class</span> <span class="nc">ActionScript</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_and_args</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sas</span> <span class="o">=</span> <span class="n">script_and_args</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ActionScript creates </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sas</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ActionScript: call()&quot;</span><span class="p">)</span>
+        <span class="n">call</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sas</span><span class="p">)</span></div>
+     
+    
+
+<div class="viewcode-block" id="ShotController"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ShotController">[docs]</a><span class="k">class</span> <span class="nc">ShotController</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;ShotController handles shot synchronization for a set of uuts</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="ShotController.prep_shot"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ShotController.prep_shot">[docs]</a>    <span class="k">def</span> <span class="nf">prep_shot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">:</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">statmon</span><span class="o">.</span><span class="n">stopped</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">statmon</span><span class="o">.</span><span class="n">armed</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">tp</span> <span class="o">=</span> <span class="p">[</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">statmon</span><span class="o">.</span><span class="n">wait_stopped</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">]</span>
+    
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">ta</span> <span class="o">=</span> <span class="p">[</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">statmon</span><span class="o">.</span><span class="n">wait_armed</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">]</span>
+    
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ta</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+        
+<div class="viewcode-block" id="ShotController.wait_armed"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ShotController.wait_armed">[docs]</a>    <span class="k">def</span> <span class="nf">wait_armed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ta</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">join</span><span class="p">()</span></div>
+         
+<div class="viewcode-block" id="ShotController.wait_complete"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ShotController.wait_complete">[docs]</a>    <span class="k">def</span> <span class="nf">wait_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">join</span><span class="p">()</span></div>
+            
+<div class="viewcode-block" id="ShotController.arm_shot"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ShotController.arm_shot">[docs]</a>    <span class="k">def</span> <span class="nf">arm_shot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> set_arm&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">uut</span><span class="p">))</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">set_arm</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_armed</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ShotController.abort_shot"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ShotController.abort_shot">[docs]</a>    <span class="k">def</span> <span class="nf">abort_shot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> set_abort&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">uut</span><span class="p">))</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">set_abort</span> <span class="o">=</span> <span class="mi">1</span></div>
+   
+<div class="viewcode-block" id="ShotController.on_shot_complete"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ShotController.on_shot_complete">[docs]</a>    <span class="k">def</span> <span class="nf">on_shot_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;runs on completion, expect subclass override.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> SHOT COMPLETE shot:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">uut</span><span class="p">,</span> <span class="n">u</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">shot</span><span class="p">))</span></div>
+            
+<div class="viewcode-block" id="ShotController.run_shot"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ShotController.run_shot">[docs]</a>    <span class="k">def</span> <span class="nf">run_shot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">soft_trigger</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">acq1014_ext_trigger</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> 
+                <span class="n">remote_trigger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;run_shot() control an entire shot from client.</span>
+<span class="sd">        </span>
+<span class="sd">           for more control, use the individual methods above.</span>
+<span class="sd">           </span>
+<span class="sd">           Args:</span>
+<span class="sd">               soft_trigger=False (bool) : trigger when armed</span>
+<span class="sd">               </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">acq1014_ext_trigger</span><span class="p">:</span>
+            <span class="c1"># block external triggers with temp switch to soft trigger</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">s2</span><span class="o">.</span><span class="n">acq1014_trg</span> <span class="o">=</span> <span class="mi">1</span>       
+        <span class="bp">self</span><span class="o">.</span><span class="n">prep_shot</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arm_shot</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">soft_trigger</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">soft_trigger</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;hit return for soft_trigger&quot;</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">while</span> <span class="n">soft_trigger</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;sleep </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">soft_trigger</span><span class="p">))</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">soft_trigger</span> <span class="o">=</span> <span class="n">soft_trigger</span> <span class="o">-</span> <span class="mi">1</span>
+            
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> soft_trigger&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">uut</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">soft_trigger</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">remote_trigger</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">remote_trigger</span><span class="p">()</span>
+            
+        <span class="k">if</span> <span class="n">acq1014_ext_trigger</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">acq1014_ext_trigger</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">s2</span><span class="o">.</span><span class="n">acq1014_trg</span> <span class="o">=</span> <span class="mi">0</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_complete</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_shot_complete</span><span class="p">()</span></div>
+        
+<div class="viewcode-block" id="ShotController.map_channels"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ShotController.map_channels">[docs]</a>    <span class="k">def</span> <span class="nf">map_channels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">):</span>
+        <span class="n">cmap</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1">#print(&quot;map_channels {}&quot;.format(channels))</span>
+        <span class="n">ii</span> <span class="o">=</span> <span class="mi">0</span>        
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">channels</span> <span class="o">==</span> <span class="p">():</span>
+                <span class="n">cmap</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">u</span><span class="o">.</span><span class="n">nchan</span><span class="p">()</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># default : ALL</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">:</span>             
+                <span class="n">cmap</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="n">channels</span>                  <span class="c1"># single value</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">channels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="nb">tuple</span><span class="p">:</span>                
+                <span class="n">cmap</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="n">channels</span>                  <span class="c1"># same tuple all UUTS</span>
+            <span class="k">else</span><span class="p">:</span>                
+                <span class="k">try</span><span class="p">:</span>                    
+                    <span class="n">cmap</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="n">channels</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>          <span class="c1"># dedicated tuple</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="n">cmap</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>                     <span class="c1"># fallback, ch1</span>
+                
+            <span class="n">ii</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">cmap</span></div>
+    
+<div class="viewcode-block" id="ShotController.read_channels"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.shotcontrol.ShotController.read_channels">[docs]</a>    <span class="k">def</span> <span class="nf">read_channels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="p">()):</span>
+        <span class="n">cmap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_channels</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span>                
+        <span class="n">chx</span> <span class="o">=</span> <span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">read_channels</span><span class="p">(</span><span class="n">cmap</span><span class="p">[</span><span class="n">u</span><span class="p">])</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">save_data</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/format&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">save_data</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>            
+                <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">:</span>                     
+                    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">cmap</span><span class="p">[</span><span class="n">u</span><span class="p">]:</span> 
+                        <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">_CH</span><span class="si">%02d</span><span class="s2"> RAW </span><span class="si">%s</span><span class="s2"> 1</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">uut</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">))</span>
+                    
+        
+        <span class="k">return</span> <span class="p">(</span><span class="n">chx</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">chx</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">chx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span></div>
+        
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_uuts</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span> <span class="o">=</span> <span class="n">_uuts</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuts</span><span class="p">:</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">shot</span> <span class="o">=</span> <span class="mi">0</span>                 </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, D-TACQ.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>

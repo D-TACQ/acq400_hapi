@@ -1,0 +1,7 @@
+radcelf\-freq\-test module
+==========================
+
+.. automodule:: radcelf-freq-test
+    :members:
+    :undoc-members:
+    :show-inheritance:

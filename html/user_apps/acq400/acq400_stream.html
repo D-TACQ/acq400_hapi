@@ -1,0 +1,165 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>acq400_stream module &#8212; user_apps/acq400 1.2.5 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="acq400_upload module" href="acq400_upload.html" />
+    <link rel="prev" title="acq400_remote_script module" href="acq400_remote_script.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="acq400_upload.html" title="acq400_upload module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="acq400_remote_script.html" title="acq400_remote_script module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">user_apps/acq400 1.2.5 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-acq400_stream">
+<span id="acq400-stream-module"></span><h1>acq400_stream module<a class="headerlink" href="#module-acq400_stream" title="Permalink to this headline">¶</a></h1>
+<p>This is a script intended to connect to a UUT and stream data from port 4210.</p>
+<p>The data that has been streamed is not demuxed and so if it is to be used then it has to be demuxed first.
+Something like:</p>
+<blockquote>
+<div><ul class="simple">
+<li>data = numpy.fromfile(“data0.dat”, dtype=”&lt;datatype&gt;”)</li>
+<li>plt.plot(data[::&lt;number of channels&gt;])</li>
+<li>plt.show()</li>
+</ul>
+</div></blockquote>
+<p>Some usage examples are included below:</p>
+<p>1: Acquire files of size 1024kb up to a total of 4096kb:</p>
+<blockquote>
+<div>python acq400_stream.py –verbose 1 –filesize 1024 –totaldata 4096 –runtime 1000 &lt;module ip or name&gt;</div></blockquote>
+<p>2: Acquire a single file of size 4096kb:</p>
+<blockquote>
+<div>python acq400_stream.py –verbose 1 –filesize 4096 –totaldata 4096 –runtime 1000 &lt;module ip or name&gt;</div></blockquote>
+<p>3: Acquire files of size 1024 for 10 seconds:</p>
+<blockquote>
+<div>python acq400_stream.py –verbose 1 –filesize 1024 –totaldata 999999 –runtime 10 &lt;module ip or name&gt;</div></blockquote>
+<p>4: Acquire data for 5 seconds and write the data all to a single file:</p>
+<blockquote>
+<div>python acq400_stream.py –verbose 1 –filesize 999999 –totaldata 999999 –runtime 5 &lt;module ip or name&gt;</div></blockquote>
+<dl class="function">
+<dt id="acq400_stream.make_data_dir">
+<code class="descclassname">acq400_stream.</code><code class="descname">make_data_dir</code><span class="sig-paren">(</span><em>directory</em>, <em>verbose</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_stream.html#make_data_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_stream.make_data_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the directory where data will be stored.</p>
+<p>This is where an extra description of the function goes.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>directory (str): The name of the directory where data is stored
+verbose (bool): Whether to print a debug statement if the method fails</dd>
+<dt>Returns:</dt>
+<dd>None: Returns None.</dd>
+<dt>Raises:</dt>
+<dd>OSError: If directory already exists then the dir can’t be created.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="acq400_stream.run_main">
+<code class="descclassname">acq400_stream.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_stream.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_stream.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq400_stream.run_stream">
+<code class="descclassname">acq400_stream.</code><code class="descname">run_stream</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_stream.html#run_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_stream.run_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Begins the stream of data from port 4210. Returns None.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>args (list): Arguments provided to the script by the user</dd>
+<dt>Returns:</dt>
+<dd>None: Returns None.</dd>
+<dt>Raises:</dt>
+<dd>NameError: Raises NameError when user wants to write all data to single file.</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="acq400_remote_script.html"
+                        title="previous chapter">acq400_remote_script module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="acq400_upload.html"
+                        title="next chapter">acq400_upload module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/acq400_stream.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="acq400_upload.html" title="acq400_upload module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="acq400_remote_script.html" title="acq400_remote_script module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">user_apps/acq400 1.2.5 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, D-TACQ.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>

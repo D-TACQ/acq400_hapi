@@ -1,0 +1,189 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>run_gpg &#8212; user_apps/acq1001 1.2.5 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">user_apps/acq1001 1.2.5 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for run_gpg</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="sd">&quot;&quot;&quot; configure and run gpg on uut</span>
+<span class="sd">    run_gpg.py [opts] uut</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">acq400_hapi</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+
+<div class="viewcode-block" id="load_stl"><a class="viewcode-back" href="../run_gpg.html#run_gpg.load_stl">[docs]</a><span class="k">def</span> <span class="nf">load_stl</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">stl</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">stl</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span> 
+        <span class="n">uut</span><span class="o">.</span><span class="n">load_gpg</span><span class="p">(</span><span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="make_waterfall"><a class="viewcode-back" href="../run_gpg.html#run_gpg.make_waterfall">[docs]</a><span class="k">def</span> <span class="nf">make_waterfall</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">hitime</span><span class="p">,</span> <span class="n">states</span><span class="p">):</span>
+    <span class="n">stl</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">on</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">interval</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">on</span><span class="p">:</span>
+            <span class="n">stl</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">,</span><span class="si">%d</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+            <span class="n">on</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">stl</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">,</span><span class="si">%d</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cursor</span><span class="o">+</span><span class="n">hitime</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+            <span class="n">cursor</span> <span class="o">+=</span> <span class="n">interval</span>
+            <span class="n">on</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">load_gpg</span><span class="p">(</span><span class="n">stl</span><span class="p">,</span> <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="soft_trigger_loop"><a class="viewcode-back" href="../run_gpg.html#run_gpg.soft_trigger_loop">[docs]</a><span class="k">def</span> <span class="nf">soft_trigger_loop</span><span class="p">(</span><span class="n">uut</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;trigger&gt;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">soft_trigger</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">break</span></div>
+   
+<div class="viewcode-block" id="set_hdmi_master"><a class="viewcode-back" href="../run_gpg.html#run_gpg.set_hdmi_master">[docs]</a><span class="k">def</span> <span class="nf">set_hdmi_master</span><span class="p">(</span><span class="n">uut</span><span class="p">):</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SYNC_OUT_CLK</span>     <span class="o">=</span> <span class="s1">&#39;CLK&#39;</span>     <span class="c1"># CLK d0 output</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SYNC_OUT_CLK_DX</span>  <span class="o">=</span> <span class="s1">&#39;d0&#39;</span>      <span class="c1"># </span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SYNC_OUT_TRG</span>     <span class="o">=</span> <span class="s1">&#39;TRG&#39;</span>     <span class="c1"># SOFT TRIGGER d1</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SYNC_OUT_TRG_DX</span>  <span class="o">=</span> <span class="s1">&#39;d1&#39;</span>
+<span class="c1">#    uut.s0.SIG_SYNC_OUT_TRG     = &#39;GPG&#39;     # trigger from gpg OUT</span>
+<span class="c1">#    uut.s0.SIG_SYNC_OUT_TRG_DX  = &#39;d0&#39;</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SYNC_OUT_SYNC</span>    <span class="o">=</span> <span class="s1">&#39;GPG&#39;</span>     <span class="c1"># GPG d1</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SYNC_OUT_SYNC_DX</span> <span class="o">=</span> <span class="s1">&#39;d1&#39;</span>      <span class="c1"># GPG 0x2</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SYNC_OUT_GPIO</span>    <span class="o">=</span> <span class="s1">&#39;GPG&#39;</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SYNC_OUT_GPIO_DX</span> <span class="o">=</span> <span class="s1">&#39;d2&#39;</span>      <span class="c1"># GPG 0x4</span></div>
+
+<div class="viewcode-block" id="run_gpg"><a class="viewcode-back" href="../run_gpg.html#run_gpg.run_gpg">[docs]</a><span class="k">def</span> <span class="nf">run_gpg</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">uut</span> <span class="o">=</span> <span class="n">acq400_hapi</span><span class="o">.</span><span class="n">Acq400</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">uut</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+ 
+    
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">trace</span>
+    
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">GPG_ENABLE</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">clk</span> <span class="o">==</span> <span class="s1">&#39;notouch&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;leave clk untouched&quot;</span><span class="p">)</span> 
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">clk</span> <span class="o">==</span> <span class="s1">&#39;int&#39;</span><span class="p">:</span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">gpg_clk</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">clk</span> <span class="o">==</span> <span class="s1">&#39;fp&#39;</span><span class="p">:</span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SYS_CLK_FPMUX</span> <span class="o">=</span> <span class="s1">&#39;FPCLK&#39;</span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">gpg_clk</span><span class="o">=</span><span class="s1">&#39;1,0,0&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># clk=dX</span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">gpg_clk</span><span class="o">=</span><span class="s1">&#39;1,</span><span class="si">{}</span><span class="s1">,1&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">clk</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+     
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">stl</span> <span class="o">!=</span> <span class="s1">&#39;none&#39;</span><span class="p">:</span>
+        <span class="n">load_stl</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">stl</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">waterfall</span> <span class="o">!=</span> <span class="s1">&#39;none&#39;</span><span class="p">:</span>
+        <span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">hitime</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\d+&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">waterfall</span><span class="p">)]</span>
+        <span class="n">make_waterfall</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">hitime</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+       
+<span class="c1"># assume GPG drives 4 lines..</span>
+    <span class="k">for</span> <span class="n">dx</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]:</span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">set_knob</span><span class="p">(</span><span class="s1">&#39;SIG_EVENT_SRC_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dx</span><span class="p">),</span> <span class="s1">&#39;GPG&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">hdmi_master</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">set_hdmi_master</span><span class="p">(</span><span class="n">uut</span><span class="p">)</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">gpg_trg</span><span class="o">=</span><span class="s1">&#39;1,</span><span class="si">{}</span><span class="s1">,1&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">trg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;soft&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">GPG_MODE</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mode</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">disable</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">GPG_ENABLE</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+   
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">trg</span> <span class="o">==</span> <span class="s1">&#39;softloop&#39;</span><span class="p">:</span>
+        <span class="n">soft_trigger_loop</span><span class="p">(</span><span class="n">uut</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">trg</span> <span class="o">==</span> <span class="s1">&#39;softonce&#39;</span><span class="p">:</span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">soft_trigger</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span></div>
+    
+        
+
+<div class="viewcode-block" id="run_main"><a class="viewcode-back" href="../run_gpg.html#run_gpg.run_main">[docs]</a><span class="k">def</span> <span class="nf">run_main</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;run_gpg&#39;</span><span class="p">)</span>    
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--trg&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;soft&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;trigger fp|soft|softloop|softonce&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--clk&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;clk int|dX|notouch&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--mode&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;LOOPWAIT&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;mode&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--disable&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;1: disable&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--stl&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;stl file&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--waterfall&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;d0,d1,d2,d3 waterfall [interval,hitime]&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--trace&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;trace wire protocol&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--hdmi_master&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;clk, trg and gpg drive HDMI outputs&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;uut&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;uut&quot;</span><span class="p">)</span>
+    <span class="n">run_gpg</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">())</span></div>
+
+<span class="c1"># execution starts here</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">run_main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">user_apps/acq1001 1.2.5 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, D-TACQ.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>

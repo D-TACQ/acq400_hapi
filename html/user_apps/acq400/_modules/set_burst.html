@@ -1,0 +1,187 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>set_burst &#8212; user_apps/acq400 1.2.5 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">user_apps/acq400 1.2.5 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for set_burst</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="sd">&quot;&quot;&quot; set burst mode</span>
+<span class="sd">    run_gpg.py [opts] uut</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">acq400_hapi</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<div class="viewcode-block" id="set_hdmi_slave_full"><a class="viewcode-back" href="../set_burst.html#set_burst.set_hdmi_slave_full">[docs]</a><span class="k">def</span> <span class="nf">set_hdmi_slave_full</span><span class="p">(</span><span class="n">uut</span><span class="p">):</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SRC_CLK_0</span> <span class="o">=</span> <span class="s1">&#39;HDMI&#39;</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SRC_TRG_0</span> <span class="o">=</span> <span class="s1">&#39;HDMI_TRG&#39;</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_SRC_SYNC_0</span> <span class="o">=</span> <span class="s1">&#39;HDMI&#39;</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_EVENT_SRC_3</span> <span class="o">=</span> <span class="s1">&#39;HDMI_SYNC&#39;</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_EVENT_SRC_1</span> <span class="o">=</span> <span class="s1">&#39;HDMI_GPIO&#39;</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SYS_CLK_FPMUX</span> <span class="o">=</span> <span class="s1">&#39;ZCLK&#39;</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_ZCLK_SRC</span> <span class="o">=</span> <span class="s1">&#39;CLK.d0&#39;</span></div>
+
+<div class="viewcode-block" id="set_mbclk"><a class="viewcode-back" href="../set_burst.html#set_burst.set_mbclk">[docs]</a><span class="k">def</span> <span class="nf">set_mbclk</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">f2</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">f2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">fin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">f2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">fout</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">f2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fin</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">fout</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">f2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_CLK_MB_FIN</span> <span class="o">=</span> <span class="n">fin</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_CLK_MB_SET</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">fout</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_CLK_MB_SET</span> <span class="o">=</span> <span class="n">fout</span>
+    <span class="n">settled</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">settled</span><span class="p">:</span>
+        <span class="n">actual</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_CLK_MB_FREQ</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">fabs</span><span class="p">(</span><span class="n">actual</span> <span class="o">-</span> <span class="n">fout</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10000</span><span class="p">:</span>
+            <span class="n">settled</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;mb_clk set:</span><span class="si">{}</span><span class="s2"> actual:</span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fout</span><span class="p">,</span> <span class="n">actual</span><span class="p">,</span> <span class="s1">&#39;OK&#39;</span> <span class="k">if</span> <span class="n">settled</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">settled</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+        
+
+<div class="viewcode-block" id="configure_bm"><a class="viewcode-back" href="../set_burst.html#set_burst.configure_bm">[docs]</a><span class="k">def</span> <span class="nf">configure_bm</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">uuts</span> <span class="o">=</span> <span class="p">[</span><span class="n">acq400_hapi</span><span class="o">.</span><span class="n">Acq400</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">uuts</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">uuts</span><span class="p">:</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">trace</span>      <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">trace</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">trace</span>      <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">trace</span>
+
+        <span class="n">u</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">GPG_ENABLE</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>       <span class="c1"># needed if running set.burst multiple times</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">clear_counters</span><span class="p">()</span>          <span class="c1"># makes COUNTERS opi easier to read</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">transient</span>  <span class="o">=</span> <span class="s1">&#39;POST=</span><span class="si">{}</span><span class="s1"> DEMUX=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">post</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">demux</span><span class="p">)</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">trg</span>        <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">trg</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">RGM</span>        <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">rgm</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">RGM_DX</span>     <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">dx</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">RGM_SENSE</span>  <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">sense</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">RTM_TRANSLEN</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">rtm_translen</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">rgm</span> <span class="o">==</span> <span class="s1">&#39;RTM&#39;</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">es_enable</span>  <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">es_enable</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">set_knob</span><span class="p">(</span><span class="s1">&#39;SIG_SRC_TRG_1&#39;</span><span class="p">,</span> <span class="s1">&#39;GPG1&#39;</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">gpg</span> <span class="o">==</span> <span class="s1">&#39;on&#39;</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">dx</span> <span class="o">==</span> <span class="s1">&#39;d1&#39;</span> <span class="k">else</span> <span class="s1">&#39;STRIG&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">hdmi_slave</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;full&#39;</span><span class="p">):</span>
+            <span class="n">set_hdmi_slave_full</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">set_knob</span><span class="p">(</span><span class="s1">&#39;SIG_SRC_TRG_0&#39;</span><span class="p">,</span> <span class="s1">&#39;GPG0&#39;</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">gpg</span> <span class="o">==</span> <span class="s1">&#39;on&#39;</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">dx</span> <span class="o">==</span> <span class="s1">&#39;d0&#39;</span> <span class="k">else</span> <span class="s1">&#39;EXT&#39;</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">hdmi_slave</span> <span class="o">==</span> <span class="s1">&#39;no&#39;</span> <span class="k">else</span> <span class="s1">&#39;HDMI_TRG&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">mbclk</span> <span class="o">!=</span> <span class="s1">&#39;notouch&#39;</span><span class="p">:</span>
+            <span class="n">set_mbclk</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">mbclk</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">))</span>
+       
+        <span class="n">u</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">set_arm</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">uuts</span><span class="p">:</span>
+        <span class="n">u</span><span class="o">.</span><span class="n">statmon</span><span class="o">.</span><span class="n">wait_armed</span><span class="p">()</span>
+
+    <span class="c1"># warning: this is a RACE for the case of a free-running trigger and multiple UUTs</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">gpg</span> <span class="o">==</span> <span class="s1">&#39;on&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">uuts</span><span class="p">:</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">GPG_ENABLE</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+        
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">trg</span> <span class="o">==</span> <span class="s1">&#39;1,1,1&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">uuts</span><span class="p">:</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">soft_trigger</span></div>
+    
+
+
+<div class="viewcode-block" id="run_main"><a class="viewcode-back" href="../set_burst.html#set_burst.run_main">[docs]</a><span class="k">def</span> <span class="nf">run_main</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;set_burst mode&#39;</span><span class="p">)</span>    
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--rgm&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;RTM&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;mode RGM|RTM&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--mbclk&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;notouch&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;notouch|FIN,FOUT&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--dx&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;d0&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;dx d0|d1|d2&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--gpg&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;source from gpg on|off&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--sense&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;rising&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;rising|falling&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--rtm_translen&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1234</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;transient length&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--post&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;shot length&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--trg&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;1,0,1&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;shot trigger triplet&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--hdmi_slave&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;no: use FPTRG, yes: use HDMI trg on d0, full=use all 4 lines&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--es_enable&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;0 disables Event Signature&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--trace&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;1: enable command trace&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--demux&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;0: do not demux&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;uuts&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;uut&quot;</span><span class="p">)</span>
+    <span class="n">configure_bm</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">())</span></div>
+
+<span class="c1"># execution starts here</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">run_main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">user_apps/acq400 1.2.5 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, D-TACQ.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>

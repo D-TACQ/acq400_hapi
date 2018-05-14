@@ -1,0 +1,228 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>acq400_hapi.awg_data &#8212; acq400_hapi 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for acq400_hapi.awg_data</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+
+<div class="viewcode-block" id="AwgDefaults"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.AwgDefaults">[docs]</a><span class="k">class</span> <span class="nc">AwgDefaults</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uut_name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defs</span> <span class="o">=</span> <span class="s2">&quot;DATA/</span><span class="si">{}</span><span class="s2">.npy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">uut_name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AwgDefaults.read_defaults"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.AwgDefaults.read_defaults">[docs]</a>    <span class="k">def</span> <span class="nf">read_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>        
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;read_defaults </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defs</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defs</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;read_defaults </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defs</span><span class="p">,</span> <span class="n">current</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">current</span></div>
+
+<div class="viewcode-block" id="AwgDefaults.store_defaults"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.AwgDefaults.store_defaults">[docs]</a>    <span class="k">def</span> <span class="nf">store_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;store_defaults </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defs</span><span class="p">,</span> <span class="n">current</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defs</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">current</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="RunsFiles"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.RunsFiles">[docs]</a><span class="k">class</span> <span class="nc">RunsFiles</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uut</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">run_forever</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uut</span> <span class="o">=</span> <span class="n">uut</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_forever</span> <span class="o">=</span> <span class="n">run_forever</span>
+
+<div class="viewcode-block" id="RunsFiles.load"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.RunsFiles.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">autorearm</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">99999</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_forever</span> <span class="k">else</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">uut</span><span class="o">.</span><span class="n">load_awg</span><span class="p">(</span><span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">autorearm</span> <span class="o">=</span> <span class="n">autorearm</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">f</span> </div></div>
+
+
+
+<div class="viewcode-block" id="SinGen"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.SinGen">[docs]</a><span class="k">class</span> <span class="nc">SinGen</span><span class="p">:</span>
+    <span class="n">NCYCLES</span> <span class="o">=</span> <span class="mi">5</span>
+<div class="viewcode-block" id="SinGen.sin"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.SinGen.sin">[docs]</a>    <span class="k">def</span> <span class="nf">sin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">nsam</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsam</span>
+        <span class="n">NCYCLES</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">NCYCLES</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nsam</span><span class="p">))</span><span class="o">*</span><span class="n">NCYCLES</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">nsam</span><span class="p">)</span>   <span class="c1"># sin, amplitude of 1 (volt)</span></div></div>
+
+<div class="viewcode-block" id="AllFullScale"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.AllFullScale">[docs]</a><span class="k">class</span> <span class="nc">AllFullScale</span><span class="p">(</span><span class="n">SinGen</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uut</span><span class="p">,</span> <span class="n">nchan</span><span class="p">,</span> <span class="n">nsam</span><span class="p">,</span> <span class="n">run_forever</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uut</span> <span class="o">=</span> <span class="n">uut</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nchan</span> <span class="o">=</span> <span class="n">nchan</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nsam</span> <span class="o">=</span> <span class="n">nsam</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_forever</span> <span class="o">=</span> <span class="n">run_forever</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sin</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nsam</span><span class="p">,</span><span class="n">nchan</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nchan</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aw</span><span class="p">[:,</span><span class="n">ch</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sw</span>
+
+<div class="viewcode-block" id="AllFullScale.load"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.AllFullScale.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">autorearm</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">99999</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_forever</span> <span class="k">else</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nchan</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">uut</span><span class="o">.</span><span class="n">load_awg</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">aw</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">15</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">),</span> <span class="n">autorearm</span> <span class="o">=</span> <span class="n">autorearm</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loaded array &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aw</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">ch</span></div></div>
+
+
+
+<div class="viewcode-block" id="RainbowGen"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.RainbowGen">[docs]</a><span class="k">class</span> <span class="nc">RainbowGen</span><span class="p">:</span>
+    <span class="n">NCYCLES</span> <span class="o">=</span> <span class="mi">5</span>
+<div class="viewcode-block" id="RainbowGen.offset"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.RainbowGen.offset">[docs]</a>    <span class="k">def</span> <span class="nf">offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">):</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mf">9.0</span> <span class="o">+</span> <span class="mf">8.0</span><span class="o">*</span><span class="n">ch</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">nchan</span><span class="p">;</span></div>
+
+<div class="viewcode-block" id="RainbowGen.rainbow"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.RainbowGen.rainbow">[docs]</a>    <span class="k">def</span> <span class="nf">rainbow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="n">ch</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="RainbowGen.sin"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.RainbowGen.sin">[docs]</a>    <span class="k">def</span> <span class="nf">sin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">nsam</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsam</span>
+        <span class="n">NCYCLES</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">NCYCLES</span>    
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nsam</span><span class="p">))</span><span class="o">*</span><span class="n">NCYCLES</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">nsam</span><span class="p">)</span>   <span class="c1"># sin, amplitude of 1 (volt)</span></div>
+
+<div class="viewcode-block" id="RainbowGen.sinc"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.RainbowGen.sinc">[docs]</a>    <span class="k">def</span> <span class="nf">sinc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">):</span>
+        <span class="n">nsam</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsam</span>
+        <span class="n">nchan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nchan</span>
+        <span class="n">NCYCLES</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">NCYCLES</span>
+        <span class="n">xoff</span> <span class="o">=</span> <span class="n">ch</span><span class="o">*</span><span class="mi">100</span>
+        <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">nsam</span><span class="o">/</span><span class="mi">2</span><span class="o">-</span><span class="n">xoff</span><span class="p">,</span><span class="n">nsam</span><span class="o">/</span><span class="mi">2</span><span class="o">-</span><span class="n">xoff</span><span class="p">))</span><span class="o">*</span><span class="n">NCYCLES</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">nsam</span>
+        <span class="k">return</span> <span class="p">[</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xx</span> <span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uut</span><span class="p">,</span> <span class="n">nchan</span><span class="p">,</span> <span class="n">nsam</span><span class="p">,</span> <span class="n">run_forever</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ao0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uut</span> <span class="o">=</span> <span class="n">uut</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nchan</span> <span class="o">=</span> <span class="n">nchan</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nsam</span> <span class="o">=</span> <span class="n">nsam</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ao0</span> <span class="o">=</span> <span class="n">ao0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_forever</span> <span class="o">=</span> <span class="n">run_forever</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sin</span><span class="p">()</span>        
+        <span class="bp">self</span><span class="o">.</span><span class="n">aw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nsam</span><span class="p">,</span><span class="n">nchan</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defs</span> <span class="o">=</span> <span class="n">AwgDefaults</span><span class="p">(</span><span class="n">uut</span><span class="o">.</span><span class="n">uut</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">try</span><span class="p">:</span>   
+            <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defs</span><span class="o">.</span><span class="n">read_defaults</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;self.current len </span><span class="si">{}</span><span class="s2"> self.nchan </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nchan</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">)):</span>            
+                <span class="bp">self</span><span class="o">.</span><span class="n">aw</span><span class="p">[:,</span><span class="bp">self</span><span class="o">.</span><span class="n">ao0</span><span class="o">+</span><span class="n">ch</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">[</span><span class="n">ch</span><span class="p">]</span>    
+        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nchan</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;no defaults&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nchan</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aw</span><span class="p">[:,</span><span class="n">ch</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rainbow</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>            
+
+<div class="viewcode-block" id="RainbowGen.load"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.RainbowGen.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">autorearm</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">99999</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_forever</span> <span class="k">else</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nchan</span><span class="p">):</span>        
+                <span class="n">aw1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aw</span><span class="p">)</span>
+                <span class="n">aw1</span><span class="p">[:,</span><span class="n">ch</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sinc</span><span class="p">(</span><span class="n">ch</span><span class="p">),</span><span class="mi">5</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loading array &quot;</span><span class="p">,</span> <span class="n">aw1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="n">awr</span> <span class="o">=</span> <span class="p">(</span><span class="n">aw1</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">15</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span>
+                <span class="k">for</span> <span class="n">chx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">)):</span>
+                    <span class="n">awr</span><span class="p">[:,</span><span class="bp">self</span><span class="o">.</span><span class="n">ao0</span><span class="o">+</span><span class="n">chx</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">[</span><span class="n">chx</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">uut</span><span class="o">.</span><span class="n">load_awg</span><span class="p">(</span><span class="n">awr</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">),</span> <span class="n">autorearm</span> <span class="o">=</span> <span class="n">autorearm</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loaded array &quot;</span><span class="p">,</span> <span class="n">aw1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">ch</span></div></div>
+
+<div class="viewcode-block" id="Pulse"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.Pulse">[docs]</a><span class="k">class</span> <span class="nc">Pulse</span><span class="p">:</span>
+<div class="viewcode-block" id="Pulse.generate"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.Pulse.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">zset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">)</span>
+        <span class="n">pset</span> <span class="o">=</span> <span class="n">zset</span>
+        <span class="n">pset</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">flat_top</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsam</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">):</span>
+            <span class="n">x1</span> <span class="o">=</span> <span class="n">seg</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span>
+            <span class="n">x2</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval</span>
+            <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nchan</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">seg</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">nchan</span> <span class="o">==</span> <span class="n">ch</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aw</span><span class="p">[</span><span class="n">x1</span><span class="p">:</span><span class="n">x2</span><span class="p">,</span><span class="n">ch</span><span class="p">]</span> <span class="o">=</span> <span class="n">pset</span></div>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uut</span><span class="p">,</span> <span class="n">nchan</span><span class="p">,</span> <span class="n">nsam</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span><span class="mi">10</span><span class="p">)):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uut</span> <span class="o">=</span> <span class="n">uut</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nchan</span> <span class="o">=</span> <span class="n">nchan</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nsam</span> <span class="o">=</span> <span class="n">nsam</span>
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_top</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span> <span class="nb">int</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">args</span> <span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span> <span class="s2">&quot;self.interval </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">))</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">aw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nsam</span><span class="p">,</span><span class="n">nchan</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+<div class="viewcode-block" id="Pulse.load"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.awg_data.Pulse.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">autorearm</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uut</span><span class="o">.</span><span class="n">load_awg</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">aw</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">15</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">),</span> <span class="n">autorearm</span> <span class="o">=</span> <span class="n">autorearm</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span></div></div>
+
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, D-TACQ.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>
