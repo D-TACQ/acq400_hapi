@@ -1,17 +1,37 @@
 #!/usr/bin/env python
 
 """
-This is a script intended to connect to a UUT and stream data from port 4210. The data that has been streamed is not
-demuxed and so if it is to be used then it has to be demuxed first. Something like:
+This is a script intended to connect to a UUT and stream data from port 4210.
 
-data = numpy.fromfile("data0.dat", dtype="<datatype>")
-plt.plot(data[::<number of channels>])
-plt.show()
+The data that has been streamed is not demuxed and so if it is to be used then it has to be demuxed first.
+Something like:
 
-Notes:
-If filesize > total data then filesize data will be stored in one file.
-The default runtime is large so that the user can specify total data required rather than time to run. If a runtime is
-more applicable then specify a large total data and the run time required.
+    - data = numpy.fromfile("data0.dat", dtype="<datatype>")
+    - plt.plot(data[::<number of channels>])
+    - plt.show()
+
+Some usage examples are included below:
+
+1: Acquire files of size 1024kb up to a total of 4096kb:
+
+
+    python acq400_stream.py --verbose 1 --filesize 1024 --totaldata 4096 --runtime 1000 <module ip or name>
+
+2: Acquire a single file of size 4096kb:
+
+
+    python acq400_stream.py --verbose 1 --filesize 4096 --totaldata 4096 --runtime 1000 <module ip or name>
+
+3: Acquire files of size 1024 for 10 seconds:
+
+
+    python acq400_stream.py --verbose 1 --filesize 1024 --totaldata 999999 --runtime 10 <module ip or name>
+
+4: Acquire data for 5 seconds and write the data all to a single file:
+
+
+    python acq400_stream.py --verbose 1 --filesize 999999 --totaldata 999999 --runtime 5 <module ip or name>
+
 """
 
 import acq400_hapi
@@ -22,6 +42,21 @@ import argparse
 
 
 def make_data_dir(directory, verbose):
+    """Creates the directory where data will be stored.
+
+    This is where an extra description of the function goes.
+
+    Args:
+        directory (str): The name of the directory where data is stored
+        verbose (bool): Whether to print a debug statement if the method fails
+
+    Returns:
+        None: Returns None.
+
+    Raises:
+        OSError: If directory already exists then the dir can't be created.
+
+    """
     try:
         os.mkdir(directory)
     except Exception:
@@ -31,6 +66,18 @@ def make_data_dir(directory, verbose):
 
 
 def run_stream(args):
+    """Begins the stream of data from port 4210. Returns None.
+
+    Args:
+        args (list): Arguments provided to the script by the user
+
+    Returns:
+        None: Returns None.
+
+    Raises:
+        NameError: Raises NameError when user wants to write all data to single file.
+
+    """
     data = ""
     num = 0
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
@@ -52,7 +99,7 @@ def run_stream(args):
         while time.clock() < (start_time + args.runtime) and data_length < args.totaldata:
 
             loop_time = time.clock()
-            data += skt.sock.recv(1024)
+            data += skt.sock.recv(10240000)
 
             if len(data) / 1024 >= args.filesize:
                 data_length += float(len(data)) / 1024
@@ -64,14 +111,14 @@ def run_stream(args):
                     print "New data file written."
                     print "Data Transferred: ", data_length, "KB"
                     print "loop_time: ", loop_time
-                    print "Data upload & save rate: ", float(len(data))/1024/((time.clock()-upload_time)), "KB/s"
+                    print "Data upload & save rate: ", float(len(data)) / 1024 / (time.clock() - upload_time), "KB/s"
                     print ""
                     print ""
 
                 num += 1
                 data_file.close()
-                data = "" # Remove data from variable once it has been written
-                upload_time = time.clock() # Reset upload time
+                data = ""  # Remove data from variable once it has been written
+                upload_time = time.clock()  # Reset upload time
                 data_written_flag = 1
 
         try:
@@ -85,11 +132,11 @@ def run_stream(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 stream')
-    parser.add_argument('--filesize', default=1024, type=int, help="Size of file to store in KB. If filesize > total data then no data will be stored.")
+    parser.add_argument('--filesize', default=1024, type=int,
+                        help="Size of file to store in KB. If filesize > total data then no data will be stored.")
     parser.add_argument('--totaldata', default=4096, type=int, help="Total amount of data to store in KB")
     parser.add_argument('--root', default="ROOT", type=str, help="Location to save files")
     parser.add_argument('--runtime', default=1000, type=int, help="How long to stream data for")
-    parser.add_argument('--plot', default=0, type=int, help='Whether the data streamed from the loop is plotted - pauses stream')
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uuts', nargs='+', help="uuts")
     run_stream(parser.parse_args())
@@ -97,4 +144,3 @@ def run_main():
 
 if __name__ == '__main__':
     run_main()
-    

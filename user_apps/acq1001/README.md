@@ -6,3 +6,5 @@
 * run_gpg.py          : controls Gate Pulse Generator GPG
 * run_livetop.py      : runs Live Time Of Pulse app
 
+## source doc
+https://d-tacq.github.io/acq400_hapi/html/user_apps/acq1001/
