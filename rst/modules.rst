@@ -1,10 +1,7 @@
-utils
-=====
+acq400_hapi
+===========
 
 .. toctree::
    :maxdepth: 4
 
-   bigplot
-   bigplot4
-   bigplota
-   bin2csv
+   acq400_hapi

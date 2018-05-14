@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>acq400_hapi.acq400_ui &#8212; acq400_hapi 1.2.6 documentation</title>
+    <title>acq400_hapi.acq400_ui &#8212; acq400_hapi/ 1.2.6 documentation</title>
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 1.2.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi/ 1.2.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -41,8 +41,10 @@
 <span class="kn">import</span> <span class="nn">acq400</span>
 
 <div class="viewcode-block" id="Acq400UI"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400_ui.Acq400UI">[docs]</a><span class="k">class</span> <span class="nc">Acq400UI</span><span class="p">:</span>
-<div class="viewcode-block" id="Acq400UI.exec_args_trg"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400_ui.Acq400UI.exec_args_trg">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">exec_args_trg</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">trg</span><span class="p">):</span> 
+    <span class="sd">&quot;&quot;&quot; Common UI features for consistent args handling across all apps</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_exec_args_trg</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">trg</span><span class="p">):</span> 
         <span class="k">if</span> <span class="n">trg</span> <span class="o">==</span> <span class="s1">&#39;notouch&#39;</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">edge</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;rising&#39;</span><span class="p">)</span>
@@ -58,10 +60,10 @@
             <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">event0</span> <span class="o">=</span> <span class="n">triplet</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">trg</span> <span class="o">=</span> <span class="n">triplet</span>
-            <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">event0</span> <span class="o">=</span> <span class="s2">&quot;0,0,0&quot;</span>                    </div>
+            <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">event0</span> <span class="o">=</span> <span class="s2">&quot;0,0,0&quot;</span>                    
         
-<div class="viewcode-block" id="Acq400UI.exec_args_clk"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400_ui.Acq400UI.exec_args_clk">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">exec_args_clk</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">clk</span><span class="p">):</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_exec_args_clk</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">clk</span><span class="p">):</span>
         <span class="n">c_args</span> <span class="o">=</span> <span class="n">clk</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
         <span class="n">src</span> <span class="o">=</span> <span class="n">c_args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         
@@ -79,15 +81,15 @@
         <span class="k">elif</span> <span class="n">src</span> <span class="o">==</span> <span class="s1">&#39;int&#39;</span> <span class="ow">or</span> <span class="n">src</span> <span class="o">==</span> <span class="s1">&#39;zclk&#39;</span><span class="p">:</span>            
             <span class="n">uut</span><span class="o">.</span><span class="n">set_mb_clk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hz</span><span class="o">=</span><span class="n">_hz</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;zclk&quot;</span><span class="p">,</span> <span class="n">fin</span><span class="o">=</span><span class="n">_fin</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">src</span> <span class="o">==</span> <span class="s1">&#39;xclk&#39;</span><span class="p">:</span>
-            <span class="n">uut</span><span class="o">.</span><span class="n">set_mb_clk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hz</span><span class="o">=</span><span class="n">_hz</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;xclk&quot;</span><span class="p">,</span> <span class="n">fin</span><span class="o">=</span><span class="n">_fin</span><span class="p">)</span></div>
+            <span class="n">uut</span><span class="o">.</span><span class="n">set_mb_clk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hz</span><span class="o">=</span><span class="n">_hz</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;xclk&quot;</span><span class="p">,</span> <span class="n">fin</span><span class="o">=</span><span class="n">_fin</span><span class="p">)</span>
     
-<div class="viewcode-block" id="Acq400UI.set_simulate"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400_ui.Acq400UI.set_simulate">[docs]</a>    <span class="nd">@staticmethod</span>    
-    <span class="k">def</span> <span class="nf">set_simulate</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">enable</span><span class="p">):</span>
+    <span class="nd">@staticmethod</span>    
+    <span class="k">def</span> <span class="nf">_set_simulate</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">enable</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">uut</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
-            <span class="n">uut</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">simulate</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span> <span class="k">if</span> <span class="n">enable</span> <span class="k">else</span> <span class="s1">&#39;0&#39;</span></div>
+            <span class="n">uut</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">simulate</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span> <span class="k">if</span> <span class="n">enable</span> <span class="k">else</span> <span class="s1">&#39;0&#39;</span>
             
-<div class="viewcode-block" id="Acq400UI.exec_args_sim"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400_ui.Acq400UI.exec_args_sim">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">exec_args_sim</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">sim</span><span class="p">):</span> 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_exec_args_sim</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">sim</span><span class="p">):</span> 
         <span class="k">try</span><span class="p">:</span>            
             <span class="n">sim_sites</span> <span class="o">=</span> <span class="p">[</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sim</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
             <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">uut</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
@@ -95,16 +97,22 @@
                 <span class="n">uut</span><span class="o">.</span><span class="n">svc</span><span class="p">[</span><span class="s1">&#39;s</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">site</span><span class="p">)]</span><span class="o">.</span><span class="n">simulate</span> <span class="o">=</span> <span class="n">sim1</span>
         <span class="c1">#            print &quot;site {} sim {}&quot;.format(site, sim1)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="n">set_simulate</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">sim</span><span class="p">)</span></div>
+            <span class="n">set_simulate</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">sim</span><span class="p">)</span>
     
         
-<div class="viewcode-block" id="Acq400UI.exec_args_trace"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400_ui.Acq400UI.exec_args_trace">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">exec_args_trace</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">trace</span><span class="p">):</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_exec_args_trace</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">trace</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">svn</span><span class="p">,</span> <span class="n">svc</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">svc</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-            <span class="n">svc</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="n">trace</span></div>
+            <span class="n">svc</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="n">trace</span>
             
 <div class="viewcode-block" id="Acq400UI.add_args"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400_ui.Acq400UI.add_args">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">add_args</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; generate standard args list</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">             post: set False to disable createing the arg, becomes client app resposibility</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--pre&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;pre-trigger samples&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">post</span><span class="p">:</span>
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--post&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;post-trigger samples&#39;</span><span class="p">)</span>
@@ -115,15 +123,17 @@
         
 <div class="viewcode-block" id="Acq400UI.exec_args"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400_ui.Acq400UI.exec_args">[docs]</a>    <span class="nd">@staticmethod</span>   
     <span class="k">def</span> <span class="nf">exec_args</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; and execute all the args</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;exec_args&quot;</span> <span class="p">)</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">trg</span><span class="p">:</span>
-            <span class="n">Acq400UI</span><span class="o">.</span><span class="n">exec_args_trg</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">trg</span><span class="p">)</span>
+            <span class="n">Acq400UI</span><span class="o">.</span><span class="n">_exec_args_trg</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">trg</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">clk</span><span class="p">:</span>
-            <span class="n">Acq400UI</span><span class="o">.</span><span class="n">exec_args_clk</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">clk</span><span class="p">)</span>
+            <span class="n">Acq400UI</span><span class="o">.</span><span class="n">_exec_args_clk</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">clk</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">sim</span><span class="p">:</span>
-            <span class="n">Acq400UI</span><span class="o">.</span><span class="n">exec_args_sim</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">sim</span><span class="p">)</span>
+            <span class="n">Acq400UI</span><span class="o">.</span><span class="n">_exec_args_sim</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">sim</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">trace</span><span class="p">:</span>
-            <span class="n">Acq400UI</span><span class="o">.</span><span class="n">exec_args_trace</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span></div></div>
+            <span class="n">Acq400UI</span><span class="o">.</span><span class="n">_exec_args_trace</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span></div></div>
             
     
         
@@ -160,7 +170,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 1.2.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi/ 1.2.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

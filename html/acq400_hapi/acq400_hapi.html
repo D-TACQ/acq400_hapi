@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>acq400_hapi package &#8212; acq400_hapi 1.2.6 documentation</title>
+    <title>acq400_hapi package &#8212; acq400_hapi/ 1.2.6 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="index.html" title="acq400_hapi"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">acq400_hapi 1.2.6 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">acq400_hapi/ 1.2.6 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -51,24 +51,24 @@
 <li>simple property interface allows natural “script-like” usage</li>
 </ul>
 <blockquote>
-<div><ul class="simple">
-<li>eg
-- uut1.s0.set_arm = 1</li>
+<div><ul>
+<li><p class="first">eg:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uut1</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">set_arm</span> <span class="o">=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">equivalent to running this on a logged in shell session on the UUT:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span><span class="o">.</span><span class="n">site1</span> <span class="n">set_arm</span><span class="o">=</span><span class="mi">1</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">monitors transient status on uut, provides blocking events</p>
+</li>
+<li><p class="first">read_channels() - reads all data from channel data service.</p>
+</li>
 </ul>
 <blockquote>
-<div><ul class="simple">
-<li>equivalent to running this on a logged in shell session on the UUT:</li>
-</ul>
-<blockquote>
-<div><ul class="simple">
-<li>set.site1 set_arm=1</li>
-</ul>
-</div></blockquote>
-<ul class="simple">
-<li>monitors transient status on uut, provides blocking events</li>
-<li>read_channels() - reads all data from channel data service.</li>
-</ul>
-<p>Created on Sun Jan  8 12:36:38 2017</p>
+<div><p>Created on Sun Jan  8 12:36:38 2017</p>
 <p>&#64;author: pgm</p>
 </div></blockquote>
 </div></blockquote>
@@ -76,9 +76,11 @@
 <dt id="acq400_hapi.acq400.Acq2106">
 <em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">Acq2106</code><span class="sig-paren">(</span><em>_uut</em>, <em>monitor=True</em>, <em>has_mgtdram=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq2106"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq2106" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#acq400_hapi.acq400.Acq400" title="acq400_hapi.acq400.Acq400"><code class="xref py py-class docutils literal notranslate"><span class="pre">acq400_hapi.acq400.Acq400</span></code></a></p>
+<p>Acq2106 specialization of Acq400</p>
+<p>Defines features specific to ACQ2106</p>
 <dl class="method">
 <dt id="acq400_hapi.acq400.Acq2106.run_mgt">
-<code class="descname">run_mgt</code><span class="sig-paren">(</span><em>_filter=&lt;acq400_hapi.acq400.NullFilter instance at 0x352f908&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq2106.run_mgt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq2106.run_mgt" title="Permalink to this definition">¶</a></dt>
+<code class="descname">run_mgt</code><span class="sig-paren">(</span><em>_filter=&lt;acq400_hapi.acq400.NullFilter instance at 0x2c09638&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq2106.run_mgt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq2106.run_mgt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -352,8 +354,9 @@ raw:  raw bits to convert.</p>
 <p>handles post shot data for one channel.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd>addr (str) : ip address or dns name
-ch (int) : channel number 1..N</dd>
+<dd><p class="first">addr (str) : ip address or dns name</p>
+<p class="last">ch (int) : channel number 1..N</p>
+</dd>
 </dl>
 <dl class="method">
 <dt id="acq400_hapi.acq400.Channelclient.read">
@@ -361,26 +364,24 @@ ch (int) : channel number 1..N</dd>
 <dd><p>read ndata from channel data server, return as np array.
 Args:</p>
 <blockquote>
-<div>ndata (int): number of elements
-data_size : 2|4 short or int
-maxbuf=4096 : max bytes to read per packet</div></blockquote>
+<div><p>ndata (int): number of elements</p>
+<p>data_size : 2|4 short or int</p>
+<p>maxbuf=4096 : max bytes to read per packet</p>
+</div></blockquote>
 <dl class="docutils">
 <dt>Returns:</dt>
-<dd><table class="first last docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">np:</th><td class="field-body">data array</td>
-</tr>
-</tbody>
-</table>
-</dd>
+<dd>np: data array</dd>
 </dl>
-<p>&#64;&#64;todo buffer +=   
-# this is probably horribly inefficient
-# probably better: 
-- retbuf = np.array(dtype, ndata)
-- retbuf[cursor].</p>
+<ul class="simple">
+<li>TODO buffer +=</li>
+</ul>
+<blockquote>
+<div><p>this is probably horribly inefficient probably better:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">retbuf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">ndata</span><span class="p">)</span>
+<span class="n">retbuf</span><span class="p">[</span><span class="n">cursor</span><span class="p">]</span><span class="o">.</span>
+</pre></div>
+</div>
+</div></blockquote>
 </dd></dl>
 
 </dd></dl>
@@ -406,7 +407,7 @@ maxbuf=4096 : max bytes to read per packet</div></blockquote>
 
 <dl class="attribute">
 <dt id="acq400_hapi.acq400.ProcessMonitor.st_re">
-<code class="descname">st_re</code><em class="property"> = &lt;_sre.SRE_Pattern object at 0x34e8810&gt;</em><a class="headerlink" href="#acq400_hapi.acq400.ProcessMonitor.st_re" title="Permalink to this definition">¶</a></dt>
+<code class="descname">st_re</code><em class="property"> = &lt;_sre.SRE_Pattern object at 0x2bb2930&gt;</em><a class="headerlink" href="#acq400_hapi.acq400.ProcessMonitor.st_re" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -486,7 +487,9 @@ maxbuf=4096 : max bytes to read per packet</div></blockquote>
 <dl class="class">
 <dt id="acq400_hapi.acq400.Statusmonitor">
 <em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">Statusmonitor</code><span class="sig-paren">(</span><em>_uut</em>, <em>_status</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Statusmonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
+<dd><p>monitors the status channel</p>
+<p>Efficient event-driven monitoring in a separate thread</p>
+<dl class="method">
 <dt id="acq400_hapi.acq400.Statusmonitor.get_state">
 <code class="descname">get_state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Statusmonitor.get_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor.get_state" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -498,7 +501,7 @@ maxbuf=4096 : max bytes to read per packet</div></blockquote>
 
 <dl class="attribute">
 <dt id="acq400_hapi.acq400.Statusmonitor.st_re">
-<code class="descname">st_re</code><em class="property"> = &lt;_sre.SRE_Pattern object at 0x3163530&gt;</em><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor.st_re" title="Permalink to this definition">¶</a></dt>
+<code class="descname">st_re</code><em class="property"> = &lt;_sre.SRE_Pattern object at 0x2bef120&gt;</em><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor.st_re" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -548,40 +551,22 @@ maxbuf=4096 : max bytes to read per packet</div></blockquote>
 <dl class="class">
 <dt id="acq400_hapi.acq400_ui.Acq400UI">
 <em class="property">class </em><code class="descclassname">acq400_hapi.acq400_ui.</code><code class="descname">Acq400UI</code><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="staticmethod">
+<dd><p>Common UI features for consistent args handling across all apps</p>
+<dl class="staticmethod">
 <dt id="acq400_hapi.acq400_ui.Acq400UI.add_args">
 <em class="property">static </em><code class="descname">add_args</code><span class="sig-paren">(</span><em>post=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI.add_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI.add_args" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>generate standard args list</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>post: set False to disable createing the arg, becomes client app resposibility</dd>
+</dl>
+</dd></dl>
 
 <dl class="staticmethod">
 <dt id="acq400_hapi.acq400_ui.Acq400UI.exec_args">
 <em class="property">static </em><code class="descname">exec_args</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI.exec_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI.exec_args" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="staticmethod">
-<dt id="acq400_hapi.acq400_ui.Acq400UI.exec_args_clk">
-<em class="property">static </em><code class="descname">exec_args_clk</code><span class="sig-paren">(</span><em>clk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI.exec_args_clk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI.exec_args_clk" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="staticmethod">
-<dt id="acq400_hapi.acq400_ui.Acq400UI.exec_args_sim">
-<em class="property">static </em><code class="descname">exec_args_sim</code><span class="sig-paren">(</span><em>sim</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI.exec_args_sim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI.exec_args_sim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="staticmethod">
-<dt id="acq400_hapi.acq400_ui.Acq400UI.exec_args_trace">
-<em class="property">static </em><code class="descname">exec_args_trace</code><span class="sig-paren">(</span><em>trace</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI.exec_args_trace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI.exec_args_trace" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="staticmethod">
-<dt id="acq400_hapi.acq400_ui.Acq400UI.exec_args_trg">
-<em class="property">static </em><code class="descname">exec_args_trg</code><span class="sig-paren">(</span><em>args</em>, <em>trg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI.exec_args_trg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI.exec_args_trg" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="staticmethod">
-<dt id="acq400_hapi.acq400_ui.Acq400UI.set_simulate">
-<em class="property">static </em><code class="descname">set_simulate</code><span class="sig-paren">(</span><em>enable</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI.set_simulate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI.set_simulate" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>and execute all the args</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -807,7 +792,7 @@ set/get syntax.</p>
 
 <dl class="attribute">
 <dt id="acq400_hapi.netclient.Siteclient.pat">
-<code class="descname">pat</code><em class="property"> = &lt;_sre.SRE_Pattern object at 0x2ef7ad0&gt;</em><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.pat" title="Permalink to this definition">¶</a></dt>
+<code class="descname">pat</code><em class="property"> = &lt;_sre.SRE_Pattern object at 0x25d1ad0&gt;</em><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.pat" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -1019,7 +1004,7 @@ set/get syntax.</p>
         <li class="right" >
           <a href="index.html" title="acq400_hapi"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">acq400_hapi 1.2.6 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">acq400_hapi/ 1.2.6 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

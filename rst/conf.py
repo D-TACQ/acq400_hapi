@@ -14,12 +14,12 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('/home/peter/PROJECTS/ACQ400/HAPI/acq400_hapi/user_apps/utils'))
+sys.path.insert(0, os.path.abspath('/home/peter/PROJECTS/ACQ400/HAPI/acq400_hapi/acq400_hapi/'))
 
 
 # -- Project information -----------------------------------------------------
 
-project = u'user_apps/utils'
+project = u'acq400_hapi/'
 copyright = u'2018, D-TACQ'
 author = u'D-TACQ'
 
@@ -103,7 +103,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'user_appsutilsdoc'
+htmlhelp_basename = 'acq400_hapidoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -130,7 +130,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'user_appsutils.tex', u'user\\_apps/utils Documentation',
+    (master_doc, 'acq400_hapi.tex', u'acq400\\_hapi/ Documentation',
      u'D-TACQ', 'manual'),
 ]
 
@@ -140,7 +140,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'user_appsutils', u'user_apps/utils Documentation',
+    (master_doc, 'acq400_hapi', u'acq400_hapi/ Documentation',
      [author], 1)
 ]
 
@@ -151,8 +151,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'user_appsutils', u'user_apps/utils Documentation',
-     author, 'user_appsutils', 'One line description of project.',
+    (master_doc, 'acq400_hapi', u'acq400_hapi/ Documentation',
+     author, 'acq400_hapi', 'One line description of project.',
      'Miscellaneous'),
 ]
 

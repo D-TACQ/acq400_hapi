@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>acq400_hapi.acq400 &#8212; acq400_hapi 1.2.6 documentation</title>
+    <title>acq400_hapi.acq400 &#8212; acq400_hapi/ 1.2.6 documentation</title>
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 1.2.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi/ 1.2.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -43,12 +43,16 @@
 
 <span class="sd">- enumerates all site services, available as uut.sX.knob</span>
 <span class="sd">- simple property interface allows natural &quot;script-like&quot; usage</span>
-<span class="sd"> - eg</span>
-<span class="sd">   - uut1.s0.set_arm = 1</span>
-<span class="sd">  - equivalent to running this on a logged in shell session on the UUT:</span>
-<span class="sd">   - set.site1 set_arm=1</span>
-<span class="sd">  - monitors transient status on uut, provides blocking events</span>
-<span class="sd">  - read_channels() - reads all data from channel data service.</span>
+<span class="sd"> - eg::</span>
+
+<span class="sd">       uut1.s0.set_arm = 1</span>
+
+<span class="sd"> - equivalent to running this on a logged in shell session on the UUT::</span>
+
+<span class="sd">       set.site1 set_arm=1</span>
+
+<span class="sd"> - monitors transient status on uut, provides blocking events</span>
+<span class="sd"> - read_channels() - reads all data from channel data service.</span>
 <span class="sd">  Created on Sun Jan  8 12:36:38 2017</span>
 
 <span class="sd">  @author: pgm</span>
@@ -128,6 +132,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        addr (str) : ip address or dns name</span>
+
 <span class="sd">        ch (int) : channel number 1..N</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>    
@@ -140,17 +145,21 @@
         <span class="sd">&quot;&quot;&quot;read ndata from channel data server, return as np array.</span>
 <span class="sd">        Args:</span>
 <span class="sd">            ndata (int): number of elements</span>
+
 <span class="sd">            data_size : 2|4 short or int</span>
+
 <span class="sd">            maxbuf=4096 : max bytes to read per packet</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            :np: data array </span>
+<span class="sd">            np: data array </span>
 
-<span class="sd">        @@todo buffer +=   </span>
-<span class="sd">        # this is probably horribly inefficient</span>
-<span class="sd">        # probably better: </span>
-<span class="sd">        - retbuf = np.array(dtype, ndata)</span>
-<span class="sd">        - retbuf[cursor].                </span>
+<span class="sd">        * TODO buffer +=</span>
+<span class="sd">   </span>
+<span class="sd">         this is probably horribly inefficient probably better::</span>
+
+<span class="sd">          retbuf = np.array(dtype, ndata)</span>
+<span class="sd">          retbuf[cursor].</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">maxbuf</span><span class="p">)</span>
         <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">ndata</span><span class="o">*</span><span class="n">data_size</span><span class="p">:</span>
@@ -169,6 +178,10 @@
     <span class="k">raise</span> <span class="n">ExitCommand</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="Statusmonitor"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400.Statusmonitor">[docs]</a><span class="k">class</span> <span class="nc">Statusmonitor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; monitors the status channel</span>
+<span class="sd">    </span>
+<span class="sd">    Efficient event-driven monitoring in a separate thread</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">st_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([0-9]) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9])+&quot;</span> <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -612,6 +625,11 @@
 
 
 <div class="viewcode-block" id="Acq2106"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400.Acq2106">[docs]</a><span class="k">class</span> <span class="nc">Acq2106</span><span class="p">(</span><span class="n">Acq400</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Acq2106 specialization of Acq400</span>
+
+<span class="sd">    Defines features specific to ACQ2106</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_uut</span><span class="p">,</span> <span class="n">monitor</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">has_mgtdram</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Acq2106 </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_uut</span><span class="p">))</span>
         <span class="n">Acq400</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_uut</span><span class="p">,</span> <span class="n">monitor</span><span class="p">)</span>
@@ -703,7 +721,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 1.2.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi/ 1.2.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
