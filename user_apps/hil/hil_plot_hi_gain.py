@@ -28,7 +28,7 @@ def run_target(uut, args):
             uut.run_oneshot()        
             print("read_chan %d" % (args.post*args.nchan))
             rdata = uut.read_chan(0, args.post*args.nchan)                        
-            if args.plot > 0 :
+            if args.plot > 0:
                 plt.cla()
                 title = "AI for shot %d %s" % (ii, "persistent plot" if args.plot > 1 else "")
                 print(title)
@@ -45,6 +45,8 @@ def run_target(uut, args):
                 else:
                     if work.in_bounds:
                         work.finished = True
+
+
                 chx = np.reshape(uut.scale_raw(rdata, volts=args.plot_volts), (args.post, args.nchan))
                 if args.plot_volts:
                     chv = np.array([ uut.chan2volts(ch+1, chx[:,ch]) for ch in range(0, args.nchan)])
@@ -69,7 +71,7 @@ def run_transfer_function(uut, args):
         print("Target set {}".format(t))
         args.set_volts = t
         w = run_target(uut, args)
-    tf.append(np.append([t], w.newset))
+        tf.append(np.append([t], w.newset)) # Maybe needs to be indented? Reason for only final line saved?
 
     np.savetxt("transfer_function.csv", np.array(tf), fmt="%6d", delimiter=',')
 
@@ -81,10 +83,10 @@ def run_shots(args):
         plt.ion()
 
     uut.s0.transient = 'POST=%d SOFT_TRIGGER=%d DEMUX=%d' % \
-        (args.post, 1 if args.trg == 'int' else 0, 1 if args.store==0 else 0) 
+        (args.post, 1 if args.trg == 'int' else 0, 1 if args.store == 0 else 0)
 
     for sx in uut.modules:
-        uut.modules[sx].trg = '1,1,1'  if args.trg == 'int' else '1,0,1'
+        uut.modules[sx].trg = '1,1,1' if args.trg == 'int' else '1,0,1'
 
     if args.transfer_function:
         run_transfer_function(uut, args)
