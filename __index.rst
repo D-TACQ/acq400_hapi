@@ -1,5 +1,5 @@
 .. user_apps/utils documentation master file, created by
-   sphinx-quickstart on Mon May 14 20:14:58 2018.
+   sphinx-quickstart on Mon May 14 21:31:33 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 

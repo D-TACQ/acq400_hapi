@@ -38,9 +38,43 @@
   <h1>Source code for acq2106_hts</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
 
-<span class="sd">&quot;&quot;&quot; acq2106_hts</span>
-<span class="sd">    control High Throughput Streaming on local SFP/AFHBA</span>
-<span class="sd">    replaces AFHBA404/scripts/hts-test-harness-*</span>
+<span class="sd">&quot;&quot;&quot; acq2106_hts High Throughput Streaming</span>
+
+<span class="sd">    - data on local SFP/AFHBA</span>
+<span class="sd">    - control on Ethernet</span>
+<span class="sd">    - replaces AFHBA404/scripts/hts-test-harness-*</span>
+
+<span class="sd">example usage::</span>
+
+<span class="sd">	./acq2106_hts.py --trg=notouch --secs=3600 acq2106_061</span>
+<span class="sd">	    # act on acq2106_061, run for 3600s</span>
+
+
+<span class="sd">usage::</span>
+
+<span class="sd">     acq2106_hts.py [-h] [--pre PRE] [--clk CLK] [--trg TRG] [--sim SIM]</span>
+<span class="sd">                      [--trace TRACE] [--post POST] [--secs SECS]</span>
+<span class="sd">                      [--spad SPAD] [--commsA COMMSA] [--commsB COMMSB]</span>
+<span class="sd">                      uut [uut ...]</span>
+
+<span class="sd">configure acq2106 High Throughput Stream</span>
+
+<span class="sd">positional arguments:</span>
+<span class="sd">  uut              uut</span>
+
+<span class="sd">optional arguments:</span>
+<span class="sd">  -h, --help       show this help message and exit</span>
+<span class="sd">  --pre PRE        pre-trigger samples</span>
+<span class="sd">  --clk CLK        int|ext|zclk|xclk,fpclk,SR,[FIN]</span>
+<span class="sd">  --trg TRG        int|ext,rising|falling</span>
+<span class="sd">  --sim SIM        nosim|s1[,s2,s3..] list of sites to run in simulate mode</span>
+<span class="sd">  --trace TRACE    1 : enable command tracing</span>
+<span class="sd">  --post POST      capture samples [default:0 inifinity]</span>
+<span class="sd">  --secs SECS      capture seconds [default:0 inifinity]</span>
+<span class="sd">  --spad SPAD      scratchpad, eg 1,16,0</span>
+<span class="sd">  --commsA COMMSA  custom list of sites for commsA</span>
+<span class="sd">  --commsB COMMSB  custom list of sites for commsB</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">sys</span>
