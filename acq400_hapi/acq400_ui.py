@@ -3,8 +3,10 @@ import argparse
 import acq400
 
 class Acq400UI:
+    """ Common UI features for consistent args handling across all apps
+    """
     @staticmethod
-    def exec_args_trg(uut, args, trg): 
+    def _exec_args_trg(uut, args, trg): 
         if trg == 'notouch':
             return
         (typ, edge) = ('int', 'rising')
@@ -23,7 +25,7 @@ class Acq400UI:
             uut.s1.event0 = "0,0,0"                    
         
     @staticmethod
-    def exec_args_clk(uut, clk):
+    def _exec_args_clk(uut, clk):
         c_args = clk.split(',')
         src = c_args[0]
         
@@ -44,12 +46,12 @@ class Acq400UI:
             uut.set_mb_clk(self, hz=_hz, src="xclk", fin=_fin)
     
     @staticmethod    
-    def set_simulate(uut, enable):
+    def _set_simulate(uut, enable):
         for s in uut.modules:
             uut.modules[s].simulate = '1' if enable else '0'
             
     @staticmethod
-    def exec_args_sim(uut, sim): 
+    def _exec_args_sim(uut, sim): 
         try:            
             sim_sites = [ int(s) for s in sim.split(',')]
             for site in uut.modules:
@@ -61,12 +63,18 @@ class Acq400UI:
     
         
     @staticmethod
-    def exec_args_trace(uut, trace):
+    def _exec_args_trace(uut, trace):
         for svn, svc in sorted(u.svc.items()):
             svc.trace = trace
             
     @staticmethod
     def add_args(parser, post=True):
+        """ generate standard args list
+
+        Args:
+             post: set False to disable createing the arg, becomes client app resposibility
+
+        """
         parser.add_argument('--pre', default=0, type=int, help='pre-trigger samples')
         if post:
             parser.add_argument('--post', default=100000, type=int, help='post-trigger samples')
@@ -77,15 +85,17 @@ class Acq400UI:
         
     @staticmethod   
     def exec_args(uut, args):
+        """ and execute all the args
+        """
         print("exec_args" )
         if args.trg:
-            Acq400UI.exec_args_trg(uut, args, args.trg)
+            Acq400UI._exec_args_trg(uut, args, args.trg)
         if args.clk:
-            Acq400UI.exec_args_clk(uut, args.clk)
+            Acq400UI._exec_args_clk(uut, args.clk)
         if args.sim:
-            Acq400UI.exec_args_sim(uut, args.sim)
+            Acq400UI._exec_args_sim(uut, args.sim)
         if args.trace:
-            Acq400UI.exec_args_trace(uut, args.trace)
+            Acq400UI._exec_args_trace(uut, args.trace)
             
     
         

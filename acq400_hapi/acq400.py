@@ -5,12 +5,16 @@ acq400.py interface to one acq400 appliance instance
 
 - enumerates all site services, available as uut.sX.knob
 - simple property interface allows natural "script-like" usage
- - eg
-   - uut1.s0.set_arm = 1
-  - equivalent to running this on a logged in shell session on the UUT:
-   - set.site1 set_arm=1
-  - monitors transient status on uut, provides blocking events
-  - read_channels() - reads all data from channel data service.
+ - eg::
+
+       uut1.s0.set_arm = 1
+
+ - equivalent to running this on a logged in shell session on the UUT::
+
+       set.site1 set_arm=1
+
+ - monitors transient status on uut, provides blocking events
+ - read_channels() - reads all data from channel data service.
   Created on Sun Jan  8 12:36:38 2017
 
   @author: pgm
@@ -90,6 +94,7 @@ class Channelclient(netclient.Netclient):
 
     Args:
         addr (str) : ip address or dns name
+
         ch (int) : channel number 1..N
 
     """    
@@ -102,17 +107,21 @@ class Channelclient(netclient.Netclient):
         """read ndata from channel data server, return as np array.
         Args:
             ndata (int): number of elements
+
             data_size : 2|4 short or int
+
             maxbuf=4096 : max bytes to read per packet
 
         Returns:
-            :np: data array 
+            np: data array 
 
-        @@todo buffer +=   
-        # this is probably horribly inefficient
-        # probably better: 
-        - retbuf = np.array(dtype, ndata)
-        - retbuf[cursor].                
+        * TODO buffer +=
+   
+         this is probably horribly inefficient probably better::
+
+          retbuf = np.array(dtype, ndata)
+          retbuf[cursor].
+
         """
         buffer = self.sock.recv(maxbuf)
         while len(buffer) < ndata*data_size:
@@ -131,6 +140,10 @@ def signal_handler(signal, frame):
     raise ExitCommand()
 
 class Statusmonitor:
+    """ monitors the status channel
+    
+    Efficient event-driven monitoring in a separate thread
+    """
     st_re = re.compile(r"([0-9]) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9])+" )
 
     def __repr__(self):
@@ -574,6 +587,11 @@ class Acq400:
 
 
 class Acq2106(Acq400):
+    """ Acq2106 specialization of Acq400
+
+    Defines features specific to ACQ2106
+    """
+
     def __init__(self, _uut, monitor=True, has_mgtdram=False):
         print("Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
