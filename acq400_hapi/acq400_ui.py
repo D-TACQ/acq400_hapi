@@ -5,6 +5,8 @@ import acq400
 class Acq400UI:
     @staticmethod
     def exec_args_trg(uut, args, trg): 
+        if trg == 'notouch':
+            return
         (typ, edge) = ('int', 'rising')
         try:
             (typ, edge) = trg.split(',')
@@ -13,12 +15,12 @@ class Acq400UI:
         
         triplet = "1,%d,%d" % (0 if typ == 'ext' else 1, 0 if edge == 'falling' else 1)
         
-        if args.pre == None or pre[0] != '0':
-            u.s1.trg = "1,1,1"
-            u.s1.event0 = triplet
+        if args.pre != 0:
+            uut.s1.trg = "1,1,1"
+            uut.s1.event0 = triplet
         else:
-            u.s1.trg = triplet
-            u.s1.event0 = "0,0,0"                    
+            uut.s1.trg = triplet
+            uut.s1.event0 = "0,0,0"                    
         
     @staticmethod
     def exec_args_clk(uut, clk):
@@ -64,7 +66,10 @@ class Acq400UI:
             svc.trace = trace
             
     @staticmethod
-    def add_args(parser):
+    def add_args(parser, post=True):
+        parser.add_argument('--pre', default=0, type=int, help='pre-trigger samples')
+        if post:
+            parser.add_argument('--post', default=100000, type=int, help='post-trigger samples')
         parser.add_argument('--clk', default=None, help='int|ext|zclk|xclk,fpclk,SR,[FIN]')
         parser.add_argument('--trg', default=None, help='int|ext,rising|falling')
         parser.add_argument('--sim', default=None, help='nosim|s1[,s2,s3..] list of sites to run in simulate mode')
@@ -72,14 +77,15 @@ class Acq400UI:
         
     @staticmethod   
     def exec_args(uut, args):
+        print("exec_args" )
         if args.trg:
-            exec_args_trg(uut, args.trg)
+            Acq400UI.exec_args_trg(uut, args, args.trg)
         if args.clk:
-            exec_args_clk(uut, args.clk)
+            Acq400UI.exec_args_clk(uut, args.clk)
         if args.sim:
-            exec_args_sim(uut, args.sim)
+            Acq400UI.exec_args_sim(uut, args.sim)
         if args.trace:
-            exec_args_trace(uut, args.trace)
+            Acq400UI.exec_args_trace(uut, args.trace)
             
     
         
