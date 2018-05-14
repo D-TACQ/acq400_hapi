@@ -1,4 +1,3 @@
-# DEPRECATED: please use https://github.com/d-tacq/acq400_hapi/
 # acq400_hapi: acq400 Host API
 
 python module to connect to remote hosts
