@@ -1,7 +1,19 @@
-acq400_hapi
-===========
+acq400
+======
 
 .. toctree::
    :maxdepth: 4
 
-   acq400_hapi
+   acq400_abort
+   acq400_caploop_rtrig
+   acq400_capture
+   acq400_checkramp
+   acq400_configure_transient
+   acq400_reboot
+   acq400_remote_script
+   acq400_stream
+   acq400_upload
+   delay_trigger_setup
+   hdmi_master_trg
+   make_clktrg_chain
+   set_burst

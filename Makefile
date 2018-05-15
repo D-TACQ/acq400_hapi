@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = acq400_hapi
+SPHINXPROJ    = user_appsacq400
 SOURCEDIR     = .
 BUILDDIR      = _build
 

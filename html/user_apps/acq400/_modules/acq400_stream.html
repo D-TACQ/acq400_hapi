@@ -44,31 +44,52 @@
 <span class="sd">The data that has been streamed is not demuxed and so if it is to be used then it has to be demuxed first.</span>
 <span class="sd">Something like:</span>
 
-<span class="sd">    - data = numpy.fromfile(&quot;data0.dat&quot;, dtype=&quot;&lt;datatype&gt;&quot;)</span>
-<span class="sd">    - plt.plot(data[::&lt;number of channels&gt;])</span>
-<span class="sd">    - plt.show()</span>
+<span class="sd">    &gt;&gt;&gt; data = numpy.fromfile(&quot;data0.dat&quot;, dtype=&quot;&lt;datatype&gt;&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; plt.plot(data[::&lt;number of channels&gt;])</span>
+<span class="sd">    &gt;&gt;&gt; plt.show()</span>
+
+<span class="sd">usage::</span>
+<span class="sd">    acq400_stream.py [-h] [--filesize FILESIZE] [--totaldata TOTALDATA]</span>
+<span class="sd">                        [--root ROOT] [--runtime RUNTIME] [--verbose VERBOSE]</span>
+<span class="sd">                        uuts [uuts ...]</span>
+
+<span class="sd">acq400 stream</span>
+
+<span class="sd">positional arguments:</span>
+<span class="sd">  uuts                  uuts</span>
+
+<span class="sd">optional arguments:</span>
+<span class="sd">  -h, --help            show this help message and exit</span>
+<span class="sd">  --filesize FILESIZE   Size of file to store in KB. If filesize &gt; total data</span>
+<span class="sd">                        then no data will be stored.</span>
+<span class="sd">  --totaldata TOTALDATA</span>
+<span class="sd">                        Total amount of data to store in KB</span>
+<span class="sd">  --root ROOT           Location to save files</span>
+<span class="sd">  --runtime RUNTIME     How long to stream data for</span>
+<span class="sd">  --verbose VERBOSE     Prints status messages as the stream is running</span>
+
 
 <span class="sd">Some usage examples are included below:</span>
 
 <span class="sd">1: Acquire files of size 1024kb up to a total of 4096kb:</span>
 
 
-<span class="sd">    python acq400_stream.py --verbose 1 --filesize 1024 --totaldata 4096 --runtime 1000 &lt;module ip or name&gt;</span>
+<span class="sd">    &gt;&gt;&gt; python acq400_stream.py --verbose 1 --filesize 1024 --totaldata 4096 --runtime 1000 &lt;module ip or name&gt;</span>
 
 <span class="sd">2: Acquire a single file of size 4096kb:</span>
 
 
-<span class="sd">    python acq400_stream.py --verbose 1 --filesize 4096 --totaldata 4096 --runtime 1000 &lt;module ip or name&gt;</span>
+<span class="sd">    &gt;&gt;&gt; python acq400_stream.py --verbose 1 --filesize 4096 --totaldata 4096 --runtime 1000 &lt;module ip or name&gt;</span>
 
 <span class="sd">3: Acquire files of size 1024 for 10 seconds:</span>
 
 
-<span class="sd">    python acq400_stream.py --verbose 1 --filesize 1024 --totaldata 999999 --runtime 10 &lt;module ip or name&gt;</span>
+<span class="sd">    &gt;&gt;&gt; python acq400_stream.py --verbose 1 --filesize 1024 --totaldata 999999 --runtime 10 &lt;module ip or name&gt;</span>
 
 <span class="sd">4: Acquire data for 5 seconds and write the data all to a single file:</span>
 
 
-<span class="sd">    python acq400_stream.py --verbose 1 --filesize 999999 --totaldata 999999 --runtime 5 &lt;module ip or name&gt;</span>
+<span class="sd">    &gt;&gt;&gt; python acq400_stream.py --verbose 1 --filesize 999999 --totaldata 999999 --runtime 5 &lt;module ip or name&gt;</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 
@@ -80,21 +101,6 @@
 
 
 <div class="viewcode-block" id="make_data_dir"><a class="viewcode-back" href="../acq400_stream.html#acq400_stream.make_data_dir">[docs]</a><span class="k">def</span> <span class="nf">make_data_dir</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Creates the directory where data will be stored.</span>
-
-<span class="sd">    This is where an extra description of the function goes.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        directory (str): The name of the directory where data is stored</span>
-<span class="sd">        verbose (bool): Whether to print a debug statement if the method fails</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        None: Returns None.</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        OSError: If directory already exists then the dir can&#39;t be created.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -104,18 +110,6 @@
 
 
 <div class="viewcode-block" id="run_stream"><a class="viewcode-back" href="../acq400_stream.html#acq400_stream.run_stream">[docs]</a><span class="k">def</span> <span class="nf">run_stream</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Begins the stream of data from port 4210. Returns None.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        args (list): Arguments provided to the script by the user</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        None: Returns None.</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        NameError: Raises NameError when user wants to write all data to single file.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">data</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="n">num</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">uuts</span> <span class="o">=</span> <span class="p">[</span><span class="n">acq400_hapi</span><span class="o">.</span><span class="n">Acq400</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">uuts</span><span class="p">]</span>
