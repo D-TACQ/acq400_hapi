@@ -6,31 +6,52 @@ This is a script intended to connect to a UUT and stream data from port 4210.
 The data that has been streamed is not demuxed and so if it is to be used then it has to be demuxed first.
 Something like:
 
-    - data = numpy.fromfile("data0.dat", dtype="<datatype>")
-    - plt.plot(data[::<number of channels>])
-    - plt.show()
+    >>> data = numpy.fromfile("data0.dat", dtype="<datatype>")
+    >>> plt.plot(data[::<number of channels>])
+    >>> plt.show()
+
+usage::
+    acq400_stream.py [-h] [--filesize FILESIZE] [--totaldata TOTALDATA]
+                        [--root ROOT] [--runtime RUNTIME] [--verbose VERBOSE]
+                        uuts [uuts ...]
+
+acq400 stream
+
+positional arguments:
+  uuts                  uuts
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --filesize FILESIZE   Size of file to store in KB. If filesize > total data
+                        then no data will be stored.
+  --totaldata TOTALDATA
+                        Total amount of data to store in KB
+  --root ROOT           Location to save files
+  --runtime RUNTIME     How long to stream data for
+  --verbose VERBOSE     Prints status messages as the stream is running
+
 
 Some usage examples are included below:
 
 1: Acquire files of size 1024kb up to a total of 4096kb:
 
 
-    python acq400_stream.py --verbose 1 --filesize 1024 --totaldata 4096 --runtime 1000 <module ip or name>
+    >>> python acq400_stream.py --verbose 1 --filesize 1024 --totaldata 4096 --runtime 1000 <module ip or name>
 
 2: Acquire a single file of size 4096kb:
 
 
-    python acq400_stream.py --verbose 1 --filesize 4096 --totaldata 4096 --runtime 1000 <module ip or name>
+    >>> python acq400_stream.py --verbose 1 --filesize 4096 --totaldata 4096 --runtime 1000 <module ip or name>
 
 3: Acquire files of size 1024 for 10 seconds:
 
 
-    python acq400_stream.py --verbose 1 --filesize 1024 --totaldata 999999 --runtime 10 <module ip or name>
+    >>> python acq400_stream.py --verbose 1 --filesize 1024 --totaldata 999999 --runtime 10 <module ip or name>
 
 4: Acquire data for 5 seconds and write the data all to a single file:
 
 
-    python acq400_stream.py --verbose 1 --filesize 999999 --totaldata 999999 --runtime 5 <module ip or name>
+    >>> python acq400_stream.py --verbose 1 --filesize 999999 --totaldata 999999 --runtime 5 <module ip or name>
 
 """
 
@@ -42,21 +63,6 @@ import argparse
 
 
 def make_data_dir(directory, verbose):
-    """Creates the directory where data will be stored.
-
-    This is where an extra description of the function goes.
-
-    Args:
-        directory (str): The name of the directory where data is stored
-        verbose (bool): Whether to print a debug statement if the method fails
-
-    Returns:
-        None: Returns None.
-
-    Raises:
-        OSError: If directory already exists then the dir can't be created.
-
-    """
     try:
         os.mkdir(directory)
     except Exception:
@@ -66,18 +72,6 @@ def make_data_dir(directory, verbose):
 
 
 def run_stream(args):
-    """Begins the stream of data from port 4210. Returns None.
-
-    Args:
-        args (list): Arguments provided to the script by the user
-
-    Returns:
-        None: Returns None.
-
-    Raises:
-        NameError: Raises NameError when user wants to write all data to single file.
-
-    """
     data = ""
     num = 0
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
