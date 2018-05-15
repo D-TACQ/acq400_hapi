@@ -256,6 +256,7 @@ class Acq400:
 
     Args:
         _uut (str) : ip-address or dns name
+
         monitor=True (bool) : set false to stub monitor, 
           useful for tracing on a second connection to an active system.
     """     
@@ -272,9 +273,14 @@ class Acq400:
             self.awg_site = site
         self.__mod_count += 1
 
-# factory .. create them in parallel
+
     @classmethod
     def create_uuts(cls, uut_names):
+        """ create_uuts():  factory .. create them in parallel
+
+        *** Experimental Do Not Use ***
+
+        """
         uuts = []
         uut_threads = {}
         for uname in uut_names:
@@ -370,8 +376,13 @@ class Acq400:
 
     def chan2volts(self, chan, raw):
         """ chan2volts(self, chan, raw) returns calibrated volts for channel
-            chan: 1..nchan
-            raw:  raw bits to convert.
+
+            Args:
+
+               chan: 1..nchan
+
+               raw:  raw bits to convert.
+
         """
         if len(self.cal_eslo) == 1:
             self.fetch_all_calibration()

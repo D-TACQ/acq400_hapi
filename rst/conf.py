@@ -14,12 +14,12 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('/home/peter/PROJECTS/ACQ400/HAPI/acq400_hapi/acq400_hapi/'))
+sys.path.insert(0, os.path.abspath('/home/peter/PROJECTS/ACQ400/HAPI/acq400_hapi/acq400_hapi'))
 
 
 # -- Project information -----------------------------------------------------
 
-project = u'acq400_hapi/'
+project = u'acq400_hapi'
 copyright = u'2018, D-TACQ'
 author = u'D-TACQ'
 
@@ -130,7 +130,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'acq400_hapi.tex', u'acq400\\_hapi/ Documentation',
+    (master_doc, 'acq400_hapi.tex', u'acq400\\_hapi Documentation',
      u'D-TACQ', 'manual'),
 ]
 
@@ -140,7 +140,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'acq400_hapi', u'acq400_hapi/ Documentation',
+    (master_doc, 'acq400_hapi', u'acq400_hapi Documentation',
      [author], 1)
 ]
 
@@ -151,7 +151,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'acq400_hapi', u'acq400_hapi/ Documentation',
+    (master_doc, 'acq400_hapi', u'acq400_hapi Documentation',
      author, 'acq400_hapi', 'One line description of project.',
      'Miscellaneous'),
 ]
