@@ -1,0 +1,1021 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>acq400_hapi package &#8212; acq400_hapi 1.2.6 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="acq400_hapi" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="acq400_hapi"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">acq400_hapi 1.2.6 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="acq400-hapi-package">
+<h1>acq400_hapi package<a class="headerlink" href="#acq400-hapi-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-acq400_hapi.acq400">
+<span id="acq400-hapi-acq400-module"></span><h2>acq400_hapi.acq400 module<a class="headerlink" href="#module-acq400_hapi.acq400" title="Permalink to this headline">¶</a></h2>
+<p>acq400.py interface to one acq400 appliance instance</p>
+<ul class="simple">
+<li>enumerates all site services, available as uut.sX.knob</li>
+<li>simple property interface allows natural “script-like” usage</li>
+</ul>
+<blockquote>
+<div><ul>
+<li><p class="first">eg:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uut1</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">set_arm</span> <span class="o">=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">equivalent to running this on a logged in shell session on the UUT:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span><span class="o">.</span><span class="n">site1</span> <span class="n">set_arm</span><span class="o">=</span><span class="mi">1</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">monitors transient status on uut, provides blocking events</p>
+</li>
+<li><p class="first">read_channels() - reads all data from channel data service.</p>
+</li>
+</ul>
+<blockquote>
+<div><p>Created on Sun Jan  8 12:36:38 2017</p>
+<p>&#64;author: pgm</p>
+</div></blockquote>
+</div></blockquote>
+<dl class="class">
+<dt id="acq400_hapi.acq400.Acq2106">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">Acq2106</code><span class="sig-paren">(</span><em>_uut</em>, <em>monitor=True</em>, <em>has_mgtdram=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq2106"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq2106" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acq400_hapi.acq400.Acq400" title="acq400_hapi.acq400.Acq400"><code class="xref py py-class docutils literal notranslate"><span class="pre">acq400_hapi.acq400.Acq400</span></code></a></p>
+<p>Acq2106 specialization of Acq400</p>
+<p>Defines features specific to ACQ2106</p>
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq2106.run_mgt">
+<code class="descname">run_mgt</code><span class="sig-paren">(</span><em>_filter=&lt;acq400_hapi.acq400.NullFilter instance at 0x3e99638&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq2106.run_mgt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq2106.run_mgt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq2106.set_master_trg">
+<code class="descname">set_master_trg</code><span class="sig-paren">(</span><em>trg</em>, <em>edge='rising'</em>, <em>enabled=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq2106.set_master_trg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq2106.set_master_trg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq2106.set_mb_clk">
+<code class="descname">set_mb_clk</code><span class="sig-paren">(</span><em>hz=4000000</em>, <em>src='zclk'</em>, <em>fin=1000000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq2106.set_mb_clk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq2106.set_mb_clk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq2106.set_sync_routing_slave">
+<code class="descname">set_sync_routing_slave</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq2106.set_sync_routing_slave"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq2106.set_sync_routing_slave" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.acq400.Acq400">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">Acq400</code><span class="sig-paren">(</span><em>_uut</em>, <em>monitor=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400" title="Permalink to this definition">¶</a></dt>
+<dd><p>host-side proxy for Acq400 uut.</p>
+<p>discovers and maintains all site servers
+maintains a monitor thread on the monitor port
+handles multiple channel post shot upload</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">_uut (str) : ip-address or dns name</p>
+<dl class="last docutils">
+<dt>monitor=True (bool) <span class="classifier-delimiter">:</span> <span class="classifier">set false to stub monitor, </span></dt>
+<dd>useful for tracing on a second connection to an active system.</dd>
+</dl>
+</dd>
+</dl>
+<dl class="exception">
+<dt id="acq400_hapi.acq400.Acq400.AwgBusyError">
+<em class="property">exception </em><code class="descname">AwgBusyError</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.AwgBusyError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.AwgBusyError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">exceptions.Exception</span></code></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.chan2volts">
+<code class="descname">chan2volts</code><span class="sig-paren">(</span><em>chan</em>, <em>raw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.chan2volts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.chan2volts" title="Permalink to this definition">¶</a></dt>
+<dd><p>chan2volts(self, chan, raw) returns calibrated volts for channel</p>
+<p>Args:</p>
+<blockquote>
+<div><p>chan: 1..nchan</p>
+<p>raw:  raw bits to convert.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.clear_counters">
+<code class="descname">clear_counters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.clear_counters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.clear_counters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="acq400_hapi.acq400.Acq400.create_uuts">
+<em class="property">classmethod </em><code class="descname">create_uuts</code><span class="sig-paren">(</span><em>uut_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.create_uuts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.create_uuts" title="Permalink to this definition">¶</a></dt>
+<dd><p>create_uuts():  factory .. create them in parallel</p>
+<p><strong>* Experimental Do Not Use *</strong></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.demux_status">
+<code class="descname">demux_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.demux_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.demux_status" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.elapsed_samples">
+<code class="descname">elapsed_samples</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.elapsed_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.elapsed_samples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.fetch_all_calibration">
+<code class="descname">fetch_all_calibration</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.fetch_all_calibration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.fetch_all_calibration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.get_aggregator_sites">
+<code class="descname">get_aggregator_sites</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.get_aggregator_sites"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.get_aggregator_sites" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.init_site_client">
+<code class="descname">init_site_client</code><span class="sig-paren">(</span><em>site</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.init_site_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.init_site_client" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.load_awg">
+<code class="descname">load_awg</code><span class="sig-paren">(</span><em>data</em>, <em>autorearm=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.load_awg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.load_awg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.load_gpg">
+<code class="descname">load_gpg</code><span class="sig-paren">(</span><em>stl</em>, <em>trace=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.load_gpg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.load_gpg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.load_segments">
+<code class="descname">load_segments</code><span class="sig-paren">(</span><em>segs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.load_segments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.load_segments" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.Acq400.mod_count">
+<code class="descname">mod_count</code><a class="headerlink" href="#acq400_hapi.acq400.Acq400.mod_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.nchan">
+<code class="descname">nchan</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.nchan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.nchan" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.post_samples">
+<code class="descname">post_samples</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.post_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.post_samples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.pre_samples">
+<code class="descname">pre_samples</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.pre_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.pre_samples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.read_chan">
+<code class="descname">read_chan</code><span class="sig-paren">(</span><em>chan</em>, <em>nsam=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.read_chan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.read_chan" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.read_channels">
+<code class="descname">read_channels</code><span class="sig-paren">(</span><em>channels=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.read_channels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.read_channels" title="Permalink to this definition">¶</a></dt>
+<dd><p>read all channels post shot data.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>chx (list) of np arrays.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.run_livetop">
+<code class="descname">run_livetop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.run_livetop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.run_livetop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.run_oneshot">
+<code class="descname">run_oneshot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.run_oneshot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.run_oneshot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.run_service">
+<code class="descname">run_service</code><span class="sig-paren">(</span><em>port</em>, <em>eof='EOF'</em>, <em>prompt='&gt;'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.run_service"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.run_service" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.samples">
+<code class="descname">samples</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.samples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.scale_raw">
+<code class="descname">scale_raw</code><span class="sig-paren">(</span><em>raw</em>, <em>volts=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.scale_raw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.scale_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.set_mb_clk">
+<code class="descname">set_mb_clk</code><span class="sig-paren">(</span><em>hz=4000000</em>, <em>src='zclk'</em>, <em>fin=1000000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.set_mb_clk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.set_mb_clk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.set_sync_routing">
+<code class="descname">set_sync_routing</code><span class="sig-paren">(</span><em>role</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.set_sync_routing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.set_sync_routing" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.set_sync_routing_master">
+<code class="descname">set_sync_routing_master</code><span class="sig-paren">(</span><em>clk_dx='d1'</em>, <em>trg_dx='d0'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.set_sync_routing_master"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.set_sync_routing_master" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.set_sync_routing_slave">
+<code class="descname">set_sync_routing_slave</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.set_sync_routing_slave"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.set_sync_routing_slave" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.show_segments">
+<code class="descname">show_segments</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.show_segments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.show_segments" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Acq400.state">
+<code class="descname">state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Acq400.state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Acq400.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.acq400.AcqPorts">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">AcqPorts</code><a class="reference internal" href="_modules/acq400_hapi/acq400.html#AcqPorts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts" title="Permalink to this definition">¶</a></dt>
+<dd><p>server port constants</p>
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.AWG_AUTOREARM">
+<code class="descname">AWG_AUTOREARM</code><em class="property"> = 54202</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.AWG_AUTOREARM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.AWG_ONCE">
+<code class="descname">AWG_ONCE</code><em class="property"> = 54201</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.AWG_ONCE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.BOLO8_CAL">
+<code class="descname">BOLO8_CAL</code><em class="property"> = 45072</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.BOLO8_CAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.DATA0">
+<code class="descname">DATA0</code><em class="property"> = 53000</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.DATA0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.GPGDUMP">
+<code class="descname">GPGDUMP</code><em class="property"> = 4543</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.GPGDUMP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.GPGSTL">
+<code class="descname">GPGSTL</code><em class="property"> = 4541</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.GPGSTL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.LIVETOP">
+<code class="descname">LIVETOP</code><em class="property"> = 53998</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.LIVETOP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.MGTDRAM">
+<code class="descname">MGTDRAM</code><em class="property"> = 53990</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.MGTDRAM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.ONESHOT">
+<code class="descname">ONESHOT</code><em class="property"> = 53999</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.ONESHOT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.SEGSR">
+<code class="descname">SEGSR</code><em class="property"> = 4251</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.SEGSR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.SEGSW">
+<code class="descname">SEGSW</code><em class="property"> = 4250</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.SEGSW" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.SITE0">
+<code class="descname">SITE0</code><em class="property"> = 4220</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.SITE0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.STREAM">
+<code class="descname">STREAM</code><em class="property"> = 4210</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.STREAM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.AcqPorts.TSTAT">
+<code class="descname">TSTAT</code><em class="property"> = 2235</em><a class="headerlink" href="#acq400_hapi.acq400.AcqPorts.TSTAT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.acq400.Channelclient">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">Channelclient</code><span class="sig-paren">(</span><em>addr</em>, <em>ch</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Channelclient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Channelclient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acq400_hapi.netclient.Netclient" title="acq400_hapi.netclient.Netclient"><code class="xref py py-class docutils literal notranslate"><span class="pre">acq400_hapi.netclient.Netclient</span></code></a></p>
+<p>handles post shot data for one channel.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">addr (str) : ip address or dns name</p>
+<p class="last">ch (int) : channel number 1..N</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="acq400_hapi.acq400.Channelclient.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>ndata</em>, <em>data_size=2</em>, <em>maxbuf=4194304</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Channelclient.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Channelclient.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>read ndata from channel data server, return as np array.
+Args:</p>
+<blockquote>
+<div><p>ndata (int): number of elements</p>
+<p>data_size : 2|4 short or int</p>
+<p>maxbuf=4096 : max bytes to read per packet</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>np: data array</dd>
+</dl>
+<ul class="simple">
+<li>TODO buffer +=</li>
+</ul>
+<blockquote>
+<div><p>this is probably horribly inefficient probably better:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">retbuf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">ndata</span><span class="p">)</span>
+<span class="n">retbuf</span><span class="p">[</span><span class="n">cursor</span><span class="p">]</span><span class="o">.</span>
+</pre></div>
+</div>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="acq400_hapi.acq400.ExitCommand">
+<em class="property">exception </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">ExitCommand</code><a class="reference internal" href="_modules/acq400_hapi/acq400.html#ExitCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.ExitCommand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">exceptions.Exception</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.acq400.NullFilter">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">NullFilter</code><a class="reference internal" href="_modules/acq400_hapi/acq400.html#NullFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.NullFilter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.acq400.ProcessMonitor">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">ProcessMonitor</code><span class="sig-paren">(</span><em>_uut</em>, <em>_filter</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#ProcessMonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.ProcessMonitor" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="acq400_hapi.acq400.ProcessMonitor.st_monitor">
+<code class="descname">st_monitor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#ProcessMonitor.st_monitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.ProcessMonitor.st_monitor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.ProcessMonitor.st_re">
+<code class="descname">st_re</code><em class="property"> = &lt;_sre.SRE_Pattern object at 0x3e409c0&gt;</em><a class="headerlink" href="#acq400_hapi.acq400.ProcessMonitor.st_re" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.acq400.SF">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">SF</code><a class="reference internal" href="_modules/acq400_hapi/acq400.html#SF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.SF" title="Permalink to this definition">¶</a></dt>
+<dd><p>state constants</p>
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.SF.DEMUX">
+<code class="descname">DEMUX</code><em class="property"> = 5</em><a class="headerlink" href="#acq400_hapi.acq400.SF.DEMUX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.SF.ELAPSED">
+<code class="descname">ELAPSED</code><em class="property"> = 3</em><a class="headerlink" href="#acq400_hapi.acq400.SF.ELAPSED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.SF.POST">
+<code class="descname">POST</code><em class="property"> = 2</em><a class="headerlink" href="#acq400_hapi.acq400.SF.POST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.SF.PRE">
+<code class="descname">PRE</code><em class="property"> = 1</em><a class="headerlink" href="#acq400_hapi.acq400.SF.PRE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.SF.STATE">
+<code class="descname">STATE</code><em class="property"> = 0</em><a class="headerlink" href="#acq400_hapi.acq400.SF.STATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.acq400.STATE">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">STATE</code><a class="reference internal" href="_modules/acq400_hapi/acq400.html#STATE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.STATE" title="Permalink to this definition">¶</a></dt>
+<dd><p>transient states</p>
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.STATE.ARM">
+<code class="descname">ARM</code><em class="property"> = 1</em><a class="headerlink" href="#acq400_hapi.acq400.STATE.ARM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.STATE.CLEANUP">
+<code class="descname">CLEANUP</code><em class="property"> = 5</em><a class="headerlink" href="#acq400_hapi.acq400.STATE.CLEANUP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.STATE.IDLE">
+<code class="descname">IDLE</code><em class="property"> = 0</em><a class="headerlink" href="#acq400_hapi.acq400.STATE.IDLE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.STATE.POPROCESS">
+<code class="descname">POPROCESS</code><em class="property"> = 4</em><a class="headerlink" href="#acq400_hapi.acq400.STATE.POPROCESS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.STATE.RUNPOST">
+<code class="descname">RUNPOST</code><em class="property"> = 3</em><a class="headerlink" href="#acq400_hapi.acq400.STATE.RUNPOST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.STATE.RUNPRE">
+<code class="descname">RUNPRE</code><em class="property"> = 2</em><a class="headerlink" href="#acq400_hapi.acq400.STATE.RUNPRE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="acq400_hapi.acq400.STATE.str">
+<em class="property">static </em><code class="descname">str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#STATE.str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.STATE.str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.acq400.Statusmonitor">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">Statusmonitor</code><span class="sig-paren">(</span><em>_uut</em>, <em>_status</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Statusmonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>monitors the status channel</p>
+<p>Efficient event-driven monitoring in a separate thread</p>
+<dl class="method">
+<dt id="acq400_hapi.acq400.Statusmonitor.get_state">
+<code class="descname">get_state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Statusmonitor.get_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor.get_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Statusmonitor.st_monitor">
+<code class="descname">st_monitor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Statusmonitor.st_monitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor.st_monitor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.Statusmonitor.st_re">
+<code class="descname">st_re</code><em class="property"> = &lt;_sre.SRE_Pattern object at 0x3e7e6b0&gt;</em><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor.st_re" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.acq400.Statusmonitor.trace">
+<code class="descname">trace</code><em class="property"> = 0</em><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor.trace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Statusmonitor.wait_armed">
+<code class="descname">wait_armed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Statusmonitor.wait_armed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor.wait_armed" title="Permalink to this definition">¶</a></dt>
+<dd><p>blocks until uut is ARMED</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Statusmonitor.wait_event">
+<code class="descname">wait_event</code><span class="sig-paren">(</span><em>ev</em>, <em>descr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Statusmonitor.wait_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor.wait_event" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.acq400.Statusmonitor.wait_stopped">
+<code class="descname">wait_stopped</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#Statusmonitor.wait_stopped"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.Statusmonitor.wait_stopped" title="Permalink to this definition">¶</a></dt>
+<dd><p>blocks until uut is STOPPED</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.acq400.StreamClient">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400.</code><code class="descname">StreamClient</code><span class="sig-paren">(</span><em>addr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#StreamClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.StreamClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acq400_hapi.netclient.Netclient" title="acq400_hapi.netclient.Netclient"><code class="xref py py-class docutils literal notranslate"><span class="pre">acq400_hapi.netclient.Netclient</span></code></a></p>
+<p>handles live streaming data</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="acq400_hapi.acq400.run_unit_test">
+<code class="descclassname">acq400_hapi.acq400.</code><code class="descname">run_unit_test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#run_unit_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.run_unit_test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq400_hapi.acq400.signal_handler">
+<code class="descclassname">acq400_hapi.acq400.</code><code class="descname">signal_handler</code><span class="sig-paren">(</span><em>signal</em>, <em>frame</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400.html#signal_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400.signal_handler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-acq400_hapi.acq400_ui">
+<span id="acq400-hapi-acq400-ui-module"></span><h2>acq400_hapi.acq400_ui module<a class="headerlink" href="#module-acq400_hapi.acq400_ui" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="acq400_hapi.acq400_ui.Acq400UI">
+<em class="property">class </em><code class="descclassname">acq400_hapi.acq400_ui.</code><code class="descname">Acq400UI</code><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Common UI features for consistent args handling across all apps</p>
+<dl class="staticmethod">
+<dt id="acq400_hapi.acq400_ui.Acq400UI.add_args">
+<em class="property">static </em><code class="descname">add_args</code><span class="sig-paren">(</span><em>post=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI.add_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI.add_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate standard args list</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>post: set False to disable createing the arg, becomes client app resposibility</dd>
+</dl>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="acq400_hapi.acq400_ui.Acq400UI.exec_args">
+<em class="property">static </em><code class="descname">exec_args</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/acq400_ui.html#Acq400UI.exec_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.acq400_ui.Acq400UI.exec_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>and execute all the args</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-acq400_hapi.awg_data">
+<span id="acq400-hapi-awg-data-module"></span><h2>acq400_hapi.awg_data module<a class="headerlink" href="#module-acq400_hapi.awg_data" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="acq400_hapi.awg_data.AllFullScale">
+<em class="property">class </em><code class="descclassname">acq400_hapi.awg_data.</code><code class="descname">AllFullScale</code><span class="sig-paren">(</span><em>uut</em>, <em>nchan</em>, <em>nsam</em>, <em>run_forever=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#AllFullScale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.AllFullScale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acq400_hapi.awg_data.SinGen" title="acq400_hapi.awg_data.SinGen"><code class="xref py py-class docutils literal notranslate"><span class="pre">acq400_hapi.awg_data.SinGen</span></code></a></p>
+<dl class="method">
+<dt id="acq400_hapi.awg_data.AllFullScale.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>autorearm=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#AllFullScale.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.AllFullScale.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.awg_data.AwgDefaults">
+<em class="property">class </em><code class="descclassname">acq400_hapi.awg_data.</code><code class="descname">AwgDefaults</code><span class="sig-paren">(</span><em>uut_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#AwgDefaults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.AwgDefaults" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="acq400_hapi.awg_data.AwgDefaults.read_defaults">
+<code class="descname">read_defaults</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#AwgDefaults.read_defaults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.AwgDefaults.read_defaults" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.awg_data.AwgDefaults.store_defaults">
+<code class="descname">store_defaults</code><span class="sig-paren">(</span><em>current</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#AwgDefaults.store_defaults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.AwgDefaults.store_defaults" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.awg_data.Pulse">
+<em class="property">class </em><code class="descclassname">acq400_hapi.awg_data.</code><code class="descname">Pulse</code><span class="sig-paren">(</span><em>uut</em>, <em>nchan</em>, <em>nsam</em>, <em>args=(1000</em>, <em>10)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#Pulse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.Pulse" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="acq400_hapi.awg_data.Pulse.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#Pulse.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.Pulse.generate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.awg_data.Pulse.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>autorearm=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#Pulse.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.Pulse.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.awg_data.RainbowGen">
+<em class="property">class </em><code class="descclassname">acq400_hapi.awg_data.</code><code class="descname">RainbowGen</code><span class="sig-paren">(</span><em>uut</em>, <em>nchan</em>, <em>nsam</em>, <em>run_forever=False</em>, <em>ao0=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#RainbowGen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.RainbowGen" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="acq400_hapi.awg_data.RainbowGen.NCYCLES">
+<code class="descname">NCYCLES</code><em class="property"> = 5</em><a class="headerlink" href="#acq400_hapi.awg_data.RainbowGen.NCYCLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.awg_data.RainbowGen.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>autorearm=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#RainbowGen.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.RainbowGen.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.awg_data.RainbowGen.offset">
+<code class="descname">offset</code><span class="sig-paren">(</span><em>ch</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#RainbowGen.offset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.RainbowGen.offset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.awg_data.RainbowGen.rainbow">
+<code class="descname">rainbow</code><span class="sig-paren">(</span><em>ch</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#RainbowGen.rainbow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.RainbowGen.rainbow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.awg_data.RainbowGen.sin">
+<code class="descname">sin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#RainbowGen.sin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.RainbowGen.sin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.awg_data.RainbowGen.sinc">
+<code class="descname">sinc</code><span class="sig-paren">(</span><em>ch</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#RainbowGen.sinc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.RainbowGen.sinc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.awg_data.RunsFiles">
+<em class="property">class </em><code class="descclassname">acq400_hapi.awg_data.</code><code class="descname">RunsFiles</code><span class="sig-paren">(</span><em>uut</em>, <em>files</em>, <em>run_forever=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#RunsFiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.RunsFiles" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="acq400_hapi.awg_data.RunsFiles.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>autorearm=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#RunsFiles.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.RunsFiles.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.awg_data.SinGen">
+<em class="property">class </em><code class="descclassname">acq400_hapi.awg_data.</code><code class="descname">SinGen</code><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#SinGen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.SinGen" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="acq400_hapi.awg_data.SinGen.NCYCLES">
+<code class="descname">NCYCLES</code><em class="property"> = 5</em><a class="headerlink" href="#acq400_hapi.awg_data.SinGen.NCYCLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.awg_data.SinGen.sin">
+<code class="descname">sin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/awg_data.html#SinGen.sin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.awg_data.SinGen.sin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-acq400_hapi.cleanup">
+<span id="acq400-hapi-cleanup-module"></span><h2>acq400_hapi.cleanup module<a class="headerlink" href="#module-acq400_hapi.cleanup" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="acq400_hapi.cleanup.ExitCommand">
+<em class="property">exception </em><code class="descclassname">acq400_hapi.cleanup.</code><code class="descname">ExitCommand</code><a class="reference internal" href="_modules/acq400_hapi/cleanup.html#ExitCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.cleanup.ExitCommand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">exceptions.Exception</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="acq400_hapi.cleanup.init">
+<code class="descclassname">acq400_hapi.cleanup.</code><code class="descname">init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/cleanup.html#init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.cleanup.init" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq400_hapi.cleanup.signal_handler">
+<code class="descclassname">acq400_hapi.cleanup.</code><code class="descname">signal_handler</code><span class="sig-paren">(</span><em>signal</em>, <em>frame</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/cleanup.html#signal_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.cleanup.signal_handler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq400_hapi.cleanup.sleep">
+<code class="descclassname">acq400_hapi.cleanup.</code><code class="descname">sleep</code><span class="sig-paren">(</span><em>secs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/cleanup.html#sleep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.cleanup.sleep" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-acq400_hapi.netclient">
+<span id="acq400-hapi-netclient-module"></span><h2>acq400_hapi.netclient module<a class="headerlink" href="#module-acq400_hapi.netclient" title="Permalink to this headline">¶</a></h2>
+<p>netclient.py interface to client tcp socket with 
+- sr() send/receive a command
+Created on Sun Jan  8 12:36:38 2017</p>
+<p>&#64;author: pgm</p>
+<dl class="class">
+<dt id="acq400_hapi.netclient.Logclient">
+<em class="property">class </em><code class="descclassname">acq400_hapi.netclient.</code><code class="descname">Logclient</code><span class="sig-paren">(</span><em>addr</em>, <em>port</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Logclient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Logclient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acq400_hapi.netclient.Netclient" title="acq400_hapi.netclient.Netclient"><code class="xref py py-class docutils literal notranslate"><span class="pre">acq400_hapi.netclient.Netclient</span></code></a></p>
+<p>Netclient optimised for logging, line by line</p>
+<dl class="method">
+<dt id="acq400_hapi.netclient.Logclient.poll">
+<code class="descname">poll</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Logclient.poll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Logclient.poll" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.netclient.Netclient">
+<em class="property">class </em><code class="descclassname">acq400_hapi.netclient.</code><code class="descname">Netclient</code><span class="sig-paren">(</span><em>addr</em>, <em>port</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Netclient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Netclient" title="Permalink to this definition">¶</a></dt>
+<dd><p>connects and holds open a socket to defined port.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>addr (str) : ip-address or dns name on network
+port (int) : server port number.</dd>
+</dl>
+<dl class="method">
+<dt id="acq400_hapi.netclient.Netclient.addr">
+<code class="descname">addr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Netclient.addr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Netclient.addr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.netclient.Netclient.port">
+<code class="descname">port</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Netclient.port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Netclient.port" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.netclient.Netclient.receive_message">
+<code class="descname">receive_message</code><span class="sig-paren">(</span><em>termex</em>, <em>maxlen=4096</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Netclient.receive_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Netclient.receive_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the information from the socket line at a time.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>termex (str): regex defines line terminator
+maxlen (int): max read size</dd>
+<dt>Returns:</dt>
+<dd>string representing message</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.netclient.Netclient.trace">
+<code class="descname">trace</code><em class="property"> = 0</em><a class="headerlink" href="#acq400_hapi.netclient.Netclient.trace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.netclient.Siteclient">
+<em class="property">class </em><code class="descclassname">acq400_hapi.netclient.</code><code class="descname">Siteclient</code><span class="sig-paren">(</span><em>addr</em>, <em>port</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Siteclient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Siteclient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acq400_hapi.netclient.Netclient" title="acq400_hapi.netclient.Netclient"><code class="xref py py-class docutils literal notranslate"><span class="pre">acq400_hapi.netclient.Netclient</span></code></a></p>
+<p>Netclient optimised for site service, may be multi-line response.</p>
+<p>Autodetects all knobs and holds them as properties for simple script-like
+set/get syntax.</p>
+<dl class="method">
+<dt id="acq400_hapi.netclient.Siteclient.build_knobs">
+<code class="descname">build_knobs</code><span class="sig-paren">(</span><em>knobstr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Siteclient.build_knobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.build_knobs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.netclient.Siteclient.get_knob">
+<code class="descname">get_knob</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Siteclient.get_knob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.get_knob" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.netclient.Siteclient.help">
+<code class="descname">help</code><span class="sig-paren">(</span><em>regex='.*'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Siteclient.help"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.help" title="Permalink to this definition">¶</a></dt>
+<dd><p>list available knobs, optionally filtered by regex.</p>
+<p>eg</p>
+<ul class="simple">
+<li>help()  : list all</li>
+<li>help(“SIG) : list all knobs with SIG</li>
+<li>help(“SIG*FREQ”) list all knobs SIG*FREQ</li>
+</ul>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.netclient.Siteclient.knobs">
+<code class="descname">knobs</code><em class="property"> = {}</em><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.knobs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.netclient.Siteclient.pat">
+<code class="descname">pat</code><em class="property"> = &lt;_sre.SRE_Pattern object at 0x3861ad0&gt;</em><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.pat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.netclient.Siteclient.prevent_autocreate">
+<code class="descname">prevent_autocreate</code><em class="property"> = False</em><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.prevent_autocreate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.netclient.Siteclient.set_knob">
+<code class="descname">set_knob</code><span class="sig-paren">(</span><em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Siteclient.set_knob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.set_knob" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.netclient.Siteclient.sr">
+<code class="descname">sr</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#Siteclient.sr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.sr" title="Permalink to this definition">¶</a></dt>
+<dd><p>send a command and receive a reply</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>message (str) : command (query) to send</dd>
+<dt>Returns:</dt>
+<dd>rx (str): response string</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="acq400_hapi.netclient.Siteclient.trace">
+<code class="descname">trace</code><em class="property"> = 0</em><a class="headerlink" href="#acq400_hapi.netclient.Siteclient.trace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="acq400_hapi.netclient.run_unit_test">
+<code class="descclassname">acq400_hapi.netclient.</code><code class="descname">run_unit_test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/netclient.html#run_unit_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.netclient.run_unit_test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-acq400_hapi.rad_dds">
+<span id="acq400-hapi-rad-dds-module"></span><h2>acq400_hapi.rad_dds module<a class="headerlink" href="#module-acq400_hapi.rad_dds" title="Permalink to this headline">¶</a></h2>
+<p>raddds.py specializes Acq400 for RADCELF triple DDS device</p>
+<ul class="simple">
+<li>enumerates all site services, available as uut.sX.knob</li>
+<li>simply property interface allows natural “script-like” usage</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>eg</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>uut1.s0.set_arm = 1</li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li>compared to</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>set.site1 set_arm=1</li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+<ul class="simple">
+<li>monitors transient status on uut, provides blocking events</li>
+<li>read_channels() - reads all data from channel data service.</li>
+</ul>
+<p>Created on Sun Jan  8 12:36:38 2017</p>
+<p>&#64;author: pgm</p>
+<dl class="class">
+<dt id="acq400_hapi.rad_dds.RAD3DDS">
+<em class="property">class </em><code class="descclassname">acq400_hapi.rad_dds.</code><code class="descname">RAD3DDS</code><span class="sig-paren">(</span><em>_uut</em>, <em>monitor=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/rad_dds.html#RAD3DDS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.rad_dds.RAD3DDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acq400_hapi.acq400.Acq400" title="acq400_hapi.acq400.Acq400"><code class="xref py py-class docutils literal notranslate"><span class="pre">acq400_hapi.acq400.Acq400</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-acq400_hapi.shotcontrol">
+<span id="acq400-hapi-shotcontrol-module"></span><h2>acq400_hapi.shotcontrol module<a class="headerlink" href="#module-acq400_hapi.shotcontrol" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="acq400_hapi.shotcontrol.ActionScript">
+<em class="property">class </em><code class="descclassname">acq400_hapi.shotcontrol.</code><code class="descname">ActionScript</code><span class="sig-paren">(</span><em>script_and_args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ActionScript"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ActionScript" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="acq400_hapi.shotcontrol.ShotController">
+<em class="property">class </em><code class="descclassname">acq400_hapi.shotcontrol.</code><code class="descname">ShotController</code><span class="sig-paren">(</span><em>_uuts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ShotController"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ShotController" title="Permalink to this definition">¶</a></dt>
+<dd><p>ShotController handles shot synchronization for a set of uuts</p>
+<dl class="method">
+<dt id="acq400_hapi.shotcontrol.ShotController.abort_shot">
+<code class="descname">abort_shot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ShotController.abort_shot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ShotController.abort_shot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.shotcontrol.ShotController.arm_shot">
+<code class="descname">arm_shot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ShotController.arm_shot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ShotController.arm_shot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.shotcontrol.ShotController.map_channels">
+<code class="descname">map_channels</code><span class="sig-paren">(</span><em>channels</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ShotController.map_channels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ShotController.map_channels" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.shotcontrol.ShotController.on_shot_complete">
+<code class="descname">on_shot_complete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ShotController.on_shot_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ShotController.on_shot_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>runs on completion, expect subclass override.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.shotcontrol.ShotController.prep_shot">
+<code class="descname">prep_shot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ShotController.prep_shot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ShotController.prep_shot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.shotcontrol.ShotController.read_channels">
+<code class="descname">read_channels</code><span class="sig-paren">(</span><em>channels=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ShotController.read_channels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ShotController.read_channels" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.shotcontrol.ShotController.run_shot">
+<code class="descname">run_shot</code><span class="sig-paren">(</span><em>soft_trigger=False</em>, <em>acq1014_ext_trigger=0</em>, <em>remote_trigger=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ShotController.run_shot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ShotController.run_shot" title="Permalink to this definition">¶</a></dt>
+<dd><p>run_shot() control an entire shot from client.</p>
+<p>for more control, use the individual methods above.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>soft_trigger=False (bool) : trigger when armed</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.shotcontrol.ShotController.wait_armed">
+<code class="descname">wait_armed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ShotController.wait_armed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ShotController.wait_armed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="acq400_hapi.shotcontrol.ShotController.wait_complete">
+<code class="descname">wait_complete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#ShotController.wait_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.ShotController.wait_complete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="acq400_hapi.shotcontrol.intSI">
+<code class="descclassname">acq400_hapi.shotcontrol.</code><code class="descname">intSI</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_hapi/shotcontrol.html#intSI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_hapi.shotcontrol.intSI" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-acq400_hapi">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-acq400_hapi" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">acq400_hapi package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-acq400_hapi.acq400">acq400_hapi.acq400 module</a></li>
+<li><a class="reference internal" href="#module-acq400_hapi.acq400_ui">acq400_hapi.acq400_ui module</a></li>
+<li><a class="reference internal" href="#module-acq400_hapi.awg_data">acq400_hapi.awg_data module</a></li>
+<li><a class="reference internal" href="#module-acq400_hapi.cleanup">acq400_hapi.cleanup module</a></li>
+<li><a class="reference internal" href="#module-acq400_hapi.netclient">acq400_hapi.netclient module</a></li>
+<li><a class="reference internal" href="#module-acq400_hapi.rad_dds">acq400_hapi.rad_dds module</a></li>
+<li><a class="reference internal" href="#module-acq400_hapi.shotcontrol">acq400_hapi.shotcontrol module</a></li>
+<li><a class="reference internal" href="#module-acq400_hapi">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">acq400_hapi</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/acq400_hapi.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="acq400_hapi"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">acq400_hapi 1.2.6 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, D-TACQ.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>

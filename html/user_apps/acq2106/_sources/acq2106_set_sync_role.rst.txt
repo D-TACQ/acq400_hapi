@@ -1,0 +1,7 @@
+acq2106\_set\_sync\_role module
+===============================
+
+.. automodule:: acq2106_set_sync_role
+    :members:
+    :undoc-members:
+    :show-inheritance:
