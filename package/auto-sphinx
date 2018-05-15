@@ -42,6 +42,7 @@ mkdir -p html/$dir
 rm -rf ./rst
 mkdir rst
 
+sed -i -e '19 i\smartquotes = False' ./conf.py
 sed -i -e 's/alabaster/default/g' ./conf.py
 sed -i -e 's/# import os/import os/g' ./conf.py
 sed -i -e 's/# import sys/import sys/g' ./conf.py
