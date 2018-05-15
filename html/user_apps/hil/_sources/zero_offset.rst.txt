@@ -1,7 +1,0 @@
-zero\_offset module
-===================
-
-.. automodule:: zero_offset
-    :members:
-    :undoc-members:
-    :show-inheritance:

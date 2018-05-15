@@ -1,7 +1,0 @@
-acq1001\_capplot module
-=======================
-
-.. automodule:: acq1001_capplot
-    :members:
-    :undoc-members:
-    :show-inheritance:

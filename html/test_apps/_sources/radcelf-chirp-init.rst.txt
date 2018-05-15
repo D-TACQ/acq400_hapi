@@ -1,7 +1,0 @@
-radcelf\-chirp\-init module
-===========================
-
-.. automodule:: radcelf-chirp-init
-    :members:
-    :undoc-members:
-    :show-inheritance:
