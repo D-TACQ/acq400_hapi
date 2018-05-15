@@ -1,8 +1,42 @@
 #!/usr/bin/env python
 
-""" acq2106_hts
-    control High Throughput Streaming on local SFP/AFHBA
-    replaces AFHBA404/scripts/hts-test-harness-*
+""" acq2106_hts High Throughput Streaming
+
+    - data on local SFP/AFHBA
+    - control on Ethernet
+    - replaces AFHBA404/scripts/hts-test-harness-*
+
+example usage::
+
+	./acq2106_hts.py --trg=notouch --secs=3600 acq2106_061
+	    # act on acq2106_061, run for 3600s
+
+
+usage::
+
+     acq2106_hts.py [-h] [--pre PRE] [--clk CLK] [--trg TRG] [--sim SIM]
+                      [--trace TRACE] [--post POST] [--secs SECS]
+                      [--spad SPAD] [--commsA COMMSA] [--commsB COMMSB]
+                      uut [uut ...]
+
+configure acq2106 High Throughput Stream
+
+positional arguments:
+  uut              uut
+
+optional arguments:
+  -h, --help       show this help message and exit
+  --pre PRE        pre-trigger samples
+  --clk CLK        int|ext|zclk|xclk,fpclk,SR,[FIN]
+  --trg TRG        int|ext,rising|falling
+  --sim SIM        nosim|s1[,s2,s3..] list of sites to run in simulate mode
+  --trace TRACE    1 : enable command tracing
+  --post POST      capture samples [default:0 inifinity]
+  --secs SECS      capture seconds [default:0 inifinity]
+  --spad SPAD      scratchpad, eg 1,16,0
+  --commsA COMMSA  custom list of sites for commsA
+  --commsB COMMSB  custom list of sites for commsB
+
 """
 
 import sys
@@ -61,7 +95,7 @@ def run_shot(args):
 
 def run_main():    
     parser = argparse.ArgumentParser(description='configure acq2106 High Throughput Stream')    
-    acq400_hapi.Acq400UI.add_args(parser)
+    acq400_hapi.Acq400UI.add_args(parser, post=False)
     parser.add_argument('--post', default=0, help="capture samples [default:0 inifinity]")
     parser.add_argument('--secs', default=999999, help="capture seconds [default:0 inifinity]")
     parser.add_argument('--spad', default=None, help="scratchpad, eg 1,16,0")

@@ -2,17 +2,22 @@
 # -*- coding: utf-8 -*-
 """
 acq400.py interface to one acq400 appliance instance
+
 - enumerates all site services, available as uut.sX.knob
 - simple property interface allows natural "script-like" usage
- - eg
-  - uut1.s0.set_arm = 1
- - equivalent to running this on a logged in shell session on the UUT:
-  - set.site1 set_arm=1
-- monitors transient status on uut, provides blocking events
-- read_channels() - reads all data from channel data service.
-Created on Sun Jan  8 12:36:38 2017
+ - eg::
 
-@author: pgm
+       uut1.s0.set_arm = 1
+
+ - equivalent to running this on a logged in shell session on the UUT::
+
+       set.site1 set_arm=1
+
+ - monitors transient status on uut, provides blocking events
+ - read_channels() - reads all data from channel data service.
+  Created on Sun Jan  8 12:36:38 2017
+
+  @author: pgm
 """
 
 import threading
@@ -89,6 +94,7 @@ class Channelclient(netclient.Netclient):
 
     Args:
         addr (str) : ip address or dns name
+
         ch (int) : channel number 1..N
 
     """    
@@ -101,17 +107,21 @@ class Channelclient(netclient.Netclient):
         """read ndata from channel data server, return as np array.
         Args:
             ndata (int): number of elements
+
             data_size : 2|4 short or int
+
             maxbuf=4096 : max bytes to read per packet
 
         Returns:
-            :np: data array 
+            np: data array 
 
-        @@todo buffer +=   
-        # this is probably horribly inefficient
-        # probably better: 
-        - retbuf = np.array(dtype, ndata)
-        - retbuf[cursor].                
+        * TODO buffer +=
+   
+         this is probably horribly inefficient probably better::
+
+          retbuf = np.array(dtype, ndata)
+          retbuf[cursor].
+
         """
         buffer = self.sock.recv(maxbuf)
         while len(buffer) < ndata*data_size:
@@ -130,6 +140,10 @@ def signal_handler(signal, frame):
     raise ExitCommand()
 
 class Statusmonitor:
+    """ monitors the status channel
+    
+    Efficient event-driven monitoring in a separate thread
+    """
     st_re = re.compile(r"([0-9]) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9])+" )
 
     def __repr__(self):
@@ -242,6 +256,7 @@ class Acq400:
 
     Args:
         _uut (str) : ip-address or dns name
+
         monitor=True (bool) : set false to stub monitor, 
           useful for tracing on a second connection to an active system.
     """     
@@ -258,9 +273,14 @@ class Acq400:
             self.awg_site = site
         self.__mod_count += 1
 
-# factory .. create them in parallel
+
     @classmethod
     def create_uuts(cls, uut_names):
+        """ create_uuts():  factory .. create them in parallel
+
+        *** Experimental Do Not Use ***
+
+        """
         uuts = []
         uut_threads = {}
         for uname in uut_names:
@@ -356,8 +376,13 @@ class Acq400:
 
     def chan2volts(self, chan, raw):
         """ chan2volts(self, chan, raw) returns calibrated volts for channel
-            chan: 1..nchan
-            raw:  raw bits to convert.
+
+            Args:
+
+               chan: 1..nchan
+
+               raw:  raw bits to convert.
+
         """
         if len(self.cal_eslo) == 1:
             self.fetch_all_calibration()
@@ -573,6 +598,11 @@ class Acq400:
 
 
 class Acq2106(Acq400):
+    """ Acq2106 specialization of Acq400
+
+    Defines features specific to ACQ2106
+    """
+
     def __init__(self, _uut, monitor=True, has_mgtdram=False):
         print("Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
