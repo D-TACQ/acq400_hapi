@@ -1,10 +1,10 @@
-.. user_apps/acq400 documentation master file, created by
-   sphinx-quickstart on Tue May 15 11:51:23 2018.
+.. user_apps/utils documentation master file, created by
+   sphinx-quickstart on Fri May 18 14:01:19 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to user_apps/acq400's documentation!
-============================================
+Welcome to user_apps/utils's documentation!
+===========================================
 
 .. toctree::
    :maxdepth: 2
