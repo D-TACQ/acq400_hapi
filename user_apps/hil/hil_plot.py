@@ -1,9 +1,48 @@
 #!/usr/bin/env python
-# Hardware In Loop : load AO data,run a shot, get AI data, repeat.
-# upload to AWG and optionally run a capture.
-# data for upload is either File (host-local data file) or Rainbow, a test pattern.
-# assumes that clocking has been pre-assigned.
 
+""" hil_plot Hardware In Loop : load AO data,run a shot, get AI data, plot, repeat.
+
+    - upload to AWG and optionally run a capture.
+    - data for upload is either File (host-local data file) or Rainbow, a test pattern.
+    - assumes that clocking has been pre-assigned.
+
+usage:: 
+
+    hil_plot.py [-h] [--autorearm AUTOREARM] [--is_debug IS_DEBUG]
+                   [--files FILES] [--pulse PULSE] [--loop LOOP]
+                   [--range RANGE] [--store STORE] [--nchan NCHAN]
+                   [--aochan AOCHAN] [--awglen AWGLEN] [--post POST]
+                   [--trg TRG] [--plot PLOT] [--plot_volts PLOT_VOLTS]
+                   [--wait_user WAIT_USER]
+                   uuts
+
+acq1001 HIL demo
+
+positional arguments:
+  uuts                  uut
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --autorearm AUTOREARM     load the waveform once, repeat many
+  --is_debug IS_DEBUG       set debug level
+  --files FILES         list of files to load
+  --pulse PULSE         interval,duration,scan: + : each channel in turn
+  --loop LOOP           loop count
+  --range RANGE         set range on ADC
+  --store STORE         save data when true
+  --nchan NCHAN         channel count for pattern
+  --aochan AOCHAN       AO channel count, if different to AI (it happens)
+  --awglen AWGLEN       samples in AWG waveform
+  --post POST           samples in ADC waveform
+  --trg TRG             trg "int|ext rising|falling"
+  --plot PLOT           --plot 1 : plot data, 2: persistent
+  --plot_volts PLOT_VOLTS
+                        1: plot values in volts
+  --wait_user WAIT_USER
+                        1: force user input each shot
+
+
+"""
 import sys
 import acq400_hapi
 from acq400_hapi import awg_data
