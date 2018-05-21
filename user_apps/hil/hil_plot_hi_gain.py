@@ -1,8 +1,51 @@
 #!/usr/bin/env python
-# Hardware In Loop : Hi Gain. Trim AO's until measured loopback is zero 
-# upload to AWG and optionally run a capture.
-# data for upload is either File (host-local data file) or Rainbow, a test pattern.
-# assumes that clocking has been pre-assigned.
+
+""" hil_plot_hi_gain Use ADC readback to adjust DAC output
+
+    - Hardware In Loop : Hi Gain. Trim AO's until measured loopback is zero 
+    - upload to AWG and optionally run a capture.
+    - data for upload is either File (host-local data file) or Rainbow, a test pattern, 
+         assumes that clocking has been pre-assigned.
+
+usage::
+
+    hil_plot_hi_gain.py [-h] [--gain GAIN] [--files FILES] [--loop LOOP]
+                           [--store STORE] [--nchan NCHAN] [--awglen AWGLEN]
+                           [--ao0 AO0] [--passvalue PASSVALUE]
+                           [--aochan AOCHAN] [--post POST] [--trg TRG]
+                           [--plot PLOT] [--wait_user WAIT_USER]
+                           [--set_volts SET_VOLTS]
+                           [--transfer_function TRANSFER_FUNCTION]
+                           uuts
+
+acq1001 HIL zero offset demo
+
+positional arguments:
+  uuts                  uut
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --gain GAIN           set gain constant
+  --files FILES         list of files to load
+  --loop LOOP           loop count
+  --store STORE         save data when true
+  --nchan NCHAN         channel count for pattern
+  --awglen AWGLEN       samples in AWG waveform
+  --ao0 AO0             first ao in set
+  --passvalue PASSVALUE
+                        acceptable error
+  --aochan AOCHAN       AO channel count, if different to AI (it happens)
+  --post POST           samples in ADC waveform
+  --trg TRG             trg "int|ext rising|falling"
+  --plot PLOT           --plot 1 : plot data, 2: persistent
+  --wait_user WAIT_USER
+                        1: force user input each shot
+  --set_volts SET_VOLTS
+                        list of voltages to converge to
+  --transfer_function TRANSFER_FUNCTION
+                        generate transfer fun, step size in V
+
+"""
 
 import sys
 import acq400_hapi
