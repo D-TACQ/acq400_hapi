@@ -5,7 +5,7 @@
 import sys
 import datetime
 import acq400_hapi
-import awg_data
+from acq400_hapi import awg_data
 import argparse
 from subprocess import call
 import re
