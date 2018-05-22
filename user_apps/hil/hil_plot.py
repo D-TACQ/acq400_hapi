@@ -88,24 +88,24 @@ def run_shots(args):
         # compensate gain ONLY Rainbow Case
         if args.range != "default":
             gain = 10/float(args.range.strip('V'))
-            print(("setting work.gain {}".format(gain)))
+            print("setting work.gain {}".format(gain))
             work.gain = gain
 
     # Set range knobs, valid ALL data sources.
     if args.range != "default":
         for sx in uut.modules:
-            print(("setting GAIN_ALL {}".format(args.range)))
+            print("setting GAIN_ALL {}".format(args.range))
             uut.modules[sx].GAIN_ALL = args.range
             break
 
-    print(("args.autorearm {}".format(args.autorearm)))
+    print("args.autorearm {}".format(args.autorearm))
 
     loader = work.load(autorearm = args.autorearm)
     for ii in range(0, args.loop):
-        print(("shot: %d" % (ii)))
+        print("shot: %d" % (ii))
         if ii == 0 or not args.autorearm:
             f = next(loader)
-            print(("Loaded %s" % (f)))
+            print("Loaded %s" % (f))
         else:
             if args.autorearm and ii+1 == args.loop:
             # on the final run, drop out of autorearm mode. 
@@ -117,7 +117,7 @@ def run_shots(args):
                         
         uut.run_oneshot()
 
-        print(("read_chan %d" % (args.post*args.nchan)))
+        print("read_chan %d" % (args.post*args.nchan))
         rdata = uut.read_chan(0, args.post*args.nchan)
         if args.store:
             pltsup.store_file(ii, rdata, args.nchan, args.post)
@@ -137,7 +137,7 @@ class ExecFile:
         self.fname = fname
     def __call__(self):
         args = [self.fname, pltsup.current_file]
-        print(("subprocess.call({})".format(args)))
+        print("subprocess.call({})".format(args))
         subprocess.call(args, stdout=sys.stdout, shell=False)
 
 class Integer:

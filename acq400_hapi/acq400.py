@@ -157,26 +157,26 @@ class Statusmonitor:
                 statuss = match.groups()
                 status1 = [int(x) for x in statuss]
                 if self.trace:
-                    print(("%s <%s" % (repr(self), status1)))
+                    print("%s <%s" % (repr(self), status1))
                 if self.status != None:
 #                    print("Status check %s %s" % (self.status0[0], status[0]))
                     if self.status[SF.STATE] != 0 and status1[SF.STATE] == 0:
-                        print(("%s STOPPED!" % (self.uut)))
+                        print("%s STOPPED!" % (self.uut))
                         self.stopped.set()
                         self.armed.clear()
 #                print("status[0] is %d" % (status[0]))
                     if status1[SF.STATE] == 1:
-                        print(("%s ARMED!" % (self.uut)))
+                        print("%s ARMED!" % (self.uut))
                         self.armed.set()
                         self.stopped.clear()
                     if self.status[SF.STATE] == 0 and status1[SF.STATE] > 1:
-                        print(("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status[0], status1[0])))                        
+                        print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status[0], status1[0]))
                         self.quit_requested = True
                         os.kill(self.main_pid, signal.SIGINT)
                         sys.exit(1)                                            
                 self.status = status1
             elif self.trace > 1:
-                print(("%s <%s>" % (repr(self), st)))
+                print("%s <%s>" % (repr(self), st))
 
     def get_state(self):
         return self.status[SF.STATE]
@@ -185,7 +185,7 @@ class Statusmonitor:
     #       print("wait_%s 02 %d" % (descr, ev.is_set()))
         while ev.wait(0.1) == False:
             if self.quit_requested:
-                print(("QUIT REQUEST call exit %s" % (descr)))
+                print("QUIT REQUEST call exit %s" % (descr))
                 sys.exit(1)
 
 #        print("wait_%s 88 %d" % (descr, ev.is_set()))
@@ -431,15 +431,15 @@ class Acq400:
         chx = []
         for ch in channels:
             if self.trace:
-                print(("%s CH%02d start.." % (self.uut, ch)))
+                print("%s CH%02d start.." % (self.uut, ch))
                 start = timeit.default_timer()
 
             chx.append(self.read_chan(ch))
 
             if self.trace:
                 tt = timeit.default_timer() - start
-                print(("%s CH%02d complete.. %.3f s %.2f MB/s" % 
-                      (self.uut, ch, tt, len(chx[-1])*2/1000000/tt)))
+                print("%s CH%02d complete.. %.3f s %.2f MB/s" %
+                      (self.uut, ch, tt, len(chx[-1])*2/1000000/tt))
 
         return chx
 
@@ -514,7 +514,7 @@ class Acq400:
             lines = stl.split("\n")
             for ll in lines:
                 if trace:
-                    print(("> {}".format(ll)))
+                    print("> {}".format(ll))
                 if len(ll) < 2:
                     if trace:
                         print("skip blank")
@@ -526,12 +526,12 @@ class Acq400:
                 nc.sock.send((ll+"\n").encode())
                 rx = nc.sock.recv(4096) 
                 if trace:
-                    print(("< {}".format(rx)))
+                    print("< {}".format(rx))
             nc.sock.send("EOF\n".encode())
             nc.sock.shutdown(socket.SHUT_WR)
             rx = nc.sock.recv(4096) 
             if trace:
-                print(("< {}".format(rx)))            
+                print("< {}".format(rx))
 
         with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
             while True:
@@ -572,7 +572,7 @@ class Acq400:
                 rx = nc.receive_message(self.NL, 256)
                 txt += rx
                 txt += "\n"
-                print(("{}{}".format(prompt, rx)))
+                print("{}{}".format(prompt, rx))
                 if rx.startswith(eof):
                     break
             nc.sock.shutdown(socket.SHUT_RDWR)
@@ -584,7 +584,7 @@ class Acq400:
         with netclient.Netclient(self.uut, AcqPorts.ONESHOT) as nc:
             while True:
                 rx = nc.receive_message(self.NL, 256)
-                print(("{}> {}".format(self.s0.HN, rx)))
+                print("{}> {}".format(self.s0.HN, rx))
                 if rx.startswith("SHOT_COMPLETE"):
                     break
             nc.sock.shutdown(socket.SHUT_RDWR)
@@ -592,7 +592,7 @@ class Acq400:
 
     def run_livetop(self):
         with netclient.Netclient(self.uut, AcqPorts.LIVETOP) as nc:
-            print((nc.receive_message(self.NL, 256)))             
+            print(nc.receive_message(self.NL, 256))
             nc.sock.shutdown(socket.SHUT_RDWR)
             nc.sock.close()
 
@@ -604,7 +604,7 @@ class Acq2106(Acq400):
     """
 
     def __init__(self, _uut, monitor=True, has_mgtdram=False):
-        print(("Acq2106 %s" % (_uut)))
+        print("Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         site = 13
         for sm in [ 'cA', 'cB']:                
@@ -646,17 +646,17 @@ def run_unit_test():
     if len(sys.argv) > 1:
         SERVER_ADDRESS = sys.argv[1]
 
-    print(("create Acq400 %s" %(SERVER_ADDRESS)))
+    print("create Acq400 %s" %(SERVER_ADDRESS))
     uut = Acq400(SERVER_ADDRESS)
-    print(("MODEL %s" %(uut.s0.MODEL)))
-    print(("SITELIST %s" %(uut.s0.SITELIST)))
-    print(("MODEL %s" %(uut.s1.MODEL)))
+    print("MODEL %s" %(uut.s0.MODEL))
+    print("SITELIST %s" %(uut.s0.SITELIST))
+    print("MODEL %s" %(uut.s1.MODEL))
 
-    print(("Module count %d" % (uut.mod_count)))
-    print(("POST SAMPLES %d" % uut.post_samples()))
+    print("Module count %d" % (uut.mod_count))
+    print("POST SAMPLES %d" % uut.post_samples())
 
     for sx in sorted(uut.svc):
-        print(("SITE:%s MODEL:%s" % (sx, uut.svc[sx].sr("MODEL")) ))
+        print("SITE:%s MODEL:%s" % (sx, uut.svc[sx].sr("MODEL")))
 
 
 if __name__ == '__main__':

@@ -86,7 +86,7 @@ def verify_chirp(uut, test):
     
     while retry < 10:
         if valid_chirp(freq(uut.s0.SIG_TRG_S2_FREQ)) and valid_chirp(freq(uut.s0.SIG_TRG_S3_FREQ)):
-            print(("test:%d  PASS %s %s" % (test, uut.s0.SIG_TRG_S2_FREQ, uut.s0.SIG_TRG_S3_FREQ)))
+            print("test:%d  PASS %s %s" % (test, uut.s0.SIG_TRG_S2_FREQ, uut.s0.SIG_TRG_S3_FREQ))
             return True
         else:
             time.sleep(1)

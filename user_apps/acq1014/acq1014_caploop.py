@@ -52,7 +52,7 @@ def run_loop(args):
                 for n in nsam:
                     if n != args.nsam:
                         err = True
-                print(("Shot %s read_channels nsam:%d %d %s" % (uuts[0].s1.shot, nsam[0], nsam[1], 'Fail' if err else 'Pass')))
+                print("Shot %s read_channels nsam:%d %d %s" % (uuts[0].s1.shot, nsam[0], nsam[1], 'Fail' if err else 'Pass'))
                 if err:
                     break
 

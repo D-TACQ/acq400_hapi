@@ -101,14 +101,14 @@ def run_shot(uut, args):
     uut.run_mgt(UploadFilter())
     ttime = datetime.datetime.now()-t1
     mb = args.captureblocks*4
-    print(("upload {} MB done in {} seconds, {} MB/s\n".\
-          format(mb, ttime, mb/ttime.seconds)))
+    print("upload {} MB done in {} seconds, {} MB/s\n".\
+          format(mb, ttime, mb/ttime.seconds))
     if args.validate != 'no':
         cmd = "{} {}".format(args.validate, uut.uut)
         print("run \"{}\"".format(cmd))
         rc = call(cmd, shell=True, stdin=0, stdout=1, stderr=2)
         if rc != 0:
-            print(("ERROR called process {} returned {}".format(args.validate, rc)))
+            print("ERROR called process {} returned {}".format(args.validate, rc))
             exit(1)
 
 def run_shots(args):
@@ -121,10 +121,10 @@ def run_shots(args):
     try:
         for ii in range(0, args.loop):
             t1 = datetime.datetime.now()
-            print(("shot: {} {}".format(ii, t1.strftime("%Y%m%d %H:%M:%S"))))
+            print("shot: {} {}".format(ii, t1.strftime("%Y%m%d %H:%M:%S")))
             run_shot(uut, args)
             t2 = datetime.datetime.now()
-            print(("done in {} seconds\n\n".format((t2-t1).seconds)))
+            print("done in {} seconds\n\n".format((t2-t1).seconds))
 
             if args.wait_user:
                 input("hit return to continue")
