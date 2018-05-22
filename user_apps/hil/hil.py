@@ -13,7 +13,7 @@ from builtins import input
 
 def store_file(it, rdata, nchan, nsam):
     fn = 'DATA/ai%04d.dat' % (it)
-    print(("store_file {}".format(fn)))
+    print("store_file {}".format(fn))
     
     with open(fn, 'wb') as f:
         f.write(rdata)
@@ -39,13 +39,13 @@ def run_shots(args):
     store = store_file
     loader = work.load()
     for ii in range(0, args.loop):
-        print(("shot: %d" % (ii)))
+        print("shot: %d" % (ii))
         f = next(loader)
-        print(("Loaded %s" % (f)))
+        print("Loaded %s" % (f))
         uut.run_oneshot()
 
         if args.store:
-            print(("read_chan %d" % (args.post*args.nchan)))
+            print("read_chan %d" % (args.post*args.nchan))
             rdata = uut.read_chan(0, args.post*args.nchan)            
             store(ii, rdata, args.nchan, args.post)
         if args.wait_user:

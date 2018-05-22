@@ -58,7 +58,7 @@ def config_shot(uut, args):
 
 def hexdump_string(uut, chan, sites, spad):
     nspad = 0 if spad == None else int(spad.split(',')[1])
-    print(("hexdump_string {} {} {}".format(chan, sites, nspad)))
+    print("hexdump_string {} {} {}".format(chan, sites, nspad))
     dumpstr = ("hexdump -ve '\"%10_ad,\" ")
     for svc in ( uut.svc['s{}'.format(s)] for s in sites.split(',')):
         d32 = svc.data32 == '1'
