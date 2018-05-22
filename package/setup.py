@@ -46,6 +46,6 @@ setup(
 
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),  
 
-    install_requires=['numpy'],
+    install_requires=['numpy', 'future'],
 
 )

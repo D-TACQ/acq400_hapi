@@ -31,7 +31,7 @@ def run_shots(args):
     for uut in uuts:
         uut.s1.shot = 0
         if hasattr(uut.s0, 'TIM_CTRL_LOCK'):
-            print "LOCKDOWN {}".format(uut)
+            print("LOCKDOWN {}".format(uut))
             uut.s0.TIM_CTRL_LOCK = 1
 
     shot_controller = acq400_hapi.ShotController(uuts)

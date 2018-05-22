@@ -49,6 +49,8 @@ from acq400_hapi import awg_data
 import argparse
 from subprocess import call
 import re
+from future import builtins
+from builtins import input
 
 import os
 
@@ -103,7 +105,7 @@ def run_shot(uut, args):
           format(mb, ttime, mb/ttime.seconds))
     if args.validate != 'no':
         cmd = "{} {}".format(args.validate, uut.uut)
-        print "run \"{}\"".format(cmd)
+        print("run \"{}\"".format(cmd))
         rc = call(cmd, shell=True, stdin=0, stdout=1, stderr=2)
         if rc != 0:
             print("ERROR called process {} returned {}".format(args.validate, rc))
@@ -125,7 +127,7 @@ def run_shots(args):
             print("done in {} seconds\n\n".format((t2-t1).seconds))
 
             if args.wait_user:
-                raw_input("hit return to continue")
+                input("hit return to continue")
     except KeyboardInterrupt:
         print("Keyboard Interrupt, take it all down NOW")
         os._exit(1)

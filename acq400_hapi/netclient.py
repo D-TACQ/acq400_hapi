@@ -13,6 +13,9 @@ import socket
 import re
 import sys
 import os
+from future import builtins
+from builtins import input
+
 
 
 
@@ -33,11 +36,11 @@ class Netclient:
             
         Returns:
             string representing message        
-        """        
+        """
 
         match = termex.search(self.buffer)
         while match == None:
-            self.buffer += self.sock.recv(maxlen)        
+            self.buffer += self.sock.recv(maxlen)
             match = termex.search(self.buffer)
             
         rc = self.buffer[:match.start(1)]            
@@ -220,7 +223,7 @@ def run_unit_test():
  
     while True:
         try:
-            data = raw_input("Enter some data: ")
+            data = input("Enter some data: ")
         except EOFError:
             print("\nOkay. Leaving. Bye")
             break

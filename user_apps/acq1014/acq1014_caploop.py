@@ -32,7 +32,7 @@ def run_loop(args):
 
     for uut in uuts:
         if hasattr(uut.s0, 'TIM_CTRL_LOCK'):
-            print "LOCKDOWN {}".format(uut)
+            print("LOCKDOWN {}".format(uut))
             uut.s0.TIM_CTRL_LOCK = 1
         uut.s1.shot='0'
 

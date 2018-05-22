@@ -8,6 +8,8 @@ import sys
 import acq400_hapi
 from acq400_hapi import awg_data
 import argparse
+from future import builtins
+from builtins import input
 
 def store_file(it, rdata, nchan, nsam):
     fn = 'DATA/ai%04d.dat' % (it)
@@ -38,7 +40,7 @@ def run_shots(args):
     loader = work.load()
     for ii in range(0, args.loop):
         print("shot: %d" % (ii))
-        f = loader.next()
+        f = next(loader)
         print("Loaded %s" % (f))
         uut.run_oneshot()
 
@@ -47,7 +49,7 @@ def run_shots(args):
             rdata = uut.read_chan(0, args.post*args.nchan)            
             store(ii, rdata, args.nchan, args.post)
         if args.wait_user:
-            raw_input("hit return to continue")
+            input("hit return to continue")
 
 
 def run_main():

@@ -8,6 +8,8 @@ import sys
 import acq400_hapi
 import argparse
 import re
+from future import builtins
+from builtins import input
 
 
 def load_stl(uut, stl):
@@ -30,7 +32,7 @@ def make_waterfall(uut, interval, hitime, states):
     
 def soft_trigger_loop(uut):
     while True:
-        key = raw_input("trigger>")
+        key = input("trigger>")
         if key == '':
             uut.s0.soft_trigger = 1
         else:

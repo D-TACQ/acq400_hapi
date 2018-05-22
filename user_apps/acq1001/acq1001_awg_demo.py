@@ -7,6 +7,8 @@ import sys
 import acq400_hapi
 from acq400_hapi import awg_data
 import argparse
+from future import builtins
+from builtins import input
 
         
 def run_shots(args):
@@ -35,7 +37,7 @@ def run_shots(args):
             if args.capture > 0:
                 shot_controller.run_shot(soft_trigger= True if args.trg=='int' else False)
             else:
-                raw_input("hit return when done")
+                input("hit return when done")
             
 
 def run_main():
