@@ -1,6 +1,7 @@
 
 import argparse
 import acq400
+from shotcontrol import intSI as intSI
 
 class Acq400UI:
     """ Common UI features for consistent args handling across all apps
@@ -28,22 +29,21 @@ class Acq400UI:
     def _exec_args_clk(uut, clk):
         c_args = clk.split(',')
         src = c_args[0]
+        _fin=1000000
+        _hz=1000000
+
         
         if len(c_args) > 1:
             _hz = intSI(c_args[1])
             if len(c_args) > 2:
                 _fin = intSI(c_args[2])
-            else:
-                _fin = 0
-        else:
-            _hz = 0
             
         if src == 'ext' or src == 'fpclk':
-            uut.set_mb_clk(self, hz=_hz, src="fpclk", fin=_fin)
+            uut.set_mb_clk(hz=_hz, src="fpclk", fin=_fin)
         elif src == 'int' or src == 'zclk':            
-            uut.set_mb_clk(self, hz=_hz, src="zclk", fin=_fin)
+            uut.set_mb_clk(hz=_hz, src="zclk", fin=_fin)
         elif src == 'xclk':
-            uut.set_mb_clk(self, hz=_hz, src="xclk", fin=_fin)
+            uut.set_mb_clk(hz=_hz, src="xclk", fin=_fin)
     
     @staticmethod    
     def _set_simulate(uut, enable):
