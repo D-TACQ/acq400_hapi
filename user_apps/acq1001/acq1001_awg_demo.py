@@ -7,6 +7,8 @@ import sys
 import acq400_hapi
 from acq400_hapi import awg_data
 import argparse
+from future import builtins
+from builtins import input
 
         
 def run_shots(args):
@@ -28,14 +30,14 @@ def run_shots(args):
         work = awg_data.RainbowGen(uut, args.nchan, args.awglen)
         
     for ii in range(0, args.loop):
-        print("shot: %d" % (ii))
+        print(("shot: %d" % (ii)))
             
         for f in work.load():
-            print("Loaded %s" % (f))
+            print(("Loaded %s" % (f)))
             if args.capture > 0:
                 shot_controller.run_shot(soft_trigger= True if args.trg=='int' else False)
             else:
-                raw_input("hit return when done")
+                input("hit return when done")
             
 
 def run_main():
