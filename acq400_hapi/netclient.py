@@ -13,6 +13,9 @@ import socket
 import re
 import sys
 import os
+from future import builtins
+from builtins import input
+
 
 
 
@@ -33,11 +36,11 @@ class Netclient:
             
         Returns:
             string representing message        
-        """        
-
+        """
+        
         match = termex.search(self.buffer)
         while match == None:
-            self.buffer += self.sock.recv(maxlen)        
+            self.buffer += self.sock.recv(maxlen)
             match = termex.search(self.buffer)
             
         rc = self.buffer[:match.start(1)]            
@@ -53,7 +56,7 @@ class Netclient:
         self.__port = int(port)
         self.sock = socket.socket()
         if Netclient.trace:
-            print("Netclient(%s, %d) connect" % (self.__addr, self.__port))
+            print(("Netclient(%s, %d) connect" % (self.__addr, self.__port)))
         self.sock.connect((self.__addr, self.__port))
 
     def __enter__(self):
@@ -107,13 +110,13 @@ class Siteclient(Netclient):
             rx (str): response string
         """
         if (self.trace):
-            print("%s >%s" % (repr(self), message.rstrip()))
+            print(("%s >%s" % (repr(self), message.rstrip())))
         self.sock.send((message+"\n").encode())
         rx = self.receive_message(self.termex).rstrip()
         if self.show_responses and len(rx) > 1:
             print(rx)
         if (self.trace):
-            print("%s <%s" % (repr(self), rx))
+            print(("%s <%s" % (repr(self), rx)))
         return rx
  
     
@@ -194,19 +197,19 @@ def run_unit_test():
         if len(sys.argv) > 2:
             SERVER_PORT = int(sys.argv[2])
 
-    print("create Netclient %s %d" %(SERVER_ADDRESS, SERVER_PORT))
+    print(("create Netclient %s %d" %(SERVER_ADDRESS, SERVER_PORT)))
     svc = Siteclient(SERVER_ADDRESS, SERVER_PORT)
     
     
-    print("Model: %s" % (svc.MODEL))
-    print("SITELIST: %s" % (svc.SITELIST))
-    print("software_version: %s" % (svc.software_version))
+    print(("Model: %s" % (svc.MODEL)))
+    print(("SITELIST: %s" % (svc.SITELIST)))
+    print(("software_version: %s" % (svc.software_version)))
     svc.trace = True
-    print("spad1: %s" % (svc.spad1))
+    print(("spad1: %s" % (svc.spad1)))
     svc.spad1 = "0x1234"
-    print("spad1: %s" % (svc.spad1))
+    print(("spad1: %s" % (svc.spad1)))
     svc.spad1 = "0x5678"
-    print("spad1: %s" % (svc.spad1))
+    print(("spad1: %s" % (svc.spad1)))
     svc.spad2 = "0x22222222"
     
     raise SystemExit
@@ -214,13 +217,13 @@ def run_unit_test():
         cmd = svc.knobs[key]
         if cmd.startswith("help"):
             continue
-        print("%s %s" % (cmd, svc.sr(cmd)))
+        print(("%s %s" % (cmd, svc.sr(cmd))))
 
     raise SystemExit
  
     while True:
         try:
-            data = raw_input("Enter some data: ")
+            data = input("Enter some data: ")
         except EOFError:
             print("\nOkay. Leaving. Bye")
             break
@@ -231,14 +234,14 @@ def run_unit_test():
             print("Can't send empty string!")
             print("Ctrl-D [or Ctrl-Z on Windows] to exit")
             continue
-        print("< %s" % (data))
+        print(("< %s" % (data)))
 
         data += "\n"
         svc.send(data)
         data = svc.recv()
         
         print("Got this string from server:")
-        print(data + '\n')
+        print((data + '\n'))
 
 # excution starts here        
 if __name__ == '__main__':
