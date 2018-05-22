@@ -67,7 +67,7 @@ def make_data_dir(directory, verbose):
         os.mkdir(directory)
     except Exception:
         if verbose:
-            print "Directory already exists"
+            print("Directory already exists")
         pass
 
 
@@ -102,12 +102,12 @@ def run_stream(args):
                 data.tofile(data_file, '')
 
                 if args.verbose == 1:
-                    print "New data file written."
-                    print "Data Transferred: ", data_length, "KB"
-                    print "loop_time: ", loop_time
-                    print "Data upload & save rate: ", float(len(data)) / 1024 / (time.clock() - upload_time), "KB/s"
-                    print ""
-                    print ""
+                    print("New data file written.")
+                    print("Data Transferred: ", data_length, "KB")
+                    print("loop_time: ", loop_time)
+                    print("Data upload & save rate: ", float(len(data)) / 1024 / (time.clock() - upload_time), "KB/s")
+                    print("")
+                    print("")
 
                 num += 1
                 data_file.close()
@@ -121,7 +121,7 @@ def run_stream(args):
             data_file = open("{}/data{}.dat".format(args.root, num), "wb")
             data = np.frombuffer(data, dtype=wordsizetype, count=-1)
             data.tofile(data_file, '')
-            print "runtime exceeded: all stream data written to single file"
+            print("runtime exceeded: all stream data written to single file")
 
 
 def run_main():

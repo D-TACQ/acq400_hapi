@@ -16,7 +16,7 @@ def configure_shot(args):
     for uut in uuts:
         acq400_hapi.Acq400UI.exec_args(uut, args) 
         if hasattr(uut.s0, 'TIM_CTRL_LOCK'):
-            print "LOCKDOWN {}".format(uut)
+            print("LOCKDOWN {}".format(uut))
             uut.s0.TIM_CTRL_LOCK = 0
             
     mset = sets.Set(uuts[0:2])
@@ -24,7 +24,7 @@ def configure_shot(args):
     post = intSI(args.post)
 
     for u in uuts:
-        print("uut:%s" % (u.uut)) 
+        print(("uut:%s" % (u.uut))) 
         u.s0.transient = "PRE=%d POST=%d SOFT_TRIGGER=%d" % (pre, post, 1 if pre>0 else 0)
         
 

@@ -20,9 +20,9 @@ uut = "acq2106_000"
 
 def load3(base="/data", lun=0, uut=uut, cycle=1, buf0=0, nchan=48):
     if buf0 % 3 != 0:
-        print("ERROR, buf %d not modulo 3" % (buf0))
+        print(("ERROR, buf %d not modulo 3" % (buf0)))
         exit(1)
-    print("load3 {}".format(FMT % (base, lun, uut, cycle, lun, buf0)))
+    print(("load3 {}".format(FMT % (base, lun, uut, cycle, lun, buf0))))
     b3 = tuple([ np.fromfile(FMT % (base, lun, uut, cycle, lun, buf0+x), np.int16) for x in range(3)] )
     raw = np.concatenate(b3)
     chx = np.reshape(raw, (raw.size/nchan, nchan))
@@ -75,8 +75,8 @@ def bigplota(args):
         buffers = buf3s * 3     
         cycle += 1                                  # counts from 1
 
-        print("samples {} buffers {} residue {} cycle {} buffc {}".format(
-            samples, buffers, residue, cycle, cycb))
+        print(("samples {} buffers {} residue {} cycle {} buffc {}".format(
+            samples, buffers, residue, cycle, cycb)))
         chx = get4(cycle=cycle, buf0=cycb)
         
         u0 = args.u1 - 1
@@ -84,11 +84,11 @@ def bigplota(args):
         c0 = args.c1 - 1
         c1 = args.c2 if args.c2 >= args.c1 else args.ccount+c0
       
-	print("Hello {}".format(args.subplots))
+	print(("Hello {}".format(args.subplots)))
 
         for u in range(u0, u1):
 	    if args.subplots:
-            	print("subplot {},{},{}".format(u1-u0,1,u1-u))
+            	print(("subplot {},{},{}".format(u1-u0,1,u1-u)))
 		ax = plt.subplot(u1-u0,1,u)
             for c in range(c0, c1):                
                 plt.plot(chx[u][0][:,c], label='a{}.{}'.format(chx[u][2][8:], c+1))
@@ -98,7 +98,7 @@ def bigplota(args):
 	if args.subplots == 0:
             plt.legend(loc='upper left', bbox_to_anchor=(1,1))
        
-        plt.title("UUTS:{} at t {}s, pulse {} at sample {}".format(range(u0+1,u1+1), p*M1/SR, pp, p*M1))   
+        plt.title("UUTS:{} at t {}s, pulse {} at sample {}".format(list(range(u0+1,u1+1)), p*M1/SR, pp, p*M1))   
         plt.axvline(x=residue)
         plt.xlabel('cycle:{} buf:{}'.format(cycle, cycb))
         plt.show()          

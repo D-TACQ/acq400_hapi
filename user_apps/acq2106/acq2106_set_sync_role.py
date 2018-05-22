@@ -7,6 +7,8 @@ acq2106_set_sync_role master [slave1 ... slaveN]
 import argparse
 import acq400_hapi
 import time
+from future import builtins
+from builtins import input
 
 def set_mb_clk(uut, clkdef):
     if (len(clkdef) == 3):
@@ -68,7 +70,7 @@ def run_main(parser):
         run_link_test(parser, uuts[0], uuts[1])
 
     if not parser.master_trg.startswith("soft"):
-        raw_input("say when")
+        input("say when")
         uuts[0].set_master_trg(mtrg, edge, enabled=True)       
 
 
