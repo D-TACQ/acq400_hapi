@@ -62,8 +62,8 @@ def hexdump_string(uut, chan, sites, spad):
     dumpstr = ("hexdump -ve '\"%10_ad,\" ")
     for svc in ( uut.svc['s{}'.format(s)] for s in sites.split(',')):
         d32 = svc.data32 == '1'
-	fmt = '" " {}/{} "%0{}x," '.format(svc.NCHAN, 4 if d32 else 2, 8 if d32 else 4)
-	dumpstr += fmt
+        fmt = '" " {}/{} "%0{}x," '.format(svc.NCHAN, 4 if d32 else 2, 8 if d32 else 4)
+        dumpstr += fmt
     if nspad:
         fmt = '{}/4 "%08x," '.format(nspad)
         dumpstr += fmt
