@@ -17,7 +17,7 @@
  on FPCLK frequency) on acq1001_105. 
 """
 
-from __future__ import print_function
+
 import acq400_hapi
 import argparse
 

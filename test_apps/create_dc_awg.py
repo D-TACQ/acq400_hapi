@@ -11,7 +11,7 @@ def create_array(size, value):
     for index, x in np.ndenumerate(waveform):
         waveform[index] = value
     waveform = waveform.astype(np.int16)
-    print waveform
+    print(waveform)
     return waveform
 
 

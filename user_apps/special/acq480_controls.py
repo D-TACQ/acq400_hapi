@@ -22,7 +22,7 @@ def set_T50R(module, enable, channel):
         module.set_knob("TR50R_{:d}".format(channel), enable)
    
 def set_gain(module, gain, channel):
-    chans = range(1,9) if channel == ALL else channel
+    chans = list(range(1,9)) if channel == ALL else channel
     
     for ch in chans:
         module.set_knob("ACQ480_GAIN_{:02d}".format(ch), gain)

@@ -8,14 +8,14 @@ class AwgDefaults:
         self.defs = "DATA/{}.npy".format(uut_name)
 
     def read_defaults(self):        
-        print("read_defaults {}".format(self.defs))
+        print(("read_defaults {}".format(self.defs)))
         with open(self.defs, 'r') as fp:
             current = np.load(fp)
-        print("read_defaults {} {}".format(self.defs, current))
+        print(("read_defaults {} {}".format(self.defs, current)))
         return current
 
     def store_defaults(self, current):
-        print("store_defaults {} {}".format(self.defs, current))
+        print(("store_defaults {} {}".format(self.defs, current)))
         with open(self.defs, 'w') as fp:
             np.save(fp, current)
 
@@ -40,7 +40,7 @@ class SinGen:
     def sin(self):
         nsam = self.nsam
         NCYCLES = self.NCYCLES
-        return np.sin(np.array(range(nsam))*NCYCLES*2*np.pi/nsam)   # sin, amplitude of 1 (volt)
+        return np.sin(np.array(list(range(nsam)))*NCYCLES*2*np.pi/nsam)   # sin, amplitude of 1 (volt)
 
 class AllFullScale(SinGen):
     def __init__(self, uut, nchan, nsam, run_forever=False):
@@ -57,7 +57,7 @@ class AllFullScale(SinGen):
         for ii in range(99999 if self.run_forever else 1):
             for ch in range(self.nchan):
                 self.uut.load_awg((self.aw*(2**15-1)).astype(np.int16), autorearm = autorearm)
-                print("loaded array ", self.aw.shape)
+                print(("loaded array ", self.aw.shape))
                 yield ch
 
 
@@ -73,14 +73,14 @@ class RainbowGen:
     def sin(self):
         nsam = self.nsam
         NCYCLES = self.NCYCLES    
-        return np.sin(np.array(range(nsam))*NCYCLES*2*np.pi/nsam)   # sin, amplitude of 1 (volt)
+        return np.sin(np.array(list(range(nsam)))*NCYCLES*2*np.pi/nsam)   # sin, amplitude of 1 (volt)
 
     def sinc(self, ch):
         nsam = self.nsam
         nchan = self.nchan
         NCYCLES = self.NCYCLES
         xoff = ch*100
-        xx = np.array(range(-nsam/2-xoff,nsam/2-xoff))*NCYCLES*2*np.pi/nsam
+        xx = np.array(list(range(-nsam/2-xoff,nsam/2-xoff)))*NCYCLES*2*np.pi/nsam
         return [ np.sin(x)/x if x != 0 else 1 for x in xx ]
 
     def __init__(self, uut, nchan, nsam, run_forever=False, ao0 = 0):
@@ -95,7 +95,7 @@ class RainbowGen:
         self.gain = 1.0
         try:   
             self.current = self.defs.read_defaults()
-            print("self.current len {} self.nchan {}".format(len(self.current), self.nchan))
+            print(("self.current len {} self.nchan {}".format(len(self.current), self.nchan)))
             for ch in range(0, len(self.current)):            
                 self.aw[:,self.ao0+ch] = self.current[ch]    
         except IOError:
@@ -110,12 +110,12 @@ class RainbowGen:
             for ch in range(self.nchan):        
                 aw1 = np.copy(self.aw)
                 aw1[:,ch] = np.add(np.multiply(self.sinc(ch),5),2)
-                print("loading array ", aw1.shape)
+                print(("loading array ", aw1.shape))
                 awr = (aw1*(2**15-1)/10)/self.gain
                 for chx in range(len(self.current)):
                     awr[:,self.ao0+chx] += self.current[chx]
                 self.uut.load_awg(awr.astype(np.int16), autorearm = autorearm)
-                print("loaded array ", aw1.shape)
+                print(("loaded array ", aw1.shape))
                 yield ch
 
 class Pulse:
@@ -137,7 +137,7 @@ class Pulse:
         self.nchan = nchan
         self.nsam = nsam
         (self.interval, self.flat_top) = [ int(u) for u in args ]
-        print( "self.interval {}".format(self.interval)) 
+        print(( "self.interval {}".format(self.interval))) 
         self.aw = np.zeros((nsam,nchan))
         self.generate()
     def load(self, autorearm = False):

@@ -18,7 +18,7 @@ def intSI(x):
 class ActionScript:
     def __init__(self, script_and_args):
         self.sas = script_and_args.split()
-        print("ActionScript creates {}".format(self.sas))
+        print(("ActionScript creates {}".format(self.sas)))
     def __call__(self):
         print("ActionScript: call()")
         call(self.sas)
@@ -55,19 +55,19 @@ class ShotController:
             
     def arm_shot(self):
         for u in self.uuts:
-            print("%s set_arm" % (u.uut))
+            print(("%s set_arm" % (u.uut)))
             u.s0.set_arm = 1
         self.wait_armed()
 
     def abort_shot(self):
         for u in self.uuts:
-            print("%s set_abort" % (u.uut))
+            print(("%s set_abort" % (u.uut)))
             u.s0.set_abort = 1
    
     def on_shot_complete(self):
         """runs on completion, expect subclass override."""
         for u in self.uuts:
-            print("%s SHOT COMPLETE shot:%s" % (u.uut, u.s1.shot))
+            print(("%s SHOT COMPLETE shot:%s" % (u.uut, u.s1.shot)))
             
     def run_shot(self, soft_trigger=False, acq1014_ext_trigger=0, 
                 remote_trigger=None):
@@ -90,11 +90,11 @@ class ShotController:
                 sys.stdin.readline()
             else:
                 while soft_trigger > 1:
-                    print("sleep {}".format(soft_trigger))
+                    print(("sleep {}".format(soft_trigger)))
                     time.sleep(1)
                     soft_trigger = soft_trigger - 1
             
-            print("%s soft_trigger" % (self.uuts[0].uut))
+            print(("%s soft_trigger" % (self.uuts[0].uut)))
             self.uuts[0].s0.soft_trigger = 1
         elif remote_trigger != None:
             remote_trigger()
@@ -112,7 +112,7 @@ class ShotController:
         ii = 0        
         for u in self.uuts:
             if channels == ():
-                cmap[u] = range(1, u.nchan()+1)  # default : ALL
+                cmap[u] = list(range(1, u.nchan()+1))  # default : ALL
             elif type(channels) == int:             
                 cmap[u] = channels                  # single value
             elif type(channels[0]) != tuple:                

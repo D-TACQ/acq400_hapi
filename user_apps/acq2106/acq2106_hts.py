@@ -58,7 +58,7 @@ def config_shot(uut, args):
 
 def hexdump_string(uut, chan, sites, spad):
     nspad = 0 if spad == None else int(spad.split(',')[1])
-    print("hexdump_string {} {} {}".format(chan, sites, nspad))
+    print(("hexdump_string {} {} {}".format(chan, sites, nspad)))
     dumpstr = ("hexdump -ve '\"%10_ad,\" ")
     for svc in ( uut.svc['s{}'.format(s)] for s in sites.split(',')):
         d32 = svc.data32 == '1'
@@ -71,7 +71,7 @@ def hexdump_string(uut, chan, sites, spad):
     print(dumpstr)
     with open("hexdump{}".format(chan), "w") as fp:
         fp.write("{} $*\n".format(dumpstr))
-    os.chmod("hexdump{}".format(chan), 0777)
+    os.chmod("hexdump{}".format(chan), 0o777)
 
 def init_comms(uut, args):
     if args.spad != None:
@@ -93,7 +93,7 @@ def init_comms(uut, args):
             hexdump_string(uut, "B", csites, args.spad)
 
 def init_work(uut, args):
-    print "init_work"
+    print("init_work")
 
 def start_shot(uut, args):    
     uut.s0.streamtonowhered = "start"

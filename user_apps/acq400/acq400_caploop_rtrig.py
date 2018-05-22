@@ -20,7 +20,7 @@ class RemoteTrigger:
     def __init__(self, uut):
         self.uut = acq400_hapi.Acq400(uut)
     def __call__(self):
-        print("{} trigger".format(self.uut.uut))
+        print(("{} trigger".format(self.uut.uut)))
         self.uut.s0.soft_trigger = 1
 
 def run_shots(args):
@@ -31,7 +31,7 @@ def run_shots(args):
     for uut in uuts:
         uut.s1.shot = 0
         if hasattr(uut.s0, 'TIM_CTRL_LOCK'):
-            print "LOCKDOWN {}".format(uut)
+            print("LOCKDOWN {}".format(uut))
             uut.s0.TIM_CTRL_LOCK = 1
 
     shot_controller = acq400_hapi.ShotController(uuts)
@@ -45,7 +45,7 @@ def run_shots(args):
         _soft_trigger = True
     try:
         while shot < args.nshots:
-            print("shot {} of {}".format(shot, args.nshots))
+            print(("shot {} of {}".format(shot, args.nshots)))
             shot_controller.run_shot(
                     remote_trigger=_remote_trigger,
                     soft_trigger=_soft_trigger)
