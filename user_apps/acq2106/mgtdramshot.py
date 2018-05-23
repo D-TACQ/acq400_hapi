@@ -28,8 +28,7 @@ optional arguments:
   --post POST           post-trigger samples
   --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
   --trg TRG             int|ext,rising|falling
-  --sim SIM             nosim|s1[,s2,s3..] list of sites to run in simulate
-                        mode
+  --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
   --trace TRACE         1 : enable command tracing
   --loop LOOP           loop count
   --captureblocks CAPTUREBLOCKS
