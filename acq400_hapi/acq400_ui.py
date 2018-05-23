@@ -1,6 +1,7 @@
 
 import argparse
 import acq400
+from shotcontrol import intSI as intSI
 
 class Acq400UI:
     """ Common UI features for consistent args handling across all apps
@@ -28,38 +29,29 @@ class Acq400UI:
     def _exec_args_clk(uut, clk):
         c_args = clk.split(',')
         src = c_args[0]
+        _fin=1000000
+        _hz=1000000
+
         
         if len(c_args) > 1:
             _hz = intSI(c_args[1])
             if len(c_args) > 2:
                 _fin = intSI(c_args[2])
-            else:
-                _fin = 0
-        else:
-            _hz = 0
             
         if src == 'ext' or src == 'fpclk':
-            uut.set_mb_clk(self, hz=_hz, src="fpclk", fin=_fin)
+            uut.set_mb_clk(hz=_hz, src="fpclk", fin=_fin)
         elif src == 'int' or src == 'zclk':            
-            uut.set_mb_clk(self, hz=_hz, src="zclk", fin=_fin)
+            uut.set_mb_clk(hz=_hz, src="zclk", fin=_fin)
         elif src == 'xclk':
-            uut.set_mb_clk(self, hz=_hz, src="xclk", fin=_fin)
+            uut.set_mb_clk(hz=_hz, src="xclk", fin=_fin)
     
-    @staticmethod    
-    def _set_simulate(uut, enable):
-        for s in uut.modules:
-            uut.modules[s].simulate = '1' if enable else '0'
-            
     @staticmethod
     def _exec_args_sim(uut, sim): 
-        try:            
-            sim_sites = [ int(s) for s in sim.split(',')]
-            for site in uut.modules:
-                sim1 = '1' if site in sim_sites else '0'
-                uut.svc['s%s' % (site)].simulate = sim1
+        sim_sites = [ int(s) for s in sim.split(',')]
+        for site in uut.modules:
+            sim1 = '1' if site in sim_sites else '0'
+            uut.svc['s%s' % (site)].simulate = sim1
         #            print "site {} sim {}".format(site, sim1)
-        except AttributeError:
-            set_simulate(uut, sim)
     
         
     @staticmethod
@@ -80,7 +72,7 @@ class Acq400UI:
             parser.add_argument('--post', default=100000, type=int, help='post-trigger samples')
         parser.add_argument('--clk', default=None, help='int|ext|zclk|xclk,fpclk,SR,[FIN]')
         parser.add_argument('--trg', default=None, help='int|ext,rising|falling')
-        parser.add_argument('--sim', default=None, help='nosim|s1[,s2,s3..] list of sites to run in simulate mode')
+        parser.add_argument('--sim', default=None, help='s1[,s2,s3..] list of sites to run in simulate mode')
         parser.add_argument('--trace', default=None, help='1 : enable command tracing')
         
     @staticmethod   
