@@ -30,7 +30,7 @@ optional arguments:
   --pre PRE        pre-trigger samples
   --clk CLK        int|ext|zclk|xclk,fpclk,SR,[FIN]
   --trg TRG        int|ext,rising|falling
-  --sim SIM        nosim|s1[,s2,s3..] list of sites to run in simulate mode
+  --sim SIM        s1[,s2,s3..] list of sites to run in simulate mode
   --trace TRACE    1 : enable command tracing
   --post POST      capture samples [default:0 inifinity]
   --secs SECS      capture seconds [default:0 inifinity]

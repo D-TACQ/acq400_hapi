@@ -1,15 +1,19 @@
 #!/usr/bin/env python
-"""
-# mgtdramshot.py : remote control capture to mgtdram, and manage upload, optional validation
-# assumes that clocking has been pre-assigned.
+""" mgtdramshot.py Capture to MGTDRAM
+
+- optional capture to mgtdram
+- manage upload
+- optional validation
+ assumes that clocking has been pre-assigned.
 
 example usage::
 
->>> ./mgtdramshot.py --loop=100 --simulate=1 --validate=validate-6x480 \
-        --captureblocks=2000 --offloadblocks=0-1999 acq2106_007
+       ./mgtdramshot.py --loop=100 --simulate=1 --validate=validate-6x480 \
+           --captureblocks=2000 --offloadblocks=0-1999 acq2106_007
 
 
-usage:: 
+usage::
+
     mgtdramshot.py [-h] [--pre PRE] [--post POST] [--clk CLK] [--trg TRG]
                       [--sim SIM] [--trace TRACE] [--loop LOOP]
                       [--captureblocks CAPTUREBLOCKS]
@@ -28,8 +32,7 @@ optional arguments:
   --post POST           post-trigger samples
   --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
   --trg TRG             int|ext,rising|falling
-  --sim SIM             nosim|s1[,s2,s3..] list of sites to run in simulate
-                        mode
+  --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
   --trace TRACE         1 : enable command tracing
   --loop LOOP           loop count
   --captureblocks CAPTUREBLOCKS
@@ -115,8 +118,8 @@ def run_shots(args):
     global LOG
     LOG = open("mgtdramshot-{}.log".format(args.uut[0]), "w")
     uut = acq400_hapi.Acq2106(args.uut[0], has_mgtdram=True)
+    acq400_hapi.Acq400UI.exec_args(uut, args)
     uut.s14.mgt_taskset = '1'
-    set_simulate(uut, args.simulate)
 
     try:
         for ii in range(0, args.loop):
