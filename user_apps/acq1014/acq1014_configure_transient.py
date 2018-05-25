@@ -7,7 +7,6 @@
 import sys
 import acq400_hapi
 import argparse
-import sets
 from acq400_hapi import intSI as intSI
 
 def configure_shot(args):
@@ -15,8 +14,7 @@ def configure_shot(args):
         print("ERROR: must be an even number of uuts, minimum 2")
         sys.exit(1)
 
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]    
-    mset = sets.Set(uuts[0:2])
+    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     pre = intSI(args.pre)
     post = intSI(args.post)
     t_args = [args.trg.split(' ')[0], 
