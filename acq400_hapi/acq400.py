@@ -561,7 +561,7 @@ class Acq400:
             nc.sock.shutdown(socket.SHUT_WR) 
             while True:
                 rx = nc.sock.recv(128)
-                if not rx or rx.startswith("DONE"):
+                if not rx or rx.startswith(b"DONE"):
                     break
             nc.sock.close()
 
