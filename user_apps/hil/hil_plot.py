@@ -126,7 +126,7 @@ def run_shots(args):
             plt.title("AI for shot %d %s" % (ii, "persistent plot" if args.plot > 1 else ""))
             pltsup.plot(uut, args, ii, rdata)
         if args.wait_user is not None:
-            args.wait_user()
+            input("hit return to continue")
 
 
 def is_exe(fpath):
