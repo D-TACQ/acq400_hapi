@@ -5,7 +5,28 @@ upload to AWG and optionally run a capture.
 data for upload is either File (host-local data file) or Rainbow, a test pattern.
 assumes that clocking has been pre-assigned.
 
+usage: hil.py [-h] [--files FILES] [--loop LOOP] [--store STORE]
+              [--nchan NCHAN] [--aochan AOCHAN] [--awglen AWGLEN]
+              [--post POST] [--trg TRG] [--wait_user WAIT_USER]
+              uuts
 
+acq1001 HIL demo
+
+positional arguments:
+  uuts                  uut
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --files FILES         list of files to load
+  --loop LOOP           loop count
+  --store STORE         save data when true
+  --nchan NCHAN         channel count for pattern
+  --aochan AOCHAN       AO channel count, if different to AI (it happens)
+  --awglen AWGLEN       samples in AWG waveform
+  --post POST           samples in ADC waveform
+  --trg TRG             trg "int|ext rising|falling"
+  --wait_user WAIT_USER
+                        1: force user input each shot
 """
 
 
