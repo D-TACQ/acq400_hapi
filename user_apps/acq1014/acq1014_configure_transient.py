@@ -1,7 +1,24 @@
 #!/usr/bin/env python
 
-""" configure transient 
-    acq1014_configure_transient UUT1 UUT2 [NPOST] [trigger=int|ext|ext2]
+"""
+configure transient
+acq1014_configure_transient UUT1 UUT2 [NPOST] [trigger=int|ext|ext2]
+
+usage: acq1014_configure_transient.py [-h] [--pre PRE] [--post POST]
+                                  [--clk CLK] [--trg TRG]
+                                  [uuts [uuts ...]]
+
+configure multiple acq1014
+
+positional arguments:
+  uuts         uut pairs: m1,m2 [s1,s2 ...]
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --pre PRE    pre trigger length
+  --post POST  post trigger length
+  --clk CLK    clk "int|ext SR [CR]"
+  --trg TRG    trg "int|ext rising|falling"
 """
 
 import sys
