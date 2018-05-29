@@ -15,6 +15,8 @@
     matplot will get very congested with more channels.
     this is really meant as a demonstration of capture, load to numpy,
     it's not really intended as a scope UI.
+
+    USAGE: acq1001_caploop UUT1 [UUT2 ..]
 """
 
 import sys

@@ -1,7 +1,27 @@
 #!/usr/bin/env python
 
-""" configure transient 
-    acq1014_configure_transient UUT1 UUT2 [NPOST] [trigger=int|ext|ext2]
+"""
+configure transient
+acq1014_configure_transient UUT1 UUT2 [NPOST] [trigger=int|ext|ext2]
+
+usage: acq400_configure_transient.py [-h] [--pre PRE] [--post POST]
+                                 [--clk CLK] [--trg TRG] [--sim SIM]
+                                 [--trace TRACE]
+                                 uuts [uuts ...]
+
+configure multiple acq400
+
+positional arguments:
+  uuts           uut pairs: m1,m2 [s1,s2 ...]
+
+optional arguments:
+  -h, --help     show this help message and exit
+  --pre PRE      pre-trigger samples
+  --post POST    post-trigger samples
+  --clk CLK      int|ext|zclk|xclk,fpclk,SR,[FIN]
+  --trg TRG      int|ext,rising|falling
+  --sim SIM      nosim|s1[,s2,s3..] list of sites to run in simulate mode
+  --trace TRACE  1 : enable command tracing
 """
 
 import sys
