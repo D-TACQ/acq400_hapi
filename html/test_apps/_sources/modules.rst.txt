@@ -4,6 +4,7 @@ test_apps
 .. toctree::
    :maxdepth: 4
 
+   create_dc_awg
    eats_shoots_leaves
    multivent_client
    radcelf-chirp-init

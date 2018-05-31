@@ -1,9 +1,10 @@
-acq2106
-=======
+utils
+=====
 
 .. toctree::
    :maxdepth: 4
 
-   acq2106_hts
-   acq2106_set_sync_role
-   mgtdramshot
+   bigplot
+   bigplot4
+   bigplota
+   bin2csv
