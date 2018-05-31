@@ -25,6 +25,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="acq400_checkramp.html" title="acq400_checkramp module"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -39,8 +42,52 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="acq400-capture-module">
-<h1>acq400_capture module<a class="headerlink" href="#acq400-capture-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-acq400_capture">
+<span id="acq400-capture-module"></span><h1>acq400_capture module<a class="headerlink" href="#module-acq400_capture" title="Permalink to this headline">¶</a></h1>
+<p>capture test. assume transient has been pre-configured
+acq400_capture UUT1 [UUT2 ..]
+where UUT1 is the ip-address or host name of first uut
+example test client runs captures in a loop on one or more uuts</p>
+<p>pre-requisite: UUT's are configured and ready to make a transient
+capture
+eg clk is running. soft trg enabled
+eg transient length set.</p>
+<p>loop continues &quot;forever&quot; until &lt;CTRL-C&gt;</p>
+<dl class="docutils">
+<dt>usage: acq400_capture.py [-h] [--soft_trigger SOFT_TRIGGER]</dt>
+<dd>[--transient TRANSIENT]
+uuts [uuts ...]</dd>
+</dl>
+<p>run capture, with optional transient configuration</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uuts                  uut1 [uut2..]</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+</tbody>
+</table>
+<p>--soft_trigger SOFT_TRIGGER
+--transient TRANSIENT</p>
+<blockquote class="last">
+<div>transient control string use commas rather than spaces</div></blockquote>
+</dd>
+</dl>
+<dl class="function">
+<dt id="acq400_capture.run_main">
+<code class="descclassname">acq400_capture.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_capture.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_capture.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq400_capture.run_shot">
+<code class="descclassname">acq400_capture.</code><code class="descname">run_shot</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_capture.html#run_shot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_capture.run_shot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -84,6 +131,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="acq400_checkramp.html" title="acq400_checkramp module"
              >next</a> |</li>

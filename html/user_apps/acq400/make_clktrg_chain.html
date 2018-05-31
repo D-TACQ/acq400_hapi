@@ -25,6 +25,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="set_burst.html" title="set_burst module"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -39,8 +42,45 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="make-clktrg-chain-module">
-<h1>make_clktrg_chain module<a class="headerlink" href="#make-clktrg-chain-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-make_clktrg_chain">
+<span id="make-clktrg-chain-module"></span><h1>make_clktrg_chain module<a class="headerlink" href="#module-make_clktrg_chain" title="Permalink to this headline">¶</a></h1>
+<p>creates a CLK + TRG daisy chain using the SYNC (HDMI) ports
+make_clktrg_chain UUTM UUTS1 [UUTS2..]
+where UUTM is the ip-address or host name of first uut
+trigger on UUTM triggers all other slaves in the chain</p>
+<p>usage: make_clktrg_chain.py [-h] [--trg TRG] [--clk CLK] uuts [uuts ...]</p>
+<p>make_clktrg_chain</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uuts        uut : UUTM, UUTS ...</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trg <var>TRG</var></span></kbd></td>
+<td>trigger fp|soft</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--clk <var>CLK</var></span></kbd></td>
+<td>clk 0=fp | intclk in Hz</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="function">
+<dt id="make_clktrg_chain.make_chain">
+<code class="descclassname">make_clktrg_chain.</code><code class="descname">make_chain</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_clktrg_chain.html#make_chain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_clktrg_chain.make_chain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="make_clktrg_chain.run_main">
+<code class="descclassname">make_clktrg_chain.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_clktrg_chain.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_clktrg_chain.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -84,6 +124,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="set_burst.html" title="set_burst module"
              >next</a> |</li>

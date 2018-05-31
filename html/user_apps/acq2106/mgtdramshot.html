@@ -24,6 +24,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="acq2106_set_sync_role.html" title="acq2106_set_sync_role module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">user_apps/acq2106 2.0.1 documentation</a> &#187;</li> 
@@ -35,8 +38,107 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="mgtdramshot-module">
-<h1>mgtdramshot module<a class="headerlink" href="#mgtdramshot-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-mgtdramshot">
+<span id="mgtdramshot-module"></span><h1>mgtdramshot module<a class="headerlink" href="#module-mgtdramshot" title="Permalink to this headline">¶</a></h1>
+<p>mgtdramshot.py Capture to MGTDRAM</p>
+<ul class="simple">
+<li>optional capture to mgtdram</li>
+<li>manage upload</li>
+<li>optional validation</li>
+</ul>
+<blockquote>
+<div>assumes that clocking has been pre-assigned.</div></blockquote>
+<p>example usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">mgtdramshot</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">loop</span><span class="o">=</span><span class="mi">100</span> <span class="o">--</span><span class="n">simulate</span><span class="o">=</span><span class="mi">1</span> <span class="o">--</span><span class="n">validate</span><span class="o">=</span><span class="n">validate</span><span class="o">-</span><span class="mi">6</span><span class="n">x480</span>            <span class="o">--</span><span class="n">captureblocks</span><span class="o">=</span><span class="mi">2000</span> <span class="o">--</span><span class="n">offloadblocks</span><span class="o">=</span><span class="mi">0</span><span class="o">-</span><span class="mi">1999</span> <span class="n">acq2106_007</span>
+</pre></div>
+</div>
+<p>usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mgtdramshot</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">pre</span> <span class="n">PRE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">post</span> <span class="n">POST</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">clk</span> <span class="n">CLK</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">trg</span> <span class="n">TRG</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">sim</span> <span class="n">SIM</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">trace</span> <span class="n">TRACE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">loop</span> <span class="n">LOOP</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">captureblocks</span> <span class="n">CAPTUREBLOCKS</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">offloadblocks</span> <span class="n">OFFLOADBLOCKS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">validate</span> <span class="n">VALIDATE</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">wait_user</span> <span class="n">WAIT_USER</span><span class="p">]</span>
+                  <span class="n">uut</span>
+</pre></div>
+</div>
+<p>acq2106 mgtdram test</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uut                   uut</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--pre <var>PRE</var></span></kbd></td>
+<td>pre-trigger samples</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--post <var>POST</var></span></kbd></td>
+<td>post-trigger samples</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--clk <var>CLK</var></span></kbd></td>
+<td>int|ext|zclk|xclk,fpclk,SR,[FIN]</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trg <var>TRG</var></span></kbd></td>
+<td>int|ext,rising|falling</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--sim <var>SIM</var></span></kbd></td>
+<td>s1[,s2,s3..] list of sites to run in simulate mode</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trace <var>TRACE</var></span></kbd></td>
+<td>1 : enable command tracing</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--loop <var>LOOP</var></span></kbd></td>
+<td>loop count</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--captureblocks <var>CAPTUREBLOCKS</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>number of 4MB blocks to capture</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--offloadblocks <var>OFFLOADBLOCKS</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>block list to upload nnn-nnn</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--validate <var>VALIDATE</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>program to validate data</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--wait_user <var>WAIT_USER</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>1: force user input each shot</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="class">
+<dt id="mgtdramshot.UploadFilter">
+<em class="property">class </em><code class="descclassname">mgtdramshot.</code><code class="descname">UploadFilter</code><a class="reference internal" href="_modules/mgtdramshot.html#UploadFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mgtdramshot.UploadFilter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mgtdramshot.run_main">
+<code class="descclassname">mgtdramshot.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mgtdramshot.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mgtdramshot.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mgtdramshot.run_shot">
+<code class="descclassname">mgtdramshot.</code><code class="descname">run_shot</code><span class="sig-paren">(</span><em>uut</em>, <em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mgtdramshot.html#run_shot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mgtdramshot.run_shot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mgtdramshot.run_shots">
+<code class="descclassname">mgtdramshot.</code><code class="descname">run_shots</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mgtdramshot.html#run_shots"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mgtdramshot.run_shots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mgtdramshot.write_console">
+<code class="descclassname">mgtdramshot.</code><code class="descname">write_console</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mgtdramshot.html#write_console"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mgtdramshot.write_console" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -77,6 +179,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="acq2106_set_sync_role.html" title="acq2106_set_sync_role module"
              >previous</a> |</li>

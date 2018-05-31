@@ -25,6 +25,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="acq400_configure_transient.html" title="acq400_configure_transient module"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -39,8 +42,27 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="acq400-checkramp-module">
-<h1>acq400_checkramp module<a class="headerlink" href="#acq400-checkramp-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-acq400_checkramp">
+<span id="acq400-checkramp-module"></span><h1>acq400_checkramp module<a class="headerlink" href="#module-acq400_checkramp" title="Permalink to this headline">¶</a></h1>
+<p>capture upload test
+acq1001_capplot UUT1 [UUT2 ..]
+where UUT1 is the ip-address or host name of first uut
+example test client runs captures in a loop on one or more uuts</p>
+<p>pre-requisite: UUT's are configured and ready to make a transient
+capture 
+eg clk is running. soft trg enabled
+eg transient length set.</p>
+<p>runs one capture, uploads the data and plots with matplotlib
+tested with 2 x 8 channels UUT's (ACQ1014)
+matplot will get very congested with more channels.
+this is really meant as a demonstration of capture, load to numpy,
+it's not really intended as a scope UI.</p>
+<p>USAGE: acq1001_caploop UUT1 [UUT2 ..]</p>
+<dl class="function">
+<dt id="acq400_checkramp.run_main">
+<code class="descclassname">acq400_checkramp.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_checkramp.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_checkramp.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -84,6 +106,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="acq400_configure_transient.html" title="acq400_configure_transient module"
              >next</a> |</li>

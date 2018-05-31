@@ -25,6 +25,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="bolo8_cal_cap_loop.html" title="bolo8_cal_cap_loop module"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -39,8 +42,63 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="acq480-controls-module">
-<h1>acq480_controls module<a class="headerlink" href="#acq480-controls-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-acq480_controls">
+<span id="acq480-controls-module"></span><h1>acq480_controls module<a class="headerlink" href="#module-acq480_controls" title="Permalink to this headline">¶</a></h1>
+<p>acq480 controls .. set ACQ480 parameters
+acq480 controls [opts] UUT1 [UUT2 ..]
+where UUT1 is the ip-address or host name of first uut
+example test client runs captures in a loop on one or more uuts</p>
+<dl class="docutils">
+<dt>usage: acq480_controls.py [-h] [--FIR FIR] [--T50R T50R] [--GAIN GAIN]</dt>
+<dd>[--site SITE] [--channel CHANNEL]
+uuts [uuts ...]</dd>
+</dl>
+<p>configure acq480</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uuts               uut1 [uut2..]</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+</tbody>
+</table>
+<p class="last">--FIR FIR
+--T50R T50R
+--GAIN GAIN
+--site SITE
+--channel CHANNEL</p>
+</dd>
+</dl>
+<dl class="function">
+<dt id="acq480_controls.run_main">
+<code class="descclassname">acq480_controls.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq480_controls.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq480_controls.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq480_controls.set_480">
+<code class="descclassname">acq480_controls.</code><code class="descname">set_480</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq480_controls.html#set_480"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq480_controls.set_480" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq480_controls.set_480_uut">
+<code class="descclassname">acq480_controls.</code><code class="descname">set_480_uut</code><span class="sig-paren">(</span><em>uut</em>, <em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq480_controls.html#set_480_uut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq480_controls.set_480_uut" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq480_controls.set_T50R">
+<code class="descclassname">acq480_controls.</code><code class="descname">set_T50R</code><span class="sig-paren">(</span><em>module</em>, <em>enable</em>, <em>channel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq480_controls.html#set_T50R"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq480_controls.set_T50R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq480_controls.set_gain">
+<code class="descclassname">acq480_controls.</code><code class="descname">set_gain</code><span class="sig-paren">(</span><em>module</em>, <em>gain</em>, <em>channel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq480_controls.html#set_gain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq480_controls.set_gain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -84,6 +142,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="bolo8_cal_cap_loop.html" title="bolo8_cal_cap_loop module"
              >next</a> |</li>

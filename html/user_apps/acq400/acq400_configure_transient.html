@@ -25,6 +25,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="acq400_reboot.html" title="acq400_reboot module"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -39,8 +42,60 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="acq400-configure-transient-module">
-<h1>acq400_configure_transient module<a class="headerlink" href="#acq400-configure-transient-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-acq400_configure_transient">
+<span id="acq400-configure-transient-module"></span><h1>acq400_configure_transient module<a class="headerlink" href="#module-acq400_configure_transient" title="Permalink to this headline">¶</a></h1>
+<p>configure transient
+acq1014_configure_transient UUT1 UUT2 [NPOST] [trigger=int|ext|ext2]</p>
+<dl class="docutils">
+<dt>usage: acq400_configure_transient.py [-h] [--pre PRE] [--post POST]</dt>
+<dd>[--clk CLK] [--trg TRG] [--sim SIM]
+[--trace TRACE]
+uuts [uuts ...]</dd>
+</dl>
+<p>configure multiple acq400</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uuts           uut pairs: m1,m2 [s1,s2 ...]</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--pre <var>PRE</var></span></kbd></td>
+<td>pre-trigger samples</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--post <var>POST</var></span></kbd></td>
+<td>post-trigger samples</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--clk <var>CLK</var></span></kbd></td>
+<td>int|ext|zclk|xclk,fpclk,SR,[FIN]</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trg <var>TRG</var></span></kbd></td>
+<td>int|ext,rising|falling</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--sim <var>SIM</var></span></kbd></td>
+<td>nosim|s1[,s2,s3..] list of sites to run in simulate mode</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trace <var>TRACE</var></span></kbd></td>
+<td>1 : enable command tracing</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="function">
+<dt id="acq400_configure_transient.configure_shot">
+<code class="descclassname">acq400_configure_transient.</code><code class="descname">configure_shot</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_configure_transient.html#configure_shot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_configure_transient.configure_shot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq400_configure_transient.run_main">
+<code class="descclassname">acq400_configure_transient.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_configure_transient.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_configure_transient.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -84,6 +139,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="acq400_reboot.html" title="acq400_reboot module"
              >next</a> |</li>

@@ -42,8 +42,79 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="hil-module">
-<h1>hil module<a class="headerlink" href="#hil-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-hil">
+<span id="hil-module"></span><h1>hil module<a class="headerlink" href="#module-hil" title="Permalink to this headline">¶</a></h1>
+<p>Hardware In Loop : load AO data,run a shot, get AI data, repeat.
+upload to AWG and optionally run a capture.
+data for upload is either File (host-local data file) or Rainbow, a test pattern.
+assumes that clocking has been pre-assigned.</p>
+<dl class="docutils">
+<dt>usage: hil.py [-h] [--files FILES] [--loop LOOP] [--store STORE]</dt>
+<dd>[--nchan NCHAN] [--aochan AOCHAN] [--awglen AWGLEN]
+[--post POST] [--trg TRG] [--wait_user WAIT_USER]
+uuts</dd>
+</dl>
+<p>acq1001 HIL demo</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uuts                  uut</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--files <var>FILES</var></span></kbd></td>
+<td>list of files to load</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--loop <var>LOOP</var></span></kbd></td>
+<td>loop count</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--store <var>STORE</var></span></kbd></td>
+<td>save data when true</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--nchan <var>NCHAN</var></span></kbd></td>
+<td>channel count for pattern</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--aochan <var>AOCHAN</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>AO channel count, if different to AI (it happens)</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--awglen <var>AWGLEN</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>samples in AWG waveform</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--post <var>POST</var></span></kbd></td>
+<td>samples in ADC waveform</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trg <var>TRG</var></span></kbd></td>
+<td>trg &quot;int|ext rising|falling&quot;</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--wait_user <var>WAIT_USER</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>1: force user input each shot</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="function">
+<dt id="hil.run_main">
+<code class="descclassname">hil.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/hil.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hil.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="hil.run_shots">
+<code class="descclassname">hil.</code><code class="descname">run_shots</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hil.html#run_shots"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hil.run_shots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="hil.store_file">
+<code class="descclassname">hil.</code><code class="descname">store_file</code><span class="sig-paren">(</span><em>it</em>, <em>rdata</em>, <em>nchan</em>, <em>nsam</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hil.html#store_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hil.store_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 

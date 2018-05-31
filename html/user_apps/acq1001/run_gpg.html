@@ -25,6 +25,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="run_livetop.html" title="run_livetop module"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -39,8 +42,89 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="run-gpg-module">
-<h1>run_gpg module<a class="headerlink" href="#run-gpg-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-run_gpg">
+<span id="run-gpg-module"></span><h1>run_gpg module<a class="headerlink" href="#module-run_gpg" title="Permalink to this headline">¶</a></h1>
+<p>configure and run gpg on uut
+run_gpg.py [opts] uut</p>
+<dl class="docutils">
+<dt>usage: run_gpg.py [-h] [--trg TRG] [--clk CLK] [--mode MODE]</dt>
+<dd>[--disable DISABLE] [--stl STL] [--waterfall WATERFALL]
+[--trace TRACE] [--hdmi_master HDMI_MASTER]
+uut</dd>
+</dl>
+<p>run_gpg</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uut                   uut</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trg <var>TRG</var></span></kbd></td>
+<td>trigger fp|soft|softloop|softonce</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--clk <var>CLK</var></span></kbd></td>
+<td>clk int|dX|notouch</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--mode <var>MODE</var></span></kbd></td>
+<td>mode</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--disable <var>DISABLE</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>1: disable</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--stl <var>STL</var></span></kbd></td>
+<td>stl file</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--waterfall <var>WATERFALL</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>d0,d1,d2,d3 waterfall [interval,hitime]</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trace <var>TRACE</var></span></kbd></td>
+<td>trace wire protocol</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--hdmi_master <var>HDMI_MASTER</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>clk, trg and gpg drive HDMI outputs</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="function">
+<dt id="run_gpg.load_stl">
+<code class="descclassname">run_gpg.</code><code class="descname">load_stl</code><span class="sig-paren">(</span><em>uut</em>, <em>stl</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/run_gpg.html#load_stl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#run_gpg.load_stl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="run_gpg.make_waterfall">
+<code class="descclassname">run_gpg.</code><code class="descname">make_waterfall</code><span class="sig-paren">(</span><em>uut</em>, <em>interval</em>, <em>hitime</em>, <em>states</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/run_gpg.html#make_waterfall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#run_gpg.make_waterfall" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="run_gpg.run_gpg">
+<code class="descclassname">run_gpg.</code><code class="descname">run_gpg</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/run_gpg.html#run_gpg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#run_gpg.run_gpg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="run_gpg.run_main">
+<code class="descclassname">run_gpg.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/run_gpg.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#run_gpg.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="run_gpg.set_hdmi_master">
+<code class="descclassname">run_gpg.</code><code class="descname">set_hdmi_master</code><span class="sig-paren">(</span><em>uut</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/run_gpg.html#set_hdmi_master"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#run_gpg.set_hdmi_master" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="run_gpg.soft_trigger_loop">
+<code class="descclassname">run_gpg.</code><code class="descname">soft_trigger_loop</code><span class="sig-paren">(</span><em>uut</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/run_gpg.html#soft_trigger_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#run_gpg.soft_trigger_loop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -84,6 +168,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="run_livetop.html" title="run_livetop module"
              >next</a> |</li>

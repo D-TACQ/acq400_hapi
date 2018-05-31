@@ -42,8 +42,118 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="hil-plot-hi-gain-module">
-<h1>hil_plot_hi_gain module<a class="headerlink" href="#hil-plot-hi-gain-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-hil_plot_hi_gain">
+<span id="hil-plot-hi-gain-module"></span><h1>hil_plot_hi_gain module<a class="headerlink" href="#module-hil_plot_hi_gain" title="Permalink to this headline">¶</a></h1>
+<p>hil_plot_hi_gain Use ADC readback to adjust DAC output</p>
+<blockquote>
+<div><ul class="simple">
+<li>Hardware In Loop : Hi Gain. Trim AO's until measured loopback is zero</li>
+<li>upload to AWG and optionally run a capture.</li>
+<li><dl class="first docutils">
+<dt>data for upload is either File (host-local data file) or Rainbow, a test pattern, </dt>
+<dd>assumes that clocking has been pre-assigned.</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p>usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">hil_plot_hi_gain</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">gain</span> <span class="n">GAIN</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">files</span> <span class="n">FILES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">loop</span> <span class="n">LOOP</span><span class="p">]</span>
+                       <span class="p">[</span><span class="o">--</span><span class="n">store</span> <span class="n">STORE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">nchan</span> <span class="n">NCHAN</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">awglen</span> <span class="n">AWGLEN</span><span class="p">]</span>
+                       <span class="p">[</span><span class="o">--</span><span class="n">ao0</span> <span class="n">AO0</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">passvalue</span> <span class="n">PASSVALUE</span><span class="p">]</span>
+                       <span class="p">[</span><span class="o">--</span><span class="n">aochan</span> <span class="n">AOCHAN</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">post</span> <span class="n">POST</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">trg</span> <span class="n">TRG</span><span class="p">]</span>
+                       <span class="p">[</span><span class="o">--</span><span class="n">plot</span> <span class="n">PLOT</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">wait_user</span> <span class="n">WAIT_USER</span><span class="p">]</span>
+                       <span class="p">[</span><span class="o">--</span><span class="n">set_volts</span> <span class="n">SET_VOLTS</span><span class="p">]</span>
+                       <span class="p">[</span><span class="o">--</span><span class="n">transfer_function</span> <span class="n">TRANSFER_FUNCTION</span><span class="p">]</span>
+                       <span class="n">uuts</span>
+</pre></div>
+</div>
+<p>acq1001 HIL zero offset demo</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uuts                  uut</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--gain <var>GAIN</var></span></kbd></td>
+<td>set gain constant</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--files <var>FILES</var></span></kbd></td>
+<td>list of files to load</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--loop <var>LOOP</var></span></kbd></td>
+<td>loop count</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--store <var>STORE</var></span></kbd></td>
+<td>save data when true</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--nchan <var>NCHAN</var></span></kbd></td>
+<td>channel count for pattern</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--awglen <var>AWGLEN</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>samples in AWG waveform</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--ao0 <var>AO0</var></span></kbd></td>
+<td>first ao in set</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--passvalue <var>PASSVALUE</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>acceptable error</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--aochan <var>AOCHAN</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>AO channel count, if different to AI (it happens)</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--post <var>POST</var></span></kbd></td>
+<td>samples in ADC waveform</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trg <var>TRG</var></span></kbd></td>
+<td>trg &quot;int|ext rising|falling&quot;</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--plot <var>PLOT</var></span></kbd></td>
+<td>--plot 1 : plot data, 2: persistent</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--wait_user <var>WAIT_USER</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>1: force user input each shot</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--set_volts <var>SET_VOLTS</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>list of voltages to converge to</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--transfer_function <var>TRANSFER_FUNCTION</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>generate transfer fun, step size in V</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="function">
+<dt id="hil_plot_hi_gain.run_main">
+<code class="descclassname">hil_plot_hi_gain.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/hil_plot_hi_gain.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hil_plot_hi_gain.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="hil_plot_hi_gain.run_shots">
+<code class="descclassname">hil_plot_hi_gain.</code><code class="descname">run_shots</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hil_plot_hi_gain.html#run_shots"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hil_plot_hi_gain.run_shots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="hil_plot_hi_gain.run_target">
+<code class="descclassname">hil_plot_hi_gain.</code><code class="descname">run_target</code><span class="sig-paren">(</span><em>uut</em>, <em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hil_plot_hi_gain.html#run_target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hil_plot_hi_gain.run_target" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="hil_plot_hi_gain.run_transfer_function">
+<code class="descclassname">hil_plot_hi_gain.</code><code class="descname">run_transfer_function</code><span class="sig-paren">(</span><em>uut</em>, <em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hil_plot_hi_gain.html#run_transfer_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hil_plot_hi_gain.run_transfer_function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 

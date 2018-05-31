@@ -25,6 +25,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="delay_trigger_setup.html" title="delay_trigger_setup module"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -39,8 +42,89 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="acq400-upload-module">
-<h1>acq400_upload module<a class="headerlink" href="#acq400-upload-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-acq400_upload">
+<span id="acq400-upload-module"></span><h1>acq400_upload module<a class="headerlink" href="#module-acq400_upload" title="Permalink to this headline">¶</a></h1>
+<p>capture upload test
+acq1001_capplot UUT1 [UUT2 ..]
+where UUT1 is the ip-address or host name of first uut
+example test client runs captures in a loop on one or more uuts</p>
+<p>pre-requisite: UUT's are configured and ready to make a transient
+capture
+eg clk is running. soft trg enabled
+eg transient length set.</p>
+<p>runs one capture, uploads the data and plots with matplotlib
+tested with 2 x 8 channels UUT's (ACQ1014)
+matplot will get very congested with more channels.
+this is really meant as a demonstration of capture, load to numpy,
+it's not really intended as a scope UI.</p>
+<dl class="docutils">
+<dt>usage: acq400_upload.py [-h] [--soft_trigger SOFT_TRIGGER]</dt>
+<dd>[--trace_upload TRACE_UPLOAD] [--save_data SAVE_DATA]
+[--plot_data PLOT_DATA] [--capture CAPTURE]
+[--remote_trigger REMOTE_TRIGGER]
+[--channels CHANNELS]
+uuts [uuts ...]</dd>
+</dl>
+<p>acq400 upload</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uuts                  uut[s]</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--soft_trigger <var>SOFT_TRIGGER</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>help use soft trigger on capture</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--trace_upload <var>TRACE_UPLOAD</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>1: verbose upload</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--save_data <var>SAVE_DATA</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>store data to specified directory</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--plot_data <var>PLOT_DATA</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>1: plot data</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--capture <var>CAPTURE</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>1: capture data, 0: wait for someone else to capture,
+-1: just upload</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--remote_trigger <var>REMOTE_TRIGGER</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>your function to fire trigger</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--channels <var>CHANNELS</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>comma separated channel list</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="class">
+<dt id="acq400_upload.ActionScript">
+<em class="property">class </em><code class="descclassname">acq400_upload.</code><code class="descname">ActionScript</code><span class="sig-paren">(</span><em>script_and_args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_upload.html#ActionScript"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_upload.ActionScript" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq400_upload.run_main">
+<code class="descclassname">acq400_upload.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_upload.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_upload.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq400_upload.upload">
+<code class="descclassname">acq400_upload.</code><code class="descname">upload</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq400_upload.html#upload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq400_upload.upload" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -84,6 +168,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="delay_trigger_setup.html" title="delay_trigger_setup module"
              >next</a> |</li>

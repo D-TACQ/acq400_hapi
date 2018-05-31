@@ -24,6 +24,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="acq480_controls.html" title="acq480_controls module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">user_apps/special 2.0.1 documentation</a> &#187;</li> 
@@ -35,8 +38,111 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="bolo8-cal-cap-loop-module">
-<h1>bolo8_cal_cap_loop module<a class="headerlink" href="#bolo8-cal-cap-loop-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-bolo8_cal_cap_loop">
+<span id="bolo8-cal-cap-loop-module"></span><h1>bolo8_cal_cap_loop module<a class="headerlink" href="#module-bolo8_cal_cap_loop" title="Permalink to this headline">¶</a></h1>
+<p>bolo8_cal_cap_loop.py ..
+run a bolo8 calibration, store to MDSplus ODD shot
+run a bolo8 capture, store to MDSplus EVEN shot
+ASSUME : each uut has a tree of the same name
+Script calls into MDSplus to increment shots, so it MUST run on the MDSplus server</p>
+<p>Usage
+./bolo8_cal_cap_loop.py --shots=1 acq2106_059
+run one cal, one capture
+./bolo8_cal_cap_loop.py --shots=100 acq2106_059
+run 100 cal/captures</p>
+<p>./bolo8_cal_cap_loop.py --cap=0 --shots=1 acq2106_059
+run one cal
+./bolo8_cal_cap_loop.py --cal=0 --shots=100 acq2106_059
+run 100 captures</p>
+<dl class="docutils">
+<dt>sage: bolo8_cal_cap_loop.py [-h] [--cap CAP] [--cal CAL] [--post POST]</dt>
+<dd>[--clk CLK] [--trg TRG] [--shots SHOTS]
+uuts [uuts ...]</dd>
+</dl>
+<p>bolo8_cal_cap_loop</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uuts           uut list</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--cap <var>CAP</var></span></kbd></td>
+<td>capture</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--cal <var>CAL</var></span></kbd></td>
+<td>calibrate</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--post <var>POST</var></span></kbd></td>
+<td>post trigger length</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--clk <var>CLK</var></span></kbd></td>
+<td>clk &quot;int|ext SR [CR]&quot;</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trg <var>TRG</var></span></kbd></td>
+<td>trg &quot;int|ext rising|falling&quot;</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--shots <var>SHOTS</var></span></kbd></td>
+<td>set number of shots [1]</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="function">
+<dt id="bolo8_cal_cap_loop.even">
+<code class="descclassname">bolo8_cal_cap_loop.</code><code class="descname">even</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bolo8_cal_cap_loop.html#even"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bolo8_cal_cap_loop.even" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bolo8_cal_cap_loop.mds_set_next_shot">
+<code class="descclassname">bolo8_cal_cap_loop.</code><code class="descname">mds_set_next_shot</code><span class="sig-paren">(</span><em>args</em>, <em>flavour</em>, <em>info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bolo8_cal_cap_loop.html#mds_set_next_shot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bolo8_cal_cap_loop.mds_set_next_shot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bolo8_cal_cap_loop.null_set_next_shot">
+<code class="descclassname">bolo8_cal_cap_loop.</code><code class="descname">null_set_next_shot</code><span class="sig-paren">(</span><em>args</em>, <em>flavour</em>, <em>info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bolo8_cal_cap_loop.html#null_set_next_shot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bolo8_cal_cap_loop.null_set_next_shot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bolo8_cal_cap_loop.odd">
+<code class="descclassname">bolo8_cal_cap_loop.</code><code class="descname">odd</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bolo8_cal_cap_loop.html#odd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bolo8_cal_cap_loop.odd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bolo8_cal_cap_loop.run_cal">
+<code class="descclassname">bolo8_cal_cap_loop.</code><code class="descname">run_cal</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bolo8_cal_cap_loop.html#run_cal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bolo8_cal_cap_loop.run_cal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bolo8_cal_cap_loop.run_cal1">
+<code class="descclassname">bolo8_cal_cap_loop.</code><code class="descname">run_cal1</code><span class="sig-paren">(</span><em>uut</em>, <em>shot</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bolo8_cal_cap_loop.html#run_cal1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bolo8_cal_cap_loop.run_cal1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bolo8_cal_cap_loop.run_capture">
+<code class="descclassname">bolo8_cal_cap_loop.</code><code class="descname">run_capture</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bolo8_cal_cap_loop.html#run_capture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bolo8_cal_cap_loop.run_capture" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bolo8_cal_cap_loop.run_main">
+<code class="descclassname">bolo8_cal_cap_loop.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bolo8_cal_cap_loop.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bolo8_cal_cap_loop.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bolo8_cal_cap_loop.run_shots">
+<code class="descclassname">bolo8_cal_cap_loop.</code><code class="descname">run_shots</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bolo8_cal_cap_loop.html#run_shots"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bolo8_cal_cap_loop.run_shots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bolo8_cal_cap_loop.set_next_shot">
+<code class="descclassname">bolo8_cal_cap_loop.</code><code class="descname">set_next_shot</code><span class="sig-paren">(</span><em>args</em>, <em>flavour</em>, <em>info</em><span class="sig-paren">)</span><a class="headerlink" href="#bolo8_cal_cap_loop.set_next_shot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -77,6 +183,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="acq480_controls.html" title="acq480_controls module"
              >previous</a> |</li>

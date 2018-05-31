@@ -24,6 +24,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="run_gpg.html" title="run_gpg module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">user_apps/acq1001 2.0.1 documentation</a> &#187;</li> 
@@ -35,8 +38,68 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="run-livetop-module">
-<h1>run_livetop module<a class="headerlink" href="#run-livetop-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-run_livetop">
+<span id="run-livetop-module"></span><h1>run_livetop module<a class="headerlink" href="#module-run_livetop" title="Permalink to this headline">¶</a></h1>
+<p>run a livetop process</p>
+<dl class="docutils">
+<dt>usage: run_gpg.py [-h] [--trg TRG] [--clk CLK] [--mode MODE]</dt>
+<dd>[--disable DISABLE] [--stl STL] [--waterfall WATERFALL]
+[--trace TRACE] [--hdmi_master HDMI_MASTER]
+uut</dd>
+</dl>
+<p>run_gpg</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uut                   uut</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trg <var>TRG</var></span></kbd></td>
+<td>trigger fp|soft|softloop|softonce</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--clk <var>CLK</var></span></kbd></td>
+<td>clk int|dX|notouch</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--mode <var>MODE</var></span></kbd></td>
+<td>mode</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--disable <var>DISABLE</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>1: disable</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--stl <var>STL</var></span></kbd></td>
+<td>stl file</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--waterfall <var>WATERFALL</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>d0,d1,d2,d3 waterfall [interval,hitime]</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trace <var>TRACE</var></span></kbd></td>
+<td>trace wire protocol</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--hdmi_master <var>HDMI_MASTER</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>clk, trg and gpg drive HDMI outputs</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="function">
+<dt id="run_livetop.run_main">
+<code class="descclassname">run_livetop.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/run_livetop.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#run_livetop.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="run_livetop.run_shot">
+<code class="descclassname">run_livetop.</code><code class="descname">run_shot</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/run_livetop.html#run_shot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#run_livetop.run_shot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -77,6 +140,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="run_gpg.html" title="run_gpg module"
              >previous</a> |</li>

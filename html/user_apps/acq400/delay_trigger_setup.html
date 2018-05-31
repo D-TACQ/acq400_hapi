@@ -25,6 +25,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="hdmi_master_trg.html" title="hdmi_master_trg module"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -39,8 +42,69 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="delay-trigger-setup-module">
-<h1>delay_trigger_setup module<a class="headerlink" href="#delay-trigger-setup-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-delay_trigger_setup">
+<span id="delay-trigger-setup-module"></span><h1>delay_trigger_setup module<a class="headerlink" href="#module-delay_trigger_setup" title="Permalink to this headline">¶</a></h1>
+<p>This file is a setup file for the delay trigger
+mode of operation for the acq1001+480 setup.
+This file will perform all the setup required to
+take data on the acq480, triggering from the gpgs,
+which itself triggers from an external trigger.
+For more information on the setup please refer to the
+D-TACQ delay trigger report.</p>
+<p>An example command line example would be:</p>
+<p>python delay_trigger_setup.py --verbose 1 --delay 10000000 acq1001_105</p>
+<p>This command runs the script in verbose mode,
+configures the gpg to run with a 10s delay (dependant
+on FPCLK frequency) on acq1001_105.</p>
+<dl class="docutils">
+<dt>usage: delay_trigger_setup.py [-h] [--verbose VERBOSE] [--delay DELAY]</dt>
+<dd>[--pre PRE] [--post POST]
+uuts [uuts ...]</dd>
+</dl>
+<p>delay-trigger analysis</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uuts               uut names</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--verbose <var>VERBOSE</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>verbose</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--delay <var>DELAY</var></span></kbd></td>
+<td>delay_trigger parameter</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--pre <var>PRE</var></span></kbd></td>
+<td>delay_trigger parameter</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--post <var>POST</var></span></kbd></td>
+<td>delay_trigger parameter</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="function">
+<dt id="delay_trigger_setup.configure_uut">
+<code class="descclassname">delay_trigger_setup.</code><code class="descname">configure_uut</code><span class="sig-paren">(</span><em>args</em>, <em>uut</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/delay_trigger_setup.html#configure_uut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#delay_trigger_setup.configure_uut" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="delay_trigger_setup.run_main">
+<code class="descclassname">delay_trigger_setup.</code><code class="descname">run_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/delay_trigger_setup.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#delay_trigger_setup.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="delay_trigger_setup.setup">
+<code class="descclassname">delay_trigger_setup.</code><code class="descname">setup</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/delay_trigger_setup.html#setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#delay_trigger_setup.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -84,6 +148,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="hdmi_master_trg.html" title="hdmi_master_trg module"
              >next</a> |</li>

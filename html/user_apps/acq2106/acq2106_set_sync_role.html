@@ -25,6 +25,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="mgtdramshot.html" title="mgtdramshot module"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -39,8 +42,69 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="acq2106-set-sync-role-module">
-<h1>acq2106_set_sync_role module<a class="headerlink" href="#acq2106-set-sync-role-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-acq2106_set_sync_role">
+<span id="acq2106-set-sync-role-module"></span><h1>acq2106_set_sync_role module<a class="headerlink" href="#module-acq2106_set_sync_role" title="Permalink to this headline">¶</a></h1>
+<p>acq2106_set_sync_role master [slave1 ... slaveN]</p>
+<dl class="docutils">
+<dt>usage: acq2106_set_sync_role.py [-h] [--master_clk MASTER_CLK]</dt>
+<dd>[--master_trg MASTER_TRG] [--clkdiv CLKDIV]
+[--test TEST] [--trace TRACE]
+uuts [uuts ...]</dd>
+</dl>
+<p>acq2106_set_sync_role</p>
+<dl class="docutils">
+<dt>positional arguments:</dt>
+<dd>uuts                  uuts m1 [s1 s2 ...]</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--master_clk <var>MASTER_CLK</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>master_clk role alt fp,sysclk,sampleclk</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--master_trg <var>MASTER_TRG</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>master_trg src alt: fp</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--clkdiv <var>CLKDIV</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>clock divider, each module</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--test <var>TEST</var></span></kbd></td>
+<td>test link</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--trace <var>TRACE</var></span></kbd></td>
+<td>set command tracing</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="function">
+<dt id="acq2106_set_sync_role.rf">
+<code class="descclassname">acq2106_set_sync_role.</code><code class="descname">rf</code><span class="sig-paren">(</span><em>edge</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq2106_set_sync_role.html#rf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq2106_set_sync_role.rf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq2106_set_sync_role.run_link_test">
+<code class="descclassname">acq2106_set_sync_role.</code><code class="descname">run_link_test</code><span class="sig-paren">(</span><em>parser</em>, <em>uutm</em>, <em>uuts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq2106_set_sync_role.html#run_link_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq2106_set_sync_role.run_link_test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq2106_set_sync_role.run_main">
+<code class="descclassname">acq2106_set_sync_role.</code><code class="descname">run_main</code><span class="sig-paren">(</span><em>parser</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq2106_set_sync_role.html#run_main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq2106_set_sync_role.run_main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="acq2106_set_sync_role.set_mb_clk">
+<code class="descclassname">acq2106_set_sync_role.</code><code class="descname">set_mb_clk</code><span class="sig-paren">(</span><em>uut</em>, <em>clkdef</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/acq2106_set_sync_role.html#set_mb_clk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#acq2106_set_sync_role.set_mb_clk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
@@ -84,6 +148,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="mgtdramshot.html" title="mgtdramshot module"
              >next</a> |</li>
