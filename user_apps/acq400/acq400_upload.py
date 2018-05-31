@@ -1,20 +1,49 @@
 #!/usr/bin/env python
 
-""" capture upload test
-    acq1001_capplot UUT1 [UUT2 ..]
-    where UUT1 is the ip-address or host name of first uut
-    example test client runs captures in a loop on one or more uuts
-    
-    pre-requisite: UUT's are configured and ready to make a transient
-    capture 
-    eg clk is running. soft trg enabled
-    eg transient length set.
-    
-    runs one capture, uploads the data and plots with matplotlib
-    tested with 2 x 8 channels UUT's (ACQ1014)
-    matplot will get very congested with more channels.
-    this is really meant as a demonstration of capture, load to numpy,
-    it's not really intended as a scope UI.
+"""
+capture upload test
+acq1001_capplot UUT1 [UUT2 ..]
+where UUT1 is the ip-address or host name of first uut
+example test client runs captures in a loop on one or more uuts
+
+pre-requisite: UUT's are configured and ready to make a transient
+capture
+eg clk is running. soft trg enabled
+eg transient length set.
+
+runs one capture, uploads the data and plots with matplotlib
+tested with 2 x 8 channels UUT's (ACQ1014)
+matplot will get very congested with more channels.
+this is really meant as a demonstration of capture, load to numpy,
+it's not really intended as a scope UI.
+
+usage: acq400_upload.py [-h] [--soft_trigger SOFT_TRIGGER]
+                    [--trace_upload TRACE_UPLOAD] [--save_data SAVE_DATA]
+                    [--plot_data PLOT_DATA] [--capture CAPTURE]
+                    [--remote_trigger REMOTE_TRIGGER]
+                    [--channels CHANNELS]
+                    uuts [uuts ...]
+
+acq400 upload
+
+positional arguments:
+  uuts                  uut[s]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --soft_trigger SOFT_TRIGGER
+                        help use soft trigger on capture
+  --trace_upload TRACE_UPLOAD
+                        1: verbose upload
+  --save_data SAVE_DATA
+                        store data to specified directory
+  --plot_data PLOT_DATA
+                        1: plot data
+  --capture CAPTURE     1: capture data, 0: wait for someone else to capture,
+                        -1: just upload
+  --remote_trigger REMOTE_TRIGGER
+                        your function to fire trigger
+  --channels CHANNELS   comma separated channel list
 """
 
 import sys

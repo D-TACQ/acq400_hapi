@@ -1,14 +1,31 @@
 #!/usr/bin/env python
 
-""" capture loop test
-    acq400_caploop UUT1 [UUT2 ..]
-    where UUT1 is the ip-address or host name of first uut
-    example test client runs captures in a loop on one or more uuts
-    
-    pre-requisite: UUT's are configured and ready to make a transient
-    capture 
-    eg clk is running. soft trg enabled
-    eg transient length set.
+"""
+capture loop test
+acq400_caploop UUT1 [UUT2 ..]
+where UUT1 is the ip-address or host name of first uut
+example test client runs captures in a loop on one or more uuts
+
+pre-requisite: UUT's are configured and ready to make a transient
+capture
+eg clk is running. soft trg enabled
+eg transient length set.
+
+usage: acq400_caploop_rtrig.py [-h] [--trigger_uut TRIGGER_UUT]
+                           [--nshots NSHOTS]
+                           uuts [uuts ...]
+
+acq400 looptest
+
+positional arguments:
+  uuts                  uuts
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --trigger_uut TRIGGER_UUT
+                        external trigger uut eg ACQ1001+DIO, soft_trigger
+                        brought to front panel
+  --nshots NSHOTS       number of shots, default infinit
     
 """
 
@@ -31,7 +48,7 @@ def run_shots(args):
     for uut in uuts:
         uut.s1.shot = 0
         if hasattr(uut.s0, 'TIM_CTRL_LOCK'):
-            print "LOCKDOWN {}".format(uut)
+            print("LOCKDOWN {}".format(uut))
             uut.s0.TIM_CTRL_LOCK = 1
 
     shot_controller = acq400_hapi.ShotController(uuts)

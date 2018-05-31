@@ -1,7 +1,7 @@
 
 import argparse
-import acq400
-from shotcontrol import intSI as intSI
+from . import acq400
+from .shotcontrol import intSI as intSI
 
 class Acq400UI:
     """ Common UI features for consistent args handling across all apps

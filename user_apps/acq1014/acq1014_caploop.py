@@ -1,16 +1,33 @@
 #!/usr/bin/env python
 
-""" capture loop test
-    acq1001_caploop UUT1 [UUT2 ..]
-    where UUT1 is the ip-address or host name of first uut
-    example test client runs captures in a loop on one or more uuts
+"""
+capture loop test
+acq1001_caploop UUT1 [UUT2 ..]
+where UUT1 is the ip-address or host name of first uut
+example test client runs captures in a loop on one or more uuts
 
-    pre-requisite: UUT's are configured and ready to make a transient
-    capture 
-    eg clk is running. soft trg enabled
-    eg transient length set.
+pre-requisite: UUT's are configured and ready to make a transient
+capture
+eg clk is running. soft trg enabled
+eg transient length set.
 
-    loop continues "forever" until <CTRL-C>
+loop continues "forever" until <CTRL-C>
+
+usage: acq1014_caploop.py [-h] [--sleep SLEEP] [--trg TRG] [--nsam NSAM]
+                          [--shots SHOTS]
+                          uuts [uuts ...]
+
+acq1014 looptest
+
+positional arguments:
+  uuts           uut pairs: m1,m2 [s1,s2 ...]
+
+optional arguments:
+  -h, --help     show this help message and exit
+  --sleep SLEEP  sleep time between shots, -1:pause input
+  --trg TRG      trigger int|ext
+  --nsam NSAM    expected number of samples
+  --shots SHOTS  number of shots to run
 """
 
 import sys
@@ -32,7 +49,7 @@ def run_loop(args):
 
     for uut in uuts:
         if hasattr(uut.s0, 'TIM_CTRL_LOCK'):
-            print "LOCKDOWN {}".format(uut)
+            print("LOCKDOWN {}".format(uut))
             uut.s0.TIM_CTRL_LOCK = 1
         uut.s1.shot='0'
 
