@@ -1,7 +1,31 @@
 #!/usr/bin/env python
 
-""" configure and run gpg on uut
-    run_gpg.py [opts] uut
+"""
+configure and run gpg on uut
+run_gpg.py [opts] uut
+
+usage: run_gpg.py [-h] [--trg TRG] [--clk CLK] [--mode MODE]
+                  [--disable DISABLE] [--stl STL] [--waterfall WATERFALL]
+                  [--trace TRACE] [--hdmi_master HDMI_MASTER]
+                  uut
+
+run_gpg
+
+positional arguments:
+  uut                   uut
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --trg TRG             trigger fp|soft|softloop|softonce
+  --clk CLK             clk int|dX|notouch
+  --mode MODE           mode
+  --disable DISABLE     1: disable
+  --stl STL             stl file
+  --waterfall WATERFALL
+                        d0,d1,d2,d3 waterfall [interval,hitime]
+  --trace TRACE         trace wire protocol
+  --hdmi_master HDMI_MASTER
+                        clk, trg and gpg drive HDMI outputs
 """
 
 import sys

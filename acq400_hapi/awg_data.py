@@ -80,7 +80,7 @@ class RainbowGen:
         nchan = self.nchan
         NCYCLES = self.NCYCLES
         xoff = ch*100
-        xx = np.array(list(range(-nsam/2-xoff,nsam/2-xoff)))*NCYCLES*2*np.pi/nsam
+        xx = np.array(list(range(-nsam//2-xoff, nsam//2-xoff)))*NCYCLES*2*np.pi/nsam
         return [ np.sin(x)/x if x != 0 else 1 for x in xx ]
 
     def __init__(self, uut, nchan, nsam, run_forever=False, ao0 = 0):
