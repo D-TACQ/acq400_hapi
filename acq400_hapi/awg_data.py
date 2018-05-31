@@ -40,7 +40,7 @@ class SinGen:
     def sin(self):
         nsam = self.nsam
         NCYCLES = self.NCYCLES
-        return np.sin(np.array(range(nsam))*NCYCLES*2*np.pi/nsam)   # sin, amplitude of 1 (volt)
+        return np.sin(np.array(list(range(nsam)))*NCYCLES*2*np.pi/nsam)   # sin, amplitude of 1 (volt)
 
 class AllFullScale(SinGen):
     def __init__(self, uut, nchan, nsam, run_forever=False):
@@ -73,14 +73,14 @@ class RainbowGen:
     def sin(self):
         nsam = self.nsam
         NCYCLES = self.NCYCLES    
-        return np.sin(np.array(range(nsam))*NCYCLES*2*np.pi/nsam)   # sin, amplitude of 1 (volt)
+        return np.sin(np.array(list(range(nsam)))*NCYCLES*2*np.pi/nsam)   # sin, amplitude of 1 (volt)
 
     def sinc(self, ch):
         nsam = self.nsam
         nchan = self.nchan
         NCYCLES = self.NCYCLES
         xoff = ch*100
-        xx = np.array(range(-nsam/2-xoff,nsam/2-xoff))*NCYCLES*2*np.pi/nsam
+        xx = np.array(list(range(-nsam//2-xoff, nsam//2-xoff)))*NCYCLES*2*np.pi/nsam
         return [ np.sin(x)/x if x != 0 else 1 for x in xx ]
 
     def __init__(self, uut, nchan, nsam, run_forever=False, ao0 = 0):
@@ -137,7 +137,7 @@ class Pulse:
         self.nchan = nchan
         self.nsam = nsam
         (self.interval, self.flat_top) = [ int(u) for u in args ]
-        print( "self.interval {}".format(self.interval)) 
+        print("self.interval {}".format(self.interval))
         self.aw = np.zeros((nsam,nchan))
         self.generate()
     def load(self, autorearm = False):

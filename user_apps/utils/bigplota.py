@@ -98,7 +98,7 @@ def bigplota(args):
 	if args.subplots == 0:
             plt.legend(loc='upper left', bbox_to_anchor=(1,1))
        
-        plt.title("UUTS:{} at t {}s, pulse {} at sample {}".format(range(u0+1,u1+1), p*M1/SR, pp, p*M1))   
+        plt.title("UUTS:{} at t {}s, pulse {} at sample {}".format(list(range(u0+1,u1+1)), p*M1/SR, pp, p*M1))   
         plt.axvline(x=residue)
         plt.xlabel('cycle:{} buf:{}'.format(cycle, cycb))
         plt.show()          

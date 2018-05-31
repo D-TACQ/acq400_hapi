@@ -54,6 +54,8 @@ import os
 import subprocess
 
 import hil_plot_support as pltsup
+from future import builtins
+from builtins import input
 
 
 def run_shots(args):
@@ -102,7 +104,7 @@ def run_shots(args):
     for ii in range(0, args.loop):
         print("shot: %d" % (ii))
         if ii == 0 or not args.autorearm:
-            f = loader.next()
+            f = next(loader)
             print("Loaded %s" % (f))
         else:
             if args.autorearm and ii+1 == args.loop:
@@ -124,7 +126,7 @@ def run_shots(args):
             plt.title("AI for shot %d %s" % (ii, "persistent plot" if args.plot > 1 else ""))
             pltsup.plot(uut, args, ii, rdata)
         if args.wait_user is not None:
-            args.wait_user()
+            input("hit return to continue")
 
 
 def is_exe(fpath):
@@ -146,7 +148,7 @@ class Integer:
 
 class Prompt:
     def __call__(self):
-        raw_input("hit return to continue")              
+        input("hit return to continue")              
 
 
 def select_prompt_or_exec(value):
