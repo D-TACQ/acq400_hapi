@@ -8,7 +8,13 @@ python module to connect to remote hosts
 
 ## Installation
 
-NB: works with Python 2.7. Does not work with Python 3.x
+V2.0.0 : works with Python 2.7 and 3.x
+
+Now needs the "future" feature:
+on linux:
+    sudo pip install future
+on Windows:
+    py -version -m pip install future
 
 RECOMMENDATION: install with PIP:
 pip install acq400_hapi

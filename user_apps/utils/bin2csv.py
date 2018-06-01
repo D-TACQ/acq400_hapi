@@ -1,7 +1,25 @@
 #!/usr/bin/env python
 
-""" bin2csv
-    input raw binary, output csv
+"""
+bin2csv
+input raw binary, output csv
+
+usage: bin2csv.py [-h] [--nchan NCHAN] [--word WORD] [--outroot OUTROOT]
+                  [--out OUT] [--paste PASTE]
+                  binfiles [binfiles ...]
+
+bin2csv
+
+positional arguments:
+  binfiles           file[s] to convert
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --nchan NCHAN      number of channels
+  --word WORD        int16|int32
+  --outroot OUTROOT  output root directory
+  --out OUT          explicit output name
+  --paste PASTE      1: paste multiple files * 1 chan
 """
 
 import csv

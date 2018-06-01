@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 
-""" remote scripting -f scriptfile UUT [UUT2]
+"""
+remote scripting -f scriptfile UUT [UUT2]
+
+usage: acq400_remote_script.py [-h] [-s SCRIPT] [-t TRACE] uuts [uuts ...]
+
+acq400_remote_script
+
+positional arguments:
+  uuts                  uut[s]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s SCRIPT, --script SCRIPT
+                        script file [default stdin]
+  -t TRACE, --trace TRACE
+                        traces command execution
 """
 
 import sys

@@ -1,7 +1,38 @@
 #!/usr/bin/env python
 
-""" set burst mode
-    run_gpg.py [opts] uut
+"""
+set burst mode
+run_gpg.py [opts] uut
+
+usage: set_burst.py [-h] [--rgm RGM] [--mbclk MBCLK] [--dx DX] [--gpg GPG]
+                [--sense SENSE] [--rtm_translen RTM_TRANSLEN]
+                [--post POST] [--trg TRG] [--hdmi_slave HDMI_SLAVE]
+                [--es_enable ES_ENABLE] [--trace TRACE] [--demux DEMUX]
+                uuts [uuts ...]
+
+set_burst mode
+
+positional arguments:
+  uuts                  uut
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --rgm RGM             mode RGM|RTM
+  --mbclk MBCLK         notouch|FIN,FOUT
+  --dx DX               dx d0|d1|d2
+  --gpg GPG             source from gpg on|off
+  --sense SENSE         rising|falling
+  --rtm_translen RTM_TRANSLEN
+                        transient length
+  --post POST           shot length
+  --trg TRG             shot trigger triplet
+  --hdmi_slave HDMI_SLAVE
+                        no: use FPTRG, yes: use HDMI trg on d0, full=use all 4
+                        lines
+  --es_enable ES_ENABLE
+                        0 disables Event Signature
+  --trace TRACE         1: enable command trace
+  --demux DEMUX         0: do not demux
 """
 
 import sys
