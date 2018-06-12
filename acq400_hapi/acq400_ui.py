@@ -68,14 +68,15 @@ class Acq400UI:
             svc.trace = trace
             
     @staticmethod
-    def add_args(parser, post=True):
+    def add_args(parser, post=True, pre=True):
         """ generate standard args list
 
         Args:
              post: set False to disable createing the arg, becomes client app resposibility
 
         """
-        parser.add_argument('--pre', default=0, type=int, help='pre-trigger samples')
+        if pre:
+            parser.add_argument('--pre', default=0, type=int, help='pre-trigger samples')
         if post:
             parser.add_argument('--post', default=100000, type=int, help='post-trigger samples')
         parser.add_argument('--clk', default=None, help='int|ext|zclk|xclk,fpclk,SR,[FIN]')
