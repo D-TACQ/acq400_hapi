@@ -60,6 +60,8 @@ import numpy as np
 import os
 import time
 import argparse
+import socket
+import matplotlib.pyplot as plt
 
 
 def make_data_dir(directory, verbose):
@@ -67,24 +69,27 @@ def make_data_dir(directory, verbose):
         os.mkdir(directory)
     except Exception:
         if verbose:
-            print "Directory already exists"
+            print("Directory already exists")
         pass
 
 
 def run_stream(args):
-    data = ""
+    data = bytes()
     num = 0
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
 
     for uut in uuts:
         try:
-            if uut.s0.data32:
+            if int(uut.s0.data32):
                 wordsizetype = "<i4"  # 32 bit little endian
+            else:
+                wordsizetype = "<i2"  # 16 bit little endian
         except AttributeError:
             print("Attribute error detected. No data32 attribute - defaulting to 16 bit")
             wordsizetype = "<i2"  # 16 bit little endian
 
-        skt = acq400_hapi.Netclient(args.uuts[0], 4210)
+        skt = socket.socket()
+        skt.connect((args.uuts[0], 4210))
         make_data_dir(args.root, args.verbose)
         start_time = time.clock()
         upload_time = time.clock()
@@ -93,25 +98,25 @@ def run_stream(args):
         while time.clock() < (start_time + args.runtime) and data_length < args.totaldata:
 
             loop_time = time.clock()
-            data += skt.sock.recv(10240000)
-
+            data += skt.recv(4096)
             if len(data) / 1024 >= args.filesize:
                 data_length += float(len(data)) / 1024
                 data_file = open("{}/data{}.dat".format(args.root, num), "wb")
-                data = np.frombuffer(data, dtype=wordsizetype, count=-1)
+                data = np.frombuffer(data, dtype="<i2")
+                data = np.asarray(data)
                 data.tofile(data_file, '')
 
                 if args.verbose == 1:
-                    print "New data file written."
-                    print "Data Transferred: ", data_length, "KB"
-                    print "loop_time: ", loop_time
-                    print "Data upload & save rate: ", float(len(data)) / 1024 / (time.clock() - upload_time), "KB/s"
-                    print ""
-                    print ""
+                    print("New data file written.")
+                    print("Data Transferred: ", data_length, "KB")
+                    print("loop_time: ", loop_time)
+                    print("Data upload & save rate: ", float(len(data)) / 1024 / (time.clock() - upload_time), "KB/s")
+                    print("")
+                    print("")
 
                 num += 1
                 data_file.close()
-                data = ""  # Remove data from variable once it has been written
+                data = bytes()  # Remove data from variable once it has been written
                 upload_time = time.clock()  # Reset upload time
                 data_written_flag = 1
 
@@ -119,9 +124,10 @@ def run_stream(args):
             data_written_flag
         except NameError:
             data_file = open("{}/data{}.dat".format(args.root, num), "wb")
-            data = np.frombuffer(data, dtype=wordsizetype, count=-1)
+            data = np.frombuffer(data, dtype="<i2")
+            data = np.asarray(data)
             data.tofile(data_file, '')
-            print "runtime exceeded: all stream data written to single file"
+            print("runtime exceeded: all stream data written to single file")
 
 
 def run_main():

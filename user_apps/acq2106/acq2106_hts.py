@@ -29,7 +29,7 @@ optional arguments:
   -h, --help       show this help message and exit
   --clk CLK        int|ext|zclk|xclk,fpclk,SR,[FIN]
   --trg TRG        int|ext,rising|falling
-  --sim SIM        nosim|s1[,s2,s3..] list of sites to run in simulate mode
+  --sim SIM        s1[,s2,s3..] list of sites to run in simulate mode
   --trace TRACE    1 : enable command tracing
   --secs SECS      capture seconds [default:0 inifinity]
   --nowait NOWAIT  start the shot but do not wait for completion
@@ -61,8 +61,8 @@ def hexdump_string(uut, chan, sites, spad):
     dumpstr = ("hexdump -ve '\"%10_ad,\" ")
     for svc in ( uut.svc['s{}'.format(s)] for s in sites.split(',')):
         d32 = svc.data32 == '1'
-	fmt = '" " {}/{} "%0{}x," '.format(svc.NCHAN, 4 if d32 else 2, 8 if d32 else 4)
-	dumpstr += fmt
+        fmt = '" " {}/{} "%0{}x," '.format(svc.NCHAN, 4 if d32 else 2, 8 if d32 else 4)
+        dumpstr += fmt
     if nspad:
         fmt = '{}/4 "%08x," '.format(nspad)
         dumpstr += fmt
@@ -70,7 +70,7 @@ def hexdump_string(uut, chan, sites, spad):
     print(dumpstr)
     with open("hexdump{}".format(chan), "w") as fp:
         fp.write("{} $*\n".format(dumpstr))
-    os.chmod("hexdump{}".format(chan), 0777)
+    os.chmod("hexdump{}".format(chan), 0o777)
 
 def init_comms(uut, args):
     if args.spad != None:
@@ -92,7 +92,7 @@ def init_comms(uut, args):
             hexdump_string(uut, "B", csites, args.spad)
 
 def init_work(uut, args):
-    print "init_work"
+    print("init_work")
 
 def start_shot(uut, args):    
     uut.s0.streamtonowhered = "start"

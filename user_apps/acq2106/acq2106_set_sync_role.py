@@ -2,11 +2,33 @@
 
 """ 
 acq2106_set_sync_role master [slave1 ... slaveN]
+
+usage: acq2106_set_sync_role.py [-h] [--master_clk MASTER_CLK]
+                                [--master_trg MASTER_TRG] [--clkdiv CLKDIV]
+                                [--test TEST] [--trace TRACE]
+                                uuts [uuts ...]
+
+acq2106_set_sync_role
+
+positional arguments:
+  uuts                  uuts m1 [s1 s2 ...]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --master_clk MASTER_CLK
+                        master_clk role alt fp,sysclk,sampleclk
+  --master_trg MASTER_TRG
+                        master_trg src alt: fp
+  --clkdiv CLKDIV       clock divider, each module
+  --test TEST           test link
+  --trace TRACE         set command tracing
 """
 
 import argparse
 import acq400_hapi
 import time
+from future import builtins
+from builtins import input
 
 def set_mb_clk(uut, clkdef):
     if (len(clkdef) == 3):
@@ -68,7 +90,7 @@ def run_main(parser):
         run_link_test(parser, uuts[0], uuts[1])
 
     if not parser.master_trg.startswith("soft"):
-        raw_input("say when")
+        input("say when")
         uuts[0].set_master_trg(mtrg, edge, enabled=True)       
 
 

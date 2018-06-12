@@ -112,7 +112,7 @@ class ShotController:
         ii = 0        
         for u in self.uuts:
             if channels == ():
-                cmap[u] = range(1, u.nchan()+1)  # default : ALL
+                cmap[u] = list(range(1, u.nchan()+1))  # default : ALL
             elif type(channels) == int:             
                 cmap[u] = channels                  # single value
             elif type(channels[0]) != tuple:                

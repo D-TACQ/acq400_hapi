@@ -1,12 +1,39 @@
 #!/usr/bin/env python
-# upload to AWG and optionally run a capture.
-# data for upload is either File (host-local data file) or Rainbow, a test pattern.
-# assumes that clocking has been pre-assigned.
+
+"""
+upload to AWG and optionally run a capture.
+data for upload is either File (host-local data file) or Rainbow, a test pattern.
+assumes that clocking has been pre-assigned.
+
+usage: acq1001_awg_demo.py [-h] [--files FILES] [--loop LOOP]
+                           [--capture CAPTURE] [--nchan NCHAN]
+                           [--awglen AWGLEN] [--post POST] [--trg TRG]
+                           uuts
+
+acq1001 awg demo
+
+positional arguments:
+  uuts               uut
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --files FILES      list of files to load
+  --loop LOOP        loop count
+  --capture CAPTURE  run a capture (assumes ADC present)
+  --nchan NCHAN      channel count for pattern
+  --awglen AWGLEN    samples in AWG waveform
+  --post POST        samples in ADC waveform
+  --trg TRG          trg "int|ext rising|falling"
+"""
+
+
 
 import sys
 import acq400_hapi
 from acq400_hapi import awg_data
 import argparse
+from future import builtins
+from builtins import input
 
         
 def run_shots(args):
@@ -35,7 +62,7 @@ def run_shots(args):
             if args.capture > 0:
                 shot_controller.run_shot(soft_trigger= True if args.trg=='int' else False)
             else:
-                raw_input("hit return when done")
+                input("hit return when done")
             
 
 def run_main():

@@ -1,13 +1,29 @@
 #!/usr/bin/env python
 
-""" configure transient 
-    acq1014_configure_transient UUT1 UUT2 [NPOST] [trigger=int|ext|ext2]
+"""
+configure transient
+acq1014_configure_transient UUT1 UUT2 [NPOST] [trigger=int|ext|ext2]
+
+usage: acq1014_configure_transient.py [-h] [--pre PRE] [--post POST]
+                                  [--clk CLK] [--trg TRG]
+                                  [uuts [uuts ...]]
+
+configure multiple acq1014
+
+positional arguments:
+  uuts         uut pairs: m1,m2 [s1,s2 ...]
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --pre PRE    pre trigger length
+  --post POST  post trigger length
+  --clk CLK    clk "int|ext SR [CR]"
+  --trg TRG    trg "int|ext rising|falling"
 """
 
 import sys
 import acq400_hapi
 import argparse
-import sets
 from acq400_hapi import intSI as intSI
 
 def configure_shot(args):
@@ -15,8 +31,7 @@ def configure_shot(args):
         print("ERROR: must be an even number of uuts, minimum 2")
         sys.exit(1)
 
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]    
-    mset = sets.Set(uuts[0:2])
+    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     pre = intSI(args.pre)
     post = intSI(args.post)
     t_args = [args.trg.split(' ')[0], 

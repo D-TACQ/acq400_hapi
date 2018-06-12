@@ -1,10 +1,27 @@
 #!/usr/bin/env python
 
-""" acq480 controls .. set ACQ480 parameters
-    acq480 controls [opts] UUT1 [UUT2 ..]
-    where UUT1 is the ip-address or host name of first uut
-    example test client runs captures in a loop on one or more uuts
+"""
+acq480 controls .. set ACQ480 parameters
+acq480 controls [opts] UUT1 [UUT2 ..]
+where UUT1 is the ip-address or host name of first uut
+example test client runs captures in a loop on one or more uuts
 
+usage: acq480_controls.py [-h] [--FIR FIR] [--T50R T50R] [--GAIN GAIN]
+                          [--site SITE] [--channel CHANNEL]
+                          uuts [uuts ...]
+
+configure acq480
+
+positional arguments:
+  uuts               uut1 [uut2..]
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --FIR FIR
+  --T50R T50R
+  --GAIN GAIN
+  --site SITE
+  --channel CHANNEL
 """
 
 import sys
@@ -22,7 +39,7 @@ def set_T50R(module, enable, channel):
         module.set_knob("TR50R_{:d}".format(channel), enable)
    
 def set_gain(module, gain, channel):
-    chans = range(1,9) if channel == ALL else channel
+    chans = list(range(1,9)) if channel == ALL else channel
     
     for ch in chans:
         module.set_knob("ACQ480_GAIN_{:02d}".format(ch), gain)

@@ -8,11 +8,12 @@ import sys
 import acq400_hapi
 import argparse
 import time
+from builtins import int
 
 
 # AD9854 class in the making ..
 def FTW1(ratio):
-    return format(long(ratio * pow(2,48)), '012x')
+    return format(int(ratio * pow(2,48)), '012x')
 
 def set_upd_clk_fpga(uut, idds, value):
     if idds == 0:

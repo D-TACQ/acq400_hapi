@@ -54,6 +54,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import hil_plot_support as pltsup
 import zero_offset
+from future import builtins
+from builtins import input
 
 
 def run_target(uut, args):
@@ -66,7 +68,7 @@ def run_target(uut, args):
     try:
         loader = work.load()
         ii = 0
-        while loader.next():        
+        while next(loader):        
             uut.run_oneshot()        
             print("read_chan %d" % (args.post*args.nchan))
             rdata = uut.read_chan(0, args.post*args.nchan)                        
@@ -78,7 +80,7 @@ def run_target(uut, args):
                 pltsup.plot(uut, args, ii, rdata)               
                 pltsup.store_file(ii, rdata, args.nchan, args.post)
                 if args.wait_user:
-                    key = raw_input("hit return to continue, q for quit").strip()
+                    key = input("hit return to continue, q for quit").strip()
                     if key == 'q':
                         work.user_quit = True
                         if work.in_bounds:
