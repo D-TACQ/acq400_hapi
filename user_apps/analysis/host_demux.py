@@ -118,7 +118,7 @@ def read_data(args):
 def save_data(args, raw_channels):
     subprocess.call(["mkdir", "-p", args.saveroot])
     for enum, channel in enumerate(raw_channels):
-        data_file = open("{}/data_{:02d}.dat".format(args.saveroot, enum), "wb+")
+        data_file = open("{}/data_{:02d}.dat".format(args.saveroot, enum+1), "wb+")
         channel.tofile(data_file, '')
 
     return raw_channels
@@ -132,6 +132,7 @@ def plot_data(args, raw_channels):
     ccount = 0
     for ch in [ int(c) for c in args.pc_list]:
         channel = raw_channels[ch]
+        # label 1.. (human)
         V2 = client.new_editable_vector(channel.astype(np.float64), name="CH{:02d}".format(ch+1))
         c1 = client.new_curve(V1, V2)
         p1 = client.new_plot()
@@ -147,13 +148,14 @@ def process_data(args):
         plot_data(args, raw_data)
 
 def make_pc_list(args):
+    # ch in 1.. (human)
     if args.pchan == 'none':
         return list()
     if args.pchan == 'all':
 	return list(range(0,args.nchan))
     elif len(args.pchan.split(':')) > 1:
         lr = args.pchan.split(':')
-        x1 = 0 if lr[0] == '' else int(lr[0])
+        x1 = 1 if lr[0] == '' else int(lr[0])
         x2 = args.nchan+1 if lr[1] == '' else int(lr[1])+1
         return list(range(x1, x2))
     else:
@@ -174,6 +176,7 @@ def run_main():
             args.saveroot = args.save
         else:
             args.saveroot = "{}/{}".format(args.uutroot, args.save)
+    # ch 0.. (comp)
     args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
     print("args.pc_list {}".format(args.pc_list))
     process_data(args)
