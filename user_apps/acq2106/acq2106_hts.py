@@ -27,13 +27,12 @@ positional arguments:
 
 optional arguments:
   -h, --help       show this help message and exit
-  --pre PRE        pre-trigger samples
   --clk CLK        int|ext|zclk|xclk,fpclk,SR,[FIN]
   --trg TRG        int|ext,rising|falling
   --sim SIM        nosim|s1[,s2,s3..] list of sites to run in simulate mode
   --trace TRACE    1 : enable command tracing
-  --post POST      capture samples [default:0 inifinity]
   --secs SECS      capture seconds [default:0 inifinity]
+  --nowait NOWAIT  start the shot but do not wait for completion
   --spad SPAD      scratchpad, eg 1,16,0
   --commsA COMMSA  custom list of sites for commsA
   --commsB COMMSB  custom list of sites for commsB
@@ -103,14 +102,8 @@ def stop_shot(uut):
     print("stop_shot")
     uut.s0.streamtonowhered = "stop"
 
-def run_shot(args):    
-    uut = acq400_hapi.Acq2106(args.uut[0])
-
-    config_shot(uut, args)
-    init_comms(uut, args)
-    init_work(uut, args)
+def wait_completion(uut, args):
     try:
-        start_shot(uut, args)
         for ts in range(0, int(args.secs)):
             sys.stdout.write("Time ... %8d / %8d\r" % (ts, int(args.secs)))
             sys.stdout.flush()
@@ -120,11 +113,21 @@ def run_shot(args):
     stop_shot(uut)
 
 
+def run_shot(args):    
+    uut = acq400_hapi.Acq2106(args.uut[0])
+
+    config_shot(uut, args)
+    init_comms(uut, args)
+    init_work(uut, args)
+    start_shot(uut, args)
+    if args.nowait == 0:
+        wait_completion(uut, args)
+
 
 def run_main():    
     parser = argparse.ArgumentParser(description='configure acq2106 High Throughput Stream')    
     acq400_hapi.Acq400UI.add_args(parser, post=False)
-    parser.add_argument('--post', default=0, help="capture samples [default:0 inifinity]")
+    parser.add_argument('--nowait', default=0, help='start the shot but do not wait for completion')
     parser.add_argument('--secs', default=999999, help="capture seconds [default:0 inifinity]")
     parser.add_argument('--spad', default=None, help="scratchpad, eg 1,16,0")
     parser.add_argument('--commsA', default="all", help='custom list of sites for commsA')
