@@ -130,7 +130,7 @@ def run_shots(args):
         print("Keyboard Interrupt, take it all down NOW")
         os._exit(1)
 
-    os.exit(0)
+    os._exit(0)
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq2106 mgtdram test')
