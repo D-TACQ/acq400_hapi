@@ -2,7 +2,7 @@
 
 # feed a set of filnames from an AFHBA404 capture
 # eg 
-# /data/ACQ400DATA/0/acq2106_096/ -type f -name 0.?? | sort -n | ./analyse_stored_buffers.py
+# find /data/ACQ400DATA/0/acq2106_096/ -type f -name 0.?? | sort -n | ./analyse_stored_buffers.py
 
 # @todo: do this as a subprocess. I failed to get a pipeline to work from python ...
 
