@@ -47,16 +47,15 @@ optional arguments:
 import pykst
 import numpy as np
 import matplotlib.pyplot as plt
-from os import listdir
+import os
 import time
 import gc
 import re
 import argparse
 import subprocess
 
-NSAM = 1048576
-NBLK = 16
-NCHN = 32
+NSAM = 0
+WSIZE = 2
 
 def channel_required(args, ch):
 #    print("channel_required {} {}".format(ch, 'in' if ch in args.pc_list else 'out', args.pc_list))
@@ -77,14 +76,20 @@ def create_npdata(args, nblk, nchn):
 
 
 def read_data(args):
-    current_dir_contents = listdir(args.uutroot)
+    global NSAM
+    current_dir_contents = os.listdir(args.uutroot)
     NCHN = args.nchan
     data_files = list()
 
-    datapat = re.compile('[0-9]{4}')
+# matches BOTH 0.?? for AFHBA an 0000 for FTP
+    datapat = re.compile('[.0-9]{4}')
+
     for blknum, blkfile in enumerate(current_dir_contents):
         if datapat.match(blkfile):
             data_files.append("{}/{}".format(args.uutroot, blkfile))
+            if NSAM == 0:
+                NSAM = os.path.getsize(data_files[0])/WSIZE/NCHN
+                print("NSAM set {}".format(NSAM))
 
     NBLK = len(data_files)
     if args.nblks > 0 and NBLK > args.nblks:
@@ -105,7 +110,7 @@ def read_data(args):
             i1 = i0 + NSAM
             for ch in range(NCHN):
                 if channel_required(args, ch):
-                    raw_channels[ch][i0:i1] = (data[ch::32])
+                    raw_channels[ch][i0:i1] = (data[ch::NCHN])
                 # print x
             i0 = i1
             blocks += 1
@@ -167,10 +172,14 @@ def run_main():
     parser.add_argument('--nblks', type=int, default=-1)
     parser.add_argument('--save', type=str, default=None, help='save channelized data to dir')
     parser.add_argument('--src', type=str, default='/data', help='data source root')
+    parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
     args.uutroot = "{}/{}".format(args.src, args.uut[0])
+    if args.cycle != None:
+        args.uutroot = "{}/{}".format(args.uutroot, args.cycle)
+    print("uutroot {}".format(args.uutroot))
     if args.save != None: 
         if args.save.startswith("/"):
             args.saveroot = args.save
