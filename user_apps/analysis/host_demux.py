@@ -78,9 +78,15 @@ def create_npdata(args, nblk, nchn):
 def read_data(args):
     global NSAM
     current_dir_contents = os.listdir(args.uutroot)
-    NCHN = args.nchan
+    current_dir_contents.sort()
+    NCHAN = args.nchan
     data_files = list()
-
+    if NCHAN % 3 == 0:
+        print("collect in groups of 3 to keep alignment")
+        GROUP = 3 
+    else:
+        GROUP = 1
+    
 # matches BOTH 0.?? for AFHBA an 0000 for FTP
     datapat = re.compile('[.0-9]{4}')
 
@@ -88,32 +94,43 @@ def read_data(args):
         if datapat.match(blkfile):
             data_files.append("{}/{}".format(args.uutroot, blkfile))
             if NSAM == 0:
-                NSAM = os.path.getsize(data_files[0])/WSIZE/NCHN
+                NSAM = GROUP*os.path.getsize(data_files[0])/WSIZE/NCHAN
                 print("NSAM set {}".format(NSAM))
 
     NBLK = len(data_files)
     if args.nblks > 0 and NBLK > args.nblks:
         NBLK = args.nblks
 
-    print("NBLK {} NCHN {}".format(NBLK, NCHN))
-   
-    raw_channels = create_npdata(args, NBLK, NCHN)
+    print("NBLK {} NCHAN {}".format(NBLK/GROUP, NCHAN))
+  
+    raw_channels = create_npdata(args, NBLK/GROUP, NCHAN)
     blocks = 0
     i0 = 0
+    iblock = 0
     for blknum, blkfile in enumerate(data_files):
         if blocks >= NBLK:
             break
         if blkfile != "analysis.py" and blkfile != "root":
 
             print blkfile, blknum
-            data = np.fromfile(blkfile, dtype=np.int16)
+            # concatenate 3 blocks to ensure modulo 3 channel align
+            if iblock == 0:
+                data = np.fromfile(blkfile, dtype=np.int16)
+            else:
+                data = np.append(data, np.fromfile(blkfile, dtype=np.int16))
+
+            iblock += 1
+            if iblock < GROUP:
+                continue
+                
             i1 = i0 + NSAM
-            for ch in range(NCHN):
+            for ch in range(NCHAN):
                 if channel_required(args, ch):
-                    raw_channels[ch][i0:i1] = (data[ch::NCHN])
+                    raw_channels[ch][i0:i1] = (data[ch::NCHAN])
                 # print x
             i0 = i1
             blocks += 1
+            iblock = 0
 
     print "length of data = ", len(raw_channels)
     print "length of data[0] = ", len(raw_channels[0])
