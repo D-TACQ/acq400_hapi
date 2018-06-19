@@ -75,31 +75,55 @@ def create_npdata(args, nblk, nchn):
     return channels 
 
 
+def make_cycle_list(args):
+    if args.cycle == None:
+        cyclist = os.listdir(args.uutroot)
+        cyclist.sort()
+        return cyclist
+    else:
+        rng = args.cycle.split(':')
+        if len(rng) > 1:
+            cyclist = [ '{:06d}'.format(c) for c in range(int(rng[0]), int(rng[1])+1) ]
+        elif len(args.cycle) == 6:
+            cyclist = [ args.cycle ]
+        else:
+            cyclist = [ '{:06d}'.format(int(args.cycle)) ]
+
+        return cyclist
+
+def get_file_names(args):
+    fnlist = list()
+# matches BOTH 0.?? for AFHBA an 0000 for FTP
+#    datapat = re.compile('[.0-9]{4}')
+    for cycle in make_cycle_list(args):
+        uutroot = '{}/{}'.format(args.uutroot, cycle)
+        ls = os.listdir(uutroot)
+        ls.sort()
+        for n, file in enumerate(ls):
+            fnlist.append( '{}/{}'.format(uutroot, file) )
+    return fnlist
+
 def read_data(args):
     global NSAM
-    current_dir_contents = os.listdir(args.uutroot)
-    current_dir_contents.sort()
     NCHAN = args.nchan
-    data_files = list()
+    data_files = get_file_names(args)
+    for n, f in enumerate(data_files):
+        print(f)
     if NCHAN % 3 == 0:
         print("collect in groups of 3 to keep alignment")
         GROUP = 3 
     else:
         GROUP = 1
     
-# matches BOTH 0.?? for AFHBA an 0000 for FTP
-    datapat = re.compile('[.0-9]{4}')
 
-    for blknum, blkfile in enumerate(current_dir_contents):
-        if datapat.match(blkfile):
-            data_files.append("{}/{}".format(args.uutroot, blkfile))
-            if NSAM == 0:
-                NSAM = GROUP*os.path.getsize(data_files[0])/WSIZE/NCHAN
-                print("NSAM set {}".format(NSAM))
+    if NSAM == 0:
+        NSAM = GROUP*os.path.getsize(data_files[0])/WSIZE/NCHAN
+        print("NSAM set {}".format(NSAM))
 
     NBLK = len(data_files)
     if args.nblks > 0 and NBLK > args.nblks:
         NBLK = args.nblks
+        data_files = [ data_files[i] for i in range(0,NBLK) ]
 
     print("NBLK {} NCHAN {}".format(NBLK/GROUP, NCHAN))
   
@@ -194,8 +218,6 @@ def run_main():
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
     args.uutroot = "{}/{}".format(args.src, args.uut[0])
-    if args.cycle != None:
-        args.uutroot = "{}/{}".format(args.uutroot, args.cycle)
     print("uutroot {}".format(args.uutroot))
     if args.save != None: 
         if args.save.startswith("/"):
