@@ -116,6 +116,8 @@ def wait_completion(uut, args):
 def run_shot(args):    
     uut = acq400_hapi.Acq2106(args.uut[0])
 
+    if args.datahandler != None:
+        os.system('{} &'.format(args.datahandler))
     config_shot(uut, args)
     init_comms(uut, args)
     init_work(uut, args)
@@ -134,6 +136,7 @@ def run_main():
     parser.add_argument('--commsB', default="none", help='custom list of sites for commsB')
     parser.add_argument('--hexdump', default=0, help="generate hexdump format string")
     parser.add_argument('--decimate', default=None, help='decimate arm data path')
+    parser.add_argument('--datahandler', default=None, help='program to stream the data')
     parser.add_argument('uut', nargs='+', help="uut ")
     run_shot(parser.parse_args())
 
