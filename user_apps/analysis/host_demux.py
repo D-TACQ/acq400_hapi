@@ -53,6 +53,7 @@ import gc
 import re
 import argparse
 import subprocess
+import acq400_hapi
 
 NSAM = 0
 WSIZE = 2
@@ -178,6 +179,8 @@ def plot_data(args, raw_channels):
     ccount = 0
     for ch in [ int(c) for c in args.pc_list]:
         channel = raw_channels[ch]
+        if args.egu:
+            channel = args.the_uut.chan2volts(ch, channel)
         # label 1.. (human)
         V2 = client.new_editable_vector(channel.astype(np.float64), name="CH{:02d}".format(ch+1))
         c1 = client.new_curve(V1, V2)
@@ -215,6 +218,7 @@ def run_main():
     parser.add_argument('--src', type=str, default='/data', help='data source root')
     parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
+    parser.add_argument('--egu', type=int, default=0, help='plot egu (V)')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
     args.uutroot = "{}/{}".format(args.src, args.uut[0])
@@ -227,6 +231,8 @@ def run_main():
     # ch 0.. (comp)
     args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
     print("args.pc_list {}".format(args.pc_list))
+    if args.egu:
+        args.the_uut = acq400_hapi.Acq2106(args.uut)
     process_data(args)
 
 if __name__ == '__main__':
