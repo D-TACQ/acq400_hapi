@@ -59,7 +59,7 @@ def run_main():
             for u in uuts:
                 u.trace = 1
                 
-        chx, ncol, nchan, nsam = shot_controller.read_channels((1,33))
+        chx, ncol, nchan, nsam = shot_controller.read_channels()
       
 # plot ex: 2 x 8 ncol=2 nchan=8
 # U1 U2      FIG
@@ -81,7 +81,7 @@ def run_main():
                     
                 checkramp = chx[col][nchan-1];
                 ll = len(checkramp)              
-                plt.subplot(nchan+1, ncol, fignum+3)
+                plt.subplot(nchan+1, ncol, fignum)
                 checkramp = checkramp[1:ll-1] - checkramp[0:ll-2]
                 plt.plot(checkramp)
                 checks.append((np.amax(checkramp), np.amin(checkramp)))
