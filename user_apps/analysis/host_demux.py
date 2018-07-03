@@ -232,7 +232,7 @@ def run_main():
     args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
     print("args.pc_list {}".format(args.pc_list))
     if args.egu:
-        args.the_uut = acq400_hapi.Acq2106(args.uut)
+        args.the_uut = acq400_hapi.Acq2106(args.uut[0].split("/")[-1])
     process_data(args)
 
 if __name__ == '__main__':
