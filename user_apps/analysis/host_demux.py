@@ -182,7 +182,8 @@ def plot_data(args, raw_channels):
     for ch in [ int(c) for c in args.pc_list]:
         channel = raw_channels[ch]
         if args.egu:
-            channel = args.the_uut.chan2volts(ch, channel)
+            # chan2volts in 1:
+            channel = args.the_uut.chan2volts(ch+1, channel)
         # label 1.. (human)
         V2 = client.new_editable_vector(channel.astype(np.float64), name="CH{:02d}".format(ch+1))
         c1 = client.new_curve(V1, V2)
