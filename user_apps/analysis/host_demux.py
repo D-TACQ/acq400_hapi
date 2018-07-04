@@ -50,6 +50,7 @@ import os
 import argparse
 import subprocess
 import acq400_hapi
+import time
 
 NSAM = 0
 WSIZE = 2
@@ -171,8 +172,13 @@ def save_data(args, raw_channels):
 
 def plot_data(args, raw_channels):
     client = pykst.Client("NumpyVector")
-#    time.sleep(10)
     xdata = np.arange(0, len(raw_channels[0])).astype(np.float64)
+    if args.ptime == 1:
+        if args.xdt == 0:
+            print("Please specify xdt (time between clock counts) to plot in seconds ")
+            raise SystemExit
+        else:
+            xdata = np.linspace(0, len(xdata)*args.xdt, num=len(xdata))
     V1 = client.new_editable_vector(xdata, name="idx")
     ccount = 0
     for ch in [ int(c) for c in args.pc_list]:
