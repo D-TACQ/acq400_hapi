@@ -46,11 +46,7 @@ optional arguments:
 
 import pykst
 import numpy as np
-import matplotlib.pyplot as plt
 import os
-import time
-import gc
-import re
 import argparse
 import subprocess
 import acq400_hapi
@@ -201,7 +197,7 @@ def make_pc_list(args):
     if args.pchan == 'none':
         return list()
     if args.pchan == 'all':
-	return list(range(0,args.nchan))
+        return list(range(0,args.nchan))
     elif len(args.pchan.split(':')) > 1:
         lr = args.pchan.split(':')
         x1 = 1 if lr[0] == '' else int(lr[0])
