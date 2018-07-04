@@ -21,6 +21,10 @@ example usage::
         # plot channels 1,2, ALL blocks
         # works for 8GB data, best to LIMIT the number of channels ..
 
+    use of --src
+        --src=/data                     # valid for FTP upload data
+        --src=/data/ACQ400DATA/1 	# valid for SFP data, port 1
+
 usage:: 
 
     host_demux.py [-h] [--nchan NCHAN] [--nblks NBLKS] [--save SAVE]
