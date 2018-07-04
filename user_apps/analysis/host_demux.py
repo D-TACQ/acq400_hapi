@@ -21,6 +21,10 @@ example usage::
         # plot channels 1,2, ALL blocks
         # works for 8GB data, best to LIMIT the number of channels ..
 
+    use of --src
+        --src=/data                     # valid for FTP upload data
+        --src=/data/ACQ400DATA/1 	# valid for SFP data, port 1
+
 usage:: 
 
     host_demux.py [-h] [--nchan NCHAN] [--nblks NBLKS] [--save SAVE]
@@ -92,15 +96,21 @@ def make_cycle_list(args):
 def get_file_names(args):
     fnlist = list()
 # matches BOTH 0.?? for AFHBA an 0000 for FTP
-#    datapat = re.compile('[.0-9]{4}')
+    datapat = re.compile('[.0-9]{4}$')
     for cycle in make_cycle_list(args):
         if cycle == "err.log":
             continue
         uutroot = '{}/{}'.format(args.uutroot, cycle)
+        print("debug")
         ls = os.listdir(uutroot)
+        print("uutroot = ", uutroot)
         ls.sort()
         for n, file in enumerate(ls):
-            fnlist.append( '{}/{}'.format(uutroot, file) )
+            if datapat.match(file):
+                fnlist.append( '{}/{}'.format(uutroot, file) )
+            else:
+                print("no match {}".format(file))
+
     return fnlist
 
 def read_data(args):
@@ -125,7 +135,7 @@ def read_data(args):
         NBLK = args.nblks
         data_files = [ data_files[i] for i in range(0,NBLK) ]
 
-    print("NBLK {} NCHAN {}".format(NBLK/GROUP, NCHAN))
+    print("NBLK {} NBLK/GROUP {} NCHAN {}".format(NBLK, NBLK/GROUP, NCHAN))
   
     raw_channels = create_npdata(args, NBLK/GROUP, NCHAN)
     blocks = 0
@@ -184,7 +194,8 @@ def plot_data(args, raw_channels):
     for ch in [ int(c) for c in args.pc_list]:
         channel = raw_channels[ch]
         if args.egu:
-            channel = args.the_uut.chan2volts(ch, channel)
+            # chan2volts in 1:
+            channel = args.the_uut.chan2volts(ch+1, channel)
         # label 1.. (human)
         V2 = client.new_editable_vector(channel.astype(np.float64), name="CH{:02d}".format(ch+1))
         c1 = client.new_curve(V1, V2)
