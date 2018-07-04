@@ -21,6 +21,13 @@ example usage::
         # plot channels 1,2, ALL blocks
         # works for 8GB data, best to LIMIT the number of channels ..
 
+    ./host_demux.py --nchan=96 --src=/data/ACQ400DATA/1 \
+        --egu=1 --xdt=2e-6 --cycle=1:4 --pchan=1:2 \
+        acq2106_061
+        # plot AFHBA404 data from PORT1
+        # plot egu (V vs s), specify interval, plot 4 cycles, plot 2 channels
+        # uut
+
     use of --src
         --src=/data                     # valid for FTP upload data
         --src=/data/ACQ400DATA/1 	# valid for SFP data, port 1
@@ -43,6 +50,8 @@ optional arguments:
   --save SAVE    save channelized data to dir
   --src SRC      data source root
   --pchan PCHAN  channels to plot
+  --egu EGU      plot egu (V vs s)
+  --xdt XDT      0: use interval from UUT, else specify interval
 
     
 
@@ -51,6 +60,7 @@ optional arguments:
 import pykst
 import numpy as np
 import os
+import re
 import argparse
 import subprocess
 import acq400_hapi
@@ -183,7 +193,7 @@ def save_data(args, raw_channels):
 def plot_data(args, raw_channels):
     client = pykst.Client("NumpyVector")
     xdata = np.arange(0, len(raw_channels[0])).astype(np.float64)
-    if args.ptime == 1:
+    if args.egu == 1:
         if args.xdt == 0:
             time1 = float(args.the_uut.s0.SIG_CLK_S1_FREQ.split(" ")[-1])
             xdata = np.linspace(0, len(xdata)/time1, num=len(xdata))
@@ -233,7 +243,8 @@ def run_main():
     parser.add_argument('--src', type=str, default='/data', help='data source root')
     parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
-    parser.add_argument('--egu', type=int, default=0, help='plot egu (V)')
+    parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
+    parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
     args.uutroot = "{}/{}".format(args.src, args.uut[0])
