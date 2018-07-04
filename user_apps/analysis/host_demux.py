@@ -50,14 +50,11 @@ optional arguments:
 
 import pykst
 import numpy as np
-import matplotlib.pyplot as plt
 import os
-import time
-import gc
-import re
 import argparse
 import subprocess
 import acq400_hapi
+import time
 
 NSAM = 0
 WSIZE = 2
@@ -101,6 +98,8 @@ def get_file_names(args):
 # matches BOTH 0.?? for AFHBA an 0000 for FTP
     datapat = re.compile('[.0-9]{4}$')
     for cycle in make_cycle_list(args):
+        if cycle == "err.log":
+            continue
         uutroot = '{}/{}'.format(args.uutroot, cycle)
         print("debug")
         ls = os.listdir(uutroot)
@@ -183,8 +182,13 @@ def save_data(args, raw_channels):
 
 def plot_data(args, raw_channels):
     client = pykst.Client("NumpyVector")
-#    time.sleep(10)
     xdata = np.arange(0, len(raw_channels[0])).astype(np.float64)
+    if args.ptime == 1:
+        if args.xdt == 0:
+            time1 = float(args.the_uut.s0.SIG_CLK_S1_FREQ.split(" ")[-1])
+            xdata = np.linspace(0, len(xdata)/time1, num=len(xdata))
+        else:
+            xdata = np.linspace(0, len(xdata)*args.xdt, num=len(xdata))
     V1 = client.new_editable_vector(xdata, name="idx")
     ccount = 0
     for ch in [ int(c) for c in args.pc_list]:
@@ -212,7 +216,7 @@ def make_pc_list(args):
     if args.pchan == 'none':
         return list()
     if args.pchan == 'all':
-	return list(range(0,args.nchan))
+        return list(range(0,args.nchan))
     elif len(args.pchan.split(':')) > 1:
         lr = args.pchan.split(':')
         x1 = 1 if lr[0] == '' else int(lr[0])
