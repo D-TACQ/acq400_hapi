@@ -185,8 +185,8 @@ def plot_data(args, raw_channels):
     xdata = np.arange(0, len(raw_channels[0])).astype(np.float64)
     if args.ptime == 1:
         if args.xdt == 0:
-            print("Please specify xdt (time between clock counts) to plot in seconds ")
-            raise SystemExit
+            time1 = float(args.the_uut.s0.SIG_CLK_S1_FREQ.split(" ")[-1])
+            xdata = np.linspace(0, len(xdata)/time1, num=len(xdata))
         else:
             xdata = np.linspace(0, len(xdata)*args.xdt, num=len(xdata))
     V1 = client.new_editable_vector(xdata, name="idx")
