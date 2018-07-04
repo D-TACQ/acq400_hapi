@@ -192,26 +192,38 @@ def save_data(args, raw_channels):
 
 def plot_data(args, raw_channels):
     client = pykst.Client("NumpyVector")
-    xdata = np.arange(0, len(raw_channels[0])).astype(np.float64)
+    llen = len(raw_channels[0])
     if args.egu == 1:
         if args.xdt == 0:
             time1 = float(args.the_uut.s0.SIG_CLK_S1_FREQ.split(" ")[-1])
-            xdata = np.linspace(0, len(xdata)/time1, num=len(xdata))
+            xdata = np.linspace(0, llen/time1, num=llen)
         else:
-            xdata = np.linspace(0, len(xdata)*args.xdt, num=len(xdata))
-    V1 = client.new_editable_vector(xdata, name="idx")
-    ccount = 0
+            xdata = np.linspace(0, llen*args.xdt, num=llen)
+        xname= 'time'
+        yu = 'V'
+        xu = 's'
+    else:
+        xname = 'idx'
+        yu = 'code'
+        xu = 'sample'
+        xdata = np.arange(0, llen).astype(np.float64)
+
+    V1 = client.new_editable_vector(xdata, name=xname)
+
     for ch in [ int(c) for c in args.pc_list]:
         channel = raw_channels[ch]
+        ch1 = ch+1
         if args.egu:
-            # chan2volts in 1:
-            channel = args.the_uut.chan2volts(ch+1, channel)
+            # chan2volts ch index from 1:
+            channel = args.the_uut.chan2volts(ch1, channel)
         # label 1.. (human)
-        V2 = client.new_editable_vector(channel.astype(np.float64), name="CH{:02d}".format(ch+1))
+        V2 = client.new_editable_vector(channel.astype(np.float64), name="CH{:02d}".format(ch1))
         c1 = client.new_curve(V1, V2)
         p1 = client.new_plot()
+        p1.set_left_label(yu)
+        p1.set_bottom_label(xu)  
+        print(p1)
         p1.add(c1)
-        ccount += 1
 
 
 def process_data(args):
