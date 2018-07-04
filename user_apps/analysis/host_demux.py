@@ -95,7 +95,7 @@ def make_cycle_list(args):
 def get_file_names(args):
     fnlist = list()
 # matches BOTH 0.?? for AFHBA an 0000 for FTP
-#    datapat = re.compile('[.0-9]{4}')
+    datapat = re.compile('[.0-9]{4}$')
     for cycle in make_cycle_list(args):
         uutroot = '{}/{}'.format(args.uutroot, cycle)
         print("debug")
@@ -103,7 +103,11 @@ def get_file_names(args):
         print("uutroot = ", uutroot)
         ls.sort()
         for n, file in enumerate(ls):
-            fnlist.append( '{}/{}'.format(uutroot, file) )
+            if datapat.match(file):
+                fnlist.append( '{}/{}'.format(uutroot, file) )
+            else:
+                print("no match {}".format(file))
+
     return fnlist
 
 def read_data(args):
@@ -128,7 +132,7 @@ def read_data(args):
         NBLK = args.nblks
         data_files = [ data_files[i] for i in range(0,NBLK) ]
 
-    print("NBLK {} NCHAN {}".format(NBLK/GROUP, NCHAN))
+    print("NBLK {} NBLK/GROUP {} NCHAN {}".format(NBLK, NBLK/GROUP, NCHAN))
   
     raw_channels = create_npdata(args, NBLK/GROUP, NCHAN)
     blocks = 0
