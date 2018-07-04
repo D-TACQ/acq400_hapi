@@ -46,11 +46,7 @@ optional arguments:
 
 import pykst
 import numpy as np
-import matplotlib.pyplot as plt
 import os
-import time
-import gc
-import re
 import argparse
 import subprocess
 import acq400_hapi
@@ -201,7 +197,7 @@ def make_pc_list(args):
     if args.pchan == 'none':
         return list()
     if args.pchan == 'all':
-	return list(range(0,args.nchan))
+        return list(range(0,args.nchan))
     elif len(args.pchan.split(':')) > 1:
         lr = args.pchan.split(':')
         x1 = 1 if lr[0] == '' else int(lr[0])
@@ -232,7 +228,7 @@ def run_main():
     args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
     print("args.pc_list {}".format(args.pc_list))
     if args.egu:
-        args.the_uut = acq400_hapi.Acq2106(args.uut)
+        args.the_uut = acq400_hapi.Acq2106(args.uut[0].split("/")[-1])
     process_data(args)
 
 if __name__ == '__main__':
