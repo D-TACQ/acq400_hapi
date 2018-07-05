@@ -48,6 +48,11 @@ import argparse
 import time
 import os
 
+from propellor import Propellor as P
+
+def read_knob(knob):
+    with open(knob, 'r') as f:
+        return f.read()
 
 def config_shot(uut, args):
     acq400_hapi.Acq400UI.exec_args(uut, args)
@@ -102,12 +107,31 @@ def stop_shot(uut):
     print("stop_shot")
     uut.s0.streamtonowhered = "stop"
 
+def get_state(args):
+    job = read_knob("/proc/driver/afhba/afhba.{}/Job".format(args.lport))
+    env = {}
+    for pp in job.split():
+        k, v = pp.split('=')
+        env[k] = v
+    args.job_state = env
+
+    
 def wait_completion(uut, args):
+    ts  = 0
     try:
-        for ts in range(0, int(args.secs)):
-            sys.stdout.write("Time ... %8d / %8d\r" % (ts, int(args.secs)))
+        while ts < int(args.secs):
+            get_state(args)
+            buf_rate = int(args.job_state['rx_rate'])
+            sys.stdout.write("Rate %d Time ... %8d / %8d %s\r" % (buf_rate, ts, int(args.secs), P.spin()))
             sys.stdout.flush()
             time.sleep(1)
+            if buf_rate > 0:
+                ts += 1
+            else:
+                if ts > 0:
+                    sys.stdout.write("\nRate %d Time ... %8d / %8d STOPPED?\n" % (buf_rate, ts, int(args.secs)))
+                    break
+            
     except KeyboardInterrupt:
         pass
     stop_shot(uut)
@@ -134,6 +158,7 @@ def run_main():
     parser.add_argument('--spad', default=None, help="scratchpad, eg 1,16,0")
     parser.add_argument('--commsA', default="all", help='custom list of sites for commsA')
     parser.add_argument('--commsB', default="none", help='custom list of sites for commsB')
+    parser.add_argument('--lport', default=0, help='local port on ahfba')
     parser.add_argument('--hexdump', default=0, help="generate hexdump format string")
     parser.add_argument('--decimate', default=None, help='decimate arm data path')
     parser.add_argument('--datahandler', default=None, help='program to stream the data')
