@@ -140,6 +140,7 @@ def get_state(args):
     
 def wait_completion(uut, args):
     ts  = 0
+    STATFMT = "Rate %d NBUFS %d Time ... %8d / %8d %s"
     try:
         while ts < int(args.secs):
             get_state(args)
@@ -149,16 +150,16 @@ def wait_completion(uut, args):
                 pid = get_data_pid(args)
                 if pid == 0:
                     print("\ndatahandler has dropped out at NBUFS {}/{} {}".format(
-				rx, args.nbuffers, "COMPLETE" if rx==args.nbuffers else "ERROR" ))
+				rx, args.nbuffers, "COMPLETE" if rx>=args.nbuffers else "ERROR" ))
                     break
-            sys.stdout.write("Rate %d NBUFS %d Time ... %8d / %8d %s\r" % (buf_rate, rx, ts, int(args.secs), P.spin()))
+            sys.stdout.write( (STATFMT+"\r") % (buf_rate, rx, ts, int(args.secs), P.spin()))
             sys.stdout.flush()
             time.sleep(1)
             if buf_rate > 0:
                 ts += 1
             else:
                 if ts > 0:
-                    sys.stdout.write("\nRate %d Time ... %8d / %8d STOPPED?\n" % (buf_rate, ts, int(args.secs)))
+                    sys.stdout.write(("\n" + STATFMT + "\n") % (buf_rate, rx, ts, int(args.secs), "STOPPED?"))
                     break
             
     except KeyboardInterrupt:
