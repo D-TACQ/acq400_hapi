@@ -98,7 +98,7 @@ def run_stream(args):
         while time.clock() < (start_time + args.runtime) and data_length < args.totaldata:
 
             loop_time = time.clock()
-            data += skt.recv(4096)
+            data += skt.recv(4096000)
             if len(data) / 1024 >= args.filesize:
                 data_length += float(len(data)) / 1024
                 data_file = open("{}/data{}.dat".format(args.root, num), "wb")
@@ -110,7 +110,7 @@ def run_stream(args):
                     print("New data file written.")
                     print("Data Transferred: ", data_length, "KB")
                     print("loop_time: ", loop_time)
-                    print("Data upload & save rate: ", float(len(data)) / 1024 / (time.clock() - upload_time), "KB/s")
+                    print("Data upload & save rate: ", float(len(data)*2) / 1024 / (time.clock() - upload_time), "KB/s")
                     print("")
                     print("")
 
