@@ -222,7 +222,6 @@ def plot_data(args, raw_channels):
         p1 = client.new_plot()
         p1.set_left_label(yu)
         p1.set_bottom_label(xu)  
-        print(p1)
         p1.add(c1)
 
 
