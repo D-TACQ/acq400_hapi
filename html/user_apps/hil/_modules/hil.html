@@ -1,0 +1,180 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>hil &#8212; user_apps/hil 2.0.3 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">user_apps/hil 2.0.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for hil</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Hardware In Loop : load AO data,run a shot, get AI data, repeat.</span>
+<span class="sd">upload to AWG and optionally run a capture.</span>
+<span class="sd">data for upload is either File (host-local data file) or Rainbow, a test pattern.</span>
+<span class="sd">assumes that clocking has been pre-assigned.</span>
+
+<span class="sd">usage: hil.py [-h] [--files FILES] [--loop LOOP] [--store STORE]</span>
+<span class="sd">              [--nchan NCHAN] [--aochan AOCHAN] [--awglen AWGLEN]</span>
+<span class="sd">              [--post POST] [--trg TRG] [--wait_user WAIT_USER]</span>
+<span class="sd">              uuts</span>
+
+<span class="sd">acq1001 HIL demo</span>
+
+<span class="sd">positional arguments:</span>
+<span class="sd">  uuts                  uut</span>
+
+<span class="sd">optional arguments:</span>
+<span class="sd">  -h, --help            show this help message and exit</span>
+<span class="sd">  --files FILES         list of files to load</span>
+<span class="sd">  --loop LOOP           loop count</span>
+<span class="sd">  --store STORE         save data when true</span>
+<span class="sd">  --nchan NCHAN         channel count for pattern</span>
+<span class="sd">  --aochan AOCHAN       AO channel count, if different to AI (it happens)</span>
+<span class="sd">  --awglen AWGLEN       samples in AWG waveform</span>
+<span class="sd">  --post POST           samples in ADC waveform</span>
+<span class="sd">  --trg TRG             trg &quot;int|ext rising|falling&quot;</span>
+<span class="sd">  --wait_user WAIT_USER</span>
+<span class="sd">                        1: force user input each shot</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">acq400_hapi</span>
+<span class="kn">from</span> <span class="nn">acq400_hapi</span> <span class="k">import</span> <span class="n">awg_data</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">future</span> <span class="k">import</span> <span class="n">builtins</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">input</span>
+
+<div class="viewcode-block" id="store_file"><a class="viewcode-back" href="../hil.html#hil.store_file">[docs]</a><span class="k">def</span> <span class="nf">store_file</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="n">rdata</span><span class="p">,</span> <span class="n">nchan</span><span class="p">,</span> <span class="n">nsam</span><span class="p">):</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="s1">&#39;DATA/ai</span><span class="si">%04d</span><span class="s1">.dat&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">it</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;store_file </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fn</span><span class="p">))</span>
+    
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">rdata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="run_shots"><a class="viewcode-back" href="../hil.html#hil.run_shots">[docs]</a><span class="k">def</span> <span class="nf">run_shots</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">uut</span> <span class="o">=</span> <span class="n">acq400_hapi</span><span class="o">.</span><span class="n">Acq400</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">uuts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">acq400_hapi</span><span class="o">.</span><span class="n">cleanup</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+    
+    <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">transient</span> <span class="o">=</span> <span class="s1">&#39;POST=</span><span class="si">%d</span><span class="s1"> SOFT_TRIGGER=</span><span class="si">%d</span><span class="s1"> DEMUX=</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> \
+            <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">post</span><span class="p">,</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">trg</span> <span class="o">==</span> <span class="s1">&#39;int&#39;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">store</span><span class="o">==</span><span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>    
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">aochan</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">aochan</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">nchan</span>
+
+    <span class="k">for</span> <span class="n">sx</span> <span class="ow">in</span> <span class="n">uut</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">sx</span><span class="p">]</span><span class="o">.</span><span class="n">trg</span> <span class="o">=</span> <span class="s1">&#39;1,1,1&#39;</span>  <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">trg</span> <span class="o">==</span> <span class="s1">&#39;int&#39;</span> <span class="k">else</span> <span class="s1">&#39;1,0,1&#39;</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">files</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="n">work</span> <span class="o">=</span> <span class="n">awg_data</span><span class="o">.</span><span class="n">RunsFiles</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">),</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">work</span> <span class="o">=</span> <span class="n">awg_data</span><span class="o">.</span><span class="n">RainbowGen</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">aochan</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">awglen</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        
+    <span class="n">store</span> <span class="o">=</span> <span class="n">store_file</span>
+    <span class="n">loader</span> <span class="o">=</span> <span class="n">work</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">loop</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;shot: </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ii</span><span class="p">))</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">loader</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loaded </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">f</span><span class="p">))</span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">run_oneshot</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">store</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;read_chan </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">post</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">nchan</span><span class="p">))</span>
+            <span class="n">rdata</span> <span class="o">=</span> <span class="n">uut</span><span class="o">.</span><span class="n">read_chan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">post</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">nchan</span><span class="p">)</span>            
+            <span class="n">store</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">rdata</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">nchan</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">post</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">wait_user</span><span class="p">:</span>
+            <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;hit return to continue&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="run_main"><a class="viewcode-back" href="../hil.html#hil.run_main">[docs]</a><span class="k">def</span> <span class="nf">run_main</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;acq1001 HIL demo&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--files&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;list of files to load&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--loop&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;loop count&quot;</span><span class="p">)</span> 
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--store&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;save data when true&quot;</span><span class="p">)</span> 
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--nchan&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;channel count for pattern&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--aochan&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;AO channel count, if different to AI (it happens)&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--awglen&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;samples in AWG waveform&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--post&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;samples in ADC waveform&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--trg&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;trg &quot;int|ext rising|falling&quot;&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--wait_user&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;1: force user input each shot&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;uuts&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;uut &quot;</span><span class="p">)</span>
+    <span class="n">run_shots</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">())</span></div>
+
+<span class="c1"># execution starts here</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">run_main</span><span class="p">()</span>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">user_apps/hil 2.0.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, D-TACQ.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>
