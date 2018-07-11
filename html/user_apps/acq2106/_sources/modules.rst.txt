@@ -7,3 +7,4 @@ acq2106
    acq2106_hts
    acq2106_set_sync_role
    mgtdramshot
+   propellor
