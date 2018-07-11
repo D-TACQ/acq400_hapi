@@ -13,9 +13,7 @@ Usage:
 import pykst
 import numpy as np
 import argparse
-import acq400_hapi
 from MDSplus import *
-import matplotlib.pyplot as plt
 
 
 def plot_data(args, data):
