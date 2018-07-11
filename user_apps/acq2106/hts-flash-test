@@ -1,0 +1,36 @@
+#!/usr/bin/bash
+LPORT=${1:-0}
+NBUFFERS=${NBUFFERS:-50000}
+SITES=${SITES:-1,2,3,4,5,6}
+ID=$(~/bin/get-ident $LPORT)
+ok=$?
+if [ $ok -ne 0 ]; then
+    echo "ERROR get-ident failed. No UUT at LPORT $LPORT \?"
+    exit 1
+fi
+echo "get-ident $ID"
+UUT=$(echo $ID | awk '{ print $3 }')
+COMMS=$(echo $ID | awk '{ print $4 }')
+ping -c 1 $UUT
+ok=$?
+if [ $ok -ne 0 ]; then
+    echo "WARNING ping test failed no DNS \?. Trying \$2"
+    UUT=$2
+    ping -c 1 $UUT
+    ok=$?
+    if [ $ok -ne 0 ]; then
+        echo "ERROR ping test failed on \$2 $2"
+        exit 1
+    fi
+fi
+echo LPORT $LPORT UUT $UUT COMMS $COMMS SITES $SITES
+echo CLEANUP:
+echo sudo rm -Rf /data/ACQ400DATA/$LPORT/$UUT/00\*
+sudo rm -Rf /data/ACQ400DATA/$LPORT/$UUT/00*
+echo RUN:
+./acq2106_hts.py --secs=1000 --comms${COMMS}=${SITES} \
+   --datahandler='mate-terminal -e "sudo /home/dt100/bin/run-stream {} {}"' \
+   --lport=$LPORT \
+   --nbuffers=$NBUFFERS \
+   --decimate=10 $UUT
+
