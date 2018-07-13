@@ -91,17 +91,17 @@ def run_stream(args):
         skt = socket.socket()
         skt.connect((args.uuts[0], 4210))
         make_data_dir(args.root, args.verbose)
-        start_time = time.clock()
-        upload_time = time.clock()
+        start_time = time.time()
+        upload_time = time.time()
         data_length = 0
 
-        while time.clock() < (start_time + args.runtime) and data_length < args.totaldata:
+        while time.time() < (start_time + args.runtime) and data_length < args.totaldata:
 
             loop_time = time.clock()
-            data += skt.recv(4096000)
+            data += skt.recv(1024)
             if len(data) / 1024 >= args.filesize:
                 data_length += float(len(data)) / 1024
-                data_file = open("{}/data{}.dat".format(args.root, num), "wb")
+                data_file = open("{}/{:04d}".format(args.root, num), "wb")
                 data = np.frombuffer(data, dtype="<i2")
                 data = np.asarray(data)
                 data.tofile(data_file, '')
@@ -109,15 +109,15 @@ def run_stream(args):
                 if args.verbose == 1:
                     print("New data file written.")
                     print("Data Transferred: ", data_length, "KB")
-                    print("loop_time: ", loop_time)
-                    print("Data upload & save rate: ", float(len(data)*2) / 1024 / (time.clock() - upload_time), "KB/s")
+                    print("runtime: ", time.time() - (start_time + args.runtime))
+#                    print("Data upload & save rate: ", float(len(data)) / 1024 / (time.clock() - upload_time), "KB/s")
                     print("")
                     print("")
 
                 num += 1
                 data_file.close()
                 data = bytes()  # Remove data from variable once it has been written
-                upload_time = time.clock()  # Reset upload time
+                upload_time = time.time()  # Reset upload time
                 data_written_flag = 1
 
         try:
