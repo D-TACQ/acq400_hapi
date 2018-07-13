@@ -61,7 +61,6 @@ import os
 import time
 import argparse
 import socket
-import matplotlib.pyplot as plt
 
 
 def make_data_dir(directory, verbose):
