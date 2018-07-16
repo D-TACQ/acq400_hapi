@@ -74,6 +74,7 @@ def make_data_dir(directory, verbose):
 
 
 def run_stream(args):
+    cycle = 0
     data = bytes()
     num = 0
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
@@ -94,13 +95,21 @@ def run_stream(args):
         start_time = time.time()
         upload_time = time.time()
         data_length = 0
-
+        bytestogo = args.filesize
         while time.time() < (start_time + args.runtime) and data_length < args.totaldata:
 
             loop_time = time.clock()
-            data += skt.recv(1024)
-            if len(data) / 1024 >= args.filesize:
+            data += skt.recv(bytestogo)
+
+            bytestogo = args.filesize - len(data) / 1024
+            if len(data) >= args.filesize * 1024:
                 data_length += float(len(data)) / 1024
+                if num > 9999:
+                    num = 0
+                    cycle += 1
+                    args.root = "ROOT" + str(cycle)
+                    make_data_dir(args.root, args.verbose)
+
                 data_file = open("{}/{:04d}".format(args.root, num), "wb")
                 data = np.frombuffer(data, dtype="<i2")
                 data = np.asarray(data)
@@ -109,7 +118,7 @@ def run_stream(args):
                 if args.verbose == 1:
                     print("New data file written.")
                     print("Data Transferred: ", data_length, "KB")
-                    print("runtime: ", time.time() - (start_time + args.runtime))
+                    print("Streaming time remaining: ", -1*(time.time() - (start_time + args.runtime)))
 #                    print("Data upload & save rate: ", float(len(data)) / 1024 / (time.clock() - upload_time), "KB/s")
                     print("")
                     print("")
