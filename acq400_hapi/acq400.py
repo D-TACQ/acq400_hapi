@@ -303,8 +303,9 @@ class Acq400:
         self.save_data = None
         self.svc = {}
         self.modules = {}
-        self.__mod_count = 0    
-        self.cal_eslo = [0, ]
+        self.__mod_count = 0   
+        # channel index from 1,..
+        self.cal_eslo = [0, ]  
         self.cal_eoff = [0, ]
 
         s0 = self.svc["s0"] = netclient.Siteclient(self.uut, AcqPorts.SITE0)
