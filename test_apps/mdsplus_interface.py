@@ -57,11 +57,9 @@ def run_plot(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 MDSplus interface')
-    # parser.add_argument('--tree', default=1024, type=int, help=".")
     parser.add_argument('--node', default="AI", type=str, help="Which node to pull data from")
     parser.add_argument('--samples', default="100000", type=int, help="Number of samples to read.")
     parser.add_argument('--shot', default=-1, type=int, help="Which shot to pull data from.")
-    # parser.add_argument('--chan', default="1:16", type=str, help="How many channels to pull data from.")
     parser.add_argument('--chan', default="1", type=str, help="How many channels to pull data from.")
     parser.add_argument('--overlay', default=0, type=int, help="Whether to overlay the channel data or to give each channel its own plot.")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the data is being pulled.')
