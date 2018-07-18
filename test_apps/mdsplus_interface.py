@@ -30,6 +30,15 @@ def plot_data(args, data):
             p1 = client.new_plot()
 
 
+def get_seg_data(args):
+    tree = Tree("acq2106_059", 999)
+    Tree.setTimeContext(None, None, args.rate)
+    node = tree.getNode("AI.CH01")
+    data = node.data()
+    print("data = ", data)
+    return None
+
+
 def get_data(args):
     data = []
     if args.shot == -1:
@@ -51,7 +60,11 @@ def get_data(args):
 
 
 def run_plot(args):
-    data = get_data(args)
+    if args.seg == 0:
+        data = get_data(args)
+    else:
+        data = get_seg_data(args)
+
     plot_data(args, data)
 
 
@@ -62,6 +75,8 @@ def run_main():
     parser.add_argument('--shot', default=-1, type=int, help="Which shot to pull data from.")
     parser.add_argument('--chan', default="1", type=str, help="How many channels to pull data from.")
     parser.add_argument('--overlay', default=0, type=int, help="Whether to overlay the channel data or to give each channel its own plot.")
+    parser.add_argument('--seg', default=0, type=int, help="Whether the data from in the tree is segmented or not.")
+    parser.add_argument('--rate', default=1000000, type=int, help="Whether the data from in the tree is segmented or not.")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the data is being pulled.')
     parser.add_argument('uuts', nargs='+', help="uuts")
     run_plot(parser.parse_args())
