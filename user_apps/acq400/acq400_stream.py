@@ -74,7 +74,7 @@ def make_data_dir(directory, verbose):
 
 def run_stream(args):
     cycle = 1
-    root = args.root + "/" + "{:06d}".format(cycle)
+    root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
     data = bytes()
     num = 0
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
@@ -107,7 +107,7 @@ def run_stream(args):
                 if num > 99:
                     num = 0
                     cycle += 1
-                    root = args.root + "/" + "{:06d}".format(cycle)
+                    root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
                     make_data_dir(root, args.verbose)
 
                 data_file = open("{}/{:04d}".format(root, num), "wb")
@@ -144,7 +144,7 @@ def run_main():
     parser.add_argument('--filesize', default=1048576, type=int,
                         help="Size of file to store in KB. If filesize > total data then no data will be stored.")
     parser.add_argument('--totaldata', default=4194304, type=int, help="Total amount of data to store in KB")
-    parser.add_argument('--root', default="ROOT", type=str, help="Location to save files")
+    parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=1000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uuts', nargs='+', help="uuts")
