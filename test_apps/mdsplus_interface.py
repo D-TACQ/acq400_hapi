@@ -30,13 +30,27 @@ def plot_data(args, data):
             p1 = client.new_plot()
 
 
+def plot_segmented_data(args, data):
+    client = pykst.Client("NumpyVector")
+    p1 = client.new_plot()
+    V2 = client.new_editable_vector(data.astype(np.float64))
+    ydata = np.array(list(range(0, len(data)))).astype(np.float64)
+    V1 = client.new_editable_vector(ydata)
+    c1 = client.new_curve(V1, V2)
+    p1.set_top_label("Channel {}".format("1"))
+    p1.add(c1)
+    # if not args.overlay and counter + 1 < len(data):
+    #     p1 = client.new_plot()
+
+
 def get_seg_data(args):
-    tree = Tree("acq2106_059", 999)
-    Tree.setTimeContext(None, None, args.rate)
-    node = tree.getNode("AI.CH01")
+    tree = Tree("seg_tree", 2)
+    #Tree.setTimeContext(None, None, args.rate)
+    Tree.setTimeContext(None, None, 1E-6)
+    node = tree.getNode("RAW_SEG.RAW")
     data = node.data()
     print("data = ", data)
-    return None
+    return data
 
 
 def get_data(args):
@@ -62,10 +76,10 @@ def get_data(args):
 def run_plot(args):
     if args.seg == 0:
         data = get_data(args)
+        plot_data(args, data)
     else:
         data = get_seg_data(args)
-
-    plot_data(args, data)
+        plot_segmented_data(args, data)
 
 
 def run_main():
