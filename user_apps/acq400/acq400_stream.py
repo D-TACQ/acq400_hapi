@@ -6,7 +6,7 @@ This is a script intended to connect to a UUT and stream data from port 4210.
 The data that has been streamed is not demuxed and so if it is to be used then it has to be demuxed first.
 Something like:
 
-    >>> data = numpy.fromfile("data0.dat", dtype="<datatype>")
+    >>> data = numpy.fromfile("0000", dtype="<datatype>")
     >>> plt.plot(data[::<number of channels>])
     >>> plt.show()
 
@@ -36,22 +36,22 @@ Some usage examples are included below:
 1: Acquire files of size 1024kb up to a total of 4096kb:
 
 
-    >>> python acq400_stream.py --verbose 1 --filesize 1048576 --totaldata 4194304 --runtime 1000 <module ip or name>
+    >>> python acq400_stream.py --verbose=1 --filesize=1M --totaldata=4M <module ip or name>
 
 2: Acquire a single file of size 4096kb:
 
 
-    >>> python acq400_stream.py --verbose 1 --filesize 4194304 --totaldata 4194304 --runtime 1000 <module ip or name>
+    >>> python acq400_stream.py --verbose=1 --filesize=4M --totaldata=4M <module ip or name>
 
 3: Acquire files of size 1024 for 10 seconds:
 
 
-    >>> python acq400_stream.py --verbose 1 --filesize 1048576 --totaldata 99999999 --runtime 10 <module ip or name>
+    >>> python acq400_stream.py --verbose=1 --filesize=1M --runtime=10 <module ip or name>
 
 4: Acquire data for 5 seconds and write the data all to a single file:
 
 
-    >>> python acq400_stream.py --verbose 1 --filesize 99999999 --totaldata 99999999 --runtime 5 <module ip or name>
+    >>> python acq400_stream.py --verbose=1 --filesize=9999M --runtime=5 <module ip or name>
 
 """
 
@@ -61,7 +61,7 @@ import os
 import time
 import argparse
 import socket
-
+import sys
 
 def make_data_dir(directory, verbose):
     try:
@@ -73,6 +73,7 @@ def make_data_dir(directory, verbose):
 
 
 def run_stream(args):
+    RXBUF_LEN = 4096
     cycle = 1
     root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
     data = bytes()
@@ -95,13 +96,16 @@ def run_stream(args):
         start_time = time.time()
         upload_time = time.time()
         data_length = 0
+        if args.filesize > args.totaldata:
+            args.filesize = args.totaldata
         bytestogo = args.filesize
+
         while time.time() < (start_time + args.runtime) and data_length < args.totaldata:
-
+            rxbuf = RXBUF_LEN if bytestogo > RXBUF_LEN else bytestogo
             loop_time = time.clock()
-            data += skt.recv(bytestogo)
-
+            data += skt.recv(rxbuf)
             bytestogo = args.filesize - len(data)
+
             if len(data) >= args.filesize:
                 data_length += len(data)
                 if num > 99:
@@ -140,13 +144,16 @@ def run_stream(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 stream')
-    parser.add_argument('--filesize', default=1048576, type=int,
-                        help="Size of file to store in KB. If filesize > total data then no data will be stored.")
-    parser.add_argument('--totaldata', default=4194304, type=int, help="Total amount of data to store in KB")
+    #parser.add_argument('--filesize', default=1048576, type=int,
+    #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
+    parser.add_argument('-filesize', '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
+    parser.add_argument('-totaldata', '--totaldata', default=sys.maxint, action=acq400_hapi.intSIAction, decimal = False)
+    #parser.add_argument('--totaldata', default=4194304, type=int, help="Total amount of data to store in KB")
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
-    parser.add_argument('--runtime', default=1000, type=int, help="How long to stream data for")
+    parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uuts', nargs='+', help="uuts")
+
     run_stream(parser.parse_args())
 
 
