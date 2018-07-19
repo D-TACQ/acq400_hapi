@@ -119,7 +119,6 @@ def run_stream(args):
                     print("New data file written.")
                     print("Data Transferred: ", data_length, "KB")
                     print("Streaming time remaining: ", -1*(time.time() - (start_time + args.runtime)))
-#                    print("Data upload & save rate: ", float(len(data)) / 1024 / (time.clock() - upload_time), "KB/s")
                     print("")
                     print("")
 
