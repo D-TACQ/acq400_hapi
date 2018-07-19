@@ -36,6 +36,14 @@ acq400\_hapi.cleanup module
     :undoc-members:
     :show-inheritance:
 
+acq400\_hapi.intSIAction module
+-------------------------------
+
+.. automodule:: acq400_hapi.intSIAction
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 acq400\_hapi.netclient module
 -----------------------------
 

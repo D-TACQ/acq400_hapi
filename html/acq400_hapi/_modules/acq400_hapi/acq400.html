@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>acq400_hapi.acq400 &#8212; acq400_hapi 2.0.3 documentation</title>
+    <title>acq400_hapi.acq400 &#8212; acq400_hapi 2.0.4 documentation</title>
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 2.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 2.0.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -341,8 +341,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">save_data</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">svc</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">modules</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__mod_count</span> <span class="o">=</span> <span class="mi">0</span>    
-        <span class="bp">self</span><span class="o">.</span><span class="n">cal_eslo</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__mod_count</span> <span class="o">=</span> <span class="mi">0</span>   
+        <span class="c1"># channel index from 1,..</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cal_eslo</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]</span>  
         <span class="bp">self</span><span class="o">.</span><span class="n">cal_eoff</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]</span>
 
         <span class="n">s0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">svc</span><span class="p">[</span><span class="s2">&quot;s0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">netclient</span><span class="o">.</span><span class="n">Siteclient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uut</span><span class="p">,</span> <span class="n">AcqPorts</span><span class="o">.</span><span class="n">SITE0</span><span class="p">)</span>
@@ -732,7 +733,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 2.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 2.0.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
