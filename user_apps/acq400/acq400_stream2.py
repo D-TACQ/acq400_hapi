@@ -36,22 +36,22 @@ Some usage examples are included below:
 1: Acquire files of size 1024kb up to a total of 4096kb:
 
 
-    >>> python acq400_stream.py --verbose=1 --filesize=1M --totaldata=4M <module ip or name>
+    >>> python acq400_stream2.py --verbose=1 --filesize=1M --totaldata=4M <module ip or name>
 
 2: Acquire a single file of size 4096kb:
 
 
-    >>> python acq400_stream.py --verbose=1 --filesize=4M --totaldata=4M <module ip or name>
+    >>> python acq400_stream2.py --verbose=1 --filesize=4M --totaldata=4M <module ip or name>
 
 3: Acquire files of size 1024 for 10 seconds:
 
 
-    >>> python acq400_stream.py --verbose=1 --filesize=1M --runtime=10 <module ip or name>
+    >>> python acq400_stream2.py --verbose=1 --filesize=1M --runtime=10 <module ip or name>
 
 4: Acquire data for 5 seconds and write the data all to a single file:
 
 
-    >>> python acq400_stream.py --verbose=1 --filesize=9999M --runtime=5 <module ip or name>
+    >>> python acq400_stream2.py --verbose=1 --filesize=9999M --runtime=5 <module ip or name>
 
 """
 
