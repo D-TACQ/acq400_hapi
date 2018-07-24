@@ -116,7 +116,7 @@ def run_stream(args):
             root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
             make_data_dir(root, args.verbose)
         if data_file == None:
-            data_file = open("{}/{:04d}".format(root, file_num), "ab")
+            data_file = open("{}/{:04d}".format(root, file_num), "wb")
         data_file.write(data)
 
         if args.verbose == 1:
