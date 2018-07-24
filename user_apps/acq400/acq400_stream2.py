@@ -99,6 +99,8 @@ def run_stream(args):
     if args.filesize > args.totaldata:
         args.filesize = args.totaldata
 
+    data_file = None
+
     while time.time() < (start_time + args.runtime) and data_len_so_far < args.totaldata:
 
         bytestogo = args.filesize - data_length
@@ -113,8 +115,8 @@ def run_stream(args):
             cycle += 1
             root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
             make_data_dir(root, args.verbose)
-
-        data_file = open("{}/{:04d}".format(root, file_num), "ab")
+        if data_file == None:
+            data_file = open("{}/{:04d}".format(root, file_num), "wb")
         data_file.write(data)
 
         if args.verbose == 1:
@@ -126,7 +128,8 @@ def run_stream(args):
         if data_length >= args.filesize:
             file_num += 1
             data_length = 0
-        data_file.close()
+            data_file.close()
+            data_file = None
 
 
 def run_main():
