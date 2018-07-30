@@ -1,7 +1,26 @@
+"""
+hil_ai_only.py is a script that configures a signal generator along with a
+UUT to take repeated transient captures. This is similar to a hardware in the loop
+test, only with the AO module replaced by the sig gen.
+
+Data is saved (muxed) to disk.
+
+Example usage:
+
+Capture for 4 loops:
+    >>> python hil_ai_only.py --loop=4 --verbose=1 --wait_user=1 acq1001_339 10.12.196.155
+
+Capture for infinty:
+    >>> python hil_ai_only.py --loop=-1 --verbose=1 acq1001_339 10.12.196.155
+"""
+
+
 import argparse
 import acq400_hapi
 import socket
 import os
+import sys
+from builtins import input
 
 
 def configure_sig_gen(args):
@@ -14,7 +33,6 @@ def configure_sig_gen(args):
     skt.send(b"BURS:NCYC {}".format(args.loop))
     skt.send(b"BURS:MODE TRIG")
     skt.send(b"OUTP ON")
-    return skt
 
 
 def configure_ai(args, uut):
@@ -45,7 +63,13 @@ def run_shots(args):
     skt = socket.socket()
     skt.connect((args.uuts[0], 2235))
 
-    for lp in range(0, args.loop):
+    if args.loop == -1:
+        args.loop = sys.maxint
+    lp = 0
+    #for lp in range(0, args.loop):
+    while lp < args.loop:
+        if args.wait_user == 1:
+            input("Hit any key to continue: ")
         uut.s0.set_arm = 1
         while True:
             trn_stat = str(skt.recv(4096))
@@ -62,13 +86,14 @@ def run_shots(args):
             data_file = open("{}/{:04d}".format(root, file_num), "wb+")
             data_file.write(rdata)
             file_num += 1
+            lp += 1
 
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq1001 HIL demo')
     parser.add_argument('--store', type=int, default=1, help='Whether to store data or not')
     # parser.add_argument('',type=int, default=1, help='')
-    # parser.add_argument('', type=int, default=1, help='')
+    parser.add_argument('--wait_user', type=int, default=0, help='If wait_user is true then wait for user input between each shot.')
     parser.add_argument('--verbose', type=int, default=0, help="Verbosity")
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--loop', type=int, default=1, help="loop count")
