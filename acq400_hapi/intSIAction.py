@@ -1,3 +1,4 @@
+import sys
 import argparse
 
 class intSIAction(argparse.Action):
@@ -8,6 +9,8 @@ class intSIAction(argparse.Action):
 
     def intSI(self, value):
         x = str(value)
+        if x == "Inf":
+            return sys.maxint
         units = x.find('M')
         if units >= 0:
             return int(x[0:units]) * (1000000 if self.decimal else 0x100000)
