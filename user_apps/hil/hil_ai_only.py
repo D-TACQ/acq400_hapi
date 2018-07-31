@@ -57,6 +57,7 @@ def run_shots(args):
     root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
     make_data_dir(root, args.verbose)
     uut = acq400_hapi.Acq400(args.uuts[0])
+    acq400_hapi.Acq400UI.exec_args(uut, args)
     uut.s0.set_arm = 1
 
     configure_ai(args, uut)
@@ -82,6 +83,8 @@ def run_shots(args):
                 file_num = 0
                 cycle += 1
                 root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
+                make_data_dir(root, args.verbose)
+
 
             rdata = uut.read_chan(0, args.post * args.nchan)
 
@@ -97,6 +100,7 @@ def run_shots(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq1001 HIL demo')
+    acq400_hapi.Acq400UI.add_args(parser, post=False, pre=False)
     parser.add_argument('--store', type=int, default=1, help='Whether to store data or not')
     # parser.add_argument('',type=int, default=1, help='')
     parser.add_argument('--sg',type=int, default=0, help='Whether to configure a sig gen. Default = False')
