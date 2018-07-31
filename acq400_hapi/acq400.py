@@ -608,12 +608,18 @@ class Acq2106(Acq400):
         print("Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         site = 13
-        for sm in [ 'cA', 'cB']:                
-            self.svc[sm] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
+        for sm in [ 'cA', 'cB']:
+            try:
+                self.svc[sm] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
+            except socket.error:
+                print("uut {} site {} not populated".format(_uut, site))
             self.mod_count += 1
             site = site - 1
         if (has_mgtdram):
-            self.svc['s14'] = netclient.Siteclient(self.uut, AcqPorts.SITE0+14)
+            try:
+                self.svc['s14'] = netclient.Siteclient(self.uut, AcqPorts.SITE0+14)
+            except socket.error:
+                print("uut {} site {} not populated".format(_uut, site))            
 
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
         Acq400.set_mb_clk(self, hz, src, fin)
