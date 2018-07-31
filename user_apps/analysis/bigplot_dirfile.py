@@ -62,6 +62,7 @@ def process_data(args):
     chx = [ np.fromfile("{}/{}".format(dir, f), dtype='int16') \
 			for f in ch_files if ch_selected(f, args.chd) ]
     llen = len(chx[0])
+    print("plotting {} {}M points".format(llen, llen/1e6))
     xsam = np.linspace(0, llen, num=llen)
     client = pykst.Client(dir)
     XX = client.new_editable_vector(xsam, name="samples")
