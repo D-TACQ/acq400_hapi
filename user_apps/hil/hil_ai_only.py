@@ -100,7 +100,7 @@ def run_shots(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq1001 HIL demo')
-    acq400_hapi.Acq400UI.add_args(parser, post=False, pre=False)
+    acq400_hapi.Acq400UI.add_args(parser, post=False, pre=True)
     parser.add_argument('--store', type=int, default=1, help='Whether to store data or not')
     # parser.add_argument('',type=int, default=1, help='')
     parser.add_argument('--sg',type=int, default=0, help='Whether to configure a sig gen. Default = False')
