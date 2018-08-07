@@ -56,7 +56,7 @@ class Acq400UI:
         
     @staticmethod
     def _exec_args_trace(uut, trace):
-        for svn, svc in sorted(u.svc.items()):
+        for svn, svc in sorted(uut.svc.items()):
             svc.trace = trace
             
     @staticmethod
