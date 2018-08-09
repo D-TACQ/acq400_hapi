@@ -31,12 +31,13 @@ from future import builtins
 from builtins import input
 
 def set_mb_clk(uut, clkdef):
+    fmt = acq400_hapi.intSI_cvt
     if (len(clkdef) == 3):
         (src, hz, fin) = clkdef
-        uut.set_mb_clk(hz=hz, src=src, fin=fin)
+        uut.set_mb_clk(hz=fmt(hz), src=src, fin=fmt(fin))
     else:
         (src, hz) = clkdef
-        uut.set_mb_clk(hz=hz, src=src)
+        uut.set_mb_clk(hz=fmt(hz), src=src)
 
 
 def rf(edge):
@@ -98,7 +99,7 @@ def run_main(parser):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="acq2106_set_sync_role")
-    parser.add_argument("--master_clk", default="zclk,2000000", help="master_clk role alt fp,sysclk,sampleclk")
+    parser.add_argument("--master_clk", default="zclk,2000000", help="master_clk role alt fp,sampleclk[,sysclk]")
     parser.add_argument("--master_trg", default="soft,rising", help="master_trg src alt: fp")    
     parser.add_argument("--clkdiv", default="1", help="clock divider, each module")
     parser.add_argument("--test", default=0, help="test link")
