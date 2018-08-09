@@ -501,7 +501,7 @@ class Acq400:
 
         if hz >= self.mb_clk_min:
             self.s0.SIG_CLK_MB_SET = hz
-            return
+            self.s1.CLKDIV = '1'
         else:
             for clkdiv in range(1,2000):
                 if hz*clkdiv >= self.mb_clk_min:
