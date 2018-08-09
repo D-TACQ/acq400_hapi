@@ -106,7 +106,7 @@ if __name__ == '__main__':
     parser.add_argument("--clkdiv", default="1", help="clock divider, each module")
     parser.add_argument("--test", default=0, help="test link")
     parser.add_argument("--trace", default=0, help="set command tracing")
-    parser,add_argument("--slave_sync_trg_to_clk", default='0', help="0: do NOT retime the trg on the slave")
+    parser.add_argument("--slave_sync_trg_to_clk", default='0', help="0: do NOT retime the trg on the slave")
     parser.add_argument("uuts", nargs='+', help="uuts m1 [s1 s2 ...]")
     run_main(parser.parse_args())
 
