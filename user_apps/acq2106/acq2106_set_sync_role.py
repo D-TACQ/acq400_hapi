@@ -70,17 +70,19 @@ def run_main(parser):
             set_mb_clk(uut, parser.master_clk.split(','))
             # use Si5326 direct output where possible (almost always!)
             _clk_dx = "d2" if uut.s1.CLKDIV != 'CLKDIV 1' else "d1"
-            uut.set_sync_routing_master( trg_dx="d1" if mtrg=="soft" else "d0", clk_dx=_clk_dx)
+            uut.set_sync_routing_master( trg_dx="d2", clk_dx=_clk_dx)
 
             uut.set_master_trg(mtrg, edge, enabled = True if mtrg=="soft" else False)
             role = "slave"
             trg = "1,%d,%d" % (1 if mtrg=="soft" else 0, rf(edge))
             clkdiv = parser.clkdiv
+            uut.s1.sync_trg_to_clk = '1'
         else:
             trg = "1,%d,%d" % (0, rf(parser.trg_edge))
             clkdiv = 1
             uut.set_sync_routing_slave()
             uut.s1.CLKDIV = clkdiv
+            uut.s1.sync_trg_to_clk = parser.slave_sync_trg_to_clk
 
         uut.s0.SIG_TRG_EXT_RESET = '1'  # self-clears. clear trigger count for easy ref 
 
@@ -104,6 +106,7 @@ if __name__ == '__main__':
     parser.add_argument("--clkdiv", default="1", help="clock divider, each module")
     parser.add_argument("--test", default=0, help="test link")
     parser.add_argument("--trace", default=0, help="set command tracing")
+    parser,add_argument("--slave_sync_trg_to_clk", default='0', help="0: do NOT retime the trg on the slave")
     parser.add_argument("uuts", nargs='+', help="uuts m1 [s1 s2 ...]")
     run_main(parser.parse_args())
 
