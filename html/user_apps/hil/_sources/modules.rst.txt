@@ -5,6 +5,7 @@ hil
    :maxdepth: 4
 
    hil
+   hil_ai_only
    hil_plot
    hil_plot_hi_gain
    hil_plot_support

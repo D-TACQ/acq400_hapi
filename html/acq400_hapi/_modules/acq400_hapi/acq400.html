@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>acq400_hapi.acq400 &#8212; acq400_hapi 2.0.4 documentation</title>
+    <title>acq400_hapi.acq400 &#8212; acq400_hapi 2.0.6 documentation</title>
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 2.0.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 2.0.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -345,7 +345,8 @@
         <span class="c1"># channel index from 1,..</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cal_eslo</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]</span>  
         <span class="bp">self</span><span class="o">.</span><span class="n">cal_eoff</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">mb_clk_min</span> <span class="o">=</span> <span class="mi">4000000</span>
+        
         <span class="n">s0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">svc</span><span class="p">[</span><span class="s2">&quot;s0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">netclient</span><span class="o">.</span><span class="n">Siteclient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uut</span><span class="p">,</span> <span class="n">AcqPorts</span><span class="o">.</span><span class="n">SITE0</span><span class="p">)</span>
         <span class="n">sl</span> <span class="o">=</span> <span class="n">s0</span><span class="o">.</span><span class="n">SITELIST</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
         <span class="n">sl</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -524,7 +525,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;undefined role </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">role</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Acq400.set_mb_clk"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400.Acq400.set_mb_clk">[docs]</a>    <span class="k">def</span> <span class="nf">set_mb_clk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hz</span><span class="o">=</span><span class="mi">4000000</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;zclk&quot;</span><span class="p">,</span> <span class="n">fin</span><span class="o">=</span><span class="mi">1000000</span><span class="p">):</span>
-        <span class="c1"># valid ACQ1001</span>
+        <span class="n">hz</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hz</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">src</span> <span class="o">==</span> <span class="s2">&quot;zclk&quot;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_ZCLK_SRC</span> <span class="o">=</span> <span class="s2">&quot;INT33M&quot;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SYS_CLK_FPMUX</span> <span class="o">=</span> <span class="s2">&quot;ZCLK&quot;</span>
@@ -536,12 +537,12 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SYS_CLK_FPMUX</span> <span class="o">=</span> <span class="s2">&quot;FPCLK&quot;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_CLK_MB_FIN</span> <span class="o">=</span> <span class="n">fin</span>
 
-        <span class="k">if</span> <span class="n">hz</span> <span class="o">&gt;=</span> <span class="mi">4000000</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">hz</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mb_clk_min</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_CLK_MB_SET</span> <span class="o">=</span> <span class="n">hz</span>
-            <span class="k">return</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">CLKDIV</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">clkdiv</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2000</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">hz</span><span class="o">*</span><span class="n">clkdiv</span> <span class="o">&gt;=</span> <span class="mi">4000000</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">hz</span><span class="o">*</span><span class="n">clkdiv</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mb_clk_min</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_CLK_MB_SET</span> <span class="o">=</span> <span class="n">hz</span><span class="o">*</span><span class="n">clkdiv</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">CLKDIV</span> <span class="o">=</span> <span class="n">clkdiv</span>
                     <span class="k">return</span>
@@ -643,15 +644,22 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_uut</span><span class="p">,</span> <span class="n">monitor</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">has_mgtdram</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Acq2106 </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_uut</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;acq400_hapi.Acq2106 </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_uut</span><span class="p">))</span>
         <span class="n">Acq400</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_uut</span><span class="p">,</span> <span class="n">monitor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mb_clk_min</span> <span class="o">=</span> <span class="mi">100000</span>
         <span class="n">site</span> <span class="o">=</span> <span class="mi">13</span>
-        <span class="k">for</span> <span class="n">sm</span> <span class="ow">in</span> <span class="p">[</span> <span class="s1">&#39;cA&#39;</span><span class="p">,</span> <span class="s1">&#39;cB&#39;</span><span class="p">]:</span>                
-            <span class="bp">self</span><span class="o">.</span><span class="n">svc</span><span class="p">[</span><span class="n">sm</span><span class="p">]</span> <span class="o">=</span> <span class="n">netclient</span><span class="o">.</span><span class="n">Siteclient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uut</span><span class="p">,</span> <span class="n">AcqPorts</span><span class="o">.</span><span class="n">SITE0</span><span class="o">+</span><span class="n">site</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">sm</span> <span class="ow">in</span> <span class="p">[</span> <span class="s1">&#39;cA&#39;</span><span class="p">,</span> <span class="s1">&#39;cB&#39;</span><span class="p">]:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">svc</span><span class="p">[</span><span class="n">sm</span><span class="p">]</span> <span class="o">=</span> <span class="n">netclient</span><span class="o">.</span><span class="n">Siteclient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uut</span><span class="p">,</span> <span class="n">AcqPorts</span><span class="o">.</span><span class="n">SITE0</span><span class="o">+</span><span class="n">site</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;uut </span><span class="si">{}</span><span class="s2"> site </span><span class="si">{}</span><span class="s2"> not populated&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_uut</span><span class="p">,</span> <span class="n">site</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mod_count</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">site</span> <span class="o">=</span> <span class="n">site</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">has_mgtdram</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">svc</span><span class="p">[</span><span class="s1">&#39;s14&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">netclient</span><span class="o">.</span><span class="n">Siteclient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uut</span><span class="p">,</span> <span class="n">AcqPorts</span><span class="o">.</span><span class="n">SITE0</span><span class="o">+</span><span class="mi">14</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">svc</span><span class="p">[</span><span class="s1">&#39;s14&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">netclient</span><span class="o">.</span><span class="n">Siteclient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uut</span><span class="p">,</span> <span class="n">AcqPorts</span><span class="o">.</span><span class="n">SITE0</span><span class="o">+</span><span class="mi">14</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;uut </span><span class="si">{}</span><span class="s2"> site </span><span class="si">{}</span><span class="s2"> not populated&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_uut</span><span class="p">,</span> <span class="n">site</span><span class="p">))</span>            
 
 <div class="viewcode-block" id="Acq2106.set_mb_clk"><a class="viewcode-back" href="../../acq400_hapi.html#acq400_hapi.acq400.Acq2106.set_mb_clk">[docs]</a>    <span class="k">def</span> <span class="nf">set_mb_clk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hz</span><span class="o">=</span><span class="mi">4000000</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;zclk&quot;</span><span class="p">,</span> <span class="n">fin</span><span class="o">=</span><span class="mi">1000000</span><span class="p">):</span>
         <span class="n">Acq400</span><span class="o">.</span><span class="n">set_mb_clk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hz</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">fin</span><span class="p">)</span>
@@ -733,7 +741,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 2.0.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">acq400_hapi 2.0.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

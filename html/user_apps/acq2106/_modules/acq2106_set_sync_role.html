@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>acq2106_set_sync_role &#8212; user_apps/acq2106 2.0.4 documentation</title>
+    <title>acq2106_set_sync_role &#8212; user_apps/acq2106 2.0.6 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">user_apps/acq2106 2.0.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">user_apps/acq2106 2.0.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -69,12 +69,13 @@
 <span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">input</span>
 
 <div class="viewcode-block" id="set_mb_clk"><a class="viewcode-back" href="../acq2106_set_sync_role.html#acq2106_set_sync_role.set_mb_clk">[docs]</a><span class="k">def</span> <span class="nf">set_mb_clk</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">clkdef</span><span class="p">):</span>
+    <span class="n">fmt</span> <span class="o">=</span> <span class="n">acq400_hapi</span><span class="o">.</span><span class="n">intSI_cvt</span>
     <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clkdef</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">):</span>
         <span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">hz</span><span class="p">,</span> <span class="n">fin</span><span class="p">)</span> <span class="o">=</span> <span class="n">clkdef</span>
-        <span class="n">uut</span><span class="o">.</span><span class="n">set_mb_clk</span><span class="p">(</span><span class="n">hz</span><span class="o">=</span><span class="n">hz</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">src</span><span class="p">,</span> <span class="n">fin</span><span class="o">=</span><span class="n">fin</span><span class="p">)</span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">set_mb_clk</span><span class="p">(</span><span class="n">hz</span><span class="o">=</span><span class="n">fmt</span><span class="p">(</span><span class="n">hz</span><span class="p">),</span> <span class="n">src</span><span class="o">=</span><span class="n">src</span><span class="p">,</span> <span class="n">fin</span><span class="o">=</span><span class="n">fmt</span><span class="p">(</span><span class="n">fin</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">hz</span><span class="p">)</span> <span class="o">=</span> <span class="n">clkdef</span>
-        <span class="n">uut</span><span class="o">.</span><span class="n">set_mb_clk</span><span class="p">(</span><span class="n">hz</span><span class="o">=</span><span class="n">hz</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">src</span><span class="p">)</span></div>
+        <span class="n">uut</span><span class="o">.</span><span class="n">set_mb_clk</span><span class="p">(</span><span class="n">hz</span><span class="o">=</span><span class="n">fmt</span><span class="p">(</span><span class="n">hz</span><span class="p">),</span> <span class="n">src</span><span class="o">=</span><span class="n">src</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="rf"><a class="viewcode-back" href="../acq2106_set_sync_role.html#acq2106_set_sync_role.rf">[docs]</a><span class="k">def</span> <span class="nf">rf</span><span class="p">(</span><span class="n">edge</span><span class="p">):</span>
@@ -100,29 +101,31 @@
         <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">trace</span>
         <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">trace</span>
 
-
         <span class="k">if</span> <span class="n">role</span> <span class="o">==</span> <span class="s2">&quot;master&quot;</span><span class="p">:</span>                        
             <span class="c1"># ensure there are two values to unpack, provide a default for the 2nd value..</span>
             <span class="n">mtrg</span><span class="p">,</span> <span class="n">edge</span> <span class="o">=</span> <span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">master_trg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span> <span class="s2">&quot;rising&quot;</span> <span class="p">])[:</span><span class="mi">2</span><span class="p">]</span>             
             <span class="n">parser</span><span class="o">.</span><span class="n">trg_edge</span> <span class="o">=</span> <span class="n">edge</span>                     
-            <span class="n">uut</span><span class="o">.</span><span class="n">set_sync_routing_master</span><span class="p">(</span> <span class="n">trg_dx</span><span class="o">=</span><span class="s2">&quot;d1&quot;</span> <span class="k">if</span> <span class="n">mtrg</span><span class="o">==</span><span class="s2">&quot;soft&quot;</span> <span class="k">else</span> <span class="s2">&quot;d0&quot;</span><span class="p">,</span> <span class="n">clk_dx</span><span class="o">=</span><span class="s2">&quot;d2&quot;</span><span class="p">)</span>
+            <span class="n">set_mb_clk</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">parser</span><span class="o">.</span><span class="n">master_clk</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">))</span>
+            <span class="c1"># use Si5326 direct output where possible (almost always!)</span>
+            <span class="n">_clk_dx</span> <span class="o">=</span> <span class="s2">&quot;d2&quot;</span> <span class="k">if</span> <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">CLKDIV</span> <span class="o">!=</span> <span class="s1">&#39;CLKDIV 1&#39;</span> <span class="k">else</span> <span class="s2">&quot;d1&quot;</span>
+            <span class="n">uut</span><span class="o">.</span><span class="n">set_sync_routing_master</span><span class="p">(</span> <span class="n">trg_dx</span><span class="o">=</span><span class="s2">&quot;d2&quot;</span><span class="p">,</span> <span class="n">clk_dx</span><span class="o">=</span><span class="n">_clk_dx</span><span class="p">)</span>
 
             <span class="n">uut</span><span class="o">.</span><span class="n">set_master_trg</span><span class="p">(</span><span class="n">mtrg</span><span class="p">,</span> <span class="n">edge</span><span class="p">,</span> <span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">mtrg</span><span class="o">==</span><span class="s2">&quot;soft&quot;</span> <span class="k">else</span> <span class="kc">False</span><span class="p">)</span>
-            <span class="n">set_mb_clk</span><span class="p">(</span><span class="n">uut</span><span class="p">,</span> <span class="n">parser</span><span class="o">.</span><span class="n">master_clk</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">))</span>            
             <span class="n">role</span> <span class="o">=</span> <span class="s2">&quot;slave&quot;</span>
             <span class="n">trg</span> <span class="o">=</span> <span class="s2">&quot;1,</span><span class="si">%d</span><span class="s2">,</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">mtrg</span><span class="o">==</span><span class="s2">&quot;soft&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span> <span class="n">rf</span><span class="p">(</span><span class="n">edge</span><span class="p">))</span>
             <span class="n">clkdiv</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">clkdiv</span>
+            <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">sync_trg_to_clk</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">trg</span> <span class="o">=</span> <span class="s2">&quot;1,</span><span class="si">%d</span><span class="s2">,</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">rf</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">trg_edge</span><span class="p">))</span>
             <span class="n">clkdiv</span> <span class="o">=</span> <span class="mi">1</span>
             <span class="n">uut</span><span class="o">.</span><span class="n">set_sync_routing_slave</span><span class="p">()</span>
+            <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">CLKDIV</span> <span class="o">=</span> <span class="n">clkdiv</span>
+            <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">sync_trg_to_clk</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">slave_sync_trg_to_clk</span>
 
-        <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_TRG_EXT_RESET</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>  <span class="c1"># self-clears   </span>
+        <span class="n">uut</span><span class="o">.</span><span class="n">s0</span><span class="o">.</span><span class="n">SIG_TRG_EXT_RESET</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>  <span class="c1"># self-clears. clear trigger count for easy ref </span>
 
         <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">trg</span> <span class="o">=</span> <span class="n">trg</span>
         <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">clk</span> <span class="o">=</span> <span class="s1">&#39;1,1,1&#39;</span>
-        <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">clkdiv</span> <span class="o">=</span> <span class="n">clkdiv</span>
-        <span class="n">uut</span><span class="o">.</span><span class="n">s1</span><span class="o">.</span><span class="n">CLKDIV</span> <span class="o">=</span> <span class="n">clkdiv</span>
 
     <span class="k">if</span> <span class="n">parser</span><span class="o">.</span><span class="n">test</span><span class="p">:</span>
         <span class="n">run_link_test</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">uuts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">uuts</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
@@ -136,11 +139,12 @@
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;acq2106_set_sync_role&quot;</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--master_clk&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;zclk,2000000&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;master_clk role alt fp,sysclk,sampleclk&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--master_clk&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;zclk,2000000&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;master_clk role alt fp,sampleclk[,sysclk]&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--master_trg&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;soft,rising&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;master_trg src alt: fp&quot;</span><span class="p">)</span>    
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--clkdiv&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;clock divider, each module&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--test&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;test link&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--trace&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;set command tracing&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--slave_sync_trg_to_clk&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;0: do NOT retime the trg on the slave&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;uuts&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;uuts m1 [s1 s2 ...]&quot;</span><span class="p">)</span>
     <span class="n">run_main</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">())</span>
 
@@ -177,7 +181,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">user_apps/acq2106 2.0.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">user_apps/acq2106 2.0.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
