@@ -8,8 +8,7 @@
 * rad_dds.py : support for RADCELF triple DDS
 
 ## API Documentation
-https://d-tacq.github.io/acq400_hapi/html/index.html
-
+https://D-TACQ.github.io/acq400_hapi/html/acq400_hapi/index.html
 
 ## Glossary
 
