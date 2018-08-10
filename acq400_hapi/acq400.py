@@ -307,7 +307,8 @@ class Acq400:
         # channel index from 1,..
         self.cal_eslo = [0, ]  
         self.cal_eoff = [0, ]
-
+        self.mb_clk_min = 4000000
+        
         s0 = self.svc["s0"] = netclient.Siteclient(self.uut, AcqPorts.SITE0)
         sl = s0.SITELIST.split(",")
         sl.pop(0)
@@ -486,7 +487,7 @@ class Acq400:
             raise ValueError("undefined role {}".format(role))
 
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
-        # valid ACQ1001
+        hz = int(hz)
         if src == "zclk":
             self.s0.SIG_ZCLK_SRC = "INT33M"
             self.s0.SYS_CLK_FPMUX = "ZCLK"
@@ -498,12 +499,12 @@ class Acq400:
             self.s0.SYS_CLK_FPMUX = "FPCLK"
             self.s0.SIG_CLK_MB_FIN = fin
 
-        if hz >= 4000000:
+        if hz >= self.mb_clk_min:
             self.s0.SIG_CLK_MB_SET = hz
-            return
+            self.s1.CLKDIV = '1'
         else:
             for clkdiv in range(1,2000):
-                if hz*clkdiv >= 4000000:
+                if hz*clkdiv >= self.mb_clk_min:
                     self.s0.SIG_CLK_MB_SET = hz*clkdiv
                     self.s1.CLKDIV = clkdiv
                     return
@@ -605,15 +606,22 @@ class Acq2106(Acq400):
     """
 
     def __init__(self, _uut, monitor=True, has_mgtdram=False):
-        print("Acq2106 %s" % (_uut))
+        print("acq400_hapi.Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
+        self.mb_clk_min = 100000
         site = 13
-        for sm in [ 'cA', 'cB']:                
-            self.svc[sm] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
+        for sm in [ 'cA', 'cB']:
+            try:
+                self.svc[sm] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
+            except socket.error:
+                print("uut {} site {} not populated".format(_uut, site))
             self.mod_count += 1
             site = site - 1
         if (has_mgtdram):
-            self.svc['s14'] = netclient.Siteclient(self.uut, AcqPorts.SITE0+14)
+            try:
+                self.svc['s14'] = netclient.Siteclient(self.uut, AcqPorts.SITE0+14)
+            except socket.error:
+                print("uut {} site {} not populated".format(_uut, site))            
 
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
         Acq400.set_mb_clk(self, hz, src, fin)
