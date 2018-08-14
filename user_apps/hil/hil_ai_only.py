@@ -58,13 +58,9 @@ def run_shots(args):
     make_data_dir(root, args.verbose)
     uut = acq400_hapi.Acq400(args.uuts[0])
     acq400_hapi.Acq400UI.exec_args(uut, args)
-    uut.s0.set_arm = 1
-
     configure_ai(args, uut)
     if args.sg == 1:
         configure_sig_gen(args)
-    skt = socket.socket()
-    skt.connect((args.uuts[0], 2235))
 
     if args.loop == -1:
         args.loop = sys.maxint
@@ -72,11 +68,8 @@ def run_shots(args):
     while lp < args.loop:
         if args.wait_user == 1:
             input("Hit any key to continue: ")
-        uut.s0.set_arm = 1
-        while True:
-            trn_stat = str(skt.recv(4096))
-            if "0 0 " + str(args.post) in trn_stat:
-                break
+
+        uut.run_oneshot()
 
         if args.store == 1:
             if file_num > 99:
@@ -84,7 +77,6 @@ def run_shots(args):
                 cycle += 1
                 root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
                 make_data_dir(root, args.verbose)
-
 
             rdata = uut.read_chan(0, args.post * args.nchan)
 
@@ -100,7 +92,7 @@ def run_shots(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq1001 HIL demo')
-    acq400_hapi.Acq400UI.add_args(parser, post=False, pre=False)
+    acq400_hapi.Acq400UI.add_args(parser, post=False, pre=True)
     parser.add_argument('--store', type=int, default=1, help='Whether to store data or not')
     # parser.add_argument('',type=int, default=1, help='')
     parser.add_argument('--sg',type=int, default=0, help='Whether to configure a sig gen. Default = False')
