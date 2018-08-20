@@ -16,6 +16,7 @@ This will upload segments of size 1kb to the specified node in the tree.
 """
 
 import pykst
+import acq400_hapi
 import numpy as np
 import argparse
 from MDSplus import *
@@ -29,7 +30,7 @@ def upload_segment(segment, node, startID, endID):
     delta = 1 / float((len(segment)))
     segment = Float32Array(segment)
     segDimension = Range(start_time, end_time, delta)
-    print("seg params: ", start_time, end_time, segDimension, segment)
+    # print("seg params: ", start_time, end_time, segDimension, segment)
     node.makeSegment(start_time, end_time, segDimension, segment)
 
 
@@ -44,30 +45,29 @@ def upload_data(args):
     if args.store_seg == 1:
         directories = [name for name in os.listdir(args.data_dir) \
         if os.path.isdir(os.path.join(args.data_dir, name))]
-
         for dir in directories:
             for file in os.listdir(args.data_dir + dir):
-
                 data.extend(np.fromfile(args.data_dir + dir + "/" + file, dtype=np.int16))
+                while len(data) * 16 >= args.seg_size:
 
-                if len(data) == args.seg_size * 1024:
-                    # buffer is exact: upload data and reset buffer.
-                    upload_segment(data, node, startID, endID)
-                    data = []
+                    if len(data) * 16 == args.seg_size:
+                        # buffer is exact: upload data and reset buffer.
+                        upload_segment(data, node, startID, endID)
+                        data = []
 
-                elif len(data) > args.seg_size * 1024:
-                    # buffer too large: upload seg size and carry over rest of buffer.
-                    extra_data = data[args.seg_size + 1:-1]
-                    data = data[0:args.seg_size]
-                    upload_segment(data, node, startID, endID)
-                    data = extra_data
+                    elif len(data) * 16 > args.seg_size:
+                        # buffer too large: upload seg size and carry over rest of buffer.
+                        extra_data = data[args.seg_size + 1:-1]
+                        data = data[0:args.seg_size]
+                        upload_segment(data, node, startID, endID)
+                        data = extra_data
 
-                elif len(data) < args.seg_size * 1024:
-                    # not enough data in buffer: continue collecting data
-                    continue
+                    elif len(data) * 16 < args.seg_size:
+                        # not enough data in buffer: continue collecting data
+                        continue
 
-                startID +=1
-                endID +=1
+                    startID += 1
+                    endID += 1
 
         if len(data) != 0:
             # if at any point the buffer is too big then some data will be
@@ -89,13 +89,14 @@ def run_upload(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 MDSplus interface')
+    # parser.add_argument('-filesize', '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
     parser.add_argument('--node', default="AI", type=str, help="Which node to pull data from")
     parser.add_argument('--create_data', default="0", type=str,
                         help="Whether to create fake data and upload it to tree.")
     parser.add_argument('--samples', default="100000", type=int, help="Number of samples to read.")
     parser.add_argument('--chan', default="1", type=str, help="How many channels to push data to.")
     parser.add_argument('--store_seg', default=1, type=int, help="Whether to upload data as a segment or not.")
-    parser.add_argument('--seg_size', default=1024, type=int, help="Segment size to upload to MDSplus.")
+    parser.add_argument('-seg_size', '--seg_size', default=0x100000, action=acq400_hapi.intSIAction, decimal=False, help="Segment size to upload to MDSplus.")
     parser.add_argument('--data_dir', default='/data/')
     parser.add_argument('--oneshot', default=1, type=int,
                         help='Whether to upload a single file, regardless of file size.')
