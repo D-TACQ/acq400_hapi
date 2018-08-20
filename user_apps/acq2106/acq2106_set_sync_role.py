@@ -55,6 +55,12 @@ def run_link_test(parser, uutm, uuts):
         time.sleep(1)
         uuts.s0.SIG_TRG_EXT_COUNT
 
+def sync_trg_to_clk(uut, value = '1'):
+    try:
+        uut.s1.sync_trg_to_clk = value
+    except AttributeError:
+        print("{} failed to set sync_trg_to_clk {} .. old firmware".format("NOTE" if value == '1' else "ERROR", value))
+
 def run_main(parser):
     uuts = [ acq400_hapi.Acq2106(addr) for addr in parser.uuts ]      
     role = "master"
@@ -72,17 +78,17 @@ def run_main(parser):
             _clk_dx = "d2" if uut.s1.CLKDIV != 'CLKDIV 1' else "d1"
             uut.set_sync_routing_master( trg_dx="d2", clk_dx=_clk_dx)
 
-            uut.set_master_trg(mtrg, edge, enabled = True if mtrg=="soft" else False)
+            uut.set_master_trg(mtrg, edge)
             role = "slave"
             trg = "1,%d,%d" % (1 if mtrg=="soft" else 0, rf(edge))
             clkdiv = parser.clkdiv
-            uut.s1.sync_trg_to_clk = '1'
+            sync_trg_to_clk(uut)
         else:
             trg = "1,%d,%d" % (0, rf(parser.trg_edge))
             clkdiv = 1
             uut.set_sync_routing_slave()
             uut.s1.CLKDIV = clkdiv
-            uut.s1.sync_trg_to_clk = parser.slave_sync_trg_to_clk
+            sync_trg_to_clk(uut, parser.slave_sync_trg_to_clk)
 
         uut.s0.SIG_TRG_EXT_RESET = '1'  # self-clears. clear trigger count for easy ref 
 
