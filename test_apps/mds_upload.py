@@ -1,6 +1,18 @@
 """
 mds_upload.py is a utility for uploading bulk raw data to an MDSplus server.
-Raw transient data will be uploaded whole. Raw streamed data will be uploaded in 12MB segments.
+
+Some tips for usage:
+
+Need to define <UUT name>_path=<server where data is stored>:://<path to UUT tree>
+e.g. seg_tree_path=andros::///home/dt100/TREES/seg_tree
+
+You must also pass the directory containing data to --data_dir at the
+command line.
+e.g. python mds_upload.py --data_dir=/data/<UUT name> <UUT name>
+This mirrors the intended use of acq400_stream2.py (streaming to
+/data/<UUT_name>).
+
+This will upload segments of size 1kb to the specified node in the tree.
 """
 
 import pykst
@@ -11,9 +23,9 @@ import time
 import os
 
 
-def upload_segment(segment, node):
-    start_time = Float64(time.time() - 1)
-    end_time = Float64(time.time())
+def upload_segment(segment, node, startID, endID):
+    start_time = Float64(startID)
+    end_time = Float64(endID)
     delta = 1 / float((len(segment)))
     segment = Float32Array(segment)
     segDimension = Range(start_time, end_time, delta)
@@ -23,37 +35,44 @@ def upload_segment(segment, node):
 
 def upload_data(args):
     # upload data to the MDSplus tree.
+    startID = 0
+    endID = 1
     data = []
     tree = Tree(args.uuts[0], Tree.getCurrent(args.uuts[0]))
     node = tree.getNode(args.node)
 
     if args.store_seg == 1:
-        directories = [name for name in os.listdir(args.data_dir) if os.path.isdir(os.path.join(args.data_dir, name))]
+        directories = [name for name in os.listdir(args.data_dir) \
+        if os.path.isdir(os.path.join(args.data_dir, name))]
+
         for dir in directories:
             for file in os.listdir(args.data_dir + dir):
-                print("loop")
+
                 data.extend(np.fromfile(args.data_dir + dir + "/" + file, dtype=np.int16))
-                print(len(data))
+
                 if len(data) == args.seg_size * 1024:
                     # buffer is exact: upload data and reset buffer.
-                    upload_segment(data, node)
+                    upload_segment(data, node, startID, endID)
                     data = []
 
                 elif len(data) > args.seg_size * 1024:
                     # buffer too large: upload seg size and carry over rest of buffer.
                     extra_data = data[args.seg_size + 1:-1]
                     data = data[0:args.seg_size]
-                    upload_segment(data, node)
+                    upload_segment(data, node, startID, endID)
                     data = extra_data
 
                 elif len(data) < args.seg_size * 1024:
                     # not enough data in buffer: continue collecting data
                     continue
 
+                startID +=1
+                endID +=1
+
         if len(data) != 0:
             # if at any point the buffer is too big then some data will be
-            # left over and this will ensure that any remaining data is uploaded to MDSplus.
-            upload_segment(data, node)
+            # left over - this ensures any remaining data is uploaded to MDSplus.
+            upload_segment(data, node, startID, endID)
 
     elif args.oneshot == 1:
         # upload oneshot test
@@ -77,7 +96,7 @@ def run_main():
     parser.add_argument('--chan', default="1", type=str, help="How many channels to push data to.")
     parser.add_argument('--store_seg', default=1, type=int, help="Whether to upload data as a segment or not.")
     parser.add_argument('--seg_size', default=1024, type=int, help="Segment size to upload to MDSplus.")
-    parser.add_argument('--data_dir', default='/home/sean/PROJECTS/ACQ400/HAPI/acq400_hapi/user_apps/acq400/')
+    parser.add_argument('--data_dir', default='/data/')
     parser.add_argument('--oneshot', default=1, type=int,
                         help='Whether to upload a single file, regardless of file size.')
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the data is being pulled.')
