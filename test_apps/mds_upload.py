@@ -24,9 +24,9 @@ import time
 import os
 
 
-def upload_segment(segment, node, startID, endID):
-    start_time = Float64(startID)
-    end_time = Float64(endID)
+def upload_segment(segment, node, segID):
+    start_time = Float64(segID)
+    end_time = Float64(segID+1)
     delta = 1 / float((len(segment)))
     segment = Float32Array(segment)
     segDimension = Range(start_time, end_time, delta)
@@ -36,8 +36,7 @@ def upload_segment(segment, node, startID, endID):
 
 def upload_data(args):
     # upload data to the MDSplus tree.
-    startID = 0
-    endID = 1
+    segID = 0
     data = []
     tree = Tree(args.uuts[0], Tree.getCurrent(args.uuts[0]))
     node = tree.getNode(args.node)
@@ -52,27 +51,27 @@ def upload_data(args):
 
                     if len(data) * 16 == args.seg_size:
                         # buffer is exact: upload data and reset buffer.
-                        upload_segment(data, node, startID, endID)
+                        upload_segment(data, node, segID)
                         data = []
 
                     elif len(data) * 16 > args.seg_size:
                         # buffer too large: upload seg size and carry over rest of buffer.
                         extra_data = data[args.seg_size + 1:-1]
                         data = data[0:args.seg_size]
-                        upload_segment(data, node, startID, endID)
+                        upload_segment(data, node, segID)
                         data = extra_data
 
                     elif len(data) * 16 < args.seg_size:
                         # not enough data in buffer: continue collecting data
                         continue
 
-                    startID += 1
-                    endID += 1
+                    segID += 1
+
 
         if len(data) != 0:
             # if at any point the buffer is too big then some data will be
             # left over - this ensures any remaining data is uploaded to MDSplus.
-            upload_segment(data, node, startID, endID)
+            upload_segment(data, node, segID)
 
     elif args.oneshot == 1:
         # upload oneshot test
@@ -81,9 +80,7 @@ def upload_data(args):
 
 
 def run_upload(args):
-    if args.create_data == 1:
-        create_data()
-        # data = get_data()
+
     upload_data(args)
 
 
@@ -91,8 +88,6 @@ def run_main():
     parser = argparse.ArgumentParser(description='acq400 MDSplus interface')
     # parser.add_argument('-filesize', '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
     parser.add_argument('--node', default="AI", type=str, help="Which node to pull data from")
-    parser.add_argument('--create_data', default="0", type=str,
-                        help="Whether to create fake data and upload it to tree.")
     parser.add_argument('--samples', default="100000", type=int, help="Number of samples to read.")
     parser.add_argument('--chan', default="1", type=str, help="How many channels to push data to.")
     parser.add_argument('--store_seg', default=1, type=int, help="Whether to upload data as a segment or not.")
