@@ -43,12 +43,13 @@ def gen_stl(uut, pulse_train):
     lo_time = int((int(pulse_train[2]) / int(pulse_train[3])) * 100000)  # in us
     print("hi_time = ", hi_time, " lo_time = ", lo_time)
     dx = str(pulse_train[0])
-    lt = 0
+    tu = 0 # gpg tick up
+    td = 0 # gpg tick down
     for line in range(0, int(pulse_train[3])):
-        ht = str(int(lt) + hi_time)
-        lt = str(int(ht) + lo_time)
-        stl = stl + ht + "," + dx + "\n" + lt + ",0" + "\n"
-    stl = stl + str(int(lt) + hi_time) + "," + dx
+        tu = str(int(td) + lo_time) # tick up after low time
+        td = str(int(tu) + hi_time) # tick down after high time
+        stl = stl + tu + "," + dx + "\n" + td + ",0" + "\n"
+    #stl = stl + str(int(td) + hi_time) + "," + dx
 
     print("STL generated: ")
     print(stl)
