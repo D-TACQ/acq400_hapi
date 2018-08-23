@@ -67,8 +67,9 @@ def get_data(args):
             elif chn < 100:
                 node = tree.getNode(args.node + "." + "CH" + str(chn))
         except:
-            print("Node not found. Make sure node exists. Node = ", node)
-            raise SystemExit
+            #print("Node not found. Make sure node exists. Node = ", args.node)
+            node = tree.getNode(args.node)
+            # raise SystemExit
         data.append(node.getData().data())
     return np.array(data)
 
@@ -99,4 +100,4 @@ def run_main():
 
 
 if __name__ == '__main__':
-    run_main() 
+    run_main()
