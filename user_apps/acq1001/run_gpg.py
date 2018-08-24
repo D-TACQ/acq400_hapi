@@ -81,16 +81,16 @@ def soft_trigger_loop(uut):
 
 
 def set_hdmi_master(uut):
-    uut.s0.SIG_SYNC_OUT_CLK = 'CLK'  # CLK d0 output
-    uut.s0.SIG_SYNC_OUT_CLK_DX = 'd0'  #
-    uut.s0.SIG_SYNC_OUT_TRG = 'TRG'  # SOFT TRIGGER d1
-    uut.s0.SIG_SYNC_OUT_TRG_DX = 'd1'
-    #    uut.s0.SIG_SYNC_OUT_TRG     = 'GPG'     # trigger from gpg OUT
-    #    uut.s0.SIG_SYNC_OUT_TRG_DX  = 'd0'
-    uut.s0.SIG_SYNC_OUT_SYNC = 'GPG'  # GPG d1
-    uut.s0.SIG_SYNC_OUT_SYNC_DX = 'd1'  # GPG 0x2
-    uut.s0.SIG_SYNC_OUT_GPIO = 'GPG'
-    uut.s0.SIG_SYNC_OUT_GPIO_DX = 'd2'  # GPG 0x4
+    uut.s0.SIG_SYNC_OUT_CLK     = 'CLK'     # CLK d0 output
+    uut.s0.SIG_SYNC_OUT_CLK_DX  = 'd0'      #
+    uut.s0.SIG_SYNC_OUT_TRG     = 'TRG'     # SOFT TRIGGER d1
+    uut.s0.SIG_SYNC_OUT_TRG_DX  = 'd1'
+#    uut.s0.SIG_SYNC_OUT_TRG     = 'GPG'     # trigger from gpg OUT
+#    uut.s0.SIG_SYNC_OUT_TRG_DX  = 'd0'
+    uut.s0.SIG_SYNC_OUT_SYNC    = 'GPG'     # GPG d1
+    uut.s0.SIG_SYNC_OUT_SYNC_DX = 'd1'      # GPG 0x2
+    uut.s0.SIG_SYNC_OUT_GPIO    = 'GPG'
+    uut.s0.SIG_SYNC_OUT_GPIO_DX = 'd2'      # GPG 0x4
 
 
 def run_gpg(args):
@@ -103,13 +103,13 @@ def run_gpg(args):
     if args.clk == 'notouch':
         print("leave clk untouched")
     elif args.clk == 'int':
-        uut.s0.gpg_clk = 0, 0, 0
+        uut.s0.gpg_clk=0,0,0
     elif args.clk == 'fp':
         uut.s0.SYS_CLK_FPMUX = 'FPCLK'
-        uut.s0.gpg_clk = '1,0,0'
+        uut.s0.gpg_clk='1,0,0'
     else:
         # clk=dX
-        uut.s0.gpg_clk = '1,{},1'.format(args.clk[1:])
+        uut.s0.gpg_clk='1,{},1'.format(args.clk[1:])
 
     if args.stl != 'none':
         load_stl(uut, args.stl)
@@ -125,8 +125,8 @@ def run_gpg(args):
         uut.s0.set_knob('SIG_EVENT_SRC_{}'.format(dx), 'GPG')
     if args.hdmi_master == 1:
         set_hdmi_master(uut)
-    uut.s0.gpg_trg = '1,{},1'.format(1 if args.trg.startswith('soft') else 0)
-    uut.s0.GPG_MODE = args.mode
+    uut.s0.gpg_trg='1,{},1'.format(1 if args.trg.startswith('soft') else 0)
+    uut.s0.GPG_MODE=args.mode
     if args.disable != 1:
         uut.s0.GPG_ENABLE = '1'
 
