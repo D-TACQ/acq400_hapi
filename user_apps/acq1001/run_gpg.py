@@ -28,7 +28,6 @@ optional arguments:
                         clk, trg and gpg drive HDMI outputs
 """
 
-# from __future__ import builtins
 from __future__ import division
 import acq400_hapi
 import argparse
@@ -36,23 +35,20 @@ import re
 from builtins import input
 
 
-def gen_stl(uut, pulse_train):
-    # stl = "0 0\n"
+def gen_stl(uut, pulse_train, args):
     stl = ""
-    hi_time = int((int(pulse_train[1]) / int(pulse_train[3])) * 100000)  # in us
-    lo_time = int((int(pulse_train[2]) / int(pulse_train[3])) * 100000)  # in us
-    print("hi_time = ", hi_time, " lo_time = ", lo_time)
+    hi_time = int((int(pulse_train[1]) / int(pulse_train[3])) * 1000)  # in us
+    lo_time = int((int(pulse_train[2]) / int(pulse_train[3])) * 1000)  # in us
     dx = str(pulse_train[0])
-    tu = 0 # gpg tick up
     td = 0 # gpg tick down
     for line in range(0, int(pulse_train[3])):
         tu = str(int(td) + lo_time) # tick up after low time
         td = str(int(tu) + hi_time) # tick down after high time
         stl = stl + tu + "," + dx + "\n" + td + ",0" + "\n"
-    #stl = stl + str(int(td) + hi_time) + "," + dx
 
-    print("STL generated: ")
-    print(stl)
+    if args.verbose:
+        print("STL generated: ")
+        print(stl)
     uut.load_gpg(stl, uut.s0.trace)
 
 
@@ -122,7 +118,7 @@ def run_gpg(args):
         make_waterfall(uut, interval, hitime, [1, 0, 2, 0, 4, 0, 8, 0])
     elif args.pulse_train != 'none':
         args.pulse_train = args.pulse_train.split(",")
-        gen_stl(uut, args.pulse_train)
+        gen_stl(uut, args.pulse_train, args)
 
     # assume GPG drives 4 lines..
     for dx in [0, 1, 2, 3]:
@@ -151,6 +147,7 @@ def run_main():
     parser.add_argument('--pulse_train', default='none', help='0,10,10,50 | dx,on-msec,off-msec,count')
     parser.add_argument('--trace', type=int, default=0, help='trace wire protocol')
     parser.add_argument('--hdmi_master', type=int, default=0, help='clk, trg and gpg drive HDMI outputs')
+    parser.add_argument('--verbose', type=int, default=0, help='Print extra debug info.')
     parser.add_argument('uut', nargs=1, help="uut")
     run_gpg(parser.parse_args())
 
