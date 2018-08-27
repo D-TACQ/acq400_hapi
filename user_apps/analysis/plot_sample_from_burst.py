@@ -32,8 +32,9 @@ def plot_data(args):
     rawi = np.fromfile(fname, dtype=np.int32)
     rawu = np.fromfile(fname, dtype=np.uint32)
     ll = len(rawi)/args.nchan
-    chxi = np.reshape(rawi, (ll, args.nchan))
-    chxu = np.reshape(rawu, (ll, args.nchan))
+    lltrunc = ll * args.nchan
+    chxi = np.reshape(rawi[0:lltrunc], (ll, args.nchan))
+    chxu = np.reshape(rawu[0:lltrunc], (ll, args.nchan))
     # extract the first sample in each burst. Approx ll/rtm_translen, ll is safe ..
     chx = np.zeros((args.nchan, ll))
     ss = 0
