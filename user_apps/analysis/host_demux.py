@@ -230,13 +230,19 @@ def plot_data(args, raw_channels):
         channel = raw_channels[ch]
         ch1 = ch+1
         if args.egu:
+            yu1 = yu
+            try:
             # chan2volts ch index from 1:
-            channel = args.the_uut.chan2volts(ch1, channel)
+                channel = args.the_uut.chan2volts(ch1, channel)
+            except IndexError:
+                yu1 = 'code'
+                print("ERROR: no calibration for CH{:02d}".format(ch1))
+
         # label 1.. (human)
         V2 = client.new_editable_vector(channel.astype(np.float64), name="CH{:02d}".format(ch1))
         c1 = client.new_curve(V1, V2)
         p1 = client.new_plot()
-        p1.set_left_label(yu)
+        p1.set_left_label(yu1)
         p1.set_bottom_label(xu)  
         p1.add(c1)
 
