@@ -31,6 +31,11 @@ example usage::
     use of --src
         --src=/data                     # valid for FTP upload data
         --src=/data/ACQ400DATA/1 	# valid for SFP data, port 1
+        --src=afhba.0.log               # one big raw file, eg from LLC
+
+    ./host_demux.py --nchan 128 --pchan 1,33,65,97 --src=/path-to/afhba.0.log acq2106_110
+    # plot data from LLC, 128 channels, show one "channel" from each site.
+    # 97 was actually the LSB of TLATCH.
 
 usage:: 
 
@@ -180,7 +185,18 @@ def read_data(args):
     print "length of data[0] = ", len(raw_channels[0])
     print "length of data[1] = ", len(raw_channels[1])
     return raw_channels
+   
+def read_data_file(args):
+    NCHAN = args.nchan
+    data = np.fromfile(args.src, dtype=np.int16)
+    nsam = len(data)/NCHAN
+    raw_channels = create_npdata(args, nsam, NCHAN)
+    for ch in range(NCHAN):
+        if channel_required(args, ch):
+            raw_channels[ch] = data[ch::NCHAN]
     
+    return raw_channels
+
 def save_data(args, raw_channels):
     subprocess.call(["mkdir", "-p", args.saveroot])
     for enum, channel in enumerate(raw_channels):
@@ -226,7 +242,7 @@ def plot_data(args, raw_channels):
 
 
 def process_data(args):
-    raw_data = read_data(args)
+    raw_data = read_data(args) if not os.path.isfile(args.src) else read_data_file(args)
     if args.save != None:
         save_data(args, raw_data)
     if len(args.pc_list) > 0:
@@ -258,8 +274,11 @@ def run_main():
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
-    args.uutroot = "{}/{}".format(args.src, args.uut[0])
-    print("uutroot {}".format(args.uutroot))
+    if os.path.isdir(args.src):
+        args.uutroot = "{}/{}".format(args.src, args.uut[0])
+        print("uutroot {}".format(args.uutroot))
+    elif os.path.isfile(args.src):
+        args.uutroot = "{}".format(os.path.dirname(args.src))
     if args.save != None: 
         if args.save.startswith("/"):
             args.saveroot = args.save
