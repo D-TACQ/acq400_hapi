@@ -229,8 +229,8 @@ def plot_data(args, raw_channels):
     for ch in [ int(c) for c in args.pc_list]:
         channel = raw_channels[ch]
         ch1 = ch+1
+        yu1 = yu
         if args.egu:
-            yu1 = yu
             try:
             # chan2volts ch index from 1:
                 channel = args.the_uut.chan2volts(ch1, channel)
