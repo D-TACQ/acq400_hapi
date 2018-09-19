@@ -11,11 +11,9 @@ import matplotlib.pyplot as plt
 from os.path import expanduser
 
 
-
 def plot_histogram(histo, args):
     plt.bar(histo.keys(), histo.values(), 1)
     plt.show()
-    print "histo = ", histo
     return None
 
 
@@ -27,9 +25,8 @@ def collect_dtimes(t_latch, args):
         if item == t_latch[num-1] - 1 or item == t_latch[num-1] + 1:
             continue
         else:
-            print "num = ", num, " item = ", item, " item - 1 = ", t_latch[num-1]
             diff = item - t_latch[num-1]
-            print "diff = ", diff
+
             if diff in histo:
                 histo[diff] += 1
             else:
@@ -38,14 +35,10 @@ def collect_dtimes(t_latch, args):
 
 
 def collect_tlatch(args):
-
     home = expanduser("~")
     data = np.fromfile(home+"/"+args.root, dtype=np.int16)
     # stride through the data in steps of nchan - 1 (since 0 indexed) - 31 (for position of T_LATCH)
     t_latch = data[args.nchan-1-31::args.nchan]
-
-
-
     return t_latch
 
 
