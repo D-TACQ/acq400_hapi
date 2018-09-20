@@ -44,7 +44,7 @@ def create_array(sine_size, args):
     # waveform being generated. We scale the sine wave by 32767 because the DACs are 16 bit.
     # DAC codes valid in range -32768 to 32767. If the UUT gets a code of 32768 the output will just saturate. Also
     # be aware that the astype(np.int16) function used below will wrap back to -32768 if a number larger than 32767 is
-    # used. The same goes for numbers < -32768: they wrap up to 32767. 
+    # used. The same goes for numbers < -32768: they wrap up to 32767.
 
     sine_wave = np.sin(np.linspace(0, 2*np.pi, sine_size)) # Creates sine wave
     sine_wave = 32767 * sine_wave # Scales the sine wave to 16 bit
