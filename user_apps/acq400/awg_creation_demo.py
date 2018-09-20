@@ -9,7 +9,7 @@ channel can be different (they will not be different for this example). The user
 necessary and to any value necessary i.e the values do not need to be the same across channels (channel 1 could be a
 sine wave, channel 2 could be a sinc wave etc).
 
-In this script we are outputting the same identical sine wave across all 32 channels for sine_size samples.
+In this script we are outputting the same identical sine wave across all 32 channels for sine_size number of samples.
 There is also an argument called even_ch_to_zeros that, if set, will set all of the even channels to zero to illustrate
 how the channels are ordered.
 
@@ -25,7 +25,7 @@ python awg_creation_demo.py --sine_size=3000 --even_ch_to_zeros=1
 
 
 
-To upload awg files once it has been generated:
+To upload awg files once it has been generated use the following python script:
 
 python acq1001_awg_demo.py --files="../acq400/waves/example_awg" --capture=1 --awglen=<awg_length> <UUT name>
 """
@@ -42,7 +42,9 @@ def create_array(sine_size, args):
 
     # Firstly, an array containing a sine wave is generated. This is entirely arbitrary and is meant to demonstrate a
     # waveform being generated. We scale the sine wave by 32767 because the DACs are 16 bit.
-    # DAC codes valid in range -32768 to 32767. If the UUT gets a code of 32768 the output will just saturate.
+    # DAC codes valid in range -32768 to 32767. If the UUT gets a code of 32768 the output will just saturate. Also
+    # be aware that the astype(np.int16) function used below will wrap back to -32768 if a number larger than 32767 is
+    # used. The same goes for numbers < -32768: they wrap up to 32767. 
 
     sine_wave = np.sin(np.linspace(0, 2*np.pi, sine_size)) # Creates sine wave
     sine_wave = 32767 * sine_wave # Scales the sine wave to 16 bit
