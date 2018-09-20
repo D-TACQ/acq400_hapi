@@ -73,8 +73,6 @@ def create_array(sine_size, args):
     # We then ensure that the waveforms points are of type int16. This is important as the UUT requires the data type
     # to be int16.
     waveform = waveform.astype(np.int16)
-
-    plt.show()
     return waveform
 
 
@@ -82,6 +80,7 @@ def write_array_to_disk(waveform, dir):
     # function that writes numpy array to disk.
     # This is just a binary file.
     waveform.tofile(dir, "")
+    return None
 
 
 def generate_awg(args):
