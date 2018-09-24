@@ -91,7 +91,8 @@ def get_esi(chx):
         for ii in range(0, len(ch)):
             if ch[ii] == 0xaa55f154:
 #                print("es at {}".format(ii))
-                esi[ich].append(ii)
+                # esi in shorts
+                esi[ich].append(ii*2)
     
     lmin = len(esi[0])
     truncate = False
@@ -120,7 +121,7 @@ def get_data(args):
     esi0 = esi[0]
     
     for ic in range(nchan):
-        for ib in range(nbursts):
+        for ib in range(nbursts-1):
             for ii in range(blen):                
                 chx[ic, ib, ii] = raw[ic][esi0[ib]+2+ii]
                 
@@ -159,7 +160,7 @@ def plot_data(chx, args):
         for ib in bursts:
             plt.plot(chx[ich,ib,:blen]+args.stack_offset*ib, label="B{}".format(ib))
             
-        if len(bursts) < 5:                
+        if len(bursts) < 9:                
             plt.legend()            
     
     plt.show()    
