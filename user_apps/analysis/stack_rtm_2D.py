@@ -65,6 +65,7 @@ Then plot it any way you like.
 '''
 
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 import re
 import argparse
@@ -107,7 +108,7 @@ def get_esi(chx):
         if bl != bmin:
             bmin = min(bl, bmin)
             print("WARNING bmin set {}".format(bmin))
-    return lmin,bmin, esi
+    return lmin, bmin, esi
 
 
 def get_data(args):
@@ -117,7 +118,7 @@ def get_data(args):
     nbursts, blen, esi = get_esi([ np.fromfile("{}/{}".format(args.root, srcs[ii]), dtype=np.uint32) for ii in range(1,nchan, 2)])
     chx = np.zeros((nchan, nbursts, blen))
     esi0 = esi[0]
-    print(esi0)
+    
     for ic in range(nchan):
         for ib in range(nbursts):
             for ii in range(blen):                
@@ -126,7 +127,42 @@ def get_data(args):
     return chx
     
 def plot_data(chx, args):
-    print("PLOT")
+    nchan = len(chx[:,0,0])
+    nburst = len(chx[0,:,0])
+    bursts = range(0, nburst)
+    if args.burst_list:
+        bursts = eval('('+args.burst_list+', )')
+    elif args.burst_range:
+        bursts = eval('range('+ args.burst_range +')')
+        
+    
+        
+    blen = min(len(chx[0,0,:]), args.maxlen)
+    plotchan = eval('[' + args.plotchan + ']')
+    print(plotchan)
+    print("PLOT nchan {} nburst {} blen {}".format(nchan, nburst, blen))
+    #plt.figure(1)
+    
+    top_plot = True
+    sp = len(plotchan*100)+11
+    for ch in plotchan:
+        plt.subplot(sp)
+        if top_plot:
+            plt.title("Stack plot of {} bursts {} .. {}".\
+                      format(len(bursts), bursts[0], bursts[len(bursts)-1]))
+            top_plot = False
+            
+        plt.ylabel("CH{:0}".format(ch))
+        sp += 1
+        ich = int(ch)-1
+    
+        for ib in bursts:
+            plt.plot(chx[ich,ib,:blen]+args.stack_offset*ib, label="B{}".format(ib))
+            
+        if len(bursts) < 5:                
+            plt.legend()            
+    
+    plt.show()    
     
 def process_data(args):
     chx = get_data(args)
@@ -136,6 +172,11 @@ def process_data(args):
     
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
+    parser.add_argument('--plotchan', type=str, default='1,17', help='list of channels to plot')
+    parser.add_argument('--stack_offset', type=int, default=100, help='separate channels in plot')
+    parser.add_argument('--burst_range', type=str, default=None, help='min, max, [stride] bursts to plot')
+    parser.add_argument('--burst_list', type=str, default=None, help='list of bursts to plot')
+    parser.add_argument('--maxlen', type=int, default=999999, help='max length per burst to plot')
     parser.add_argument('--root', type=str, default="./DATA", help='directory with data')
     args = parser.parse_args()
     if os.path.isdir(args.root):
