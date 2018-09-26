@@ -109,35 +109,48 @@ def get_esi(chx):
         if bl != bmin:
             bmin = min(bl, bmin)
             print("WARNING bmin set {}".format(bmin))
+    print("get_esi returns nbursts {} blen {} ".format(lmin, bmin))
     return lmin, bmin, esi
 
+FRONTPORCH = 30
 
 def get_data(args):
     srcs = get_src_names(args.root)
     nchan = len(srcs)
     raw = [ np.fromfile("{}/{}".format(args.root, srcs[ii]), dtype=np.int16) for ii in range(0, nchan)]
     nbursts, blen, esi = get_esi([ np.fromfile("{}/{}".format(args.root, srcs[ii]), dtype=np.uint32) for ii in range(1,nchan, 2)])
-    chx = np.zeros((nchan, nbursts, blen))
+    chx = np.zeros((nchan, nbursts, blen+FRONTPORCH))
     esi0 = esi[0]
     
-    for ic in range(nchan):
-        for ib in range(nbursts-1):
-            for ii in range(blen):                
-                chx[ic, ib, ii] = raw[ic][esi0[ib]+2+ii]
-                
+    print("chx 01 3 dimension {}",len(chx[0,0]))
+    try:
+        for ic in range(nchan):
+            for ib in range(nbursts-2):
+                chx[ic, ib ] = raw[ic][esi0[ib]+2:esi0[ib]+2+blen+FRONTPORCH]
+
+    except IndexError as ie:
+        print("IndexError {} ic {} ib {} ii {}".format(ie, ic, ib, ii))
+              
+    print("chx 99 3 dimension {}",len(chx[0,0]))                
     return chx
-    
+
+VALUE_ERRORS = 0
+
 def plot_data(chx, args):
     nchan = len(chx[:,0,0])
-    nburst = len(chx[0,:,0])
+    nburst = len(chx[0,:,0]) - VALUE_ERRORS
     bursts = range(0, nburst)
     if args.burst_list:
-        bursts = eval('('+args.burst_list+', )')
+        ubursts = eval('('+args.burst_list+', )')
+        # todo no range check
+        bursts = ubursts        
     elif args.burst_range:
-        bursts = eval('range('+ args.burst_range +')')
-        
-    
-        
+        ubursts = eval('range('+ args.burst_range +')')
+        if max(ubursts) > max(bursts):
+            bursts = range(min(ubursts), max(bursts))
+        else:
+            bursts = ubursts
+            
     blen = min(len(chx[0,0,:]), args.maxlen)
     plotchan = eval('[' + args.plotchan + ']')
     print(plotchan)
@@ -164,9 +177,47 @@ def plot_data(chx, args):
             plt.legend()            
     
     plt.show()    
-    
+
+REBASE_COMP = ( 3, 4, 3, 5, 3, 5, 3, 5)
+
+
+def rebase(chx, ib, ith):
+    global VALUE_ERRORS
+    nchan = len(chx)
+    #print("rebase {}".format(ib))
+    blen =  len(chx[0, ib])
+    try:
+        for ic in range(nchan):
+            ithc = ith - REBASE_COMP[ic/8]
+            chx[ic, ib, 0:blen-ithc] = chx[ic, ib, ithc:]
+    except ValueError as ve:
+        print("Value Error {} {} {} {} {}".format(ve, ic, ib, len(chx[ic,ib]), len(chx[ic,ib,ith:])))
+        VALUE_ERRORS += 1
+            
+def realign_burst(chx, ib, iref):
+    #print("realign on {}".format(iref))
+    baseline = np.mean(chx[iref, 0, 0:5])
+    tophat = np.mean(chx[iref, 0, FRONTPORCH:FRONTPORCH+5])
+    if tophat - baseline > 1000:
+        threshold = baseline + (tophat-baseline)/10
+        print("iref {} baseline {} tophat {} th={}".format(iref, baseline, tophat, threshold))
+        for ii in range(FRONTPORCH):
+            if chx[iref, ib, ii] > threshold:
+                #print("iref {} ib {}  threshold crossed at {}".format(iref, ib, ii))
+                rebase(chx, ib, ii)
+                break
+    else:
+        print("iref {} ERROR: enough amplitude baseline {} tophat {}".format(iref, baseline, tophat))
+        
+def realign(chx, iref):
+    for ib in range(len(chx[0,:])):
+        realign_burst(chx, ib, iref)
+        
 def process_data(args):
     chx = get_data(args)
+    if args.alignref != None and args.alignref > 0:
+        # index from zero
+        realign(chx, args.alignref-1)
     plot_data(chx, args)
     
     
@@ -179,6 +230,7 @@ def run_main():
     parser.add_argument('--burst_list', type=str, default=None, help='list of bursts to plot')
     parser.add_argument('--maxlen', type=int, default=999999, help='max length per burst to plot')
     parser.add_argument('--root', type=str, default="./DATA", help='directory with data')
+    parser.add_argument('--alignref', type=int, default=None, help='realign on this channel [index from 1]')
     args = parser.parse_args()
     if os.path.isdir(args.root):
         print("using data from {}".format(args.root))
