@@ -200,7 +200,7 @@ def realign_burst(chx, ib, iref):
     tophat = np.mean(chx[iref, 0, FRONTPORCH:FRONTPORCH+5])
     if tophat - baseline > 1000:
         threshold = baseline + (tophat-baseline)/10
-        print("iref {} baseline {} tophat {} th={}".format(iref, baseline, tophat, threshold))
+        #print("iref {} baseline {} tophat {} th={}".format(iref, baseline, tophat, threshold))
         for ii in range(FRONTPORCH):
             if chx[iref, ib, ii] > threshold:
                 #print("iref {} ib {}  threshold crossed at {}".format(iref, ib, ii))
