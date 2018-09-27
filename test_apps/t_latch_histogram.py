@@ -36,7 +36,7 @@ def collect_dtimes(t_latch, args):
 
 def collect_tlatch(args):
     home = expanduser("~")
-    data = np.fromfile(home+"/"+args.root, dtype=np.int16)
+    data = np.fromfile(home+"/"+args.src, dtype=np.int16)
     # stride through the data in steps of nchan - 1 (since 0 indexed) - 31 (for position of T_LATCH)
     t_latch = data[args.nchan-1-31::args.nchan]
     return t_latch
@@ -51,7 +51,7 @@ def run_analysis(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 stream')
-    parser.add_argument('--root', default="PROJECTS/AFHBA404/afhba.0.log", type=str, help="Location to pull data "
+    parser.add_argument('--src', default="PROJECTS/AFHBA404/afhba.0.log", type=str, help="Location to pull data "
                                                                                           "from for analysis.")
     parser.add_argument('--nchan', default=160, type=int, help="How many channels are contained in the data.")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
