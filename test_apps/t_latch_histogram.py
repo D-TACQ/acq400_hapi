@@ -20,28 +20,33 @@ def plot_histogram(histo, args):
 def collect_dtimes(t_latch, args):
     histo = {1: 0, 2: 0, 3: 0}
     for num, item in enumerate(t_latch):
-        if num == 0 or item == -32768 or item == 32767:
+        if num == 0 or item == - 2**31 or item == 2**31-1: # Handle the case of 32 bit rollover.
+            # if the number is 0 or is about to roll over then just continue to the next value.
             continue
-        if item == t_latch[num-1] - 1 or item == t_latch[num-1] + 1:
-            continue
-        else:
-            diff = item - t_latch[num-1]
 
-            if diff in histo:
-                histo[diff] += 1
-            else:
-                histo[diff] = 1
+        if item == t_latch[num-1] - 1 or item == t_latch[num-1] + 1:
+            if args.ones == 0:
+                # if the diff is one and the args.ones arg is set to false then continue to next value.
+                continue
+
+        diff = item - t_latch[num-1]
+        if diff in histo:
+            histo[diff] += 1
+        else:
+            histo[diff] = 1
     return histo
 
 
 def collect_tlatch(args):
     if args.src == "PROJECTS/AFHBA404/afhba.0.log":
         home = expanduser("~")
-        data = np.fromfile(home+"/"+args.src, dtype=np.int16)
+        data = np.fromfile(home+"/"+args.src, dtype=np.int32)
     else:
-        data = np.fromfile(args.src, dtype=np.int16)
-    # stride through the data in steps of nchan - 1 (since 0 indexed) - 31 (for position of T_LATCH)
-    t_latch = data[args.nchan-1-31::args.nchan]
+        data = np.fromfile(args.src, dtype=np.int32)
+
+    # stride through the data in steps of:
+    # nchan/2 (real channels are shorts but we have loaded data as longs)
+    t_latch = data[args.nchan/2::args.nchan/2+args.spad_len] # divide nchan by 2 as we are now dealing with long ints.
     return t_latch
 
 
@@ -54,9 +59,15 @@ def run_analysis(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 stream')
+    parser.add_argument('--ones', default=0, type=int, help="The ones argument allows the user to plot the instances "
+                                                            "where the calculated t_latch difference is equal to one. "
+                                                            "This is the default case and so this will dwarf the other "
+                                                            "numbers in the histogram.")
     parser.add_argument('--src', default="PROJECTS/AFHBA404/afhba.0.log", type=str, help="Location to pull data "
                                                                                           "from for analysis.")
-    parser.add_argument('--nchan', default=160, type=int, help="How many channels are contained in the data.")
+    parser.add_argument('--nchan', default=128, type=int, help="How many physical channels are contained in the data"
+                                                               "EXCLUDING SCRATCHPAD.")
+    parser.add_argument('--spad_len', default=16, type=int, help="How long the scratchpad is. Default is 16 long words")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     # parser.add_argument('uuts', nargs='+', help="uuts")
     run_analysis(parser.parse_args())
