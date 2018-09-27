@@ -35,8 +35,11 @@ def collect_dtimes(t_latch, args):
 
 
 def collect_tlatch(args):
-    home = expanduser("~")
-    data = np.fromfile(home+"/"+args.src, dtype=np.int16)
+    if args.src == "PROJECTS/AFHBA404/afhba.0.log":
+        home = expanduser("~")
+        data = np.fromfile(home+"/"+args.src, dtype=np.int16)
+    else:
+        data = np.fromfile(args.src, dtype=np.int16)
     # stride through the data in steps of nchan - 1 (since 0 indexed) - 31 (for position of T_LATCH)
     t_latch = data[args.nchan-1-31::args.nchan]
     return t_latch
