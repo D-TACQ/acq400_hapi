@@ -2,6 +2,15 @@
 
 """
 This is a script intended to pull off the LLC T_LATCH data, calculate the delta times and plot them in a histogram.
+
+Usage:
+
+Usage for 1AI BOLO with spad length of 8:
+python t_latch_histogram.py --nchan=48 --spad_len=8
+
+Usage for 4 x acq424, 2 x ao424
+python t_latch_histogram.py
+
 """
 
 
