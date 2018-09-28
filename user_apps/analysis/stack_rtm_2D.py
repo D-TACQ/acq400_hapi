@@ -73,6 +73,8 @@ import subprocess
 import acq400_hapi
 import time
 
+VERBOSE = os.getenv("VERBOSE", 0)
+
 def get_src_names(root):
     p = re.compile('.*_CH[0-9][0-9]$')
     src_names = []
@@ -85,15 +87,52 @@ def get_src_names(root):
     return src_names
 
 def get_esi(chx):
-# calculate ES indices    
-    esi = [ [] for ii in range(len(chx))]
+# calculate ES indices. Only look at ch2 on all boxes   
+# remember the ES is double width..
+    esn = len(chx)/8
+    esi = [ [] for ii in range(esn)]     # index
+    esc = [ [] for ii in range(esn)]     # count (ich+1)
+ 
+    if VERBOSE:
+        print("sanity check, check we are looking at real data, rows with 2857759060 are es, rest is data32")
+        for ii in range(5):
+            print("{} {}".format(ii, [chx[ic][ii] for ic in range(len(chx))]))
+ 
     for ich, ch in enumerate(chx):
-        for ii in range(0, len(ch)):
-            if ch[ii] == 0xaa55f154:
-#                print("es at {}".format(ii))
+#        print("ich {} len(chx) {}".format(ich, len(chx)))
+        if ich%8 == 1:
+            print("scanning ES on ich {}".format(ich))
+            for ii in range(0, len(ch)):
+                if ch[ii] == 0xaa55f154:
+#                    print("es at {}".format(ii))
+#                    if ich == 1:
+#                        print("es detail at {} {} {}".format(ich, ii, [chx[ic][ii] for ic in range(0,32,8)]))
                 # esi in shorts
-                esi[ich].append(ii*2)
+                    esi[ich/8].append(ii*2)
+                    esc[ich/8].append(chx[ich-1][ii])
+   
+    print("esi lengths {}".format([len(esi[ii]) for ii in range(0, len(esi))]))
     
+    if VERBOSE:
+        for ii, es in enumerate(esi):
+            deltac = [ es[jj]-esi[0][jj] for jj in range(esn) ]
+            deltas = [ es[jj] - es[jj-1] for jj in range(1, esn)]
+            print("difference between channels ii {} max {}".format(ii, max(deltac)))
+            print("difference between bursts ii {} min {} max {}".format(ii, min(deltas), max(deltas)))
+        
+    errors = 0  
+    print("scanning embedded counts..")
+    for icount in range(len(esc[0])):
+        cv = [esc[ic][icount] for ic in range(esn)]
+        if icount < 5:
+            print("ic {} {}".format(icount, cv))
+        if min(cv) != max(cv):
+            print("ERROR: count discrepancy at {} {}".format(icount, cv))
+            errors += 1
+        
+    print("scanned {}*{} counts, errors {}".format(esn, icount, errors))
+         
+              
     lmin = len(esi[0])
     truncate = False
     
@@ -118,7 +157,7 @@ def get_data(args):
     srcs = get_src_names(args.root)
     nchan = len(srcs)
     raw = [ np.fromfile("{}/{}".format(args.root, srcs[ii]), dtype=np.int16) for ii in range(0, nchan)]
-    nbursts, blen, esi = get_esi([ np.fromfile("{}/{}".format(args.root, srcs[ii]), dtype=np.uint32) for ii in range(1,nchan, 2)])
+    nbursts, blen, esi = get_esi([ np.fromfile("{}/{}".format(args.root, srcs[ii]), dtype=np.uint32) for ii in range(0,nchan)])
     chx = np.zeros((nchan, nbursts, blen+FRONTPORCH))
     esi0 = esi[0]
     
