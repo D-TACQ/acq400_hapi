@@ -217,6 +217,7 @@ def plot_data(chx, args):
     
     plt.show()    
 
+REBASE_COMP = ( 3, 3, 4, 4, 4, 4, 4, 4)
 REBASE_COMP = ( 3, 4, 3, 5, 3, 5, 3, 5)
 
 
@@ -270,6 +271,7 @@ def run_main():
     parser.add_argument('--maxlen', type=int, default=999999, help='max length per burst to plot')
     parser.add_argument('--root', type=str, default="./DATA", help='directory with data')
     parser.add_argument('--alignref', type=int, default=None, help='realign on this channel [index from 1]')
+    
     args = parser.parse_args()
     if os.path.isdir(args.root):
         print("using data from {}".format(args.root))
