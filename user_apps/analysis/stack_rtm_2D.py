@@ -175,25 +175,30 @@ def get_data(args):
 
 VALUE_ERRORS = 0
 
-def plot_data(chx, args):
-    nchan = len(chx[:,0,0])
-    nburst = len(chx[0,:,0]) - VALUE_ERRORS
-    bursts = range(0, nburst)
+def fix_args(chx, args):
+    args.nburst = len(chx[0,:,0]) - VALUE_ERRORS
+    bursts = range(0, args.nburst)
     if args.burst_list:
         ubursts = eval('('+args.burst_list+', )')
         # todo no range check
-        bursts = ubursts        
+        bursts = ubursts
     elif args.burst_range:
         ubursts = eval('range('+ args.burst_range +')')
         if max(ubursts) > max(bursts):
             bursts = range(min(ubursts), max(bursts))
         else:
             bursts = ubursts
-            
+    
+    args.bursts = bursts
+
+def plot_data(chx, args):
+    nchan = len(chx[:,0,0])
+    bursts = args.bursts
+
     blen = min(len(chx[0,0,:]), args.maxlen)
     plotchan = eval('[' + args.plotchan + ']')
     print(plotchan)
-    print("PLOT nchan {} nburst {} blen {}".format(nchan, nburst, blen))
+    print("PLOT nchan {} nburst {} blen {}".format(nchan, args.nburst, blen))
     #plt.figure(1)
     
     top_plot = True
@@ -220,6 +225,17 @@ def plot_data(chx, args):
 REBASE_COMP = ( 3, 3, 4, 4, 4, 4, 4, 4)
 REBASE_COMP = ( 3, 4, 3, 5, 3, 5, 3, 5)
 
+def store_chan(chx, args):
+    blen = min(len(chx[0,0,:]), args.maxlen)
+    nchan = len(chx[:,0,0])
+    try:
+        os.mkdir(args.store_chan)
+    except OSError as e:
+        print("ignoring {}".format(e))
+
+    for ch in range(nchan):
+        fn = "{}/CH{:02d}.dat".format(args.store_chan, ch+1)
+        chx[ch,args.bursts,:blen].astype('int16').tofile(fn)
 
 def rebase(chx, ib, ith):
     global VALUE_ERRORS
@@ -258,7 +274,11 @@ def process_data(args):
     if args.alignref != None and args.alignref > 0:
         # index from zero
         realign(chx, args.alignref-1)
-    plot_data(chx, args)
+    fix_args(chx, args)
+    if args.plotchan != '0':
+	plot_data(chx, args)
+    if args.store_chan:
+        store_chan(chx, args)
     
     
     
@@ -271,7 +291,7 @@ def run_main():
     parser.add_argument('--maxlen', type=int, default=999999, help='max length per burst to plot')
     parser.add_argument('--root', type=str, default="./DATA", help='directory with data')
     parser.add_argument('--alignref', type=int, default=None, help='realign on this channel [index from 1]')
-    
+    parser.add_argument('--store_chan', type=str, default=None, help='directory to store result by channel') 
     args = parser.parse_args()
     if os.path.isdir(args.root):
         print("using data from {}".format(args.root))
