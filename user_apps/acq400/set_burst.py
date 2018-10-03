@@ -82,13 +82,18 @@ def configure_bm(args):
 
         u.s0.GPG_ENABLE = '0'       # needed if running set.burst multiple times
         u.clear_counters()          # makes COUNTERS opi easier to read
-        u.s0.transient  = 'POST={} DEMUX={}'.format(args.post, args.demux)
         u.s1.trg        = args.trg
         u.s1.RGM        = args.rgm
         u.s1.RGM_DX     = args.dx
         u.s1.RGM_SENSE  = args.sense
-        u.s1.RTM_TRANSLEN = args.rtm_translen if args.rgm == 'RTM' else 0
         u.s1.es_enable  = args.es_enable
+        u.s1.RTM_TRANSLEN = args.rtm_translen if args.rgm == 'RTM' else 0
+        u.s1.rtm_translen = args.rtm_translen if args.rgm == 'RTM' else 0
+        
+        if args.config_only:
+            continue
+
+        u.s0.transient  = 'POST={} DEMUX={}'.format(args.post, args.demux)
         u.s0.set_knob('SIG_SRC_TRG_1', 'GPG1' if args.gpg == 'on' and args.dx == 'd1' else 'STRIG')
 
         if args.hdmi_slave.startswith('full'):
@@ -100,6 +105,10 @@ def configure_bm(args):
             set_mbclk(u, args.mbclk.split(','))
        
         u.s0.set_arm = 1
+
+    if args.config_only:
+        print("config_only: DONE")
+        return
 
     for u in uuts:
         u.statmon.wait_armed()
@@ -129,6 +138,7 @@ def run_main():
     parser.add_argument('--es_enable', default=1, type=int, help='0 disables Event Signature')
     parser.add_argument('--trace', default=0, type=int, help='1: enable command trace')
     parser.add_argument('--demux', default=1, type=int, help='0: do not demux')
+    parser.add_argument('--config_only', default=0, type=int, help='1: configure RGM, do nothing else')
     parser.add_argument('uuts', nargs='+', help="uut")
     configure_bm(parser.parse_args())
 

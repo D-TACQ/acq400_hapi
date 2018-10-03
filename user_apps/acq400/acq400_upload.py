@@ -136,6 +136,13 @@ PLOTDATA=int(os.getenv("PLOTDATA", "0"))
 CAPTURE=int(os.getenv("CAPTURE", "0"))
 CHANNELS=os.getenv("CHANNELS", "()")
 
+def uniq(inp):
+    out = []
+    for x in inp:
+        if x not in out:
+            out.append(x)
+    return out
+
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 upload')  
     parser.add_argument('--soft_trigger', default=SOFT_TRIGGER, type=int, help="help use soft trigger on capture")
@@ -147,6 +154,8 @@ def run_main():
     parser.add_argument('--channels', default=CHANNELS, type=str, help="comma separated channel list")
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     args = parser.parse_args()
+    # deduplicate (yes, some non-optimal apps call with duplicated uuts, wastes time)
+    args.uuts = uniq(args.uuts)
     # encourage single ints to become a list
     if re.search(r'^\d$', args.channels) is not None:
         args.channels += ','
