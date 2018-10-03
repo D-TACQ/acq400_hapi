@@ -624,8 +624,12 @@ class Acq2106(Acq400):
                 print("uut {} site {} not populated".format(_uut, site))            
 
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
+        print("set_mb_clk {} {} {}".format(hz, src, fin))
         Acq400.set_mb_clk(self, hz, src, fin)
-        self.s0.SYS_CLK_DIST_CLK_SRC = 'Si5326'
+        try:
+            self.s0.SYS_CLK_DIST_CLK_SRC = 'Si5326'
+        except AttributeError:
+            print("SYS_CLK_DIST_CLK_SRC, deprecated")
         self.s0.SYS_CLK_OE_CLK1_ZYNQ = '1'
 
     def set_sync_routing_slave(self):
