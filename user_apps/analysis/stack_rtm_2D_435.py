@@ -117,10 +117,11 @@ def get_esi(chx):
     
     if VERBOSE:
         for ii, es in enumerate(esi):
-            deltac = [ es[jj]-esi[0][jj] for jj in range(esn) ]
-            deltas = [ es[jj] - es[jj-1] for jj in range(1, esn)]
-            print("difference between channels ii {} max {}".format(ii, max(deltac)))
-            print("difference between bursts ii {} min {} max {}".format(ii, min(deltas), max(deltas)))
+            print("ii {} es {} esc {}".format(ii, es, esc))
+#            deltac = [ es[jj]-esi[0][jj] for jj in range(esn) ]
+#            deltas = [ es[jj] - es[jj-1] for jj in range(1, esn)]
+#            print("difference between channels ii {} max {}".format(ii, max(deltac)))
+#            print("difference between bursts ii {} min {} max {}".format(ii, min(deltas), max(deltas)))
         
     errors = 0  
     print("scanning embedded counts..")
@@ -146,10 +147,10 @@ def get_esi(chx):
 
     bmin = esi[0][1] - esi[0][0]
     
-    for bl in [ esi[0][ii]-esi[0][ii-1] for ii in range(2,len(esi))]:
-        if bl != bmin:
-            bmin = min(bl, bmin)
-            print("WARNING bmin set {}".format(bmin))
+#    for bl in [ esi[0][ii]-esi[0][ii-1] for ii in range(2,len(esi))]:
+#        if bl != bmin:
+#            bmin = min(bl, bmin)
+#            print("WARNING bmin set {}".format(bmin))
     print("get_esi returns nbursts {} blen {} ".format(lmin, bmin))
     return lmin, bmin, esi
 
@@ -172,7 +173,8 @@ def get_data(args):
     except IndexError as ie:
         print("IndexError {} ic {} ib {} ii {}".format(ie, ic, ib, ii))
               
-    print("chx 99 3 dimension {}",len(chx[0,0]))                
+    print("chx 99 3 dimension {}",len(chx[0,0]))
+    print("chx 99") 
     return chx
 
 VALUE_ERRORS = 0
