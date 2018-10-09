@@ -42,11 +42,7 @@ def save_2d_data(args, chx, nuut, nchan, shot):
      print(np.shape(chx))    
      with open("%s/DATA2D_%d.dat" % (args.save_data, shot), 'wb') as fid: 
          for uu in range(nuut):
-#             for cc in range(nchan):
-# equivalent to
-#             for cc in (0, 1, 2, 3, 4, 5, 6, 7):
-# fix for errored assembly on TETRA system
-#             for cc in (0, 1, 4, 5, 6, 7, 2, 3):
+             for cc in range(nchan):
                  chx[uu][cc].tofile(fid, '') 
                  
 def run_loop(args):
