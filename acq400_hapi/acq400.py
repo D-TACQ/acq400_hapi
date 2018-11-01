@@ -473,7 +473,7 @@ class Acq400:
     def set_sync_routing_slave(self):
         self.set_sync_routing_master()
         self.s0.SIG_SRC_CLK_1 = "HDMI"
-        self.s0.SIG_SRC_TRG_0 = "HDMI_TRG"
+        self.s0.SIG_SRC_TRG_0 = "HDMI"
 
     def set_sync_routing(self, role):
         # deprecated
