@@ -238,8 +238,8 @@ def plot_data(args, raw_channels):
                 yu1 = 'code'
                 print("ERROR: no calibration for CH{:02d}".format(ch1))
 
-        # label 1.. (human)
-        V2 = client.new_editable_vector(channel.astype(np.float64), name="{}:CH{:02d}".format(args.the_uut.uut, ch1))
+        # label 1.. (human) 
+        V2 = client.new_editable_vector(channel.astype(np.float64), name="{}:CH{:02d}".format(re.sub(r"_", r"-", args.the_uut.uut), ch1))
         c1 = client.new_curve(V1, V2)
         p1 = client.new_plot()
         p1.set_left_label(yu1)
