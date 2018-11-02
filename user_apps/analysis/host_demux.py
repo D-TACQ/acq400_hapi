@@ -211,6 +211,8 @@ def plot_data(args, raw_channels):
     llen = len(raw_channels[0])
     if args.egu == 1:
         if args.xdt == 0:
+            print "##### WARNING ##### NO CLOCK RATE PROVIDED. TIME SCALE _WILL_ BE INNACURATE."
+            raw_input("Please press enter if you want to continue with innacurate time base.")
             time1 = float(args.the_uut.s0.SIG_CLK_S1_FREQ.split(" ")[-1])
             xdata = np.linspace(0, llen/time1, num=llen)
         else:
