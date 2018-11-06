@@ -40,6 +40,7 @@ class AcqPorts:
     SITE0 = 4220
     SEGSW = 4250
     SEGSR = 4251
+    DPGSTL = 4521
     GPGSTL= 4541
     GPGDUMP = 4543
 
@@ -510,9 +511,9 @@ class Acq400:
                     return
             raise ValueError("frequency out of range {}".format(hz))
 
-    def load_gpg(self, stl, trace = False):
-        termex = re.compile("\n")
-        with netclient.Netclient(self.uut, AcqPorts.GPGSTL) as nc:            
+    def load_stl(self, stl, port, trace = False):
+       termex = re.compile("\n")
+        with netclient.Netclient(self.uut, port) as nc:
             lines = stl.split("\n")
             for ll in lines:
                 if trace:
@@ -526,14 +527,18 @@ class Acq400:
                         print("skip comment")
                     continue
                 nc.sock.send((ll+"\n").encode())
-                rx = nc.sock.recv(4096) 
+                rx = nc.sock.recv(4096)
                 if trace:
                     print("< {}".format(rx))
             nc.sock.send("EOF\n".encode())
             nc.sock.shutdown(socket.SHUT_WR)
-            rx = nc.sock.recv(4096) 
+            rx = nc.sock.recv(4096)
             if trace:
                 print("< {}".format(rx))
+
+
+    def load_gpg(self, stl, trace = False):
+        load_stl(self, stl, AcqPorts.GPGSTL, trace)
 
         with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
             while True:
@@ -545,6 +550,8 @@ class Acq400:
                 else:
                     break
 
+    def load_dpg(self, stl, trace = False):
+        load_stl(self, stl, AcqPorts.DPGSTL, trace
 
     class AwgBusyError(Exception):
         def __init__(self, value):
