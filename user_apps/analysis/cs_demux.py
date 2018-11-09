@@ -15,9 +15,11 @@ python cs_demux.py --df="/home/sean/PROJECTS/workspace/acq400_hapi-1/user_apps/
 
 """
 
+
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
+
 
 def find_zero_index(args):
     # This function finds the first 0xaa55f154 short value in the data and then
@@ -29,11 +31,9 @@ def find_zero_index(args):
     data = np.fromfile(args.df, dtype=np.uint32)
     for long_pos, long_val in enumerate(data):
         long = format(long_val, '08x')
-        # print "long_val = ", long
         if long_val == 0xaa55f154:
             # Check current index
             first_es_position = long_pos
-            # print "first es position found @ ", first_es_position
             break
 
     # loop over all the event samples. Look at the "index" value before and
@@ -53,8 +53,9 @@ def find_zero_index(args):
 
 
 def demux_data(args, zero_index):
+    # Demuxes the data into a single dimension list that contains the data in
+    # sequence.
     data = []
-    # chunk = [1]
     count = 0
 
     with open(args.df, "rb") as f:
@@ -65,10 +66,6 @@ def demux_data(args, zero_index):
             #throw away es
             if count % args.tl == 0:
                 chunk = np.fromfile(f, dtype=np.int32, count=24) # strip es
-                # print ""
-                # for item in chunk:
-                #
-                #     print "{}".format(item, '08x')
 
             # collect data into a new list
             chunk = np.fromfile(f, dtype=np.int16, count=4)
@@ -90,55 +87,6 @@ def plot_data(args, data):
     f, plots = plt.subplots(8, 1)
     for sp in range(0,8):
         plots[sp].plot(data[sp:-1:8])
-
-    # plot all the data in stacks (one stack on top of the other)
-
-    # burst_data = [[],[],[],[],[],[],[],[]]
-    # bursted_channels = [[],[],[],[],[],[],[],[]]
-    # for ch in range(0, 7):
-    #     burst_data[ch].extend(data[ch:-1:8])
-
-    # for ch in range(0, 7):
-    #     count = 0
-    #     for item in burst_data[ch][0:-1:args.tl]:
-    #         bursted_channels[ch].append(burst_data[ch][count:count+args.tl])
-    #
-    # plt.plot(bursted_channels[0])
-    # plt.show()
-    #
-
-
-    # num_bursts = len(burst_data[1]) #/float(args.tl)
-    # print "num_bursts = ", num_bursts
-    #
-    #
-    # for ch in range(0, 7):
-    #
-    #     for ch_num, ch in enumerate(burst_data):
-    #         burst = 0
-    #         counter = 0
-    #         # burst_data[ch] = np.array_split(np.array(burst[0]), len(burst_data[0])/args.tl)
-    #         for sample in ch:
-    #             if counter < args.tl + 1:
-    #                 print "sample = ", sample
-    #                 print "bursted_channels[burst]", bursted_channels[burst]
-    #                 bursted_channels[burst].extend(sample)
-    #                 counter += 1
-    #             else:
-    #                 counter = 0
-    #                 burst += 1
-    #         print "bursted_channels = ", bursted_channels
-    #
-    # num_bursts = len(burst_data[0])
-    #
-    # print "num_bursts = ", num_bursts
-    # f, plots = plt.subplots(8, 1)
-    # for sp in range(0, 8):
-    #
-    #     # for burst in range():
-    #     for burst in range(sp, len(burst_data[0]) - 1): # loop over data
-    #         plots[sp].plot(data[ssp:ssp+args.tl-1:8]) # plot in blocks of 8192
-    #         # plt.plot(data[ssp:ssp+8192-1:7]) # plot in blocks of 8192
     plt.show()
     return None
 
@@ -150,7 +98,6 @@ def run_main():
     parser.add_argument('--tl', default=8192, type=int, help='transient length')
     parser.add_argument('--df', default="./shot_data", type=str, help="Name of"
                                                                     "data file")
-
     args = parser.parse_args()
 
     # zero_index should be the index of the first event sample where the
