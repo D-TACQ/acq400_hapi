@@ -43,6 +43,7 @@ def run_shot(args):
 def run_main():
     parser = argparse.ArgumentParser(description='run hts all uuts')
     parser.add_argument('--secs', default=100, help='seconds to run')
+    parser.add_argument('--etrg', default=0, help='enable external trg TODO')
     parser.add_argument('uut', nargs='+', help='uut')
     run_shot(parser.parse_args())
 
