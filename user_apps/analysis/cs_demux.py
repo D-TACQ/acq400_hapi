@@ -84,9 +84,34 @@ def save_data(args, data):
 
 def plot_data(args, data):
     # plot all the data in order (not stacked)
+
+    axes = ["Demuxed channels from acq1001",
+    "CH01 \n (Sampled \n FACET)",
+    "CH02 \n (Sampled \n INDEX)",
+    "CH03 \n (Sampled \n Sine Wave)",
+    "CH04 \n (Sampled \n Sine Wave)",
+    "FACET",
+    "INDEX",
+    "Sample Count",
+    "usec Count",
+    "Samples"]
+
     f, plots = plt.subplots(8, 1)
+    plots[0].set_title(axes[0])
+
     for sp in range(0,8):
-        plots[sp].plot(data[sp:-1:8])
+        # plots[sp].plot(data[sp:-1:8])
+        try:
+            # Plot ((number of facets) * (rtm len)) - 1 from each channel
+            plots[sp].plot(data[sp:args.plt_facets * args.tl * 8 - 1:8])
+        except:
+            print "Data exception met. Plotting all data instead."
+            plots[sp].plot(data[sp:-1:8])
+
+        plots[sp].set(ylabel=axes[sp+1], xlabel=axes[-1])
+        # plots[sp].ylabel(axes[sp+1])
+        # plots[sp].xlabel(axes[-1])
+
     plt.show()
     return None
 
@@ -94,6 +119,8 @@ def plot_data(args, data):
 def run_main():
     parser = argparse.ArgumentParser(description='cs demux')
     parser.add_argument('--plot', default=1, type=int, help="Plot data")
+    parser.add_argument('--plt_facets', default=1, type=int, help="No of facets"
+                                                                    "to plt")
     parser.add_argument('--save', default=0, type=int, help="Save data")
     parser.add_argument('--tl', default=8192, type=int, help='transient length')
     parser.add_argument('--df', default="./shot_data", type=str, help="Name of"
