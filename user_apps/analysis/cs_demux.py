@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-A python script to demux the data from the corescan system.
+A python script to demux the data from the cs system.
 
 The data is supposed to come out in the following way:
 
@@ -10,7 +10,7 @@ short   short   short   short   long     long     long          long
 
 Usage:
 
-python cs_demux.py --df="/home/sean/PROJECTS/workspace/acq400_hapi-1/user_apps/
+python cs_demux.py -df="/home/sean/PROJECTS/workspace/acq400_hapi-1/user_apps/
                                     acq400/acq1001_068/000001/0000"
 
 """
@@ -100,10 +100,10 @@ def plot_data(args, data):
     plots[0].set_title(axes[0])
 
     for sp in range(0,8):
-        if args.plt_facets != -1:
+        if args.plot_facets != -1:
             try:
                 # Plot ((number of facets) * (rtm len)) - 1 from each channel
-                plots[sp].plot(data[sp:args.plt_facets * args.tl * 8 - 1:8])
+                plots[sp].plot(data[sp:args.plot_facets * args.tl * 8 - 1:8])
             except:
                 print "Data exception met. Plotting all data instead."
                 plots[sp].plot(data[sp:-1:8])
@@ -118,11 +118,11 @@ def plot_data(args, data):
 def run_main():
     parser = argparse.ArgumentParser(description='cs demux')
     parser.add_argument('--plot', default=1, type=int, help="Plot data")
-    parser.add_argument('--plt_facets', default=-1, type=int, help="No of facets"
-                                                                    "to plt")
+    parser.add_argument('--plot_facets', default=-1, type=int, help="No of facets"
+                                                                    "to plot")
     parser.add_argument('--save', default=0, type=int, help="Save data")
-    parser.add_argument('--tl', default=8192, type=int, help='transient length')
-    parser.add_argument('--df', default="./shot_data", type=str, help="Name of"
+    parser.add_argument('-tl', '--transient_length', default=8192, type=int, help='transient length')
+    parser.add_argument('-df', "--data_file", default="./shot_data", type=str, help="Name of"
                                                                     "data file")
     args = parser.parse_args()
 
