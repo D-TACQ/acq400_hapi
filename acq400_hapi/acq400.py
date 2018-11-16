@@ -512,7 +512,7 @@ class Acq400:
             raise ValueError("frequency out of range {}".format(hz))
 
     def load_stl(self, stl, port, trace = False):
-       termex = re.compile("\n")
+        termex = re.compile("\n")
         with netclient.Netclient(self.uut, port) as nc:
             lines = stl.split("\n")
             for ll in lines:
