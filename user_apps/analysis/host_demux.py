@@ -83,16 +83,10 @@ def create_npdata(args, nblk, nchn):
 
     for counter in range(nchn):
        if channel_required(args, counter):
-           if args.data_type == 16:
-               channels.append(np.zeros((nblk*NSAM), dtype=np.int16))
-           else:
-               channels.append(np.zeros((nblk * NSAM), dtype=np.int32))
+           channels.append(np.zeros((nblk*NSAM), dtype=args.np_data_type))
+
        else:
-           # token spacer reduces memory use
-           if args.data_type == 16:
-               channels.append(np.zeros(16, dtype=np.int16))
-           else:
-               channels.append(np.zeros(16, dtype=np.int32))
+           channels.append(np.zeros(16, dtype=args.np_data_type))
     # print "length of data = ", len(total_data)
     # print "npdata = ", npdata
     return channels
@@ -135,7 +129,6 @@ def get_file_names(args):
     return fnlist
 
 def read_data(args):
-    print "DEBUG: IN READ_DATA"
     global NSAM
     NCHAN = args.nchan
     data_files = get_file_names(args)
@@ -172,15 +165,10 @@ def read_data(args):
             print blkfile, blknum
             # concatenate 3 blocks to ensure modulo 3 channel align
             if iblock == 0:
-                if args.data_type == 16:
-                    data = np.fromfile(blkfile, dtype=np.int16)
-                if args.data_type == 32:
-                    data = np.fromfile(blkfile, dtype=np.int32)
+                data = np.fromfile(blkfile, dtype=args.np_data_type)
             else:
-                if args.data_type == 16:
-                    data = np.append(data, np.fromfile(blkfile, dtype=np.int16))
-                if args.data_type == 32:
-                    data = np.append(data, np.fromfile(blkfile, dtype=np.int32))
+                data = np.append(data, np.fromfile(blkfile, dtype=args.np_data_type))
+
 
 
             iblock += 1
@@ -203,10 +191,8 @@ def read_data(args):
 
 def read_data_file(args):
     NCHAN = args.nchan
-    if args.data_type == 16:
-        data = np.fromfile(args.src, dtype=np.int16)
-    if args.data_type == 32:
-        data = np.fromfile(args.src, dtype=np.int32)
+    data = np.fromfile(args.src, dtype=args.np_data_type)
+
     nsam = len(data)/NCHAN
     raw_channels = create_npdata(args, nsam, NCHAN)
     for ch in range(NCHAN):
@@ -302,7 +288,13 @@ def run_main():
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
     global WSIZE
-    WSIZE = 2 if args.data_type == 16 else 4
+    if args.data_type == 16:
+        args.np_data_type = np.int16
+        WSIZE = 2
+    else:
+        args.np_data_type = np.int32
+        WSIZE = 4
+
     if os.path.isdir(args.src):
         args.uutroot = "{}/{}".format(args.src, args.uut[0])
         print("uutroot {}".format(args.uutroot))
