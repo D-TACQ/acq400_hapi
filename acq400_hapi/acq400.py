@@ -556,7 +556,7 @@ class Acq400:
                     break
 
     def load_dpg(self, stl, trace = False):
-        load_stl(self, stl, AcqPorts.DPGSTL, trace
+        load_stl(self, stl, AcqPorts.DPGSTL, trace)
 
     class AwgBusyError(Exception):
         def __init__(self, value):
