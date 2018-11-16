@@ -85,6 +85,11 @@ class STATE:
             return "CLEANUP"
         return "UNDEF"
 
+class Signals:
+    EXT_TRG_DX = 'd0'
+    INT_TRG_DX = 'd1'
+    MB_CLK_DX = 'd1'
+
 class StreamClient(netclient.Netclient):
     """handles live streaming data"""
     def __init__(self, addr):
