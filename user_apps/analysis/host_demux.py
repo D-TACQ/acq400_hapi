@@ -71,8 +71,9 @@ import subprocess
 import acq400_hapi
 import time
 
-NSAM = 0
-WSIZE = 2
+
+def WSIZE(args):
+    return np.dtype(args.np_data_type).itemsize
 
 def channel_required(args, ch):
 #    print("channel_required {} {}".format(ch, 'in' if ch in args.pc_list else 'out', args.pc_list))
@@ -83,7 +84,7 @@ def create_npdata(args, nblk, nchn):
 
     for counter in range(nchn):
        if channel_required(args, counter):
-           channels.append(np.zeros((nblk*NSAM), dtype=args.np_data_type))
+           channels.append(np.zeros((nblk*args.NSAM), dtype=args.np_data_type))
 
        else:
            channels.append(np.zeros(16, dtype=args.np_data_type))
@@ -129,7 +130,6 @@ def get_file_names(args):
     return fnlist
 
 def read_data(args):
-    global NSAM
     NCHAN = args.nchan
     data_files = get_file_names(args)
     for n, f in enumerate(data_files):
@@ -141,10 +141,10 @@ def read_data(args):
         GROUP = 1
 
 
-    if NSAM == 0:
-        print "WSIZE ", WSIZE
-        NSAM = GROUP*os.path.getsize(data_files[0])/WSIZE/NCHAN
-        print("NSAM set {}".format(NSAM))
+    if args.NSAM == 0:
+        print "WSIZE ", WSIZE(args)
+        args.NSAM = GROUP*os.path.getsize(data_files[0])/WSIZE(args)/NCHAN
+        print("NSAM set {}".format(args.NSAM))
 
     NBLK = len(data_files)
     if args.nblks > 0 and NBLK > args.nblks:
@@ -287,13 +287,10 @@ def run_main():
     parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
-    global WSIZE
     if args.data_type == 16:
         args.np_data_type = np.int16
-        WSIZE = 2
     else:
         args.np_data_type = np.int32
-        WSIZE = 4
 
     if os.path.isdir(args.src):
         args.uutroot = "{}/{}".format(args.src, args.uut[0])
