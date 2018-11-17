@@ -83,10 +83,10 @@ def create_npdata(args, nblk, nchn):
 
     for counter in range(nchn):
        if channel_required(args, counter):
-           channels.append(np.zeros((nblk*NSAM), dtype=np.int16))
+           channels.append(np.zeros((nblk*NSAM), dtype=args.np_data_type))
+
        else:
-           # token spacer reduces memory use
-           channels.append(np.zeros(16, dtype=np.int16))
+           channels.append(np.zeros(16, dtype=args.np_data_type))
     # print "length of data = ", len(total_data)
     # print "npdata = ", npdata
     return channels
@@ -142,6 +142,7 @@ def read_data(args):
 
 
     if NSAM == 0:
+        print "WSIZE ", WSIZE
         NSAM = GROUP*os.path.getsize(data_files[0])/WSIZE/NCHAN
         print("NSAM set {}".format(NSAM))
 
@@ -164,9 +165,11 @@ def read_data(args):
             print blkfile, blknum
             # concatenate 3 blocks to ensure modulo 3 channel align
             if iblock == 0:
-                data = np.fromfile(blkfile, dtype=np.int16)
+                data = np.fromfile(blkfile, dtype=args.np_data_type)
             else:
-                data = np.append(data, np.fromfile(blkfile, dtype=np.int16))
+                data = np.append(data, np.fromfile(blkfile, dtype=args.np_data_type))
+
+
 
             iblock += 1
             if iblock < GROUP:
@@ -188,7 +191,8 @@ def read_data(args):
 
 def read_data_file(args):
     NCHAN = args.nchan
-    data = np.fromfile(args.src, dtype=np.int16)
+    data = np.fromfile(args.src, dtype=args.np_data_type)
+
     nsam = len(data)/NCHAN
     raw_channels = create_npdata(args, nsam, NCHAN)
     for ch in range(NCHAN):
@@ -280,8 +284,17 @@ def run_main():
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
     parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
+    parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
+    global WSIZE
+    if args.data_type == 16:
+        args.np_data_type = np.int16
+        WSIZE = 2
+    else:
+        args.np_data_type = np.int32
+        WSIZE = 4
+
     if os.path.isdir(args.src):
         args.uutroot = "{}/{}".format(args.src, args.uut[0])
         print("uutroot {}".format(args.uutroot))
