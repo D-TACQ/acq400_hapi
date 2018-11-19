@@ -72,7 +72,6 @@ import acq400_hapi
 import time
 
 NSAM = 0
-WSIZE = 2
 
 def channel_required(args, ch):
 #    print("channel_required {} {}".format(ch, 'in' if ch in args.pc_list else 'out', args.pc_list))
@@ -142,8 +141,8 @@ def read_data(args):
 
 
     if NSAM == 0:
-        print "WSIZE ", WSIZE
-        NSAM = GROUP*os.path.getsize(data_files[0])/WSIZE/NCHAN
+
+        NSAM = GROUP*os.path.getsize(data_files[0])/args.WSIZE/NCHAN
         print("NSAM set {}".format(NSAM))
 
     NBLK = len(data_files)
@@ -245,7 +244,7 @@ def plot_data(args, raw_channels):
                 print("ERROR: no calibration for CH{:02d}".format(ch1))
 
         # label 1.. (human) 
-        V2 = client.new_editable_vector(channel.astype(np.float64), name="{}:CH{:02d}".format(re.sub(r"_", r"-", args.the_uut.uut), ch1))
+        V2 = client.new_editable_vector(channel.astype(np.float64), name="{}:CH{:02d}".format(re.sub(r"_", r"-", args.uut[0]), ch1))
         c1 = client.new_curve(V1, V2)
         p1 = client.new_plot()
         p1.set_left_label(yu1)
@@ -287,13 +286,13 @@ def run_main():
     parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
-    global WSIZE
+    args.WSIZE = 2
     if args.data_type == 16:
         args.np_data_type = np.int16
-        WSIZE = 2
+        args.WSIZE = 2
     else:
         args.np_data_type = np.int32
-        WSIZE = 4
+        args.WSIZE = 4
 
     if os.path.isdir(args.src):
         args.uutroot = "{}/{}".format(args.src, args.uut[0])
