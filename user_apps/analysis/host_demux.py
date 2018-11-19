@@ -71,7 +71,6 @@ import subprocess
 import acq400_hapi
 import time
 
-NSAM = 0
 
 def channel_required(args, ch):
 #    print("channel_required {} {}".format(ch, 'in' if ch in args.pc_list else 'out', args.pc_list))
@@ -82,7 +81,7 @@ def create_npdata(args, nblk, nchn):
 
     for counter in range(nchn):
        if channel_required(args, counter):
-           channels.append(np.zeros((nblk*NSAM), dtype=args.np_data_type))
+           channels.append(np.zeros((nblk*args.NSAM), dtype=args.np_data_type))
 
        else:
            channels.append(np.zeros(16, dtype=args.np_data_type))
@@ -128,7 +127,7 @@ def get_file_names(args):
     return fnlist
 
 def read_data(args):
-    global NSAM
+    # global NSAM
     NCHAN = args.nchan
     data_files = get_file_names(args)
     for n, f in enumerate(data_files):
@@ -140,10 +139,9 @@ def read_data(args):
         GROUP = 1
 
 
-    if NSAM == 0:
-
-        NSAM = GROUP*os.path.getsize(data_files[0])/args.WSIZE/NCHAN
-        print("NSAM set {}".format(NSAM))
+    if args.NSAM == 0:
+        args.NSAM = GROUP*os.path.getsize(data_files[0])/args.WSIZE/NCHAN
+        print("NSAM set {}".format(args.NSAM))
 
     NBLK = len(data_files)
     if args.nblks > 0 and NBLK > args.nblks:
@@ -174,7 +172,7 @@ def read_data(args):
             if iblock < GROUP:
                 continue
 
-            i1 = i0 + NSAM
+            i1 = i0 + args.NSAM
             for ch in range(NCHAN):
                 if channel_required(args, ch):
                     raw_channels[ch][i0:i1] = (data[ch::NCHAN])
@@ -287,6 +285,7 @@ def run_main():
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
     args.WSIZE = 2
+    args.NSAM = 0
     if args.data_type == 16:
         args.np_data_type = np.int16
         args.WSIZE = 2
