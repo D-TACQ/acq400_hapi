@@ -37,7 +37,7 @@ example usage::
     # plot data from LLC, 128 channels, show one "channel" from each site.
     # 97 was actually the LSB of TLATCH.
 
-usage:: 
+usage::
 
     host_demux.py [-h] [--nchan NCHAN] [--nblks NBLKS] [--save SAVE]
                      [--src SRC] [--pchan PCHAN]
@@ -58,7 +58,7 @@ optional arguments:
   --egu EGU      plot egu (V vs s)
   --xdt XDT      0: use interval from UUT, else specify interval
 
-    
+
 
 """
 
@@ -71,8 +71,6 @@ import subprocess
 import acq400_hapi
 import time
 
-NSAM = 0
-WSIZE = 2
 
 def channel_required(args, ch):
 #    print("channel_required {} {}".format(ch, 'in' if ch in args.pc_list else 'out', args.pc_list))
@@ -83,13 +81,13 @@ def create_npdata(args, nblk, nchn):
 
     for counter in range(nchn):
        if channel_required(args, counter):
-           channels.append(np.zeros((nblk*NSAM), dtype=np.int16))
+           channels.append(np.zeros((nblk*args.NSAM), dtype=args.np_data_type))
+
        else:
-           # token spacer reduces memory use
-           channels.append(np.zeros(16, dtype=np.int16))
+           channels.append(np.zeros(16, dtype=args.np_data_type))
     # print "length of data = ", len(total_data)
     # print "npdata = ", npdata
-    return channels 
+    return channels
 
 
 def make_cycle_list(args):
@@ -129,21 +127,21 @@ def get_file_names(args):
     return fnlist
 
 def read_data(args):
-    global NSAM
+    # global NSAM
     NCHAN = args.nchan
     data_files = get_file_names(args)
     for n, f in enumerate(data_files):
         print(f)
     if NCHAN % 3 == 0:
         print("collect in groups of 3 to keep alignment")
-        GROUP = 3 
+        GROUP = 3
     else:
         GROUP = 1
-    
 
-    if NSAM == 0:
-        NSAM = GROUP*os.path.getsize(data_files[0])/WSIZE/NCHAN
-        print("NSAM set {}".format(NSAM))
+
+    if args.NSAM == 0:
+        args.NSAM = GROUP*os.path.getsize(data_files[0])/args.WSIZE/NCHAN
+        print("NSAM set {}".format(args.NSAM))
 
     NBLK = len(data_files)
     if args.nblks > 0 and NBLK > args.nblks:
@@ -151,7 +149,7 @@ def read_data(args):
         data_files = [ data_files[i] for i in range(0,NBLK) ]
 
     print("NBLK {} NBLK/GROUP {} NCHAN {}".format(NBLK, NBLK/GROUP, NCHAN))
-  
+
     raw_channels = create_npdata(args, NBLK/GROUP, NCHAN)
     blocks = 0
     i0 = 0
@@ -164,15 +162,17 @@ def read_data(args):
             print blkfile, blknum
             # concatenate 3 blocks to ensure modulo 3 channel align
             if iblock == 0:
-                data = np.fromfile(blkfile, dtype=np.int16)
+                data = np.fromfile(blkfile, dtype=args.np_data_type)
             else:
-                data = np.append(data, np.fromfile(blkfile, dtype=np.int16))
+                data = np.append(data, np.fromfile(blkfile, dtype=args.np_data_type))
+
+
 
             iblock += 1
             if iblock < GROUP:
                 continue
-                
-            i1 = i0 + NSAM
+
+            i1 = i0 + args.NSAM
             for ch in range(NCHAN):
                 if channel_required(args, ch):
                     raw_channels[ch][i0:i1] = (data[ch::NCHAN])
@@ -185,16 +185,17 @@ def read_data(args):
     print "length of data[0] = ", len(raw_channels[0])
     print "length of data[1] = ", len(raw_channels[1])
     return raw_channels
-   
+
 def read_data_file(args):
     NCHAN = args.nchan
-    data = np.fromfile(args.src, dtype=np.int16)
+    data = np.fromfile(args.src, dtype=args.np_data_type)
+
     nsam = len(data)/NCHAN
     raw_channels = create_npdata(args, nsam, NCHAN)
     for ch in range(NCHAN):
         if channel_required(args, ch):
             raw_channels[ch] = data[ch::NCHAN]
-    
+
     return raw_channels
 
 def save_data(args, raw_channels):
@@ -204,13 +205,15 @@ def save_data(args, raw_channels):
         channel.tofile(data_file, '')
 
     return raw_channels
-    
+
 
 def plot_data(args, raw_channels):
     client = pykst.Client("NumpyVector")
     llen = len(raw_channels[0])
     if args.egu == 1:
         if args.xdt == 0:
+            print "WARNING ##### NO CLOCK RATE PROVIDED. TIME SCALE measured by system."
+            raw_input("Please press enter if you want to continue with innacurate time base.")
             time1 = float(args.the_uut.s0.SIG_CLK_S1_FREQ.split(" ")[-1])
             xdata = np.linspace(0, llen/time1, num=llen)
         else:
@@ -238,12 +241,12 @@ def plot_data(args, raw_channels):
                 yu1 = 'code'
                 print("ERROR: no calibration for CH{:02d}".format(ch1))
 
-        # label 1.. (human)
-        V2 = client.new_editable_vector(channel.astype(np.float64), name="{}:CH{:02d}".format(args.the_uut.uut, ch1))
+        # label 1.. (human) 
+        V2 = client.new_editable_vector(channel.astype(np.float64), name="{}:CH{:02d}".format(re.sub(r"_", r"-", args.uut[0]), ch1))
         c1 = client.new_curve(V1, V2)
         p1 = client.new_plot()
         p1.set_left_label(yu1)
-        p1.set_bottom_label(xu)  
+        p1.set_bottom_label(xu)
         p1.add(c1)
 
 
@@ -266,8 +269,8 @@ def make_pc_list(args):
         x2 = args.nchan+1 if lr[1] == '' else int(lr[1])+1
         return list(range(x1, x2))
     else:
-        return args.pchan.split(',') 
-    
+        return args.pchan.split(',')
+
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
     parser.add_argument('--nchan', type=int, default=32)
@@ -278,14 +281,24 @@ def run_main():
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
     parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
+    parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
+    args.WSIZE = 2
+    args.NSAM = 0
+    if args.data_type == 16:
+        args.np_data_type = np.int16
+        args.WSIZE = 2
+    else:
+        args.np_data_type = np.int32
+        args.WSIZE = 4
+
     if os.path.isdir(args.src):
         args.uutroot = "{}/{}".format(args.src, args.uut[0])
         print("uutroot {}".format(args.uutroot))
     elif os.path.isfile(args.src):
         args.uutroot = "{}".format(os.path.dirname(args.src))
-    if args.save != None: 
+    if args.save != None:
         if args.save.startswith("/"):
             args.saveroot = args.save
         else:

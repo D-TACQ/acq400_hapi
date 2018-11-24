@@ -205,6 +205,7 @@ def run_main():
     parser.add_argument('--decimate', default=None, help='decimate arm data path')
     parser.add_argument('--datahandler', default=None, help='program to stream the data')
     parser.add_argument('--nbuffers', type=int, default=9999999999, help='set capture length in buffers')
+    parser.add_argument('--etrig', type=int, default=0, help='ext trigger TODO')
     parser.add_argument('uut', nargs='+', help="uut ")
     run_shot(parser.parse_args())
 
