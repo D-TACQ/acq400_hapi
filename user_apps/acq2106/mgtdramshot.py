@@ -127,7 +127,7 @@ def run_shots(args):
             print("shot: {} {}".format(ii, t1.strftime("%Y%m%d %H:%M:%S")))
             run_shot(uut, args)
             t2 = datetime.datetime.now()
-            print("done in {} seconds\n\n".format((t2-t1).seconds))
+            print("shot: {} done in {} seconds\n\n".format(ii, (t2-t1).seconds))
 
             if args.wait_user:
                 input("hit return to continue")
