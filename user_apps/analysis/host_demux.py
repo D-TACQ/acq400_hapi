@@ -57,7 +57,14 @@ optional arguments:
   --pchan PCHAN  channels to plot
   --egu EGU      plot egu (V vs s)
   --xdt XDT      0: use interval from UUT, else specify interval
+  --double_up    Use for ACQ480 two lines per channel mode
 
+if --src is a file, use it directly
+    dir/nnnn
+if --src is a directory, first check if it has cycles:
+    dir/NNNNN/nnnnn*
+else iterate files in dir
+    dir/nnnnn*
 
 
 """
@@ -74,7 +81,7 @@ import time
 
 def channel_required(args, ch):
 #    print("channel_required {} {}".format(ch, 'in' if ch in args.pc_list else 'out', args.pc_list))
-    return args.save != None or ch in args.pc_list
+    return args.save != None or args.double_up or ch in args.pc_list
 
 def create_npdata(args, nblk, nchn):
     channels = []
@@ -110,19 +117,28 @@ def get_file_names(args):
     fnlist = list()
 # matches BOTH 0.?? for AFHBA an 0000 for FTP
     datapat = re.compile('[.0-9]{4}$')
+    has_cycles = True
     for cycle in make_cycle_list(args):
         if cycle == "err.log":
             continue
-        uutroot = '{}/{}'.format(args.uutroot, cycle)
-        print("debug")
-        ls = os.listdir(uutroot)
-        print("uutroot = ", uutroot)
+        try:
+            uutroot = '{}/{}'.format(args.uutroot, cycle)
+            print("debug")
+            ls = os.listdir(uutroot)
+            print("uutroot = ", uutroot)
+        except:
+            uutroot = args.uutroot
+            ls = os.listdir(uutroot)
+            has_cycles = False
+
         ls.sort()
         for n, file in enumerate(ls):
             if datapat.match(file):
                 fnlist.append( '{}/{}'.format(uutroot, file) )
             else:
                 print("no match {}".format(file))
+        if not has_cycles:
+            break
 
     return fnlist
 
@@ -250,8 +266,35 @@ def plot_data(args, raw_channels):
         p1.add(c1)
 
 
+# double_up : data is presented as [ ch010, ch011, ch020, ch021 ] .. so zip them together..
+def double_up(args, d1):
+    d2 = []
+    args.nchan /= 2
+    for ch in range(args.nchan):
+        ch2 = ch * 2
+        ll = d1[ch2] 
+        #print ll.shape
+        rr = d1[ch2+1]
+        #print rr.shape
+        mm = np.column_stack((ll, rr))
+	#print mm.shape
+        mm1 = np.reshape(mm, (len(ll)*2, 1))
+	#print mm1.shape
+        d2.append(mm1)
+
+    return d2
+        
+
 def process_data(args):
+    if args.double_up:
+        args.nchan *= 2
+
     raw_data = read_data(args) if not os.path.isfile(args.src) else read_data_file(args)
+
+    if args.double_up:
+	raw_data = double_up(args, raw_data)
+
+
     if args.save != None:
         save_data(args, raw_data)
     if len(args.pc_list) > 0:
@@ -282,8 +325,10 @@ def run_main():
     parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
     parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
+    parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
+
     args.WSIZE = 2
     args.NSAM = 0
     if args.data_type == 16:
