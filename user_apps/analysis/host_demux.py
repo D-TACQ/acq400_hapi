@@ -142,9 +142,8 @@ def get_file_names(args):
 
     return fnlist
 
-def read_data(args):
+def read_data(args, NCHAN):
     # global NSAM
-    NCHAN = args.nchan
     data_files = get_file_names(args)
     for n, f in enumerate(data_files):
         print(f)
@@ -202,8 +201,7 @@ def read_data(args):
     print "length of data[1] = ", len(raw_channels[1])
     return raw_channels
 
-def read_data_file(args):
-    NCHAN = args.nchan
+def read_data_file(args, NCHAN):
     data = np.fromfile(args.src, dtype=args.np_data_type)
 
     nsam = len(data)/NCHAN
@@ -269,7 +267,6 @@ def plot_data(args, raw_channels):
 # double_up : data is presented as [ ch010, ch011, ch020, ch021 ] .. so zip them together..
 def double_up(args, d1):
     d2 = []
-    args.nchan /= 2
     for ch in range(args.nchan):
         ch2 = ch * 2
         ll = d1[ch2] 
@@ -294,10 +291,11 @@ def stack_480_shuffle(args, raw_data):
      
         
 def process_data(args):
+    NCHAN = args.nchan
     if args.double_up:
-        args.nchan *= 2
+        NCHAN *= 2
 
-    raw_data = read_data(args) if not os.path.isfile(args.src) else read_data_file(args)
+    raw_data = read_data(args, NCHAN) if not os.path.isfile(args.src) else read_data_file(args, NCHAN)
 
     if args.double_up:
 	raw_data = double_up(args, raw_data)
