@@ -142,9 +142,8 @@ def get_file_names(args):
 
     return fnlist
 
-def read_data(args):
+def read_data(args, NCHAN):
     # global NSAM
-    NCHAN = args.nchan
     data_files = get_file_names(args)
     for n, f in enumerate(data_files):
         print(f)
@@ -202,8 +201,7 @@ def read_data(args):
     print "length of data[1] = ", len(raw_channels[1])
     return raw_channels
 
-def read_data_file(args):
-    NCHAN = args.nchan
+def read_data_file(args, NCHAN):
     data = np.fromfile(args.src, dtype=args.np_data_type)
 
     nsam = len(data)/NCHAN
@@ -269,7 +267,6 @@ def plot_data(args, raw_channels):
 # double_up : data is presented as [ ch010, ch011, ch020, ch021 ] .. so zip them together..
 def double_up(args, d1):
     d2 = []
-    args.nchan /= 2
     for ch in range(args.nchan):
         ch2 = ch * 2
         ll = d1[ch2] 
@@ -286,25 +283,19 @@ def double_up(args, d1):
         
 
 def stack_480_shuffle(args, raw_data):
-    if args.stack_480 == '2x4':
-        cmap = ( 0, 1, 4, 5, 2, 3, 6, 7 )
-    elif args.stack_480 == '2x8':
-        cmap = ( 0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15 )
-    else:
-	print("bad stuff")
-        quit()
     r2 = []
-    for i1 in cmap:
+    for i1 in args.stack_480_cmap:
         r2.append(raw_data[i1])
 
     return r2
      
         
 def process_data(args):
+    NCHAN = args.nchan
     if args.double_up:
-        args.nchan *= 2
+        NCHAN *= 2
 
-    raw_data = read_data(args) if not os.path.isfile(args.src) else read_data_file(args)
+    raw_data = read_data(args, NCHAN) if not os.path.isfile(args.src) else read_data_file(args, NCHAN)
 
     if args.double_up:
 	raw_data = double_up(args, raw_data)
@@ -331,6 +322,35 @@ def make_pc_list(args):
     else:
         return args.pchan.split(',')
 
+def calc_stack_480(args):
+    args.double_up = 0
+    if not args.stack_480:
+        return
+    if args.stack_480 == '2x4':
+        args.stack_480_cmap = ( 0, 1, 4, 5, 2, 3, 6, 7 )
+        args.double_up = 1
+        args.nchan = 8
+    elif args.stack_480 == '2x8':
+        args.nchan = 16
+        args.stack_480_cmap = ( 
+            0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15 )
+    elif args.stack_480 == '4x8':
+        args.nchan = 32
+        args.stack_480_cmap = ( 
+            0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15,
+           16, 17, 18, 19, 24, 25, 26, 27, 20, 21, 22, 23, 28, 29, 30, 31 )
+    elif args.stack_480 == '6x8':
+        args.nchan = 48        
+        args.stack_480_cmap = ( 
+            0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15,
+           16, 17, 18, 19, 24, 25, 26, 27, 20, 21, 22, 23, 28, 29, 30, 31,
+           32, 33, 34, 35, 40, 41, 42, 43, 36, 37, 38, 39, 44, 45, 46, 47 )
+    else:
+        print("bad option {}".format(args.stack_480))
+        quit()
+
+    print("args.stack_480_cmap: {}".format(args.stack_480_cmap))
+        
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
     parser.add_argument('--nchan', type=int, default=32)
@@ -345,18 +365,7 @@ def run_main():
     parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
-
-    args.double_up = 0
-    if args.stack_480:
-        if args.stack_480 == '2x4':
-            args.double_up = 1
-            args.nchan = 8
-        elif args.stack_480 == '2x8':
-            args.nchan = 16
-        else:
-            print("die die die")
-            quit()
-
+    calc_stack_480(args)
     args.WSIZE = 2
     args.NSAM = 0
     if args.data_type == 16:
