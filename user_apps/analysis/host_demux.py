@@ -285,6 +285,21 @@ def double_up(args, d1):
     return d2
         
 
+def stack_480_shuffle(args, raw_data):
+    if args.stack_480 == '2x4':
+        cmap = ( 0, 1, 4, 5, 2, 3, 6, 7 )
+    elif args.stack_480 == '2x8':
+        cmap = ( 0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15 )
+    else:
+	print("bad stuff")
+        quit()
+    r2 = []
+    for i1 in cmap:
+        r2.append(raw_data[i1])
+
+    return r2
+     
+        
 def process_data(args):
     if args.double_up:
         args.nchan *= 2
@@ -294,6 +309,8 @@ def process_data(args):
     if args.double_up:
 	raw_data = double_up(args, raw_data)
 
+    if args.stack_480:
+        raw_data = stack_480_shuffle(args, raw_data)
 
     if args.save != None:
         save_data(args, raw_data)
@@ -325,9 +342,20 @@ def run_main():
     parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
     parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
-    parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
+    parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
+
+    args.double_up = 0
+    if args.stack_480:
+        if args.stack_480 == '2x4':
+            args.double_up = 1
+            args.nchan = 8
+        elif args.stack_480 == '2x8':
+            args.nchan = 16
+        else:
+            print("die die die")
+            quit()
 
     args.WSIZE = 2
     args.NSAM = 0
