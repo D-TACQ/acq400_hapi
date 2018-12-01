@@ -9,6 +9,8 @@ import os
 import signal
 
 def disable_trigger(master):
+    print("WARNING: REMOVEME temporary fudge while we get the sync trigger right")
+    master.s0.SIG_SYNC_OUT_TRG_DX = 'd0'
     master.s0.SIG_SRC_TRG_0 = 'DSP0'
     master.s0.SIG_SRC_TRG_1 = 'DSP1'
     
@@ -16,15 +18,23 @@ def enable_trigger(master):
     master.s0.SIG_SRC_TRG_0 = 'EXT'
     master.s0.SIG_SRC_TRG_1 = 'STRIG'    
     
-def expand_role(urole):
+def expand_role(args, urole):
     # fpmaster          # fpclk, fptrg
     # fpmaster,strg     # fpclk, strg
     # master            # mbclk, strg
     # master,fptrg      # mbclk, fptrg
+    
+    if urole == "fpmaster" or urole == "master,fptrg":
+        args.external_trigger = True
+    else:
+        args.external_trigger = False
+        
     if urole == "fpmaster,strg":
-        return "fpmaster TRG:DX=d1"
+        args.postfix.append("TRG:DX=d1")
+        return "fpmaster"
     if urole == "master,fptrg":
-        return "master TRG:DX=d0"
+        args.postfix.append("TRG:DX=d0")
+        return "master"
     return urole
 
 def run_shot(args):
@@ -34,14 +44,23 @@ def run_shot(args):
         enable_trigger(master)
         return
     
-    postfix = ""
-    if args.clkdiv:
-        postfix = "CLKDIV={}".args.clkdiv
+    args.postfix = []       # master specials
+    postfix = []            # common specials
+    if args.clkdiv:        
+        args.postfix.append("CLKDIV={}".args.clkdiv)
 
-    master.s0.sync_role = "{} {} {} {}".format(expand_role(args.toprole), args.fclk, args.fin, postfix)
-    disable_trigger(master)
+    master.s0.sync_role = "{} {} {} {}".format(expand_role(args, args.toprole), 
+                                            args.fclk, args.fin, " ".join(args.postfix), " ".join(postfix))
+    
+    if args.external_trigger:
+        disable_trigger(master)
+    else:
+        print("WARNING: REMOVEME temporary fudge while we get the sync trigger right")
+        master.s0.SIG_SYNC_OUT_TRG_DX = 'd1'
+        enable_trigger(master)
+        
     for slave in uuts[1:]:
-        slave.s0.sync_role = "{} {} {} {}".format('slave', args.fclk, args.fin, postfix)
+        slave.s0.sync_role = "{} {} {} {}".format('slave', args.fclk, args.fin, " ".join(postfix))
     
 def run_main():    
     parser = argparse.ArgumentParser(description='set sync roles for a stack of modules')    
