@@ -115,7 +115,7 @@ def init_work(uut, args):
 
 def get_data_pid(args):
     return int(read_knob("/dev/rtm-t.{}.ctrl/streamer_pid".format(args.lport)))
-    
+
 def start_shot(uut, args):    
     uut.s0.streamtonowhered = "start"
 
@@ -126,9 +126,9 @@ def stop_shot(uut, args):
     time.sleep(1)
     pid = get_data_pid(args)
     if pid != 0:
-       os.system('sudo kill -9 {}'.format(pid))
+        os.system('sudo kill -9 {}'.format(pid))
 
-    
+
 def get_state(args):
     job = read_knob("/proc/driver/afhba/afhba.{}/Job".format(args.lport))
     env = {}
@@ -137,7 +137,7 @@ def get_state(args):
         env[k] = v
     args.job_state = env
 
-    
+
 def wait_completion(uut, args):
     ts  = 0
     STATFMT = "Rate %d NBUFS %d Time ... %8d / %8d %s"
@@ -150,7 +150,7 @@ def wait_completion(uut, args):
                 pid = get_data_pid(args)
                 if pid == 0:
                     print("\ndatahandler has dropped out at NBUFS {}/{} {}".format(
-				rx, args.nbuffers, "COMPLETE" if rx>=args.nbuffers else "ERROR" ))
+                        rx, args.nbuffers, "COMPLETE" if rx>=args.nbuffers else "ERROR" ))
                     break
             sys.stdout.write( (STATFMT+"\r") % (buf_rate, rx, ts, int(args.secs), P.spin()))
             sys.stdout.flush()
@@ -161,7 +161,7 @@ def wait_completion(uut, args):
                 if ts > 0:
                     sys.stdout.write(("\n" + STATFMT + "\n") % (buf_rate, rx, ts, int(args.secs), "STOPPED?"))
                     break
-            
+
     except KeyboardInterrupt:
         pass
     stop_shot(uut, args)
@@ -175,7 +175,7 @@ def run_shot(args):
         print("datahandler command {}".format(cmd))
         os.system(cmd)
         pollcat = 0
-	pid = get_data_pid(args)
+        pid = get_data_pid(args)
         while pid == 0:
             time.sleep(1)
             pollcat += 1
