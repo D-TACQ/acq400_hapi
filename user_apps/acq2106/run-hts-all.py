@@ -2,7 +2,7 @@
 
 import argparse
 import subprocess
-
+import os
 
 
 class Struct(object):
@@ -23,18 +23,38 @@ def map_uuts():
 uuts = map_uuts()
 
 
+def make_fifos(args):
+    args.fifos = []
+    for uut in args.uuts:
+        fn = "/tmp/{}.hts".format(uut)
+        try:
+            os.mkfifo(fn)            
+        except OSError:
+            print("OSError, but it's all good")
+        args.fifos.append(fn)
+            
+            
+
 def run_shot(args):
+    make_fifos(args)
     cmd = ['mate-terminal']
     tabdef = '--window-with-profile=Default'
 
-    for uut in args.uut:
+    ii = 0
+    for uut in args.uuts:
         ports = uuts[uut]
         cmd.append(tabdef)
         cmd.append('--title={}'.format(uut))
         cmd.append('--command=run-hts {} {} {} {}'.\
                 format(uut, ports.lport, args.secs, ports.rport))
-                
         tabdef = '--tab-with-profile=Default'
+        
+        cmd.append(tabdef)
+        cmd.append('--title={}.hts'.format(uut))
+        cmd.append('--command=cat {}'.format(args.fifos[ii]))                
+        ii += 1
+    
+ 
 
     print(cmd)
     subprocess.check_call(cmd)
@@ -44,7 +64,7 @@ def run_main():
     parser = argparse.ArgumentParser(description='run hts all uuts')
     parser.add_argument('--secs', default=100, help='seconds to run')
     parser.add_argument('--etrg', default=0, help='enable external trg TODO')
-    parser.add_argument('uut', nargs='+', help='uut')
+    parser.add_argument('uuts', nargs='+', help='uut')
     run_shot(parser.parse_args())
 
 # execution starts here
