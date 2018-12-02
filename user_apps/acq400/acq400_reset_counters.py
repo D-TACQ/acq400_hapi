@@ -77,7 +77,7 @@ def run_main():
     parser = argparse.ArgumentParser(description='acq400_reset_counters')
     parser.add_argument('-s','--sites', default='s0', help="sites to clear eg s0,s1,s2,cA") 
     parser.add_argument('-t','--trace', default=0, help="traces command execution")
-    parser.add_argument('--threaded', type=int, default=1)
+    parser.add_argument('--threaded', type=int, default=2)
     parser.add_argument('uuts', nargs='+', help="uut[s]")
     reset_counters(parser.parse_args())
 
