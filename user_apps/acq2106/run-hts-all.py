@@ -23,7 +23,8 @@ def map_uuts():
 
     return uut_port_map
 
-uuts = map_uuts()
+uut_port_map = map_uuts()
+uuts = []
 
 
 def make_fifos(args):
@@ -49,22 +50,26 @@ def set_sync_roles(args):
     if args.etrg == 1:
         toprole += ',fptrg'
     cmd.append('--toprole={}'.format(toprole))
-    cmd.append('--fclk=10M')
+    cmd.append('--fclk={}'.format(args.fclk))
     for uut in args.uuts:
         cmd.append(uut)
     print(cmd)
     subprocess.check_call(cmd)        
 
-def wait_for_arm(args):
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
-    
+def wait_for_state(args, state):
     for uut in uuts:
-        while uut.s0.CONTINUOUS_STATE.split(' ')[1] != 'ARM':
-            print("polling {} for ARM".format(uut.uut))
-            time.sleep(1)
+        while uut.s0.CONTINUOUS_STATE.split(' ')[1] != state:
+            print("polling {} for {}".format(uut.uut, state))
+            time.sleep(1)    
+            
+def wait_for_arm(args):
+    wait_for_state(args, 'ARM')
+
+def wait_for_idle(args):
+    wait_for_state(args, 'IDLE')
             
 def release_the_trigger(args):
-    wait_for_arm(args)
+    
     print("RELEASE the trigger REMOVEME when hardware fixed")
     cmd = []
     cmd.extend(scmd)
@@ -73,14 +78,29 @@ def release_the_trigger(args):
     print(cmd)
     subprocess.check_call(cmd)     
 
-def run_shot(args):
+def init_shot(args):
     make_fifos(args)
+    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     set_sync_roles(args)
+    
+def store_shot(args):
+    wait_for_idle(args) 
+    shot = [ u.s0.shot for u in uuts]
+    
+    s0 = shot[0]
+    for ii, s1 in enumerate(shot[1:]):
+        if s0 != s1:
+            print("WARNING: uut {} shot {} does not equal master {}".format(uuts[ii].uut, s1, s0))
+            
+    print("store_shot {}".format(shot[0]))
+    print("stub. copy from {}".format(os.getenv('HTSDATA')))
+    
+def run_shot(args):
     cmd = ['mate-terminal']
     tabdef = '--window-with-profile=Default'
 
     for ii, uut in enumerate(args.uuts):
-        ports = uuts[uut]
+        ports = uut_port_map[uut]
         cmd.append(tabdef)
         cmd.append('--title={}'.format(uut))
         cmd.append('--command=run-hts {} {} {} {}'.\
@@ -94,15 +114,26 @@ def run_shot(args):
     print(cmd)
     subprocess.check_call(cmd)
 
+    wait_for_arm(args)
+    
     if args.etrg == 1:
        release_the_trigger(args) 
+       
+    if args.store == 1:
+        store_shot(args)
+        
+       
 
 def run_main():
     parser = argparse.ArgumentParser(description='run hts all uuts')
     parser.add_argument('--secs', default=100, help='seconds to run')
-    parser.add_argument('--etrg', type=int, default=0, help='enable external trg TODO')
+    parser.add_argument('--etrg', type=int, default=0, help='1: enable external trg')
+    parser.add_argument('--fclk', type=str, default='10M', help='sample clock before decimation')
+    parser.add_argument('--store', type=int, default=0, help='1: store shot after capture')
     parser.add_argument('uuts', nargs='+', help='uut')
-    run_shot(parser.parse_args())
+    args = parser.parse_args()
+    init_shot(args)
+    run_shot(args)
 
 # execution starts here
 
