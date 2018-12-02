@@ -18,6 +18,8 @@ import acq400_hapi
 import argparse
 import threading
 
+
+        
 def reset1(uut, s):
     uut.svc[s].RESET_CTR = '1'
     print "reset {} {} done".format(uut.uut, s)
@@ -45,10 +47,28 @@ def reset_counters_serial(args):
     for uut in uuts:
         for s in sites:
             reset1(uut, s)
-    
+  
+def reset2(uutname, sites):
+    uut = acq400_hapi.Acq2106(uutname)
+    for s in sites:
+        reset1(uut, s)
+        
+def reset_counters_threaded_ultra(args):    
+    sites = args.sites.split(',')
+    print sites
+    threads = []
+    for uutname in args.uuts:                      
+        t = threading.Thread(target=reset2, args=(uutname, sites))
+        threads.append(t)
+        t.start()
+             
+    for t in threads:
+        t.join()
   
 def reset_counters(args):
-    if args.threaded:     
+    if args.threaded > 1:
+        reset_counters_threaded_ultra(args)
+    elif args.threaded:     
         reset_counters_threaded(args)
     else:
         reset_counters_serial(args)
