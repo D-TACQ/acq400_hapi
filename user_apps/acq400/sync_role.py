@@ -7,6 +7,7 @@ import argparse
 import time
 import os
 import signal
+import threading
 
 def disable_trigger(master):
     print("WARNING: REMOVEME temporary fudge while we get the sync trigger right")
@@ -37,9 +38,12 @@ def expand_role(args, urole):
         return "master"
     return urole
 
-def run_shot(args):
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
-    master = uuts[0]
+def configure_slave(name, args, postfix):
+    slave = acq400_hapi.Acq400(name)
+    slave.s0.sync_role = "{} {} {} {}".format('slave', args.fclk, args.fin, " ".join(postfix))
+    
+def run_shot(args):    
+    master = acq400_hapi.Acq400(args.uuts[0])
     if args.enable_trigger:
         enable_trigger(master)
         return
@@ -58,9 +62,16 @@ def run_shot(args):
         print("WARNING: REMOVEME temporary fudge while we get the sync trigger right")
         master.s0.SIG_SYNC_OUT_TRG_DX = 'd1'
         enable_trigger(master)
-        
-    for slave in uuts[1:]:
-        slave.s0.sync_role = "{} {} {} {}".format('slave', args.fclk, args.fin, " ".join(postfix))
+    
+    # now run all the slave in parallel. We can do this because they do not share data.
+    threads = []
+    for uutname in args.uuts[1:]:                      
+        t = threading.Thread(target=configure_slave, args=(uutname, args, postfix))
+        threads.append(t)
+        t.start()
+                 
+    for t in threads:
+        t.join()
     
 def run_main():    
     parser = argparse.ArgumentParser(description='set sync roles for a stack of modules')    
