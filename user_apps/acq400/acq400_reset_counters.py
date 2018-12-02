@@ -18,9 +18,9 @@ import acq400_hapi
 import argparse
         
 def reset_counters(args):
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
+    uuts = [acq400_hapi.Acq2106(u) for u in args.uuts]
     sites = args.sites.split(',')
-    
+    print sites
     for uut in uuts:
         for s in sites:
             uut.svc[s].RESET_CTR = '1'
