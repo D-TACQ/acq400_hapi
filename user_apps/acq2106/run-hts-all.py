@@ -36,7 +36,7 @@ def make_fifos(args):
             os.mkfifo(fn)            
         except OSError, e:
             if e.errno != 17:            
-                sys.exit("ERORR OSError, {}", e)
+                sys.exit("ERROR OSError, {}", e)
                 
         args.fifos.append(fn)
             
@@ -57,33 +57,37 @@ def set_sync_roles(args):
     print(cmd)
     subprocess.check_call(cmd)        
 
-def wait_for_state(args, state):
+time0 = 0
+
+def wait_for_state(args, state, timeout=0):
+    global time0
+    if time0 == 0:
+        time0 = time.time()  
     for uut in uuts:
         olds = ""
         finished = False
         dots = 0
+        pollcat = 0
         
         while not finished:
             st = uut.s0.CONTINUOUS_STATE.split(' ')[1]
             finished = st == state
-            news = "\npolling {}:{} {} waiting for {}".format(uut.uut, st, 'DONE' if finished else '', state)
-            if news != olds:
-                sys.stdout.write(news)
+            news = "polling {}:{} {} waiting for {}".format(uut.uut, st, 'DONE' if finished else '', state)
+            if news != olds: 
+                sys.stdout.write("\n{:06.2f}: {}".format(time.time() - time0, news))
                 olds = news
             else:
                 sys.stdout.write('.')
                 dots += 1
-                if dots > 20:
-                    olds = ""
+                if dots >= 20:                    
                     dots = 0
-            if not finished:        
+                    olds = ""
+            if not finished:
+                if timeout and (time.time() - time0) > timeout:
+                    sys.exit("\ntimeout waiting for {}".format(news))
                 time.sleep(1)
-            
-def wait_for_arm(args):
-    wait_for_state(args, 'ARM')
-
-def wait_for_idle(args):
-    wait_for_state(args, 'IDLE')
+            pollcat += 1
+    print("")
             
 def release_the_trigger(args):
     
@@ -108,7 +112,16 @@ def _store_shot(shot):
     base = os.getenv('HTSARCHIVE', os.path.dirname(src))
     shotbase = "{}/SHOTS/{:08d}".format(base, shot)
     print("copy from {} to {}".format(src, shotbase))
-    os.makedirs(shotbase)
+    
+    try:
+        os.makedirs(shotbase)
+#OSError: [Errno 17] File exists: '/mnt/datastream/SHOTS/00000144'
+    except OSError, e:
+        if e.errno == 17:
+            sys.exit("WARNING: {}\nrefusing to overwrite duplicate shot, please backup by hand".format(e))
+        else:
+            sys.exit("ERROR OSError, {}", e) 
+        
     
     for sp in srcports:
         cmd = [ 'sudo', 'mv', sp, shotbase]
@@ -118,7 +131,7 @@ def _store_shot(shot):
     subprocess.check_call(cmd)
     
 def store_shot(args):
-    wait_for_idle(args) 
+    wait_for_state(args, 'IDLE')
     shot = [ u.s1.shot for u in uuts]
     
     s0 = shot[0]
@@ -150,7 +163,7 @@ def run_shot(args):
     print(cmd)
     subprocess.check_call(cmd)
 
-    wait_for_arm(args)
+    wait_for_state(args, 'ARM', timeout=45)
     
     if args.etrg == 1:
        release_the_trigger(args) 
