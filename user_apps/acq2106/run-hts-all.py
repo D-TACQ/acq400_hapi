@@ -5,7 +5,8 @@ import subprocess
 import os
 import sys
 import time
-
+import glob
+import shutil
 import acq400_hapi
 
 class Struct(object):
@@ -58,9 +59,25 @@ def set_sync_roles(args):
 
 def wait_for_state(args, state):
     for uut in uuts:
-        while uut.s0.CONTINUOUS_STATE.split(' ')[1] != state:
-            print("polling {} for {}".format(uut.uut, state))
-            time.sleep(1)    
+        olds = ""
+        finished = False
+        dots = 0
+        
+        while not finished:
+            st = uut.s0.CONTINUOUS_STATE.split(' ')[1]
+            finished = st == state
+            news = "\npolling {}:{} {} waiting for {}".format(uut.uut, st, 'DONE' if finished else '', state)
+            if news != olds:
+                sys.stdout.write(news)
+                olds = news
+            else:
+                sys.stdout.write('.')
+                dots += 1
+                if dots > 20:
+                    olds = ""
+                    dots = 0
+            if not finished:        
+                time.sleep(1)
             
 def wait_for_arm(args):
     wait_for_state(args, 'ARM')
@@ -79,22 +96,41 @@ def release_the_trigger(args):
     subprocess.check_call(cmd)     
 
 def init_shot(args):
+    global uuts
     make_fifos(args)
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     set_sync_roles(args)
     
+def _store_shot(shot):
+    print("store_shot {}".format(shot))    
+    src = os.getenv('HTSDATA')
+    srcports = glob.glob('{}/*'.format(src))
+    base = os.path.dirname(src)
+    shotbase = "{}/SHOTS/{:08d}".format(base, shot)
+    print("copy from {} to {}".format(src, shotbase))
+    os.makedirs(shotbase)
+    
+    for sp in srcports:
+        cmd = [ 'sudo', 'mv', sp, shotbase]
+        subprocess.check_call(cmd)   
+    
+    cmd = [ 'du', '-sh', shotbase]
+    subprocess.check_call(cmd)
+    
 def store_shot(args):
     wait_for_idle(args) 
-    shot = [ u.s0.shot for u in uuts]
+    shot = [ u.s1.shot for u in uuts]
     
     s0 = shot[0]
     for ii, s1 in enumerate(shot[1:]):
         if s0 != s1:
             print("WARNING: uut {} shot {} does not equal master {}".format(uuts[ii].uut, s1, s0))
             
-    print("store_shot {}".format(shot[0]))
-    print("stub. copy from {}".format(os.getenv('HTSDATA')))
+    _store_shot(int(shot[0]))
     
+    
+    
+# sudo mv /mnt/datastream/ACQ400DATA/* /mnt/datastream/SHOT_0134/    
 def run_shot(args):
     cmd = ['mate-terminal']
     tabdef = '--window-with-profile=Default'
