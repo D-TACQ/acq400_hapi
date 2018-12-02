@@ -105,7 +105,7 @@ def _store_shot(shot):
     print("store_shot {}".format(shot))    
     src = os.getenv('HTSDATA')
     srcports = glob.glob('{}/*'.format(src))
-    base = os.path.dirname(src)
+    base = os.getenv('HTSARCHIVE', os.path.dirname(src))
     shotbase = "{}/SHOTS/{:08d}".format(base, shot)
     print("copy from {} to {}".format(src, shotbase))
     os.makedirs(shotbase)
