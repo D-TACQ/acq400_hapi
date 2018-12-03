@@ -316,7 +316,16 @@ def double_up(args, d1):
     return d2
 
 
+def stack_480_shuffle(args, raw_data):
+    r2 = []
+    for i1 in args.stack_480_cmap:
+        r2.append(raw_data[i1])
+
+    return r2
+     
+        
 def process_data(args):
+    NCHAN = args.nchan
     if args.double_up:
         args.nchan *= 2
 
@@ -325,6 +334,8 @@ def process_data(args):
     if args.double_up:
 	raw_data = double_up(args, raw_data)
 
+    if args.stack_480:
+        raw_data = stack_480_shuffle(args, raw_data)
 
     if args.save != None:
         save_data(args, raw_data)
@@ -345,6 +356,35 @@ def make_pc_list(args):
     else:
         return args.pchan.split(',')
 
+def calc_stack_480(args):
+    args.double_up = 0
+    if not args.stack_480:
+        return
+    if args.stack_480 == '2x4':
+        args.stack_480_cmap = ( 0, 1, 4, 5, 2, 3, 6, 7 )
+        args.double_up = 1
+        args.nchan = 8
+    elif args.stack_480 == '2x8':
+        args.nchan = 16
+        args.stack_480_cmap = ( 
+            0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15 )
+    elif args.stack_480 == '4x8':
+        args.nchan = 32
+        args.stack_480_cmap = ( 
+            0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15,
+           16, 17, 18, 19, 24, 25, 26, 27, 20, 21, 22, 23, 28, 29, 30, 31 )
+    elif args.stack_480 == '6x8':
+        args.nchan = 48        
+        args.stack_480_cmap = ( 
+            0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15,
+           16, 17, 18, 19, 24, 25, 26, 27, 20, 21, 22, 23, 28, 29, 30, 31,
+           32, 33, 34, 35, 40, 41, 42, 43, 36, 37, 38, 39, 44, 45, 46, 47 )
+    else:
+        print("bad option {}".format(args.stack_480))
+        quit()
+
+    print("args.stack_480_cmap: {}".format(args.stack_480_cmap))
+        
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
     parser.add_argument('--nchan', type=int, default=32)
@@ -359,9 +399,10 @@ def run_main():
     parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
     parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data.')
     parser.add_argument('--mpl_subrate', type=int, default=1000, help='Control subrate for mpl plotting.')
+    parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
-
+    calc_stack_480(args)
     args.WSIZE = 2
     args.NSAM = 0
     if args.data_type == 16:
