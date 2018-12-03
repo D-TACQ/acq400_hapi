@@ -66,6 +66,10 @@ if --src is a directory, first check if it has cycles:
 else iterate files in dir
     dir/nnnnn*
 
+TO DEMUX ON WINDOWS TO STORE CHANNELISED DATA:
+python .\host_demux.py --save=1 --src="muxed" --pchan=none acq2106_114
+    Make sure that the muxed data is in D:\\muxed\[UUT name]\
+Demuxed data will be written to D:\\demuxed\[UUT name]\
 
 """
 
@@ -77,6 +81,7 @@ import argparse
 import subprocess
 import acq400_hapi
 import time
+import matplotlib.pyplot as plt
 
 
 def channel_required(args, ch):
@@ -122,7 +127,7 @@ def get_file_names(args):
         if cycle == "err.log":
             continue
         try:
-            uutroot = '{}/{}'.format(args.uutroot, cycle)
+            uutroot = r'{}/{}'.format(args.uutroot, cycle)
             print("debug")
             ls = os.listdir(uutroot)
             print("uutroot = ", uutroot)
@@ -134,7 +139,7 @@ def get_file_names(args):
         ls.sort()
         for n, file in enumerate(ls):
             if datapat.match(file):
-                fnlist.append( '{}/{}'.format(uutroot, file) )
+                fnlist.append(r'{}/{}'.format(uutroot, file) )
             else:
                 print("no match {}".format(file))
         if not has_cycles:
@@ -215,15 +220,41 @@ def read_data_file(args):
     return raw_channels
 
 def save_data(args, raw_channels):
-    subprocess.call(["mkdir", "-p", args.saveroot])
+
+    if os.name == "nt": # if system is windows.
+        path = r'D:\\demuxed\{}'.format(args.uut[0]) # raw string literal so we can use \ in path.
+        if not os.path.exists(path):
+            os.makedirs(path)
+        args.saveroot = path # set args.saveroot to windows style dir.
+
+    else:
+        subprocess.call(["mkdir", "-p", args.saveroot])
     for enum, channel in enumerate(raw_channels):
         data_file = open("{}/data_{:02d}.dat".format(args.saveroot, enum+1), "wb+")
         channel.tofile(data_file, '')
 
+    print "data saved to directory: {}".format(args.saveroot)
     return raw_channels
 
 
+def plot_mpl(args, raw_channels):
+    print "Plotting with MatPlotLib. Subrate = {}".format(args.mpl_subrate)
+    #real_len = len(raw_channels[0]) # this is the real length of the channel data
+    num_of_ch = len(args.pc_list)
+    f, plots = plt.subplots(num_of_ch, 1)
+    for num, sp in enumerate(args.pc_list):
+        plots[num].plot(raw_channels[sp][0::args.mpl_subrate])
+    plt.show()
+    return None
+
+
 def plot_data(args, raw_channels):
+
+    if args.plot_mpl == 1:
+        # if arg set then plot with matplotlib instead.
+        plot_mpl(args, raw_channels)
+        return None
+
     client = pykst.Client("NumpyVector")
     llen = len(raw_channels[0])
     if args.egu == 1:
@@ -257,7 +288,7 @@ def plot_data(args, raw_channels):
                 yu1 = 'code'
                 print("ERROR: no calibration for CH{:02d}".format(ch1))
 
-        # label 1.. (human) 
+        # label 1.. (human)
         V2 = client.new_editable_vector(channel.astype(np.float64), name="{}:CH{:02d}".format(re.sub(r"_", r"-", args.uut[0]), ch1))
         c1 = client.new_curve(V1, V2)
         p1 = client.new_plot()
@@ -272,7 +303,7 @@ def double_up(args, d1):
     args.nchan /= 2
     for ch in range(args.nchan):
         ch2 = ch * 2
-        ll = d1[ch2] 
+        ll = d1[ch2]
         #print ll.shape
         rr = d1[ch2+1]
         #print rr.shape
@@ -283,7 +314,7 @@ def double_up(args, d1):
         d2.append(mm1)
 
     return d2
-        
+
 
 def process_data(args):
     if args.double_up:
@@ -326,6 +357,8 @@ def run_main():
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
     parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
     parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
+    parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data.')
+    parser.add_argument('--mpl_subrate', type=int, default=1000, help='Control subrate for mpl plotting.')
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
 
@@ -338,8 +371,10 @@ def run_main():
         args.np_data_type = np.int32
         args.WSIZE = 4
 
-    if os.path.isdir(args.src):
-        args.uutroot = "{}/{}".format(args.src, args.uut[0])
+    if os.name == "nt":  # do this if windows system.
+        args.uutroot = r"D:\{}\{}".format(args.src, args.uut[0])
+    elif os.path.isdir(args.src):
+        args.uutroot = r"{}/{}".format(args.src, args.uut[0])
         print("uutroot {}".format(args.uutroot))
     elif os.path.isfile(args.src):
         args.uutroot = "{}".format(os.path.dirname(args.src))
@@ -347,7 +382,9 @@ def run_main():
         if args.save.startswith("/"):
             args.saveroot = args.save
         else:
-            args.saveroot = "{}/{}".format(args.uutroot, args.save)
+            if os.name != "nt":
+                args.saveroot = r"{}/{}".format(args.uutroot, args.save)
+
     # ch 0.. (comp)
     args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
     print("args.pc_list {}".format(args.pc_list))
