@@ -222,7 +222,7 @@ def read_data_file(args):
 def save_data(args, raw_channels):
 
     if os.name == "nt": # if system is windows.
-        path = r'D:\\demuxed\{}'.format(args.uut[0]) # raw string literal so we can use \ in path.
+        path = r'{}:\\demuxed\{}'.format(args.drive_letter, args.uut[0]) # raw string literal so we can use \ in path.
         if not os.path.exists(path):
             os.makedirs(path)
         args.saveroot = path # set args.saveroot to windows style dir.
@@ -322,8 +322,8 @@ def stack_480_shuffle(args, raw_data):
         r2.append(raw_data[i1])
 
     return r2
-     
-        
+
+
 def process_data(args):
     NCHAN = args.nchan
     if args.double_up:
@@ -366,16 +366,16 @@ def calc_stack_480(args):
         args.nchan = 8
     elif args.stack_480 == '2x8':
         args.nchan = 16
-        args.stack_480_cmap = ( 
+        args.stack_480_cmap = (
             0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15 )
     elif args.stack_480 == '4x8':
         args.nchan = 32
-        args.stack_480_cmap = ( 
+        args.stack_480_cmap = (
             0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15,
            16, 17, 18, 19, 24, 25, 26, 27, 20, 21, 22, 23, 28, 29, 30, 31 )
     elif args.stack_480 == '6x8':
-        args.nchan = 48        
-        args.stack_480_cmap = ( 
+        args.nchan = 48
+        args.stack_480_cmap = (
             0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15,
            16, 17, 18, 19, 24, 25, 26, 27, 20, 21, 22, 23, 28, 29, 30, 31,
            32, 33, 34, 35, 40, 41, 42, 43, 36, 37, 38, 39, 44, 45, 46, 47 )
@@ -384,7 +384,7 @@ def calc_stack_480(args):
         quit()
 
     print("args.stack_480_cmap: {}".format(args.stack_480_cmap))
-        
+
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
     parser.add_argument('--nchan', type=int, default=32)
@@ -400,6 +400,7 @@ def run_main():
     parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data.')
     parser.add_argument('--mpl_subrate', type=int, default=1000, help='Control subrate for mpl plotting.')
     parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
+    parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
     calc_stack_480(args)
