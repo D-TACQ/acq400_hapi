@@ -243,7 +243,7 @@ def plot_mpl(args, raw_channels):
     num_of_ch = len(args.pc_list)
     f, plots = plt.subplots(num_of_ch, 1)
     for num, sp in enumerate(args.pc_list):
-        plots[num].plot(raw_channels[sp][0::args.mpl_subrate])
+        plots[num].plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrate])
     plt.show()
     return None
 
@@ -328,11 +328,12 @@ def process_data(args):
     NCHAN = args.nchan
     if args.double_up:
         args.nchan *= 2
+        print "nchan = ", args.nchan
 
     raw_data = read_data(args) if not os.path.isfile(args.src) else read_data_file(args)
 
     if args.double_up:
-	raw_data = double_up(args, raw_data)
+	       raw_data = double_up(args, raw_data)
 
     if args.stack_480:
         raw_data = stack_480_shuffle(args, raw_data)
@@ -399,6 +400,8 @@ def run_main():
     parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
     parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data.')
     parser.add_argument('--mpl_subrate', type=int, default=1000, help='Control subrate for mpl plotting.')
+    parser.add_argument('--mpl_start', type=int, default=0, help='Control number of samples to plot with mpl.')
+    parser.add_argument('--mpl_end', type=int, default=-1, help='Control number of samples to plot with mpl.')
     parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
     parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
     parser.add_argument('uut', nargs=1, help='uut')
