@@ -67,9 +67,15 @@ else iterate files in dir
     dir/nnnnn*
 
 TO DEMUX ON WINDOWS TO STORE CHANNELISED DATA:
-python .\host_demux.py --save=1 --src="muxed" --pchan=none acq2106_114
-    Make sure that the muxed data is in D:\\muxed\[UUT name]\
+python .\host_demux.py --save=1 --src="[dir]" --pchan=none acq2106_114
+    Make sure that the muxed data is in D:\\[dir]\[UUT name]\
+Where [dir] is the location of the data.
+
 Demuxed data will be written to D:\\demuxed\[UUT name]\
+To plot subsampled data on windows:
+
+python .\host_demux.py --src=Projects --nchan=8
+--pchan 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 --stack_480="2x8" --plot_mpl=1 acq2106_120
 
 """
 
