@@ -79,7 +79,7 @@ python .\host_demux.py --src=Projects --nchan=8
 
 """
 
-import pykst
+
 import numpy as np
 import os
 import re
@@ -88,6 +88,8 @@ import subprocess
 import acq400_hapi
 import time
 import matplotlib.pyplot as plt
+if os.name != "nt":
+    import pykst
 
 
 def channel_required(args, ch):
@@ -421,7 +423,7 @@ def run_main():
         args.WSIZE = 4
 
     if os.name == "nt":  # do this if windows system.
-        args.uutroot = r"D:\{}\{}".format(args.src, args.uut[0])
+        args.uutroot = r"{}:\{}\{}".format(args.drive_letter, args.src, args.uut[0])
     elif os.path.isdir(args.src):
         args.uutroot = r"{}/{}".format(args.src, args.uut[0])
         print("uutroot {}".format(args.uutroot))
