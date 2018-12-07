@@ -105,7 +105,7 @@ def init_shot(args):
 
     if args.run_hts:
         uut_port_map = map_uuts()
-    make_fifos(args)
+        make_fifos(args)
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     set_sync_roles(args)
     
