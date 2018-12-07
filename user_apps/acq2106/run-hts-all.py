@@ -107,6 +107,15 @@ def init_shot(args):
         uut_port_map = map_uuts()
         make_fifos(args)
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
+
+    for uut in uuts:
+        uut.s0.transient = "SOFT_TRIGGER=0"
+        
+    if acq400_hapi.intSI_cvt(args.fclk) > 40000000:
+        print("fclk > 40M, setting 2x4 mode")
+        for uut in uuts:
+            uut.s0.stack_480 = '2x4'
+
     set_sync_roles(args)
     
 def _store_shot(shot):
