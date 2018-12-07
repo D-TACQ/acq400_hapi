@@ -13,6 +13,7 @@ class Struct(object):
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
 
+uut_port_map = {}
 def map_uuts():
     ids = subprocess.check_output(["get-ident-all"]).split('\n')
     uut_port_map = {}
@@ -24,7 +25,6 @@ def map_uuts():
 
     return uut_port_map
 
-uut_port_map = map_uuts()
 uuts = []
 
 
@@ -101,6 +101,10 @@ def release_the_trigger(args):
 
 def init_shot(args):
     global uuts
+    global uut_port_map
+
+    if args.run_hts:
+        uut_port_map = map_uuts()
     make_fifos(args)
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     set_sync_roles(args)
