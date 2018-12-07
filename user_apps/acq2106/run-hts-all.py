@@ -141,10 +141,7 @@ def store_shot(args):
             
     _store_shot(int(shot[0]))
     
-    
-    
-# sudo mv /mnt/datastream/ACQ400DATA/* /mnt/datastream/SHOT_0134/    
-def run_shot(args):
+def run_hts(args):
     cmd = ['mate-terminal']
     tabdef = '--window-with-profile=Default'
 
@@ -161,8 +158,12 @@ def run_shot(args):
         cmd.append('--command=cat {}'.format(args.fifos[ii]))                
 
     print(cmd)
-    subprocess.check_call(cmd)
-
+    subprocess.check_call(cmd)    
+# sudo mv /mnt/datastream/ACQ400DATA/* /mnt/datastream/SHOT_0134/    
+def run_shot(args):
+    if args.run_hts:
+        run_hts(args)
+        
     wait_for_state(args, 'ARM', timeout=45)
     
     if args.etrg == 1:
@@ -179,6 +180,7 @@ def run_main():
     parser.add_argument('--etrg', type=int, default=0, help='1: enable external trg')
     parser.add_argument('--fclk', type=str, default='10M', help='sample clock before decimation')
     parser.add_argument('--store', type=int, default=0, help='1: store shot after capture')
+    parser.add_argument('--run_hts', type=int, default=1, help='1: run the hts-helper, 0: do not run')
     parser.add_argument('uuts', nargs='+', help='uut')
     args = parser.parse_args()
     init_shot(args)
