@@ -14,6 +14,7 @@ class Struct(object):
         self.__dict__.update(kwds)
 
 uut_port_map = {}
+
 def map_uuts():
     ids = subprocess.check_output(["get-ident-all"]).split('\n')
     uut_port_map = {}
@@ -37,9 +38,9 @@ def make_fifos(args):
         except OSError, e:
             if e.errno != 17:            
                 sys.exit("ERROR OSError, {}", e)
-                
+
         args.fifos.append(fn)
-            
+
 scmd = ('python', '-u', './user_apps/acq400/sync_role.py')
 
 def set_sync_roles(args):
@@ -68,7 +69,7 @@ def wait_for_state(args, state, timeout=0):
         finished = False
         dots = 0
         pollcat = 0
-        
+
         while not finished:
             st = uut.s0.CONTINUOUS_STATE.split(' ')[1]
             finished = st == state
@@ -88,9 +89,9 @@ def wait_for_state(args, state, timeout=0):
                 time.sleep(1)
             pollcat += 1
     print("")
-            
+
 def release_the_trigger(args):
-    
+
     print("RELEASE the trigger REMOVEME when hardware fixed")
     cmd = []
     cmd.extend(scmd)
@@ -110,14 +111,14 @@ def init_shot(args):
 
     for uut in uuts:
         uut.s0.transient = "SOFT_TRIGGER=0"
-        
+
     if acq400_hapi.intSI_cvt(args.fclk) > 40000000:
         print("fclk > 40M, setting 2x4 mode")
         for uut in uuts:
             uut.s0.stack_480 = '2x4'
 
     set_sync_roles(args)
-    
+
 def _store_shot(shot):
     print("store_shot {}".format(shot))    
     src = os.getenv('HTSDATA')
@@ -125,7 +126,7 @@ def _store_shot(shot):
     base = os.getenv('HTSARCHIVE', os.path.dirname(src))
     shotbase = "{}/SHOTS/{:08d}".format(base, shot)
     print("copy from {} to {}".format(src, shotbase))
-    
+
     try:
         os.makedirs(shotbase)
 #OSError: [Errno 17] File exists: '/mnt/datastream/SHOTS/00000144'
@@ -134,26 +135,26 @@ def _store_shot(shot):
             sys.exit("WARNING: {}\nrefusing to overwrite duplicate shot, please backup by hand".format(e))
         else:
             sys.exit("ERROR OSError, {}", e) 
-        
-    
+
+
     for sp in srcports:
         cmd = [ 'sudo', 'mv', sp, shotbase]
         subprocess.check_call(cmd)   
-    
+
     cmd = [ 'du', '-sh', shotbase]
     subprocess.check_call(cmd)
-    
+
 def store_shot(args):
     wait_for_state(args, 'IDLE')
     shot = [ u.s1.shot for u in uuts]
-    
+
     s0 = shot[0]
     for ii, s1 in enumerate(shot[1:]):
         if s0 != s1:
             print("WARNING: uut {} shot {} does not equal master {}".format(uuts[ii].uut, s1, s0))
-            
+
     _store_shot(int(shot[0]))
-    
+
 def run_hts(args):
     cmd = ['mate-terminal']
     tabdef = '--window-with-profile=Default'
@@ -163,29 +164,41 @@ def run_hts(args):
         cmd.append(tabdef)
         cmd.append('--title={}'.format(uut))
         cmd.append('--command=run-hts {} {} {} {}'.\
-                format(uut, ports.lport, args.secs, ports.rport))
+                   format(uut, ports.lport, args.secs, ports.rport))
         tabdef = '--tab-with-profile=Default'
-        
+
         cmd.append(tabdef)
         cmd.append('--title={}.hts'.format(uut))
         cmd.append('--command=cat {}'.format(args.fifos[ii]))                
 
     print(cmd)
     subprocess.check_call(cmd)    
+
+def print_mgt_command(args):
+    global uuts
+    BLOCKSZ = 0x400000
+    nchan = int(uuts[0].s0.NCHAN)
+    mbps = nchan * acq400_hapi.intSI_cvt(args.fclk) * 2
+    blocks = mbps * int(args.secs) / BLOCKSZ
+    for uut in args.uuts:
+        print("# python mgtdramshot.py --captureblocks={} {}".format(blocks, uut))
+
 # sudo mv /mnt/datastream/ACQ400DATA/* /mnt/datastream/SHOT_0134/    
 def run_shot(args):
     if args.run_hts:
         run_hts(args)
-        
+    else:
+        print_mgt_command(args)
+
     wait_for_state(args, 'ARM', timeout=45)
-    
+
     if args.etrg == 1:
-       release_the_trigger(args) 
-       
+        release_the_trigger(args) 
+
     if args.store == 1:
         store_shot(args)
-        
-       
+
+
 
 def run_main():
     parser = argparse.ArgumentParser(description='run hts all uuts')
