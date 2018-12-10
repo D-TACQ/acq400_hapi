@@ -172,7 +172,7 @@ def run_hts(args):
         cmd.append('--command=cat {}'.format(args.fifos[ii]))
 
     print(cmd)
-    subprocess.check_call(cmd)    
+    subprocess.check_call(cmd)
 
 def print_mgt_command(args):
     global UUTS
@@ -183,7 +183,7 @@ def print_mgt_command(args):
     for uut in args.uutnames:
         print("# python mgtdramshot.py --captureblocks={} {}".format(blocks, uut))
 
-# sudo mv /mnt/datastream/ACQ400DATA/* /mnt/datastream/SHOT_0134/    
+# sudo mv /mnt/datastream/ACQ400DATA/* /mnt/datastream/SHOT_0134/
 def run_shot(args):
     if args.run_hts:
         run_hts(args)
@@ -206,7 +206,7 @@ def _run_mgt_cmd(args, blocks):
 
     print(cmd)
     # subprocess.check_call(cmd)
-    subprocess.Popen(cmd)
+    subprocess.Popen(cmd) # Popen runs asynchronously. 
 
 
 def run_mgt_command(args):
