@@ -9,8 +9,9 @@ import argparse
 
 MAXSAM = 1000000
 
-def plot_data(datafile):
-    ch01 = np.fromfile(datafile, dtype='int16')
+def plot_data(args):
+    datafile = args.file[0]
+    ch01 = np.fromfile(datafile, dtype=args.np_data_type)
     print("Data file {}, {} samples".format(datafile, len(ch01)))
     if len(ch01) > MAXSAM:
         ch01 = ch01[0:MAXSAM]
@@ -22,8 +23,16 @@ def plot_data(datafile):
 def run_main():
     parser = argparse.ArgumentParser(description='plots a single channel data file')
     parser.add_argument('file', nargs=1, help='data file')
+    parser.add_argument('--wordsize', type=int, default=16, help='16 or 32')
     args = parser.parse_args()
-    plot_data(args.file[0])
+    if args.wordsize == 16:
+        args.np_data_type = np.int16
+        args.WSIZE = 2
+    else:
+        args.np_data_type = np.int32
+        args.WSIZE = 4
+
+    plot_data(args)
 
 
 if __name__ == '__main__':

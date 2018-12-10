@@ -172,7 +172,23 @@ def run_hts(args):
         cmd.append('--command=cat {}'.format(args.fifos[ii]))
 
     print(cmd)
-    subprocess.check_call(cmd)
+    subprocess.check_call(cmd)    
+
+def print_mgt_command(args):
+    global UUTS
+    BLOCKSZ = 0x400000
+    nchan = int(UUTS[0].s0.NCHAN)
+    mbps = nchan * acq400_hapi.intSI_cvt(args.fclk) * 2
+    blocks = mbps * int(args.secs) / BLOCKSZ
+    for uut in args.uutnames:
+        print("# python mgtdramshot.py --captureblocks={} {}".format(blocks, uut))
+
+# sudo mv /mnt/datastream/ACQ400DATA/* /mnt/datastream/SHOT_0134/    
+def run_shot(args):
+    if args.run_hts:
+        run_hts(args)
+    else:
+        print_mgt_command(args)
 
 
 def _run_mgt_cmd(args, blocks):
