@@ -34,9 +34,9 @@ def make_fifos(args):
     for uut in args.uutnames:
         fn = "/tmp/{}.hts".format(uut)
         try:
-            os.mkfifo(fn)            
+            os.mkfifo(fn)
         except OSError, e:
-            if e.errno != 17:            
+            if e.errno != 17:
                 sys.exit("ERROR OSError, {}", e)
 
         args.fifos.append(fn)
@@ -56,14 +56,14 @@ def set_sync_roles(args):
     for uut in args.uutnames:
         cmd.append(uut)
     print(cmd)
-    subprocess.check_call(cmd)        
+    subprocess.check_call(cmd)
 
 time0 = 0
 
 def wait_for_state(args, state, timeout=0):
     global time0
     if time0 == 0:
-        time0 = time.time()  
+        time0 = time.time()
     for uut in UUTS:
         olds = ""
         finished = False
@@ -74,13 +74,13 @@ def wait_for_state(args, state, timeout=0):
             st = uut.s0.CONTINUOUS_STATE.split(' ')[1]
             finished = st == state
             news = "polling {}:{} {} waiting for {}".format(uut.uut, st, 'DONE' if finished else '', state)
-            if news != olds: 
+            if news != olds:
                 sys.stdout.write("\n{:06.2f}: {}".format(time.time() - time0, news))
                 olds = news
             else:
                 sys.stdout.write('.')
                 dots += 1
-                if dots >= 20:                    
+                if dots >= 20:
                     dots = 0
                     olds = ""
             if not finished:
@@ -98,7 +98,7 @@ def release_the_trigger(args):
     cmd.append('--enable_trigger=1')
     cmd.append(args.uutnames[0])
     print(cmd)
-    subprocess.check_call(cmd)     
+    subprocess.check_call(cmd)
 
 def init_shot(args):
     global UUTS
@@ -120,7 +120,7 @@ def init_shot(args):
     set_sync_roles(args)
 
 def _store_shot(shot):
-    print("store_shot {}".format(shot))    
+    print("store_shot {}".format(shot))
     src = os.getenv('HTSDATA')
     srcports = glob.glob('{}/*'.format(src))
     base = os.getenv('HTSARCHIVE', os.path.dirname(src))
@@ -134,12 +134,12 @@ def _store_shot(shot):
         if e.errno == 17:
             sys.exit("WARNING: {}\nrefusing to overwrite duplicate shot, please backup by hand".format(e))
         else:
-            sys.exit("ERROR OSError, {}", e) 
+            sys.exit("ERROR OSError, {}", e)
 
 
     for sp in srcports:
         cmd = [ 'sudo', 'mv', sp, shotbase]
-        subprocess.check_call(cmd)   
+        subprocess.check_call(cmd)
 
     cmd = [ 'du', '-sh', shotbase]
     subprocess.check_call(cmd)
@@ -169,10 +169,10 @@ def run_hts(args):
 
         cmd.append(tabdef)
         cmd.append('--title={}.hts'.format(uut))
-        cmd.append('--command=cat {}'.format(args.fifos[ii]))                
+        cmd.append('--command=cat {}'.format(args.fifos[ii]))
 
     print(cmd)
-    subprocess.check_call(cmd)    
+    subprocess.check_call(cmd)
 
 def print_mgt_command(args):
     global UUTS
@@ -183,17 +183,51 @@ def print_mgt_command(args):
     for uut in args.uutnames:
         print("# python mgtdramshot.py --captureblocks={} {}".format(blocks, uut))
 
-# sudo mv /mnt/datastream/ACQ400DATA/* /mnt/datastream/SHOT_0134/    
+# sudo mv /mnt/datastream/ACQ400DATA/* /mnt/datastream/SHOT_0134/
 def run_shot(args):
     if args.run_hts:
         run_hts(args)
     else:
         print_mgt_command(args)
 
+
+def _run_mgt_cmd(args, blocks):
+    cmd = ['mate-terminal']
+
+    tabdef = '--window-with-profile=Default'
+
+    for ii, uut in enumerate(args.uutnames):
+        spawned_cmd = "python -u ./user_apps/acq2106/mgtdramshot.py --captureblocks={} {}".format(blocks, uut)
+        cmd.append(tabdef)
+        cmd.append('--title={}'.format(uut))
+        # spawned_cmd = 'powershell pwd'
+        cmd.append('--command={}'.format(spawned_cmd))
+        tabdef = '--tab-with-profile=Default'
+
+    print(cmd)
+    # subprocess.check_call(cmd)
+    subprocess.Popen(cmd) # Popen runs asynchronously. 
+
+
+def run_mgt_command(args):
+    global UUTS
+    BLOCKSZ = 0x400000
+    nchan = int(UUTS[0].s0.NCHAN)
+    mbps = nchan * acq400_hapi.intSI_cvt(args.fclk) * 2
+    blocks = mbps * int(args.secs) / BLOCKSZ
+    _run_mgt_cmd(args, blocks)
+
+# sudo mv /mnt/datastream/ACQ400DATA/* /mnt/datastream/SHOT_0134/
+def run_shot(args):
+    if args.run_hts:
+        run_hts(args)
+    else:
+        run_mgt_command(args)
+
     wait_for_state(args, 'ARM', timeout=45)
 
     if args.etrg == 1:
-        release_the_trigger(args) 
+        release_the_trigger(args)
 
     if args.store == 1:
         store_shot(args)

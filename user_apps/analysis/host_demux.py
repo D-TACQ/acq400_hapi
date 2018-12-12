@@ -79,7 +79,7 @@ python .\host_demux.py --src=Projects --nchan=8
 
 """
 
-import pykst
+
 import numpy as np
 import os
 import re
@@ -88,6 +88,8 @@ import subprocess
 import acq400_hapi
 import time
 import matplotlib.pyplot as plt
+if os.name != "nt":
+    import pykst
 
 
 def channel_required(args, ch):
@@ -225,7 +227,7 @@ def read_data_file(args, NCHAN):
     return raw_channels
 
 def save_data(args, raw_channels):
-
+    
     if os.name == "nt": # if system is windows.
         path = r'{}:\\demuxed\{}'.format(args.drive_letter, args.uut[0]) # raw string literal so we can use \ in path.
         if not os.path.exists(path):
@@ -234,11 +236,18 @@ def save_data(args, raw_channels):
 
     else:
         subprocess.call(["mkdir", "-p", args.saveroot])
+
+    uutname = args.uut[0].uut
     for enum, channel in enumerate(raw_channels):
-        data_file = open("{}/data_{:02d}.dat".format(args.saveroot, enum+1), "wb+")
+        data_file = open("{}/{}_{:02d}.dat".format(args.saveroot, uutname, enum+1), "wb+")
         channel.tofile(data_file, '')
 
     print "data saved to directory: {}".format(args.saveroot)
+    with open("{}/format".format(args.saveroot), 'w') as fmt:
+        fmt.print("# dirfile format file for {}".format(uutname))
+        for enum, channel in enumerate(raw_channels):
+            fmt.print("{}_{:02d}.dat RAW s 1".format(uutname, enum+1))
+
     return raw_channels
 
 
@@ -421,7 +430,7 @@ def run_main():
         args.WSIZE = 4
 
     if os.name == "nt":  # do this if windows system.
-        args.uutroot = r"D:\{}\{}".format(args.src, args.uut[0])
+        args.uutroot = r"{}:\{}\{}".format(args.drive_letter, args.src, args.uut[0])
     elif os.path.isdir(args.src):
         args.uutroot = r"{}/{}".format(args.src, args.uut[0])
         print("uutroot {}".format(args.uutroot))
