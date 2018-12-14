@@ -8,6 +8,7 @@ SAMPLESZ = 16
 
 def run_shot(uut, shot, fn):
     print("run_shot {} {}".format(shot, fn))
+    uut.s1.playloop_length = '0 0'
     uut.s1.playloop_maxlen = os.stat(fn).st_size/SAMPLESZ
     t1 = time.time()
     os.system('cat {} | pv | nc {} 54203 1>/dev/null'.format(fn, uut.uut))
