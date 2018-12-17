@@ -190,7 +190,7 @@ def _run_mgt_cmd(args, blocks):
 
     print(cmd)
     # subprocess.check_call(cmd)
-    subprocess.Popen(cmd)
+    subprocess.Popen(cmd) # Popen runs asynchronously. 
 
 
 def run_mgt_command(args):
