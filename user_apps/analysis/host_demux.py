@@ -88,8 +88,14 @@ import subprocess
 import acq400_hapi
 import time
 import matplotlib.pyplot as plt
+
+has_pykst = False
 if os.name != "nt":
-    import pykst
+    try:
+        import pykst
+        has_pykst = True
+    except ImportError:
+        print("WARNING: failed to import pykst, no kst plots")
 
 
 def channel_required(args, ch):
@@ -244,9 +250,9 @@ def save_data(args, raw_channels):
 
     print "data saved to directory: {}".format(args.saveroot)
     with open("{}/format".format(args.saveroot), 'w') as fmt:
-        fmt.print("# dirfile format file for {}".format(uutname))
+        fmt.write("# dirfile format file for {}\n".format(uutname))
         for enum, channel in enumerate(raw_channels):
-            fmt.print("{}_{:02d}.dat RAW s 1".format(uutname, enum+1))
+            fmt.write("{}_{:02d}.dat RAW s 1\n".format(uutname, enum+1))
 
     return raw_channels
 
@@ -262,13 +268,7 @@ def plot_mpl(args, raw_channels):
     return None
 
 
-def plot_data(args, raw_channels):
-
-    if args.plot_mpl == 1:
-        # if arg set then plot with matplotlib instead.
-        plot_mpl(args, raw_channels)
-        return None
-
+def plot_data_kst(args, raw_channels):
     client = pykst.Client("NumpyVector")
     llen = len(raw_channels[0])
     if args.egu == 1:
@@ -310,6 +310,17 @@ def plot_data(args, raw_channels):
         p1.set_bottom_label(xu)
         p1.add(c1)
 
+
+def plot_data(args, raw_channels):
+    if args.plot_mpl == 1:
+        # if arg set then plot with matplotlib instead.
+        plot_mpl(args, raw_channels)
+        return None
+
+    if has_pykst:
+        plot_data_kst(args, raw_channels)
+    else:
+        print("SORRY, kst automation via pykst not available. Please install pykst, or use kst DirFile importer")
 
 # double_up : data is presented as [ ch010, ch011, ch020, ch021 ] .. so zip them together..
 def double_up(args, d1):
