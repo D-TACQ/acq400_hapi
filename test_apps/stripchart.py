@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -9,7 +9,6 @@ def stripchart(args):
 
     plt.ion()
     dlist = []
-    print args.chs
     for item in range(0, args.chs):
         dlist.append([])
 
@@ -22,7 +21,6 @@ def stripchart(args):
 
         for num, list in enumerate(dlist):
             dlist[num].append(data[num])
-            #print "list ", num, " = ", dlist[num]
 
         for num, list in enumerate(dlist):
             plt.plot(dlist[num])
@@ -31,12 +29,9 @@ def stripchart(args):
             for num, list in enumerate(dlist):
                 dlist[num] = dlist[num][1:-1]
 
-        #plt.ylim((-100,100))
         plt.draw()
         plt.pause(0.1)
         plt.clf()
-        print "drawing"
-
         time.sleep(args.sleep)
 
 def run_main():
