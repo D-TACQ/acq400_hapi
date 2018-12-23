@@ -26,17 +26,21 @@ from builtins import input
         
 def load_awg(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
-    work = awg_data.RunsFiles(uut, (args.file))
-    
-    _autorearm = True if args.autorearm == 1 else False
 
-    work.load(autorearm=_autorearm) 
+    if args.clear_autorearm:
+        uut.s1.playloop_maxshot = '1'
+        print "allow system to run final shot and return to idle"
+    else:
+        work = awg_data.RunsFiles(uut, (args.file))
+        _autorearm = True if args.autorearm == 1 else False
+        work.load(autorearm=_autorearm) 
             
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 simple awg demo')
     parser.add_argument('--file', default="", help="file to load")
-    parser.add_argument('--autorearm', default=0 type=int)
+    parser.add_argument('--autorearm', default=0, type=int, help="enable autorearm mode")
+    parser.add_argument('--clear_autorearm', default=0, help="clear previous autorearm mode")
     parser.add_argument('uuts', nargs=1, help="uut ")
     load_awg(parser.parse_args())
 
