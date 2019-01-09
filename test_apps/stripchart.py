@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 import argparse
 import time
 import subprocess
+try:
+    import pyepics
+except Exception:
+    print "Not importing pyepics."
 
 def stripchart(args):
 
