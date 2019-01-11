@@ -38,7 +38,7 @@ def _run_shot_py(uut, fn, port):
             sys.stderr.write("DONE\n")
 
 
-            
+
 
 _run_shot = _run_shot_nc
 
@@ -54,7 +54,7 @@ def run_shot(uut, shot, fn, port, awgsite):
         time.sleep(0.1)
     t3 = time.time()
     return( t1, t2, t3)
-    
+
 
 def run_test(args):
     global _run_shot
@@ -70,17 +70,17 @@ def run_test(args):
     for shot in range(0, args.reps):
         for fn in args.files:
             times.append(run_shot(uut, shot, fn, port, awgsite))
-	    if args.gaps:
-		time.sleep(args.gaps)
-    
+        if args.gaps:
+            time.sleep(args.gaps)
+
     totalplay = 0
     for shot in times:
         playtime = shot[2] - shot[0]
         totalplay += playtime
         print("{}".format(shot[2] - shot[0]))
-   
+
     print("mean {}".format(totalplay/len(times)))
-       
+
 
 def run_main():
     parser = argparse.ArgumentParser(description = 'awg speed test')
