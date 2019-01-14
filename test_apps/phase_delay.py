@@ -8,8 +8,8 @@ from scipy.signal import hilbert, chirp
 def run_test(args):
 
     # Load files
-    ch1 = np.fromfile(args.file1, dtype=np.int16)
-    ch2 = np.fromfile(args.file2, dtype=np.int16)
+    ch1 = np.fromfile(args.file1, dtype=args.type)
+    ch2 = np.fromfile(args.file2, dtype=args.type)
 
     x1 = ch1
     x2 = ch2
@@ -48,16 +48,24 @@ def run_test(args):
         x1h = hilbert(x1)
         x2h = hilbert(x2)
         ph_diff = np.angle(x1h/x2h)
-        phase_diff = ph_diff[0]
+        phase_diff = abs(ph_diff[0])
 
     print "Phase difference in rads = ", phase_diff
+    sec = phase_diff / (360 * args.fsig);
+    print "Difference in seconds is ", sec
+    print "Difference as % of sample clock ", sec * 100 * args.s_clk
 
 def run_main():
     parser = argparse.ArgumentParser(description = 'awg speed test')
-    parser.add_argument('--file1', type=str, default="CH01", help='ch1 file name')
-    parser.add_argument('--file2', type=str, default="CH02", help='ch2 file name')
+    parser.add_argument('--file1', type=str, default="CH01", help='ch1 file name.')
+    parser.add_argument('--file2', type=str, default="CH02", help='ch2 file name.')
     parser.add_argument('--method', type=int, default=1, help='Which method to use.')
-    run_test(parser.parse_args())
+    parser.add_argument('--fsig', type=int, default=10, help='Frequency of the signal.')
+    parser.add_argument('--s_clk', type=int, default=43500, help='Frequency of the clk.')
+    parser.add_argument('--type', type=int, default=16, help='16 or 32 bit data')
+    args = parser.parse_args()
+    args.type = np.int16 if args.type == 16 else np.int32
+    run_test(args)
 
 
 if __name__ == '__main__':
