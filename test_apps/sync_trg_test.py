@@ -17,7 +17,7 @@ def wait_for_state(uut, state, timeout=0):
         pollcat = 0
 
         while not finished:
-            st = uut.s0.CONTINUOUS_STATE.split(' ')[1]
+            st = uut.s0.TRANS_ACT_STATE.split(' ')[1] #Real name TRANS_ACT:STATE
             finished = st == state
             news = "polling {}:{} {} waiting for {}".format(uut.uut, st, 'DONE' if finished else '', state)
             if news != olds:
@@ -42,17 +42,24 @@ uut1 = acq400_hapi.Acq400(sys.argv[1]) # first arg
 uut2 = acq400_hapi.Acq400(sys.argv[2]) # second arg
 
 while True:
-    
+
     ### Change trg to d4
     uut1.s1.trg = "1,5,1"
     print "Setting trg to no trg"
+
     ### Arm uuts
     uut2.s0.set_arm = 1
     wait_for_state(uut2, "ARM")
     uut1.s0.set_arm = 1
     wait_for_state(uut1, "ARM")
     print "Set arm"
+
     ### Change trigger back to external
     uut1.s1.trg = "1,0,1"
     print "Set trigger to ext"
-    time.sleep(5)
+
+    # Wait for UUTs to be IDLE again
+    wait_for_state(uut1, "IDLE")
+    wait_for_state(uut2, "IDLE")
+
+    
