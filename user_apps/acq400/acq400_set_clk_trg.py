@@ -1,6 +1,15 @@
 #!/usr/bin/python
 
 
+"""
+A script to configure a UUT as master or slave depending on the position of the
+HDMI cable in the system.
+
+Use case 1: Run on a specific UUT locally.
+Use case 2: Run remotely from a host by providing a UUT argument.
+"""
+
+
 import acq400_hapi
 import argparse
 import socket
@@ -9,8 +18,8 @@ import socket
 def set_clk_trg(args):
     try:
         uut = acq400_hapi.Acq400(args.uut)
-    except: 
-        print "Connection refused. If you are running this script from "
+    except:
+        print "Connection refused. If you are running this script from " \
               "a remote host then make sure you provide a uut argument."
     # Check if master or slave
     if uut.s0.SIG_SYNC_BUS_OUT_CABLE_DET.split(" ")[-1] == "CONNECTED":
