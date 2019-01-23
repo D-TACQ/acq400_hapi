@@ -13,10 +13,11 @@ import socket
 import re
 import sys
 import os
-from future import builtins
-from builtins import input
-
-
+try:
+    from future import builtins
+    from builtins import input
+except:
+    print("No builtins/future found. Some features might not work correctly.")
 
 
 class Netclient:
