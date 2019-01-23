@@ -6,6 +6,11 @@ already been performed. A capture is performed using the "release_the_trigger"
 method. Shot number and sample counts are then verified.
 Example usage:
 python sync_trg_test.py acq1001_377 acq1001_376
+
+postshot on UUTs should be:
+    var=$(get.site 1 shot)
+    spad=$(printf "%08d" $var)
+    set.site 0 spad0=$spad
 """
 
 
@@ -62,6 +67,13 @@ def run_test(args):
             print "# of samples recorded by each UUT not identical. Fail."
             print "Ending test now"
             break
+
+        # Check postshot set spad0 to shot num
+        for uut in args.uuts:
+            if uut.s0.spad0[-len(shotnums[0]):] == shotnums[0]:
+                print "Postshot script is effective."
+            else:
+                print "Postshot script failed. Exiting."
 
         print "Finished iteration"
 
