@@ -1,4 +1,4 @@
-bigplota module
+bigplota Module
 ===============
 
 .. automodule:: bigplota

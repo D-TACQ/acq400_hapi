@@ -1,7 +1,0 @@
-acq480\_controls module
-=======================
-
-.. automodule:: acq480_controls
-    :members:
-    :undoc-members:
-    :show-inheritance:

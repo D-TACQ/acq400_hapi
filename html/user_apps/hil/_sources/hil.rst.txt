@@ -1,7 +1,0 @@
-hil module
-==========
-
-.. automodule:: hil
-    :members:
-    :undoc-members:
-    :show-inheritance:

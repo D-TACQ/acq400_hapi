@@ -1,7 +1,0 @@
-run\_gpg module
-===============
-
-.. automodule:: run_gpg
-    :members:
-    :undoc-members:
-    :show-inheritance:

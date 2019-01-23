@@ -1,7 +1,0 @@
-bolo8\_cal\_cap\_loop module
-============================
-
-.. automodule:: bolo8_cal_cap_loop
-    :members:
-    :undoc-members:
-    :show-inheritance:

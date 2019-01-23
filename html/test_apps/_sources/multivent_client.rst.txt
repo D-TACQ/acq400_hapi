@@ -1,7 +1,0 @@
-multivent\_client module
-========================
-
-.. automodule:: multivent_client
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -1,7 +1,0 @@
-mgtdramshot module
-==================
-
-.. automodule:: mgtdramshot
-    :members:
-    :undoc-members:
-    :show-inheritance:

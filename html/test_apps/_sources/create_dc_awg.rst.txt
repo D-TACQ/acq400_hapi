@@ -1,7 +1,0 @@
-create\_dc\_awg module
-======================
-
-.. automodule:: create_dc_awg
-    :members:
-    :undoc-members:
-    :show-inheritance:

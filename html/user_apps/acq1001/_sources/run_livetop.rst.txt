@@ -1,7 +1,0 @@
-run\_livetop module
-===================
-
-.. automodule:: run_livetop
-    :members:
-    :undoc-members:
-    :show-inheritance:

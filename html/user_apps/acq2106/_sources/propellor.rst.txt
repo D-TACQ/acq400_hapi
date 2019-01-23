@@ -1,7 +1,0 @@
-propellor module
-================
-
-.. automodule:: propellor
-    :members:
-    :undoc-members:
-    :show-inheritance:

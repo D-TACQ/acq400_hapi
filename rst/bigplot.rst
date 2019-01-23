@@ -1,4 +1,4 @@
-bigplot module
+bigplot Module
 ==============
 
 .. automodule:: bigplot

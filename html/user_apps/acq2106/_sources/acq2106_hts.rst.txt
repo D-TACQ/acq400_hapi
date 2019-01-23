@@ -1,7 +1,0 @@
-acq2106\_hts module
-===================
-
-.. automodule:: acq2106_hts
-    :members:
-    :undoc-members:
-    :show-inheritance:

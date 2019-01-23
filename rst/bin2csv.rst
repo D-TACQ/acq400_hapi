@@ -1,4 +1,4 @@
-bin2csv module
+bin2csv Module
 ==============
 
 .. automodule:: bin2csv

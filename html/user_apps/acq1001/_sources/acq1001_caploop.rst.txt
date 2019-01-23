@@ -1,7 +1,0 @@
-acq1001\_caploop module
-=======================
-
-.. automodule:: acq1001_caploop
-    :members:
-    :undoc-members:
-    :show-inheritance:

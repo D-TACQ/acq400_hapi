@@ -1,7 +1,0 @@
-acq1014\_configure\_transient module
-====================================
-
-.. automodule:: acq1014_configure_transient
-    :members:
-    :undoc-members:
-    :show-inheritance:
