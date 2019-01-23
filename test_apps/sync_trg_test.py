@@ -2,7 +2,10 @@
 
 """
 A script used to test N UUTs syncd using sync_role. This script assumes this has
-already been performed. A capture is performed and the
+already been performed. A capture is performed using the "release_the_trigger"
+method. Shot number and sample counts are then verified.
+Example usage:
+python sync_trg_test.py acq1001_377 acq1001_376
 """
 
 
