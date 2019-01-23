@@ -61,10 +61,5 @@ while True:
     # Wait for UUTs to be IDLE again
     wait_for_state(uut1, "IDLE")
     wait_for_state(uut2, "IDLE")
+
     
-
-
-
-
-
-
