@@ -34,9 +34,17 @@ import sys
 import acq400_hapi
 import argparse
 import os
+import numpy as np
 
 SAVEDATA=os.getenv("SAVEDATA", None)
 
+def save_2d_data(args, chx, nuut, nchan, shot):
+     print(np.shape(chx))    
+     with open("%s/DATA2D_%d.dat" % (args.save_data, shot), 'wb') as fid: 
+         for uu in range(nuut):
+             for cc in range(nchan):
+                 chx[uu][cc].tofile(fid, '') 
+                 
 def run_loop(args):
     global SAVEDATA
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]             
@@ -63,6 +71,10 @@ def run_loop(args):
             else:
                 shot_controller.run_shot(soft_trigger=0,acq1014_ext_trigger=3)
 
+            chx, ncol, nchan, nsam = shot_controller.read_channels()
+           
+            if args.save_2D:
+                save_2d_data(args, chx, len(uuts), nchan, shot)
             if args.nsam > 0:
                 nsam = [len(u.read_chan(1)) for u in uuts]
                 err = False
@@ -93,6 +105,8 @@ def run_main():
     parser.add_argument('--trg', default='int', type=str, help="trigger int|ext")
     parser.add_argument('--nsam', default=0, type=int, help='expected number of samples')
     parser.add_argument('--shots', default=999999, type=int, help='number of shots to run')
+    parser.add_argument('--save_data', default='DATA', type=str, help="store data to specified directory")
+    parser.add_argument('--save_2D', default=1, help="store 2D data array to save_data")
     parser.add_argument('uuts', nargs='+', help="uut pairs: m1,m2 [s1,s2 ...]")
     run_loop(parser.parse_args())
 

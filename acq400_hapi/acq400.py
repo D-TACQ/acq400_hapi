@@ -40,6 +40,7 @@ class AcqPorts:
     SITE0 = 4220
     SEGSW = 4250
     SEGSR = 4251
+    DPGSTL = 4521
     GPGSTL= 4541
     GPGDUMP = 4543
 
@@ -83,6 +84,11 @@ class STATE:
         if st==STATE.CLEANUP:
             return "CLEANUP"
         return "UNDEF"
+
+class Signals:
+    EXT_TRG_DX = 'd0'
+    INT_TRG_DX = 'd1'
+    MB_CLK_DX = 'd1'
 
 class StreamClient(netclient.Netclient):
     """handles live streaming data"""
@@ -473,7 +479,7 @@ class Acq400:
     def set_sync_routing_slave(self):
         self.set_sync_routing_master()
         self.s0.SIG_SRC_CLK_1 = "HDMI"
-        self.s0.SIG_SRC_TRG_0 = "HDMI_TRG"
+        self.s0.SIG_SRC_TRG_0 = "HDMI"
 
     def set_sync_routing(self, role):
         # deprecated
@@ -510,9 +516,9 @@ class Acq400:
                     return
             raise ValueError("frequency out of range {}".format(hz))
 
-    def load_gpg(self, stl, trace = False):
+    def load_stl(self, stl, port, trace = False):
         termex = re.compile("\n")
-        with netclient.Netclient(self.uut, AcqPorts.GPGSTL) as nc:            
+        with netclient.Netclient(self.uut, port) as nc:
             lines = stl.split("\n")
             for ll in lines:
                 if trace:
@@ -526,14 +532,18 @@ class Acq400:
                         print("skip comment")
                     continue
                 nc.sock.send((ll+"\n").encode())
-                rx = nc.sock.recv(4096) 
+                rx = nc.sock.recv(4096)
                 if trace:
                     print("< {}".format(rx))
             nc.sock.send("EOF\n".encode())
             nc.sock.shutdown(socket.SHUT_WR)
-            rx = nc.sock.recv(4096) 
+            rx = nc.sock.recv(4096)
             if trace:
                 print("< {}".format(rx))
+
+
+    def load_gpg(self, stl, trace = False):
+        load_stl(self, stl, AcqPorts.GPGSTL, trace)
 
         with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
             while True:
@@ -545,6 +555,8 @@ class Acq400:
                 else:
                     break
 
+    def load_dpg(self, stl, trace = False):
+        load_stl(self, stl, AcqPorts.DPGSTL, trace)
 
     class AwgBusyError(Exception):
         def __init__(self, value):
@@ -624,8 +636,12 @@ class Acq2106(Acq400):
                 print("uut {} site {} not populated".format(_uut, site))            
 
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
+        print("set_mb_clk {} {} {}".format(hz, src, fin))
         Acq400.set_mb_clk(self, hz, src, fin)
-        self.s0.SYS_CLK_DIST_CLK_SRC = 'Si5326'
+        try:
+            self.s0.SYS_CLK_DIST_CLK_SRC = 'Si5326'
+        except AttributeError:
+            print("SYS_CLK_DIST_CLK_SRC, deprecated")
         self.s0.SYS_CLK_OE_CLK1_ZYNQ = '1'
 
     def set_sync_routing_slave(self):

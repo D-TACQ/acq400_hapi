@@ -101,6 +101,9 @@ def run_cal(args):
         run_cal1(u, shot)
     # unfortunately this sleep seems to be necessary, else subsequent shot HANGS at 21760
     time.sleep(2)
+    if args.single_calibration_only == 1:
+        shot = set_next_shot(args, even, "Cap")
+
 
 def run_capture(args):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts] 
@@ -138,12 +141,20 @@ def run_main():
     parser = argparse.ArgumentParser(description='bolo8_cal_cap_loop')
     parser.add_argument('--cap', default=1, type=int, help="capture")
     parser.add_argument('--cal', default=1, type=int, help="calibrate")
+    parser.add_argument('--single_calibration_only', default=0, type=int, help="run one calibration shot only")
     parser.add_argument('--post', default=100000, help="post trigger length")
     parser.add_argument('--clk', default="int 1000000", help='clk "int|ext SR [CR]"')
     parser.add_argument('--trg', default="int", help='trg "int|ext rising|falling"')
     parser.add_argument('--shots', default=1, type=int, help='set number of shots [1]')
     parser.add_argument('uuts', nargs='+', help="uut list")
-    run_shots(parser.parse_args())
+    args = parser.parse_args()
+    if args.single_calibration_only == 1:
+        print("setting single calibration mode, overwrites other settings")
+        args.cap = 0
+        args.cal = 1
+        args.shots = 1
+
+    run_shots(args)
 
 
 # execution starts here

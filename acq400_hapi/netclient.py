@@ -50,11 +50,15 @@ class Netclient:
     trace = int(os.getenv("NETCLIENT_TRACE", "0"))   
                 
     def __init__(self, addr, port) :
-#        print("Netclient.init")
+        print("Netclient.init {} {}".format(addr, port))
         self.buffer = ""
         self.__addr = addr
         self.__port = int(port)
-        self.sock = socket.socket()
+        try:
+            self.sock = socket.socket()
+        except socket.error as e:
+            print("Netclient {}.{} connect fail {}".format(addr, port, e))
+            raise e
         if Netclient.trace:
             print("Netclient(%s, %d) connect" % (self.__addr, self.__port))
         self.sock.connect((self.__addr, self.__port))
