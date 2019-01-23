@@ -19,7 +19,7 @@ def set_clk_trg(args):
     try:
         uut = acq400_hapi.Acq400(args.uut)
     except:
-        print "Connection refused. If you are running this script from "
+        print "Connection refused. If you are running this script from " \
               "a remote host then make sure you provide a uut argument."
     # Check if master or slave
     if uut.s0.SIG_SYNC_BUS_OUT_CABLE_DET.split(" ")[-1] == "CONNECTED":
