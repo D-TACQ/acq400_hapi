@@ -51,14 +51,14 @@ def extend_to_16_ch(args, data):
         # for index, element in enumerate(data[0::4]):
         for index in range(0,len(chunk),INCHAN):
             # duplicate AO1, AO2 for pairs and quad if exists
-            for xx in range(0, OUTPAIRS+OUTQUADS):
+            for ch in range(0, OUTPAIRS+OUTQUADS):
                 data2[num].append(chunk[index])
                 data2[num].append(chunk[index+1])
             # then include AO3, AO4 and 4 TRASH values
             if OUTQUADS:
                 data2[num].append(chunk[index+2])
-                data2[num].append(data[index+3])
-            for yy in range(0, DMAFILL):
+                data2[num].append(chunk[index+3])
+            for ch in range(0, DMAFILL):
                 data2[num].append(TRASH_MARK)
 
     return data2
