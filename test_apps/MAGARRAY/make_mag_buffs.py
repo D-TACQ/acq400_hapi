@@ -27,11 +27,12 @@ def extend_to_16_ch(args, data):
         # data2 = data[0:len(data)/8]
         # for index, element in enumerate(data[0::4]):
         for index in range(0,len(chunk),4):
-            for xx in range(0, 4): # For each element do this 4 times.
+            for xx in range(0, 3): # For each element do this 4 times.
                 data2[num].append(chunk[index])
                 data2[num].append(chunk[index+1])
+                #if xx == 3:
                 data2[num].append(chunk[index+2])
-                #data2.append(data[index+3])
+                data2[num].append(data[index+3])
             for yy in range(0, 4):
                 data2[num].append(-5000)
 
@@ -43,15 +44,11 @@ def extend_to_n_bytes(args, data):
     for index, buf in enumerate(data):
         data_size = len(buf) * 2 # Data size in bytes
         print "len(buf) = ", len(buf)
-        print "data size = ", data_size
         samples_needed = (args.size - data_size) / 2 # samples reqd to pad to 1MB buffers
         print "samples needed = ", samples_needed
         chunk = np.append(buf, samples_needed * [0]) # data is 1MB
-        print chunk
         final_data.append(chunk)
-        #print "fdata = ", final_data
         print "data shape ", np.shape(final_data)
-        #data = np.array([buf, buf, buf, buf]) # data is now 4 * 1MB buffers
     final_data = np.array(final_data).astype(np.int16)
     print "data = ", np.shape(final_data)
     return final_data
