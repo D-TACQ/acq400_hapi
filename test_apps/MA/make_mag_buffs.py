@@ -1,9 +1,33 @@
 #!/usr/bin/env python
+# convert MA1 AWG file to MA2
+# NSAMPLES x 4CH x 2BYTE raw file to
+# NSAMPLES x "16CH" x 2BYTES, in 4 x 1MB chunks
 
 
 import numpy as np
 import argparse
 
+INCHAN = 4                  # channels in source file
+
+# Valid 4xACQ436, 1xAO420
+OUTPAIRS = 4
+OUTQUADS = 1
+
+# Valid 5xACQ436, 1xAO420
+#OUTPAIRS = 5
+#OUTQUADS = 1
+
+# Valid 6 x ACQ436
+#OUTPAIRS = 6
+#OUTQUADS = 0
+
+DMASAMPLE = 16
+DMAFILL = (DMASAMPLE - OUTPAIRS*2 - OUTQUADS*4)
+
+MINBUFS = 4             # AWG minimum number of buffers to operate
+
+TRASH_MARK = -32000
+ENDBUF_MARK = 32700
 
 def load_wf(args):
     data = np.fromfile(args.datafile, dtype=np.int16)
@@ -20,21 +44,22 @@ def extend_to_16_ch(args, data):
     # Assuming only 4 channels
     data_size = len(data) * 2
     data2 = [[],[],[],[]]
-    data_chunks = chunks(data, len(data)/4) # split list into 4 chunks
-    print "dchunks = ", data_chunks
+    data_chunks = chunks(data, len(data)/MINBUFS) # split list into 4 chunks
+
     for num, chunk in enumerate(data_chunks):
         # data2 = data[0:len(data)/8]
         # for index, element in enumerate(data[0::4]):
-        for index in range(0,len(chunk),4):
-            # duplicate AO1, AO2 5x
-            for xx in range(0, 5): # For each element do this 4 times.
+        for index in range(0,len(chunk),INCHAN):
+            # duplicate AO1, AO2 for pairs and quad if exists
+            for xx in range(0, OUTPAIRS+OUTQUADS):
                 data2[num].append(chunk[index])
                 data2[num].append(chunk[index+1])
             # then include AO3, AO4 and 4 TRASH values
-            data2[num].append(chunk[index+2])
-            data2[num].append(data[index+3])
-            for yy in range(0, 4):
-                data2[num].append(-5000)
+            if OUTQUADS:
+                data2[num].append(chunk[index+2])
+                data2[num].append(data[index+3])
+            for yy in range(0, DMAFILL):
+                data2[num].append(TRASH_MARK)
 
     return data2
 
@@ -43,14 +68,12 @@ def extend_to_n_bytes(args, data):
     final_data = []
     for index, buf in enumerate(data):
         data_size = len(buf) * 2 # Data size in bytes
-        print "len(buf) = ", len(buf)
-        samples_needed = (args.size - data_size) / 2 # samples reqd to pad to 1MB buffers
-        print "samples needed = ", samples_needed
-        chunk = np.append(buf, samples_needed * [0]) # data is 1MB
+        pad_samples = (args.size - data_size) / 2 
+        chunk = np.append(buf, pad_samples * [ENDBUF_MARK]) # data is 1MB
         final_data.append(chunk)
-        print "data shape ", np.shape(final_data)
+        print("{} len:{} samples needed: {} data shape {}".
+                format(index, len(buf), pad_samples, np.shape(final_data)))
     final_data = np.array(final_data).astype(np.int16)
-    print "data = ", np.shape(final_data)
     return final_data
 
 
@@ -68,7 +91,7 @@ def make_buff(args):
 
 
 def run_main():
-    parser = argparse.ArgumentParser(description = 'make magarray buffers.')
+    parser = argparse.ArgumentParser(description = 'AWG convert MA1 to MA2')
     parser.add_argument('--datafile', type=str, default="awgdata.dat",
     help="Which datafile to load.")
     parser.add_argument('--out', type=str, default="4mb_sines.dat",
