@@ -26,14 +26,15 @@ def extend_to_16_ch(args, data):
         # data2 = data[0:len(data)/8]
         # for index, element in enumerate(data[0::4]):
         for index in range(0,len(chunk),4):
+            # duplicate AO1, AO2 5x
             for xx in range(0, 5): # For each element do this 4 times.
                 data2[num].append(chunk[index])
                 data2[num].append(chunk[index+1])
-                if xx == 4:
-                    data2[num].append(chunk[index+2])
-                    data2[num].append(data[index+3])
-                    for yy in range(0, 4):
-                        data2[num].append(-5000)
+            # then include AO3, AO4 and 4 TRASH values
+            data2[num].append(chunk[index+2])
+            data2[num].append(data[index+3])
+            for yy in range(0, 4):
+                data2[num].append(-5000)
 
     return data2
 
@@ -59,11 +60,6 @@ def export_data(args, data):
 
 
 def make_buff(args):
-    data = load_wf(args)
-    data = extend_to_16_ch(args, data)
-    data = extend_to_n_bytes(args, data)
-    export_data(args, data)
-
     data = load_wf(args)
     data = extend_to_16_ch(args, data)
     data = extend_to_n_bytes(args, data)
