@@ -81,7 +81,7 @@ def run_cal1(uut, shot):
     txt = uut.run_service(acq400_hapi.AcqPorts.BOLO8_CAL, eof="END")
     logfile = "{}/cal_{}.log".format(os.getenv("{}_path".format(uut.uut), "."), shot)
     try:
-        with open(logfile, 'w') as log: 
+        with open(logfile, 'w') as log:
             print("logging to {}".format(logfile))
             log.write(txt)
     except IOError as e:
@@ -94,7 +94,9 @@ def run_cal1(uut, shot):
 
 
 def run_cal(args):
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts] 
+    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
+    for u in uuts:
+        u.s1.trg = "1,1,1" # Set soft trigger for calibration.
     shot = set_next_shot(args, odd, "Cal")
     # hmm, running the cal serialised?. not cool, parallelize me ..
     for u in uuts:
@@ -106,11 +108,16 @@ def run_cal(args):
 
 
 def run_capture(args):
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts] 
+    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     shot = set_next_shot(args, even, "Cap")
 
     for u in uuts:
         u.s0.transient = "POST={} SOFT_TRIGGER=0".format(args.post)
+        if args.trg == "ext rising" or args.trg == "ext":
+            u.s1.trg = "1,0,1"
+        elif  args.trg == "ext falling":
+            u.s1.trg = "1,0,0"
+
     for u in uuts:
         u.s0.set_arm = '1'
 
