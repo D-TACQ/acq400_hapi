@@ -96,6 +96,8 @@ def run_cal1(uut, shot):
 def run_cal(args):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     for u in uuts:
+        # trg=1,1,1 external d1 RISING
+        u.old_trg = u.s1.trg.split(' ')[0].split('=')[1]
         u.s1.trg = "1,1,1" # Set soft trigger for calibration.
     shot = set_next_shot(args, odd, "Cal")
     # hmm, running the cal serialised?. not cool, parallelize me ..
@@ -103,6 +105,9 @@ def run_cal(args):
         run_cal1(u, shot)
     # unfortunately this sleep seems to be necessary, else subsequent shot HANGS at 21760
     time.sleep(2)
+    for u in uuts:
+        u.s1.trg = u.old_trg
+
     if args.single_calibration_only == 1:
         shot = set_next_shot(args, even, "Cap")
 
