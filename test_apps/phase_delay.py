@@ -51,7 +51,11 @@ def run_test(args):
         phase_diff = abs(ph_diff[0])
 
     print "Phase difference in rads = ", phase_diff
-    sec = phase_diff / (360 * args.fsig);
+    #sec = phase_diff / (np.pi * args.fsig);
+    degrees = phase_diff * (1/(np.pi / 180))
+    print "Phase difference in degrees = ", degrees
+    #sec = phase_diff / (360 * args.fsig);
+    sec = degrees / (360 * args.fsig);
     print "Difference in seconds is ", sec
     print "Difference as % of sample clock ", sec * 100 * args.s_clk
 
