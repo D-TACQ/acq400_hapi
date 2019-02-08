@@ -48,7 +48,7 @@ def set_clk_trg(args):
         uut.s0.SIG_SYNC_OUT_TRG_DX = "d0"
         uut.s0.SIG_SYNC_OUT_SYNC = "SYNC"
         uut.s0.SIG_SYNC_OUT_SYNC_DX = "d0"
-        uut.s1.clk = "1,0,1"
+        uut.s1.clk = "1,1,1"
         uut.s1.trg = "1,0,1"
         uut.s1.sync = "1,0,1"
         uut.s1.sync_trg_to_clk=0
