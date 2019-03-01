@@ -55,17 +55,22 @@ def init_clks(uuts):
 #    uut.s1.clkdiv = EXTCLKDIV
 #    uut.s0.SIG_SYNC_OUT_CLK_DX = "d2"
 
+GPGDX = 1               # output d0
+FLATTOP = 5             # pulse width
 
-def init_spad_us(uut):
-    trg = uut.s1.trg
-    trg = trg[4:9]
-    print "trg = ", trg
-    uut.s0.spad1_us = trg
+def set_delay(uut, args):
+    uut.s0.GPG_ENABLE = '0'
+    stl = ""
+    stl = stl + "+{},{}\n".format(args.delay,GPGDX)
+    stl = stl + "+{},{}\n".format(FLATTOP,0)
+
+    uut.load_gpg(stl)
+    uut.s0.gpg_trg = '1,1,0'
+    uut.s0.GPG_MODE = 'LOOPWAIT'
+    uut.s0.GPG_ENABLE = '1'
 
 
 def init_ai(uut):
-    #init_common(uut)
-    init_spad_us(uut)
     for s in uut.modules:
         uut.modules[s].simulate = '1' if str(s) in SIMULATE else '0'
     uut.s0.spad = '1,16,0'
@@ -73,22 +78,27 @@ def init_ai(uut):
     uut.cA.aggregator = 'sites={}'.format(AISITES)
     uut.cB.spad = '1'
     uut.cB.aggregator = 'sites={}'.format(AISITES)
+    uut.s1.trg = '0,0,0'
+    uut.s1.clk = '1,0,1'
 
 
 def run_main(args):
     uuts = [ acq400_hapi.Acq2106(addr) for addr in args.uuts ]
+    uutm = uuts[0]
 
     print("initialise {} uuts {}".format(len(uuts), args.uuts))
     clear_counters(uuts)
     init_clks(uuts)
-    
-#    for uut in uuts[0:]:
-#        init_ai(uut)
+    set_delay(uutm, args)
+    for uut in uuts:
+        init_ai(uut)
 
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="aq2106_llc-run-full-auto-two.py")
+    parser.add_argument("--delay", type=int, default=5, help="delay in usecs (min 5)")
+    parser.add_argument("--verbose", type=int, default=0, help="verbosity, default 0")
     parser.add_argument("uuts", nargs='+', help="name the uuts")
     run_main(parser.parse_args())
 
