@@ -172,7 +172,8 @@ class ShotController:
 
         return (chx, len(self.uuts), len(chx[0]), len(chx[0][0]))
 
-    def __init__(self, _uuts):
+    def __init__(self, _uuts, shot=None):
         self.uuts = _uuts
-        for u in self.uuts:
-            u.s1.shot = 0
+        if shot != None:
+            for u in self.uuts:
+                u.s1.shot = shot
