@@ -42,9 +42,9 @@ def run_shot(args):
     for uut in uuts:
         if args.transient != 'notouch':
             uut.s0.transient = args.transient.replace(',', ' ')
-        if hasattr(uut.s0, 'TIM_CTRL_LOCK'):
-            print("LOCKDOWN {}".format(uut))
-            uut.s0.TIM_CTRL_LOCK = 1
+#        if hasattr(uut.s0, 'TIM_CTRL_LOCK'):
+#            print("LOCKDOWN {}".format(uut))
+#            uut.s0.TIM_CTRL_LOCK = 1
 
     shot_controller = acq400_hapi.ShotController(uuts)
 
