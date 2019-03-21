@@ -543,7 +543,7 @@ class Acq400:
 
 
     def load_gpg(self, stl, trace = False):
-        load_stl(self, stl, AcqPorts.GPGSTL, trace)
+        self.load_stl(stl, AcqPorts.GPGSTL, trace)
 
         with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
             while True:
@@ -556,7 +556,7 @@ class Acq400:
                     break
 
     def load_dpg(self, stl, trace = False):
-        load_stl(self, stl, AcqPorts.DPGSTL, trace)
+        self.load_stl(stl, AcqPorts.DPGSTL, trace)
 
     class AwgBusyError(Exception):
         def __init__(self, value):
