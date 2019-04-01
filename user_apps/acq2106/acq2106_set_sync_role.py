@@ -94,6 +94,7 @@ def run_main(parser):
             uut.set_sync_routing_slave()
             uut.s1.CLKDIV = clkdiv
             sync_trg_to_clk(uut, parser.slave_sync_trg_to_clk)
+            uut.s0.SIG_SRC_TRG_0 = "HDMI"
 
         uut.s0.SIG_TRG_EXT_RESET = '1'  # self-clears. clear trigger count for easy ref 
 
