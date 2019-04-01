@@ -36,6 +36,7 @@ def load_wf(args):
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
+    n = int(n)
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
@@ -68,7 +69,7 @@ def extend_to_n_bytes(args, data):
     final_data = []
     for index, buf in enumerate(data):
         data_size = len(buf) * 2 # Data size in bytes
-        pad_samples = (args.size - data_size) / 2 
+        pad_samples = int((args.size - data_size) / 2)
         chunk = np.append(buf, pad_samples * [ENDBUF_MARK]) # data is 1MB
         final_data.append(chunk)
         print("{} len:{} samples needed: {} data shape {}".
