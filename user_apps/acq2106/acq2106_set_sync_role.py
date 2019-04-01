@@ -8,6 +8,8 @@ usage: acq2106_set_sync_role.py [-h] [--master_clk MASTER_CLK]
                                 [--test TEST] [--trace TRACE]
                                 uuts [uuts ...]
 
+*** DEPRECATION WARNING: please consider using user_apps/acq400/sync_role.py ***
+
 acq2106_set_sync_role
 
 positional arguments:
