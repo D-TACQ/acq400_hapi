@@ -63,11 +63,12 @@ import argparse
 import socket
 import sys
 import shutil
+from builtins import input
 
 
 def remove_stale_data(args):
     if os.path.exists(args.root + args.uuts[0]):
-        answer = raw_input("Stale data detected. Delete all contents in " + args.root + str(args.uuts[0]) + "? y/n ")
+        answer = input("Stale data detected. Delete all contents in " + args.root + str(args.uuts[0]) + "? y/n ")
         if answer == "y":
             shutil.rmtree(args.root + args.uuts[0])
         else:
@@ -135,9 +136,9 @@ def run_stream(args):
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 stream')
     parser.add_argument('-filesize', '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
-    parser.add_argument('-totaldata', '--totaldata', default=sys.maxint, action=acq400_hapi.intSIAction, decimal = False)
+    parser.add_argument('-totaldata', '--totaldata', default=sys.maxsize, action=acq400_hapi.intSIAction, decimal = False)
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
-    parser.add_argument('--runtime', default=sys.maxint, type=int, help="How long to stream data for")
+    parser.add_argument('--runtime', default=sys.maxsize, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uuts', nargs='+', help="uuts")
     run_stream(parser.parse_args())
