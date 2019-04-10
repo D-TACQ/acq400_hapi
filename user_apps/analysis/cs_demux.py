@@ -28,7 +28,7 @@ def find_zero_index(args):
     # than the former. If the values do not increment then go to the next
     # event sample and repeat.
 
-    data = np.fromfile(args.df, dtype=np.uint32)
+    data = np.fromfile(args.data_file, dtype=np.uint32)
     for long_pos, long_val in enumerate(data):
         long = format(long_val, '08x')
         if long_val == 0xaa55f154:
@@ -42,7 +42,7 @@ def find_zero_index(args):
     for pos, f_long_in_es in enumerate(data):
         if pos < first_es_position:
             continue
-        if counter % (args.tl*6 + 24) == 0:
+        if counter % (args.transient_length*6 + 24) == 0:
             counter += 1
             if data[pos - 3] + 1 == data[pos + 27]:
                 zero_index_long_pos = pos
@@ -58,13 +58,13 @@ def demux_data(args, zero_index):
     data = []
     count = 0
 
-    with open(args.df, "rb") as f:
+    with open(args.data_file, "rb") as f:
         # throw away all data before the "zeroth" index (the first es)
         chunk = np.fromfile(f, dtype=np.int32, count=int(zero_index))
         while len(chunk) != 0: # if chunk size is zero we have run out of data
 
             #throw away es
-            if count % args.tl == 0:
+            if count % args.transient_length == 0:
                 chunk = np.fromfile(f, dtype=np.int32, count=24) # strip es
 
             # collect data into a new list
@@ -103,7 +103,7 @@ def plot_data(args, data):
         if args.plot_facets != -1:
             try:
                 # Plot ((number of facets) * (rtm len)) - 1 from each channel
-                plots[sp].plot(data[sp:args.plot_facets * args.tl * 8 - 1:8])
+                plots[sp].plot(data[sp:args.plot_facets * args.transient_length * 8 - 1:8])
             except:
                 print "Data exception met. Plotting all data instead."
                 plots[sp].plot(data[sp:-1:8])
@@ -121,11 +121,11 @@ def run_main():
     parser.add_argument('--plot_facets', default=-1, type=int, help="No of facets"
                                                                     "to plot")
     parser.add_argument('--save', default=0, type=int, help="Save data")
-    parser.add_argument('-tl', '--transient_length', default=8192, type=int, help='transient length')
-    parser.add_argument('-df', "--data_file", default="./shot_data", type=str, help="Name of"
+    parser.add_argument('--transient_length', default=8192, type=int, help='transient length')
+    parser.add_argument("--data_file", default="./shot_data", type=str, help="Name of"
                                                                     "data file")
     args = parser.parse_args()
-
+    print args.transient_length
     # zero_index should be the index of the first event sample where the
     # system value index increments over the event sample.
     zero_index = find_zero_index(args)
