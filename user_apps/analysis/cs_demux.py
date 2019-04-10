@@ -9,10 +9,11 @@ CH01 .. CH02 .. CH03 .. CH04 .. INDEX .. FACET .. SAM COUNT .. usec COUNT
 short   short   short   short   long     long     long          long
 
 Usage:
-
-python cs_demux.py -df="/home/sean/PROJECTS/workspace/acq400_hapi-1/user_apps/
+Linux:
+python cs_demux.py --data_file="/home/sean/PROJECTS/workspace/acq400_hapi-1/user_apps/
                                     acq400/acq1001_068/000001/0000"
-
+Windows:
+python .\cs_demux.py --plot_facets=4 --data_file="C:/acq2106_112/000001/0000"
 """
 
 
