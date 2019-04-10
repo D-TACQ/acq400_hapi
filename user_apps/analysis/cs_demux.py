@@ -126,7 +126,6 @@ def run_main():
     parser.add_argument("--data_file", default="./shot_data", type=str, help="Name of"
                                                                     "data file")
     args = parser.parse_args()
-    print args.transient_length
     # zero_index should be the index of the first event sample where the
     # system value index increments over the event sample.
     zero_index = find_zero_index(args)
