@@ -667,6 +667,25 @@ class Acq400:
         return None
 
 
+    def configure_rgm(self, role, trigger, post):
+        self.s1.TRG = 1
+        if role == "slave" or trigger == "int":
+            self.s1.TRG_DX = 1
+        else:
+            self.s1.TRG_DX = 0
+        self.s1.TRG_SENSE = 1
+
+        self.s1.EVENT0 = 0
+        self.s1.EVENT0_DX = 0
+        self.s1.EVENT0_SENSE = 0
+
+        self.s1.RGM = 2
+        self.s1.RGM_DX = 0
+        self.s1.RGM_SENSE = 1
+
+        return None
+
+
     def pull_plot(self, type="mpl"):
         data = self.read_channels()
         if type == "mpl":
