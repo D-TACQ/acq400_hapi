@@ -618,6 +618,15 @@ class Acq400:
             nc.sock.close()
 
 
+    def pull_plot(self, type="mpl"):
+        data = self.read_channels()
+        if type == "mpl":
+            import matplotlib.pyplot as plt
+            for item in data:
+                plt.plot(item)
+            plt.grid(True)
+            plt.show()
+        return data
 class Acq2106(Acq400):
     """ Acq2106 specialization of Acq400
 
