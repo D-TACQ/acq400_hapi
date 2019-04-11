@@ -555,9 +555,9 @@ class Acq400:
         with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
             while True:
                 txt = nc.sock.recv(4096)
-                if txt: 
-                    sys.stdout.write(txt)                    
-                    if txt.find("EOF") != -1:
+                if txt:
+                    print(txt)
+                    if str(txt).find("EOF") != -1:
                         break
                 else:
                     break
