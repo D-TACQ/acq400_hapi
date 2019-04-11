@@ -132,7 +132,7 @@ class Channelclient(netclient.Netclient):
         _dtype = np.dtype('i4' if data_size == 4 else 'i2')
         total_buffer = buffer = self.sock.recv(maxbuf)
 
-        if int(ndata) == 0:
+        if int(ndata) == 0 or int(ndata) == -1:
             while True:
                 buffer = self.sock.recv(maxbuf)
                 if not buffer:
@@ -428,7 +428,7 @@ class Acq400:
     def nchan(self):
         return int(self.s0.NCHAN)
 
-    def read_channels(self, channels=()):
+    def read_channels(self, channels=(), nsam=0):
         """read all channels post shot data.
 
         Returns:
@@ -449,7 +449,7 @@ class Acq400:
                 print("%s CH%02d start.." % (self.uut, ch))
                 start = timeit.default_timer()
 
-            chx.append(self.read_chan(ch))
+            chx.append(self.read_chan(ch, nsam))
 
             if self.trace:
                 tt = timeit.default_timer() - start
@@ -695,6 +695,13 @@ class Acq400:
             plt.grid(True)
             plt.show()
         return data
+
+
+    def read_muxed_data(self):
+        data = self.read_channels((0), -1)
+        print("shape = ", np.shape(data))
+        return None
+
 class Acq2106(Acq400):
     """ Acq2106 specialization of Acq400
 
