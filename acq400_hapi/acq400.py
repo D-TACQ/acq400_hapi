@@ -667,9 +667,10 @@ class Acq400:
         return None
 
 
-    def configure_rgm(self, role, trigger, post):
+    def configure_rgm(self, role, trigger="ext", post="100000"):
+        self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.TRG = 1
-        if role == "slave" or trigger == "int":
+        if role == "master" or trigger == "int":
             self.s1.TRG_DX = 1
         else:
             self.s1.TRG_DX = 0
