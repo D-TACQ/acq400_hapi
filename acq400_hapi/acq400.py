@@ -646,6 +646,27 @@ class Acq400:
         return None
 
 
+    def configure_rtm(self, role, trigger="ext", post=100000):
+        self.s0.transient = "PRE=0 POST={}".format(post)
+
+        self.s1.TRG = 1
+        if role == "master" or trigger == "int":
+            self.s1.TRG_DX = 1
+        else:
+            self.s1.TRG_DX = 0
+        self.s1.TRG_SENSE = 1
+
+        self.s1.EVENT0 = 0
+        self.s1.EVENT0_DX = 0
+        self.s1.EVENT0_SENSE = 0
+
+        self.s1.RGM = 3
+        self.s1.RGM_DX = 0
+        self.s1.RGM_SENSE = 1
+
+        return None
+
+
     def pull_plot(self, type="mpl"):
         data = self.read_channels()
         if type == "mpl":
