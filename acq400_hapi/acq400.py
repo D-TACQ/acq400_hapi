@@ -703,6 +703,27 @@ class Acq400:
         print("shape = ", np.shape(data))
         return data
 
+
+    def get_es_indices(self):
+        # a function to return the location of the event samples. Does not return
+        # the samples themselves.
+        indices = []
+        event_samples = []
+        nchan = self.nchan()
+        data = self.read_muxed_data()
+        data = np.array(data)
+        if data.dtype == np.int16:
+            # convert shorts back to bytes and then to longs.
+            data = np.frombuffer(data.tobytes(), dtype=np.int32)
+            nchan = nchan / 2 # our "effective" nchan has halved if data is shorts.
+        print(data)
+        for index, sample in enumerate(data[0::nchan]):
+            if sample == np.int32(0xaa55f154): # aa55
+                indices.append(index)
+                event_samples.append(data[index*nchan:index*nchan + nchan])
+        return [indices, event_samples]
+
+
 class Acq2106(Acq400):
     """ Acq2106 specialization of Acq400
 
