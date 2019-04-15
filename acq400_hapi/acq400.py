@@ -700,7 +700,6 @@ class Acq400:
 
     def read_muxed_data(self):
         data = self.read_channels((0), -1)
-        print("shape = ", np.shape(data))
         return data
 
 
