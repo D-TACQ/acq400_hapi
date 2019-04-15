@@ -691,8 +691,8 @@ class Acq400:
         data = self.read_channels()
         if type == "mpl":
             import matplotlib.pyplot as plt
-            for item in data:
-                plt.plot(item)
+            for channel in data:
+                plt.plot(channel)
             plt.grid(True)
             plt.show()
         return data
