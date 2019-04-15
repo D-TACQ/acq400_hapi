@@ -687,8 +687,8 @@ class Acq400:
         return None
 
 
-    def pull_plot(self, type="mpl"):
-        data = self.read_channels()
+    def pull_plot(self, channels=(), type="mpl"):
+        data = self.read_channels(channels)
         if type == "mpl":
             import matplotlib.pyplot as plt
             for channel in data:
