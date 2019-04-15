@@ -704,19 +704,27 @@ class Acq400:
         return data
 
 
-    def get_es_indices(self):
-        # a function to return the location of the event samples. Does not return
-        # the samples themselves.
+    def get_es_indices(self, file_path="default", nchan="default"):
+        # a function that return the location of event samples.
+        # returns:
+        # [ [event sample indices], [ [event sample 1], ...[event sample N] ] ]
         indices = []
         event_samples = []
-        nchan = self.nchan()
-        data = self.read_muxed_data()
-        data = np.array(data)
-        if data.dtype == np.int16:
-            # convert shorts back to bytes and then to longs.
-            data = np.frombuffer(data.tobytes(), dtype=np.int32)
-            nchan = nchan / 2 # our "effective" nchan has halved if data is shorts.
-        print(data)
+        nchan = self.nchan() if nchan == "default" else nchan
+
+        if file_path == "default":
+            data = self.read_muxed_data()
+            data = np.array(data)
+            if data.dtype == np.int16:
+                # convert shorts back to raw bytes and then to longs.
+                data = np.frombuffer(data.tobytes(), dtype=np.int32)
+        else:
+            data = np.fromfile(file_path, dtype=np.int32)
+
+        if self.s0.data32 == 0:
+            nchan = nchan / 2 # "effective" nchan has halved if data is shorts.
+
+        nchan = int(nchan)
         for index, sample in enumerate(data[0::nchan]):
             if sample == np.int32(0xaa55f154): # aa55
                 indices.append(index)
