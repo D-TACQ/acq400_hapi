@@ -628,10 +628,10 @@ class Acq400:
         self.s0.transient = "PRE={} POST={} SOFT_TRIGGER={}".format(pre, post, trg)
 
         self.s1.TRG = 1
-        if role == "slave" or trigger == "int":
-            self.s1.TRG_DX = 1
-        else:
+        if role == "slave" or trigger == "ext":
             self.s1.TRG_DX = 0
+        else:
+            self.s1.TRG_DX = 1
         self.s1.TRG_SENSE = 1
 
         self.s1.EVENT0 = 1
@@ -650,10 +650,10 @@ class Acq400:
         self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.rtm_translen = rtm_translen
         self.s1.TRG = 1
-        if role == "master" or trigger == "int":
-            self.s1.TRG_DX = 1
-        else:
+        if role == "slave" or trigger == "ext":
             self.s1.TRG_DX = 0
+        else:
+            self.s1.TRG_DX = 1
         self.s1.TRG_SENSE = 1
 
         self.s1.EVENT0 = 0
@@ -670,10 +670,10 @@ class Acq400:
     def configure_rgm(self, role, trigger="ext", post="100000"):
         self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.TRG = 1
-        if role == "master" or trigger == "int":
-            self.s1.TRG_DX = 1
-        else:
+        if role == "slave" or trigger == "ext":
             self.s1.TRG_DX = 0
+        else:
+            self.s1.TRG_DX = 1
         self.s1.TRG_SENSE = 1
 
         self.s1.EVENT0 = 0
