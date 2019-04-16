@@ -646,7 +646,7 @@ class Acq400:
         return None
 
 
-    def configure_rtm(self, role, trigger="ext", post=100000, rtm_translen=5000):
+    def configure_rtm(self, role, trigger="ext", post=100000, rtm_translen=5000, gpg=0):
         self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.rtm_translen = rtm_translen
         self.s1.TRG = 1
@@ -664,10 +664,12 @@ class Acq400:
         self.s1.RGM_DX = 0
         self.s1.RGM_SENSE = 1
 
+        self.s0.SIG_EVENT_SRC_0 = 1 if gpg == 1 else 0
+
         return None
 
 
-    def configure_rgm(self, role, trigger="ext", post="100000"):
+    def configure_rgm(self, role, trigger="ext", post="100000", gpg=0):
         self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.TRG = 1
         if role == "slave" or trigger == "ext":
@@ -683,6 +685,8 @@ class Acq400:
         self.s1.RGM = 2
         self.s1.RGM_DX = 0
         self.s1.RGM_SENSE = 1
+
+        self.s0.SIG_EVENT_SRC_0 = 1 if gpg == 1 else 0
 
         return None
 
