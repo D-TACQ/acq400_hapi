@@ -618,7 +618,6 @@ class Acq400:
             nc.sock.close()
 
 
-    def configure_pre_post(self, role, trigger="ext", pre=50000, post=100000):
     def configure_post(self, role, trigger="int", post=100000):
         self.s0.transient = "PRE=0 POST={} SOFT_TRIGGER=1".format(post)
 
@@ -643,6 +642,7 @@ class Acq400:
         return None
 
 
+    def configure_pre_post(self, role, trigger="int", pre=50000, post=100000):
         # configure UUT for pre/post mode. Default: soft trigger starts the
         # data flow and we trigger the event on a hard external trigger.
         if pre > post:
