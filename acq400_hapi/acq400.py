@@ -744,16 +744,16 @@ class Acq400:
             data = np.array(data)
             if data.dtype == np.int16:
                 # convert shorts back to raw bytes and then to longs.
-                data = np.frombuffer(data.tobytes(), dtype=np.int32)
+                data = np.frombuffer(data.tobytes(), dtype=np.uint32)
         else:
-            data = np.fromfile(file_path, dtype=np.int32)
+            data = np.fromfile(file_path, dtype=np.uint32)
 
-        if self.s0.data32 == 0:
+        if int(self.s0.data32) == 0:
             nchan = nchan / 2 # "effective" nchan has halved if data is shorts.
-
         nchan = int(nchan)
         for index, sample in enumerate(data[0::nchan]):
-            if sample == np.int32(0xaa55f154): # aa55
+            # if sample == np.int32(0xaa55f154): # aa55
+            if sample == np.uint32(0xaa55f154): # aa55
                 indices.append(index)
                 event_samples.append(data[index*nchan:index*nchan + nchan])
         return [indices, event_samples]
