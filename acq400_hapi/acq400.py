@@ -619,6 +619,30 @@ class Acq400:
 
 
     def configure_pre_post(self, role, trigger="ext", pre=50000, post=100000):
+    def configure_post(self, role, trigger="int", post=100000):
+        self.s0.transient = "PRE=0 POST={} SOFT_TRIGGER=1".format(post)
+
+        self.s1.TRG = 1
+        if role == "slave" or trigger == "ext":
+            self.s1.TRG_DX = 0
+        else:
+            self.s1.TRG_DX = 1
+        self.s1.TRG_SENSE = 1
+
+        self.s1.EVENT0 = 0
+        self.s1.EVENT0_DX = 0
+        self.s1.EVENT0_SENSE = 0
+
+        self.s1.RGM = 0
+        self.s1.RGM_DX = 0
+        self.s1.RGM_SENSE = 0
+
+        self.s1.RGM = 0 # Make sure RGM mode is turned off.
+        return None
+
+        return None
+
+
         # configure UUT for pre/post mode. Default: soft trigger starts the
         # data flow and we trigger the event on a hard external trigger.
         if pre > post:
