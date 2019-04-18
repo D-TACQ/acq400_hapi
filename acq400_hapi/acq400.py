@@ -671,7 +671,7 @@ class Acq400:
         return None
 
 
-    def configure_rtm(self, role, trigger="ext", post=100000, rtm_translen=5000, gpg=0):
+    def configure_rtm(self, role, trigger="ext", post=50000, rtm_translen=5000, gpg=0):
         self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.rtm_translen = rtm_translen
         self.s1.TRG = 1
