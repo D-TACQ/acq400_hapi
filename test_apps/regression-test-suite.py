@@ -173,9 +173,9 @@ def check_es(events):
 
 
 def show_es(events, uuts):
-    length = len(events[0][1])
-    for index, uut in enumerate(uuts):
-        print('{HN: {fill}{align}{length}}'.format(HN=uut.s0.HN, fill=' ', align='<', length=length))
+    # length = len(events[0][1])
+    # for index, uut in enumerate(uuts):
+    #     print('{HN: {fill}{align}{length}}'.format(HN=uut.s0.HN, fill=' ', align='<', length=length))
         # events[index][1] = '{0: <{length}}'.format(uut.s0.HN + "\n", length=length) + events[index][1]
     uut_list = list(range(0, len(uuts)))
     lines = [events[counter][1].splitlines() for counter in uut_list]
@@ -256,6 +256,9 @@ def run_test(args):
         check_es(events)
         if args.show_es == 1:
             show_es(events, uuts)
+        data = uut.read_muxed_data()
+        data = np.array(data)
+        data.tofile("shot_data")
     else:
         for data_set in data:
             for ch in data_set:
