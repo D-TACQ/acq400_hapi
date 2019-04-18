@@ -637,7 +637,7 @@ class Acq400:
         self.s1.RGM_SENSE = 0
 
         self.s1.RGM = 0 # Make sure RGM mode is turned off.
-        return None
+        self.s0.SIG_EVENT_SRC_0 = 0
 
         return None
 
