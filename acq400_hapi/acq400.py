@@ -732,7 +732,7 @@ class Acq400:
         return data
 
 
-    def get_es_indices(self, file_path="default", nchan="default"):
+    def get_es_indices(self, file_path="default", nchan="default", human_readable=0, return_hex_string=0):
         # a function that return the location of event samples.
         # returns:
         # [ [event sample indices], [ [event sample 1], ...[event sample N] ] ]
@@ -757,6 +757,31 @@ class Acq400:
             if sample == np.uint32(0xaa55f154): # aa55
                 indices.append(index)
                 event_samples.append(data[index*nchan:index*nchan + nchan])
+
+        if human_readable == 1:
+            # Change decimal to hex.
+            ii = 0
+            while ii < len(event_samples):
+                if type(event_samples[ii]) == np.ndarray:
+                    event_samples[ii] = event_samples[ii].tolist()
+                for indice, channel in enumerate(event_samples[ii]):
+                    event_samples[ii][indice] = '0x{0:08X}'.format(channel)
+                ll = int(len(event_samples[ii])/int(len(self.get_aggregator_sites())))
+                # print(event_samples[ii])
+                event_samples[ii] = [event_samples[ii][i:i + ll] for i in range(0, len(event_samples[ii]), ll)]
+                ii += 1
+
+            if return_hex_string == 1:
+                # Make a single string containing the hex values.
+                es_string = ""
+                for sample in event_samples:
+                    for i in range(len(event_samples[0][0])):
+                        for x in event_samples[0]:
+                            es_string = es_string + str(x[i]) + " "
+                        es_string = es_string + "\n"
+                    es_string = es_string + "\n"
+                event_samples = es_string
+
         return [indices, event_samples]
 
 
