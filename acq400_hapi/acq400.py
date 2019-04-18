@@ -775,7 +775,7 @@ class Acq400:
                 # Make a single string containing the hex values.
                 es_string = ""
                 for num, sample in enumerate(event_samples):
-                    for i in range(len(sample[0])-1):
+                    for i in range(len(sample[0])):
                         for x in event_samples[num]:
                             es_string = es_string + str(x[i]) + " "
                         es_string = es_string + "\n"
