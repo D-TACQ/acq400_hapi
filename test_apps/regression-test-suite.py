@@ -252,12 +252,16 @@ def run_test(args):
 
     trigger_system(args, sig_gen)
 
-    channels = args.channels.split(",")
+    channels = eval(args.channels[0])
+
 
     for index, uut in enumerate(uuts):
         # uut.statmon.wait_stopped()
         acq400_hapi.shotcontrol.wait_for_state(uut, "IDLE")
-        data.append(uut.read_channels(int(channels[index])))
+        if args.demux == 1:
+            data.append(uut.read_channels(*channels[index]))
+        else:
+            data.append(uut.read_channels((0), -1))
         events.append(uut.get_es_indices(human_readable=1, return_hex_string=1))
 
     if args.demux == 0:
@@ -265,6 +269,11 @@ def run_test(args):
         if args.show_es == 1:
             show_es(events, uuts)
         save_data(uuts)
+        for index, data_set in enumerate(data):
+            for ch in channels[index]:
+                plt.plot(data_set[0][ch-1::32])
+        plt.grid(True)
+        plt.show()
 
     else:
         for data_set in data:
@@ -294,8 +303,8 @@ def run_main():
     parser.add_argument('--sig_gen_name', default="A-33600-00001", type=str,
     help='Default IP address.')
 
-    parser.add_argument('--channels', default=1, type=str,
-    help='Which channel to pull from each UUT in order. Format: 1,17,...,x.')
+    parser.add_argument('--channels', default=['[1]'], nargs='+',
+    help='One list per UUT: --channels=[1],[1] plots channel 1 on UUT1 and 2')
 
     parser.add_argument('--clock_divisor', default=20000, type=int,
     help="The speed at which to run the sig gen. 20,000 is human readable.")
