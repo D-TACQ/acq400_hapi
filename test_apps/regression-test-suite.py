@@ -185,12 +185,9 @@ def show_es(events, uuts):
 
 
 def save_data(uuts):
-    master_data = uuts[0].read_muxed_data()
-    slave_data = uuts[1].read_muxed_data()
-    master_data = master_data[0]
-    slave_data = slave_data[0]
-    master_data.tofile("shot_data")
-    slave_data.tofile("shot_data")
+    for uut in uuts:
+        data = uut.read_muxed_data()
+        data[0].tofile("{}_shot_data".format(uut.s0.HN))
     return None
 
 
