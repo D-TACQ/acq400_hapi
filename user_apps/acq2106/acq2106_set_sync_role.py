@@ -8,6 +8,8 @@ usage: acq2106_set_sync_role.py [-h] [--master_clk MASTER_CLK]
                                 [--test TEST] [--trace TRACE]
                                 uuts [uuts ...]
 
+*** DEPRECATION WARNING: please consider using user_apps/acq400/sync_role.py ***
+
 acq2106_set_sync_role
 
 positional arguments:
@@ -83,12 +85,18 @@ def run_main(parser):
             trg = "1,%d,%d" % (1 if mtrg=="soft" else 0, rf(edge))
             clkdiv = parser.clkdiv
             sync_trg_to_clk(uut)
+            uut.s1.clkdiv = clkdiv
+            uut.s0.SIG_SYNC_OUT_CLK = "CLK"
+            uut.s0.SIG_SYNC_OUT_CLK_DX = "d2"
+            uut.s0.SIG_SYNC_OUT_TRG = "TRG"
+            uut.s0.SIG_SYNC_OUT_TRG_DX = "d1"
         else:
             trg = "1,%d,%d" % (0, rf(parser.trg_edge))
             clkdiv = 1
             uut.set_sync_routing_slave()
             uut.s1.CLKDIV = clkdiv
             sync_trg_to_clk(uut, parser.slave_sync_trg_to_clk)
+            uut.s0.SIG_SRC_TRG_0 = "HDMI"
 
         uut.s0.SIG_TRG_EXT_RESET = '1'  # self-clears. clear trigger count for easy ref 
 
