@@ -184,6 +184,16 @@ def show_es(events, uuts):
     return None
 
 
+def save_data(uuts):
+    master_data = uuts[0].read_muxed_data()
+    slave_data = uuts[1].read_muxed_data()
+    master_data = master_data[0]
+    slave_data = slave_data[0]
+    master_data.tofile("shot_data")
+    slave_data.tofile("shot_data")
+    return None
+
+
 def run_test(args):
     uuts = []
     data = []
@@ -256,9 +266,8 @@ def run_test(args):
         check_es(events)
         if args.show_es == 1:
             show_es(events, uuts)
-        data = uut.read_muxed_data()
-        data = np.array(data)
-        data.tofile("shot_data")
+        save_data(uuts)
+
     else:
         for data_set in data:
             for ch in data_set:
