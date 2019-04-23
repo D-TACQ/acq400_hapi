@@ -255,7 +255,8 @@ def run_test(args):
     channels = args.channels.split(",")
 
     for index, uut in enumerate(uuts):
-        uut.statmon.wait_stopped()
+        # uut.statmon.wait_stopped()
+        acq400_hapi.shotcontrol.wait_for_state(uut, "IDLE")
         data.append(uut.read_channels(int(channels[index])))
         events.append(uut.get_es_indices(human_readable=1, return_hex_string=1))
 
