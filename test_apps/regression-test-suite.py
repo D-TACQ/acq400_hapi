@@ -294,6 +294,8 @@ def run_test(args):
             print("Event samples are not identical. Exiting now.")
             plt.show()
             exit(1)
+        else:
+            print("Test successful.")
         # import code
         # code.interact(local=locals())
     plt.show()
