@@ -170,6 +170,7 @@ def check_es(events):
             return False
     if success_flag == True:
         print("\nES Comparison successful!\n")
+    return True
 
 
 def show_es(events, uuts):
@@ -192,9 +193,10 @@ def save_data(uuts):
 
 
 def run_test(args):
+
     uuts = []
-    data = []
-    events = []
+    success_flag = True
+    channels = eval(args.channels[0])
 
     for uut in args.uuts:
         uut = acq400_hapi.Acq400(uut)
@@ -209,82 +211,92 @@ def run_test(args):
         freq = calculate_frequency(args, uuts[0], args.clock_divisor)
         configure_sig_gen(sig_gen, args, freq)
 
-    for index, uut in reversed(list(enumerate(uuts))):
+    for iteration in list(range(0, args.loops)):
+        data = []
+        events = []
+        plt.clf()
 
-        if args.test == "pre_post":
-            if index == 0:
-                uut.configure_pre_post("master", trigger=args.trg)
+        for index, uut in reversed(list(enumerate(uuts))):
+
+            if args.test == "pre_post":
+                if index == 0:
+                    uut.configure_pre_post("master", trigger=args.trg)
+                else:
+                    # uut.s0.sync_role = "slave"
+                    uut.configure_pre_post("slave")
+
+            elif args.test == "post":
+                if index == 0:
+                    uut.configure_post("master", trigger=args.trg)
+                else:
+                    uut.configure_post("slave", trigger=args.trg)
+
+            elif args.test == "rtm":
+                if index == 0:
+                    uut.configure_rtm("master", trigger=args.trg)
+                else:
+                    uut.configure_rtm("slave")
+
+            elif args.test == "rtm_gpg":
+                if index == 0:
+                    uut.configure_rtm("master", trigger=args.trg, gpg=1)
+                    config_gpg(uut, args, trg=0)
+                else:
+                    uut.configure_rtm("slave")
+
+            elif args.test == "rgm":
+                if index == 0:
+                    uut.configure_rgm("master", trigger=args.trg, post=75000, gpg=1)
+                    config_gpg(uut, args, trg=0)
+                else:
+                    uut.s0.sync_role = "slave"
+                    uut.configure_rgm("slave", post=75000)
+
+            uut.s0.set_arm
+            uut.statmon.wait_armed()
+
+        time.sleep(5)
+
+        trigger_system(args, sig_gen)
+
+        for index, uut in enumerate(uuts):
+            # uut.statmon.wait_stopped()
+            acq400_hapi.shotcontrol.wait_for_state(uut, "IDLE")
+            if args.demux == 1:
+                data.append(uut.read_channels(*channels[index]))
             else:
-                # uut.s0.sync_role = "slave"
-                uut.configure_pre_post("slave")
+                data.append(uut.read_channels((0), -1))
+            events.append(uut.get_es_indices(human_readable=1, return_hex_string=1))
 
-        elif args.test == "post":
-            if index == 0:
-                uut.configure_post("master", trigger=args.trg)
-            else:
-                uut.configure_post("slave", trigger=args.trg)
+        if args.demux == 0:
+            success_flag = check_es(events)
+            if args.show_es == 1:
+                show_es(events, uuts)
+            save_data(uuts)
+            for index, data_set in enumerate(data):
+                for ch in channels[index]:
+                    plt.plot(data_set[0][ch-1::uuts[index].nchan()])
+            plt.grid(True)
 
-        elif args.test == "rtm":
-            if index == 0:
-                uut.configure_rtm("master", trigger=args.trg)
-            else:
-                uut.configure_rtm("slave")
+            plt.pause(0.001)
+            plt.show(block=False)
 
-        elif args.test == "rtm_gpg":
-            if index == 0:
-                uut.configure_rtm("master", trigger=args.trg, gpg=1)
-                config_gpg(uut, args, trg=0)
-            else:
-                uut.configure_rtm("slave")
-
-        elif args.test == "rgm":
-            if index == 0:
-                uut.configure_rgm("master", trigger=args.trg, post=75000, gpg=1)
-                config_gpg(uut, args, trg=0)
-            else:
-                uut.s0.sync_role = "slave"
-                uut.configure_rgm("slave", post=75000)
-
-        uut.s0.set_arm
-        uut.statmon.wait_armed()
-
-    time.sleep(5)
-
-    trigger_system(args, sig_gen)
-
-    channels = eval(args.channels[0])
-
-
-    for index, uut in enumerate(uuts):
-        # uut.statmon.wait_stopped()
-        acq400_hapi.shotcontrol.wait_for_state(uut, "IDLE")
-        if args.demux == 1:
-            data.append(uut.read_channels(*channels[index]))
         else:
-            data.append(uut.read_channels((0), -1))
-        events.append(uut.get_es_indices(human_readable=1, return_hex_string=1))
+            for data_set in data:
+                for ch in data_set:
+                    plt.plot(ch)
+            plt.grid(True)
 
-    if args.demux == 0:
-        check_es(events)
-        if args.show_es == 1:
-            show_es(events, uuts)
-        save_data(uuts)
-        for index, data_set in enumerate(data):
-            for ch in channels[index]:
-                plt.plot(data_set[0][ch-1::uuts[index].nchan()])
-        plt.grid(True)
-        plt.show()
+            plt.pause(0.001)
+            plt.show(block=False)
 
-    else:
-        for data_set in data:
-            for ch in data_set:
-                plt.plot(ch)
-        plt.grid(True)
-        plt.show()
-
-    # import code
-    # code.interact(local=locals())
-
+        if success_flag == False:
+            print("Event samples are not identical. Exiting now.")
+            plt.show()
+            exit(1)
+        # import code
+        # code.interact(local=locals())
+    plt.show()
     return None
 
 
@@ -314,6 +326,9 @@ def run_main():
 
     parser.add_argument('--show_es', default=1, type=int,
     help="Whether or not to show the event samples when demux = 0.")
+
+    parser.add_argument('--loops', default=1, type=int,
+    help="Number of iterations to run the test for.")
 
     parser.add_argument('uuts', nargs='+', help="Names of uuts to test.")
 
