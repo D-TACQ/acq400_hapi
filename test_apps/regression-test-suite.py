@@ -10,9 +10,9 @@ http://eigg-fs:8090/mediawiki/index.php/Products:ACQ400:Regression_Testing
 
 Usage:
 
-python regression-test-suite.py --trg=int --test=post --channels="1,1" acq2106_085 acq2106_126
+python regression-test-suite.py --trg=int --test=post --channels="1,1" UUT1 UUT2
 
-python regression-test-suite.py --trg=ext --test=post --channels="1,1" acq2106_085 acq2106_126
+python regression-test-suite.py --trg=ext --test=post --channels="1,1" UUT1 UUT2
 
 
 
@@ -174,10 +174,6 @@ def check_es(events):
 
 
 def show_es(events, uuts):
-    # length = len(events[0][1])
-    # for index, uut in enumerate(uuts):
-    #     print('{HN: {fill}{align}{length}}'.format(HN=uut.s0.HN, fill=' ', align='<', length=length))
-        # events[index][1] = '{0: <{length}}'.format(uut.s0.HN + "\n", length=length) + events[index][1]
     uut_list = list(range(0, len(uuts)))
     lines = [events[counter][1].splitlines() for counter in uut_list]
     for l in zip(*lines):
