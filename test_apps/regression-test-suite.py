@@ -271,7 +271,7 @@ def run_test(args):
         save_data(uuts)
         for index, data_set in enumerate(data):
             for ch in channels[index]:
-                plt.plot(data_set[0][ch-1::32])
+                plt.plot(data_set[0][ch-1::uuts[index].nchan()])
         plt.grid(True)
         plt.show()
 
