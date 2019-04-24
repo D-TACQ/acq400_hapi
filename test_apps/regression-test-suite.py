@@ -207,7 +207,7 @@ def run_test(args):
         freq = calculate_frequency(args, uuts[0], args.clock_divisor)
         configure_sig_gen(sig_gen, args, freq)
 
-    for iteration in list(range(0, args.loops)):
+    for iteration_number, iteration in enumerate(list(range(0, args.loops))):
         data = []
         events = []
         plt.clf()
@@ -288,12 +288,14 @@ def run_test(args):
 
         if success_flag == False:
             print("Event samples are not identical. Exiting now.")
+            print("Tests run: ", iteration_number)
             plt.show()
             exit(1)
         else:
-            print("Test successful.")
+            print("Test successful. Test number: ", iteration_number)
         # import code
         # code.interact(local=locals())
+    print("Finished tests. Total tests run: ", args.loops)
     plt.show()
     return None
 
