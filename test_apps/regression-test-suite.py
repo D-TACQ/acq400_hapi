@@ -178,6 +178,8 @@ def show_es(events, uuts):
     lines = [events[counter][1].splitlines() for counter in uut_list]
     for l in zip(*lines):
         print(*l, sep='')
+    for event in events:
+        print("{}\n".format(event[0])) # Print indices too!
     return None
 
 
