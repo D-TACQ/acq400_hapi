@@ -716,14 +716,33 @@ class Acq400:
         return None
 
 
-    def pull_plot(self, channels=(), type="mpl"):
-        data = self.read_channels(channels)
-        if type == "mpl":
-            import matplotlib.pyplot as plt
-            for channel in data:
-                plt.plot(channel)
-            plt.grid(True)
-            plt.show()
+    def get_demux_state(self):
+        transient = self.s0.transient
+        demux_state = transient.split("DEMUX=",1)[1][0]
+        return int(demux_state)
+
+
+    def pull_plot(self, channels=(), demux=-1):
+        data = []
+        if demux == -1:
+            demux = self.get_demux_state()
+        if demux == 1:
+            data = self.read_channels(channels)
+        elif demux == 0:
+            mux_data = self.read_muxed_data()
+            print("mux data = ", mux_data)
+            nchan = self.nchan()
+            if channels == ():
+                channels = list(range(1,nchan+1))
+            for ch in channels:
+                print("Channel - ", ch)
+                data.append(mux_data[0][ch::nchan])
+
+        import matplotlib.pyplot as plt
+        for channel in data:
+            plt.plot(channel)
+        plt.grid(True)
+        plt.show()
         return data
 
 
