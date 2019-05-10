@@ -26,10 +26,14 @@ def run_test(args):
     for num, uut in enumerate(args.uuts):
         args.uuts[num] = acq400_hapi.Acq400(uut)
 
-    while True:
+    for uut in args.uuts:
+        uut.s0.transient="POST=100000"
+
+    counter = 0
+    while counter < args.loops:
 
         ### Change trg to d4 on master
-        args.uuts[0].s1.trg = "1,5,1"
+        args.uuts[0].s1.trg = "1,5,0"
         print "Setting trg to no trg"
 
         ### Arm uuts
@@ -39,8 +43,8 @@ def run_test(args):
         print "Set arm"
 
         ### Change trigger back to external on master
-        args.uuts[0].s1.trg = "1,0,1"
-        print "Set trigger to ext"
+        args.uuts[0].s1.trg = "1,1,0"
+        print "Set trigger to int"
 
         # Wait for UUTs to be IDLE again
         for uut in args.uuts:
@@ -76,10 +80,12 @@ def run_test(args):
                 print "Postshot script failed. Exiting."
 
         print "Finished iteration"
+        counter += 1
 
 
 def run_main():
     parser = argparse.ArgumentParser(description='synchronised trigger test')
+    parser.add_argument('--loops', default=sys.maxint, type=int, help="Number of loops to run")
     parser.add_argument('uuts', nargs='+', help='UUTs - master should be first')
     args = parser.parse_args()
     run_test(args)

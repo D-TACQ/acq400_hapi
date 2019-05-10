@@ -129,13 +129,20 @@ class Channelclient(netclient.Netclient):
           retbuf[cursor].
 
         """
-        buffer = self.sock.recv(maxbuf)
+        _dtype = np.dtype('i4' if data_size == 4 else 'i2')
+        total_buffer = buffer = self.sock.recv(maxbuf)
+
+        if int(ndata) == 0:
+            while True:
+                buffer = self.sock.recv(maxbuf)
+                if not buffer:
+                    return np.frombuffer(total_buffer, dtype=_dtype, count=-1)
+                total_buffer += buffer
+
         while len(buffer) < ndata*data_size:
             buffer += self.sock.recv(maxbuf)
-            
-        _dtype = np.dtype('i4' if data_size == 4 else 'i2')
-        
-        return np.frombuffer(buffer, dtype=_dtype, count=ndata)        
+
+        return np.frombuffer(buffer, dtype=_dtype, count=ndata)
 
 
 class ExitCommand(Exception):
@@ -543,7 +550,7 @@ class Acq400:
 
 
     def load_gpg(self, stl, trace = False):
-        load_stl(self, stl, AcqPorts.GPGSTL, trace)
+        self.load_stl(stl, AcqPorts.GPGSTL, trace)
 
         with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
             while True:
@@ -556,7 +563,7 @@ class Acq400:
                     break
 
     def load_dpg(self, stl, trace = False):
-        load_stl(self, stl, AcqPorts.DPGSTL, trace)
+        self.load_stl(stl, AcqPorts.DPGSTL, trace)
 
     class AwgBusyError(Exception):
         def __init__(self, value):
