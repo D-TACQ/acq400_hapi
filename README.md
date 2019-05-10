@@ -26,7 +26,10 @@ The connectivity package is available globally as a library from pip, or you can
 run the code in acq400_hapi directly, by using PYTHONPATH
 
 ## API Documentation
+
+### Library
 http://www.d-tacq.com/resources/HAPI/acq400_hapi/index.html
+### Example Applications
 http://www.d-tacq.com/resources/HAPI/user_apps/index.html
 
 
