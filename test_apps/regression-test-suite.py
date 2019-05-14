@@ -190,11 +190,22 @@ def save_data(uuts):
     return None
 
 
+def verify_inputs(args):
+    tests = ["post","pre_post", "rtm", "rtm_gpg", "rgm"]
+    if args.test not in tests:
+        print("Please choose from one of the following tests:")
+        print(tests)
+        exit(1)
+    return None
+
+
 def run_test(args):
 
     uuts = []
     success_flag = True
     channels = eval(args.channels[0])
+
+    verify_inputs(args)
 
     for uut in args.uuts:
         uut = acq400_hapi.Acq400(uut)
