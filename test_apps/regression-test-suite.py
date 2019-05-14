@@ -306,31 +306,35 @@ def run_main():
     parser = argparse.ArgumentParser(description='acq400 regression test.')
 
     parser.add_argument('--test', default="pre_post", type=str,
-    help='Which test to run. Options are: pre_post, rtm, rgm.')
+    help='Which test to run. Options are: pre_post, rtm, rgm. \
+    Default is pre_post')
 
     parser.add_argument('--trg', default="ext", type=str,
-    help='Which trigger to use. Options are ext and int.')
+    help='Which trigger to use. Options are ext and int. Default is ext.')
 
     parser.add_argument('--config_sig_gen', default=1, type=int,
-    help='If True, configure signal generator.')
+    help='If True, configure signal generator. Default is 1 (True).')
 
     parser.add_argument('--sig_gen_name', default="A-33600-00001", type=str,
-    help='Default IP address.')
+    help='Name of signal generator. Default is A-33600-00001.')
 
     parser.add_argument('--channels', default=['[1]'], nargs='+',
     help='One list per UUT: --channels=[1],[1] plots channel 1 on UUT1 and 2')
 
     parser.add_argument('--clock_divisor', default=20000, type=int,
-    help="The speed at which to run the sig gen. 20,000 is human readable.")
+    help="The speed at which to run the sig gen. 20,000 is human readable and \
+    is default.")
 
     parser.add_argument('--demux', default=1, type=int,
-    help="Whether or not to have demux configured on the UUT.")
+    help="Whether or not to have demux configured on the UUT. Default is 1 \
+    (True)")
 
     parser.add_argument('--show_es', default=1, type=int,
-    help="Whether or not to show the event samples when demux = 0.")
+    help="Whether or not to show the event samples when demux = 0. Default is 1\
+    (True)")
 
     parser.add_argument('--loops', default=1, type=int,
-    help="Number of iterations to run the test for.")
+    help="Number of iterations to run the test for. Default is 1.")
 
     parser.add_argument('uuts', nargs='+', help="Names of uuts to test.")
 
