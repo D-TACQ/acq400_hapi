@@ -132,7 +132,7 @@ class Channelclient(netclient.Netclient):
         _dtype = np.dtype('i4' if data_size == 4 else 'i2')
         total_buffer = buffer = self.sock.recv(maxbuf)
 
-        if int(ndata) == 0:
+        if int(ndata) == 0 or int(ndata) == -1:
             while True:
                 buffer = self.sock.recv(maxbuf)
                 if not buffer:
@@ -428,7 +428,7 @@ class Acq400:
     def nchan(self):
         return int(self.s0.NCHAN)
 
-    def read_channels(self, channels=()):
+    def read_channels(self, channels=(), nsam=0):
         """read all channels post shot data.
 
         Returns:
@@ -449,7 +449,7 @@ class Acq400:
                 print("%s CH%02d start.." % (self.uut, ch))
                 start = timeit.default_timer()
 
-            chx.append(self.read_chan(ch))
+            chx.append(self.read_chan(ch, nsam))
 
             if self.trace:
                 tt = timeit.default_timer() - start
@@ -555,9 +555,9 @@ class Acq400:
         with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
             while True:
                 txt = nc.sock.recv(4096)
-                if txt: 
-                    sys.stdout.write(txt)                    
-                    if txt.find("EOF") != -1:
+                if txt:
+                    print(txt)
+                    if str(txt).find("EOF") != -1:
                         break
                 else:
                     break
@@ -616,6 +616,192 @@ class Acq400:
             print(nc.receive_message(self.NL, 256))
             nc.sock.shutdown(socket.SHUT_RDWR)
             nc.sock.close()
+
+
+    def configure_post(self, role, trigger="int", post=100000):
+        self.s0.transient = "PRE=0 POST={} SOFT_TRIGGER=1".format(post)
+
+        self.s1.TRG = 1
+        if role == "slave" or trigger == "ext":
+            self.s1.TRG_DX = 0
+        else:
+            self.s1.TRG_DX = 1
+        self.s1.TRG_SENSE = 1
+
+        self.s1.EVENT0 = 0
+        self.s1.EVENT0_DX = 0
+        self.s1.EVENT0_SENSE = 0
+
+        self.s1.RGM = 0
+        self.s1.RGM_DX = 0
+        self.s1.RGM_SENSE = 0
+
+        self.s1.RGM = 0 # Make sure RGM mode is turned off.
+        self.s0.SIG_EVENT_SRC_0 = 0
+
+        return None
+
+
+    def configure_pre_post(self, role, trigger="int", pre=50000, post=100000):
+        # configure UUT for pre/post mode. Default: soft trigger starts the
+        # data flow and we trigger the event on a hard external trigger.
+        if pre > post:
+            print("PRE samples cannot be greater than POST samples. Config not set.")
+            return None
+        trg = 1 if trigger == "int" else 0
+        self.s0.transient = "PRE={} POST={} SOFT_TRIGGER={}".format(pre, post, trg)
+
+        self.s1.TRG = 1
+        if role == "slave" or trigger == "ext":
+            self.s1.TRG_DX = 0
+        else:
+            self.s1.TRG_DX = 1
+        self.s1.TRG_SENSE = 1
+
+        self.s1.EVENT0 = 1
+        self.s1.EVENT0_DX = 0
+        self.s1.EVENT0_SENSE = 1
+
+        self.s1.RGM = 0
+        self.s1.RGM_DX = 0
+        self.s1.RGM_SENSE = 0
+
+        self.s1.RGM = 0 # Make sure RGM mode is turned off.
+        self.s0.SIG_EVENT_SRC_0 = 0
+        return None
+
+
+    def configure_rtm(self, role, trigger="ext", post=50000, rtm_translen=5000, gpg=0):
+        self.s0.transient = "PRE=0 POST={}".format(post)
+        self.s1.rtm_translen = rtm_translen
+        self.s1.TRG = 1
+        if role == "slave" or trigger == "ext":
+            self.s1.TRG_DX = 0
+        else:
+            self.s1.TRG_DX = 1
+        self.s1.TRG_SENSE = 1
+
+        self.s1.EVENT0 = 0
+        self.s1.EVENT0_DX = 0
+        self.s1.EVENT0_SENSE = 0
+
+        self.s1.RGM = 3
+        self.s1.RGM_DX = 0
+        self.s1.RGM_SENSE = 1
+
+        self.s0.SIG_EVENT_SRC_0 = 1 if gpg == 1 else 0
+
+        return None
+
+
+    def configure_rgm(self, role, trigger="ext", post="100000", gpg=0):
+        self.s0.transient = "PRE=0 POST={}".format(post)
+        self.s1.TRG = 1
+        if role == "slave" or trigger == "ext":
+            self.s1.TRG_DX = 0
+        else:
+            self.s1.TRG_DX = 1
+        self.s1.TRG_SENSE = 1
+
+        self.s1.EVENT0 = 0
+        self.s1.EVENT0_DX = 0
+        self.s1.EVENT0_SENSE = 0
+
+        self.s1.RGM = 2
+        self.s1.RGM_DX = 0
+        self.s1.RGM_SENSE = 1
+
+        self.s0.SIG_EVENT_SRC_0 = 1 if gpg == 1 else 0
+
+        return None
+
+
+    def get_demux_state(self):
+        transient = self.s0.transient
+        demux_state = transient.split("DEMUX=",1)[1][0]
+        return int(demux_state)
+
+
+    def pull_plot(self, channels=(), demux=-1):
+        data = []
+        if demux == -1:
+            demux = self.get_demux_state()
+        if demux == 1:
+            data = self.read_channels(channels)
+        elif demux == 0:
+            mux_data = self.read_muxed_data()
+            print("mux data = ", mux_data)
+            nchan = self.nchan()
+            if channels == ():
+                channels = list(range(1,nchan+1))
+            for ch in channels:
+                print("Channel - ", ch)
+                data.append(mux_data[0][ch::nchan])
+
+        import matplotlib.pyplot as plt
+        for channel in data:
+            plt.plot(channel)
+        plt.grid(True)
+        plt.show()
+        return data
+
+
+    def read_muxed_data(self):
+        data = self.read_channels((0), -1)
+        return data
+
+
+    def get_es_indices(self, file_path="default", nchan="default", human_readable=0, return_hex_string=0):
+        # a function that return the location of event samples.
+        # returns:
+        # [ [event sample indices], [ [event sample 1], ...[event sample N] ] ]
+        indices = []
+        event_samples = []
+        nchan = self.nchan() if nchan == "default" else nchan
+
+        if file_path == "default":
+            data = self.read_muxed_data()
+            data = np.array(data)
+            if data.dtype == np.int16:
+                # convert shorts back to raw bytes and then to longs.
+                data = np.frombuffer(data.tobytes(), dtype=np.uint32)
+        else:
+            data = np.fromfile(file_path, dtype=np.uint32)
+
+        if int(self.s0.data32) == 0:
+            nchan = nchan / 2 # "effective" nchan has halved if data is shorts.
+        nchan = int(nchan)
+        for index, sample in enumerate(data[0::nchan]):
+            # if sample == np.int32(0xaa55f154): # aa55
+            if sample == np.uint32(0xaa55f154): # aa55
+                indices.append(index)
+                event_samples.append(data[index*nchan:index*nchan + nchan])
+
+        if human_readable == 1:
+            # Change decimal to hex.
+            ii = 0
+            while ii < len(event_samples):
+                if type(event_samples[ii]) == np.ndarray:
+                    event_samples[ii] = event_samples[ii].tolist()
+                for indice, channel in enumerate(event_samples[ii]):
+                    event_samples[ii][indice] = '0x{0:08X}'.format(channel)
+                ll = int(len(event_samples[ii])/int(len(self.get_aggregator_sites())))
+                # print(event_samples[ii])
+                event_samples[ii] = [event_samples[ii][i:i + ll] for i in range(0, len(event_samples[ii]), ll)]
+                ii += 1
+
+            if return_hex_string == 1:
+                # Make a single string containing the hex values.
+                es_string = ""
+                for num, sample in enumerate(event_samples):
+                    for i in range(len(sample[0])):
+                        for x in event_samples[num]:
+                            es_string = es_string + str(x[i]) + " "
+                        es_string = es_string + "\n"
+                    es_string = es_string + "\n"
+                event_samples = es_string
+
+        return [indices, event_samples]
 
 
 class Acq2106(Acq400):
