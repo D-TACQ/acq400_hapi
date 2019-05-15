@@ -205,6 +205,10 @@ def verify_inputs(args):
 
 
 def run_test(args):
+    CRED = "\x1b[1;31;40m"
+    CGREEN = "\x1b[1;32;40m"
+    CYELLOW = "\x1b[1;33;40m"
+    CEND = "\33[0m"
 
     uuts = []
     success_flag = True
@@ -323,15 +327,16 @@ def run_test(args):
             plt.show(block=False)
 
         if success_flag == False:
-            print("Event samples are not identical. Exiting now.")
+            print(CRED , "Event samples are not identical. Exiting now. " , CEND)
             print("Tests run: ", iteration)
             plt.show()
             exit(1)
         else:
-            print("Test successful. Test number: ", iteration)
+            print(CGREEN + "Test successful. Test number: ", iteration, CEND)
         # import code
         # code.interact(local=locals())
-    print("Finished tests. Total tests run: ", args.loops)
+    print("Finished '{}' test. Total tests run: {}".format(args.test, args.loops))
+    print(CYELLOW, "Please close graph to continue.",CEND)
     plt.show()
     return None
 
