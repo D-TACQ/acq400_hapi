@@ -205,10 +205,12 @@ def verify_inputs(args):
 
 
 def run_test(args):
-    CRED = "\x1b[1;31;40m"
-    CGREEN = "\x1b[1;32;40m"
-    CYELLOW = "\x1b[1;33;40m"
+    CRED = "\x1b[1;31m"
+    CGREEN = "\x1b[1;32m"
+    CYELLOW = "\x1b[1;33m"
     CEND = "\33[0m"
+
+    plt.figure() # Open a new figure for each test (only in all tests mode).
 
     uuts = []
     success_flag = True
@@ -312,19 +314,15 @@ def run_test(args):
             for index, data_set in enumerate(data):
                 for ch in channels[index]:
                     plt.plot(data_set[0][ch-1::uuts[index].nchan()])
-            plt.grid(True)
-
-            plt.pause(0.001)
-            plt.show(block=False)
 
         else:
             for data_set in data:
                 for ch in data_set:
                     plt.plot(ch)
-            plt.grid(True)
-
-            plt.pause(0.001)
-            plt.show(block=False)
+        plt.grid(True)
+        plt.title("Test: {} Run: {}".format(args.test, iteration))
+        plt.pause(0.001)
+        plt.show(block=False)
 
         if success_flag == False:
             print(CRED , "Event samples are not identical. Exiting now. " , CEND)
@@ -336,8 +334,8 @@ def run_test(args):
         # import code
         # code.interact(local=locals())
     print("Finished '{}' test. Total tests run: {}".format(args.test, args.loops))
-    print(CYELLOW, "Please close graph to continue.",CEND)
-    plt.show()
+    plt.pause(0.001)
+    plt.show(block=False)
     return None
 
 
@@ -390,6 +388,7 @@ def run_main():
             run_test(args)
     else:
         run_test(args)
+    plt.show()
 
 
 if __name__ == '__main__':
