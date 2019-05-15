@@ -107,9 +107,14 @@ def config_gpg(uut, args, trg=1):
         stl = create_rgm_stl()
     else:
         stl = create_rtm_stl()
-    uut.load_gpg(stl)
+    try:
+        uut.load_gpg(stl)
+    except Exception:
+        print("Load GPG has failed. If you want to use the GPG please make sure")
+        print("that the GPG package has been enabled.")
+        return False
     uut.s0.gpg_enable = 1
-    return None
+    return True
 
 
 def configure_sig_gen(sig_gen, args, freq):
@@ -248,20 +253,35 @@ def run_test(args):
             elif args.test == "rtm_gpg":
                 if index == 0:
                     uut.configure_rtm("master", trigger=args.trg, gpg=1)
-                    config_gpg(uut, args, trg=0)
+                    gpg_config_success = config_gpg(uut, args, trg=0)
+                    if gpg_config_success != True:
+                        print("Breaking out of test {} now.".format(args.test))
+                        break
                 else:
                     uut.configure_rtm("slave")
 
             elif args.test == "rgm":
                 if index == 0:
                     uut.configure_rgm("master", trigger=args.trg, post=75000, gpg=1)
-                    config_gpg(uut, args, trg=0)
+                    gpg_config_success = config_gpg(uut, args, trg=0)
+                    if gpg_config_success != True:
+                        print("Breaking out of test {} now.".format(args.test))
+                        break
                 else:
                     uut.s0.sync_role = "slave"
                     uut.configure_rgm("slave", post=75000)
 
             uut.s0.set_arm
             uut.statmon.wait_armed()
+
+        try:
+            # Here the value of gpg_config_success is verified, as we need to
+            # break out of the outer loop if it is false. If it does not exist
+            # then do nothing.
+            if gpg_config_success != True:
+                break
+        except NameError:
+            print("")
 
         time.sleep(5)
 
