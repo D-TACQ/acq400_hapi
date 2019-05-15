@@ -372,7 +372,19 @@ def run_main():
 
     parser.add_argument('uuts', nargs='+', help="Names of uuts to test.")
 
-    run_test(parser.parse_args())
+    args = parser.parse_args()
+
+    all_tests = ["post", "pre_post", "rtm", "rtm_gpg", "rgm"]
+
+    if args.test.lower() == "all":
+        print("You have selected to run all tests.")
+        print("Now running each test {} times.".format(args.loops))
+        for test in all_tests:
+            args.test = test
+            print("\nNow running: {} test\n".format(test))
+            run_test(args)
+    else:
+        run_test(args)
 
 
 if __name__ == '__main__':
