@@ -204,7 +204,6 @@ def run_test(args):
     uuts = []
     success_flag = True
     channels = eval(args.channels[0])
-
     verify_inputs(args)
 
     for uut in args.uuts:
@@ -329,7 +328,7 @@ def run_main():
     parser.add_argument('--sig_gen_name', default="A-33600-00001", type=str,
     help='Name of signal generator. Default is A-33600-00001.')
 
-    parser.add_argument('--channels', default=['[1]'], nargs='+',
+    parser.add_argument('--channels', default=['[1],[1]'], nargs='+',
     help='One list per UUT: --channels=[1],[1] plots channel 1 on UUT1 and 2')
 
     parser.add_argument('--clock_divisor', default=20000, type=int,
