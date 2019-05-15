@@ -80,7 +80,12 @@ def create_rgm_stl():
 
 def calculate_frequency(args, uut, divisor):
     # calculate a reasonable frequency from the clock speed of the master uut.
-    freq = str(int(float(uut.s0.SIG_CLK_S1_FREQ.split(" ")[1]) / divisor))
+    clk_freq = (int(float(uut.s0.SIG_CLK_S1_FREQ.split(" ")[1])))
+    print("\n\nSample Rate = ",clk_freq,"\n\n")
+    freq = clk_freq / divisor
+    if int(freq) == 0 :
+        print("\n\nWarning CLK Frequency reading ZERO!!!\n\n")
+        exit()
     return freq
 
 
