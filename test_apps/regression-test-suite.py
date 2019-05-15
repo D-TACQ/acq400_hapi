@@ -345,8 +345,8 @@ def run_main():
     parser = argparse.ArgumentParser(description='acq400 regression test.')
 
     parser.add_argument('--test', default="pre_post", type=str,
-    help='Which test to run. Options are: pre_post, rtm, rgm. \
-    Default is pre_post')
+    help='Which test to run. Options are: all, post, pre_post, rtm, rtm_gpg, rgm. \
+    Default is pre_post.')
 
     parser.add_argument('--trg', default="ext", type=str,
     help='Which trigger to use. Options are ext and int. Default is ext.')
