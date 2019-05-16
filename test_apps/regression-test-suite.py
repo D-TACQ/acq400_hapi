@@ -104,7 +104,7 @@ def config_gpg(uut, args, trg=1):
     # The following settings are very test specific and so they
     # have not been included in a library function.
     uut.s0.gpg_enable = 0
-    uut.s0.gpg_clk = "1,1,1" # GPG clock is the same as the site.
+    uut.s0.gpg_clk = "1,2,1" # GPG clock is the same as the site.
     uut.s0.gpg_trg = "1,{},1".format(trg)
     uut.s0.gpg_mode = 3 # LOOPWAIT
 
