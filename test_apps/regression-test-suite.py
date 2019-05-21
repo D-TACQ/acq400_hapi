@@ -209,6 +209,10 @@ def verify_inputs(args):
     return None
 
 
+def custom_test(args, uuts):
+    return None
+
+
 def run_test(args):
     CRED = "\x1b[1;31m"
     CGREEN = "\x1b[1;32m"
@@ -329,6 +333,9 @@ def run_test(args):
         plt.pause(0.001)
         plt.show(block=False)
 
+        if args.custom_test == 1:
+            custom_test(args, uuts)
+
         if success_flag == False:
             print(CRED , "Event samples are not identical. Exiting now. " , CEND)
             print("Tests run: ", iteration)
@@ -377,6 +384,10 @@ def run_main():
 
     parser.add_argument('--loops', default=1, type=int,
     help="Number of iterations to run the test for. Default is 1.")
+
+    parser.add_argument('--custom_test', default=0, type=int,
+    help="This argument allows the user to write a custom test in the custom \
+    test function. Default is disabled (0).")
 
     parser.add_argument('uuts', nargs='+', help="Names of uuts to test.")
 
