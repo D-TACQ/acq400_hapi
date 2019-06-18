@@ -803,7 +803,7 @@ class Acq400:
                 channels = list(range(1,nchan+1))
             for ch in channels:
                 print("Channel - ", ch)
-                data.append(mux_data[0][ch::nchan])
+                data.append(mux_data[ch-1::nchan])
 
         import matplotlib.pyplot as plt
         for channel in data:
@@ -821,7 +821,7 @@ class Acq400:
         get_demux_state() function.
         """
         data = self.read_channels((0), -1)
-        return data
+        return data[0]
 
 
     def get_es_indices(self, file_path="default", nchan="default", human_readable=0, return_hex_string=0):
