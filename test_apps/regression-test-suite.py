@@ -150,10 +150,10 @@ def configure_sig_gen(sig_gen, args, freq):
 
     elif args.test == "rtm" or args.test == "rgm":
         # sig_gen.send("FREQ 1000\n".encode())
-        sig_gen.send("BURS:STAT ON\n".encode())
-        sig_gen.send("BURS:NCYC 1\n".encode())
         sig_gen.send("TRIG:SOUR IMM\n".encode())
+        sig_gen.send("BURS:STAT OFF\n".encode())
         if args.test == "rgm":
+            sig_gen.send("BURS:STAT ON\n".encode())
             sig_gen.send("BURS:NCYC 5\n".encode())
             sig_gen.send("TRIG:SOUR BUS\n".encode())
     elif args.test == "rtm_gpg":
