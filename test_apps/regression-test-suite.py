@@ -304,7 +304,8 @@ def run_test(args):
 
         for index, uut in enumerate(uuts):
             try:
-                acq400_hapi.shotcontrol.wait_for_state(uut, "IDLE")
+                # acq400_hapi.shotcontrol.wait_for_state(uut, "IDLE")
+                uut.statmon.wait_stopped()
             except Exception:
                 print("\nshotcontrol has failed. Using statmon instead.")
                 print("You should be able to ignore this diagnostic message.\n")
