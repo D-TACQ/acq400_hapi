@@ -619,6 +619,16 @@ class Acq400:
 
 
     def configure_post(self, role, trigger="int", post=100000):
+        """
+        Configure UUT for a regular transient capture. Default: internal soft
+        trigger starts the capture.
+
+        "Role" is a mandatory argument. For master systems, role should be the
+        string "master", if the system is a slave then role should be the string
+        "slave"
+
+        Default post samples: 100k.
+        """
         self.s0.transient = "PRE=0 POST={} SOFT_TRIGGER=1".format(post)
 
         self.s1.TRG = 1
@@ -643,8 +653,17 @@ class Acq400:
 
 
     def configure_pre_post(self, role, trigger="int", pre=50000, post=100000):
-        # configure UUT for pre/post mode. Default: soft trigger starts the
-        # data flow and we trigger the event on a hard external trigger.
+        """
+        Configure UUT for pre/post mode. Default: soft trigger starts the
+        data flow and trigger the event on a hard external trigger.
+
+        "Role" is a mandatory argument. For master systems, role should be the
+        string "master", if the system is a slave then role should be the string
+        "slave"
+
+        Default pre trigger samples: 50k.
+        Default post trigger samples: 100k.
+        """
         if pre > post:
             print("PRE samples cannot be greater than POST samples. Config not set.")
             return None
@@ -672,6 +691,22 @@ class Acq400:
 
 
     def configure_rtm(self, role, trigger="ext", post=50000, rtm_translen=5000, gpg=0):
+        """
+        Configure UUT for rtm mode. Default: external trigger starts the capture
+        and takes 5000 samples, each subsequent trigger gives us another 5000
+        samples.
+
+        "Role" is a mandatory argument. For master systems, role should be the
+        string "master", if the system is a slave then role should be the string
+        "slave"
+
+        Default rtm_translen: 5k samples.
+        Default post: 50k samples
+
+        GPG can be used in RTM mode as the Event. If you are using the GPG
+        then this function can put the GPG output onto the event bus (to use as
+        an Event for RTM).
+        """
         self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.rtm_translen = rtm_translen
         self.s1.TRG = 1
@@ -695,6 +730,21 @@ class Acq400:
 
 
     def configure_rgm(self, role, trigger="ext", post="100000", gpg=0):
+        """
+        Configure UUT for RGM mode. Default: external trigger starts the capture
+        and the system takes samples every clock whenever the trigger is high.
+
+        "Role" is a mandatory argument. For master systems, role should be the
+        string "master", if the system is a slave then role should be the string
+        "slave"
+
+        Default post: 100k samples.
+
+        GPG can be used in RGM mode as the Event. If you are using the GPG then
+        this function can put the GPG output onto the event bus (to use as an
+        Event for RGM).
+
+        """
         self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.TRG = 1
         if role == "slave" or trigger == "ext":
@@ -716,23 +766,84 @@ class Acq400:
         return None
 
 
-    def pull_plot(self, channels=(), type="mpl"):
-        data = self.read_channels(channels)
-        if type == "mpl":
-            import matplotlib.pyplot as plt
-            for channel in data:
-                plt.plot(channel)
-            plt.grid(True)
-            plt.show()
+    def get_demux_state(self):
+        """
+        Returns the current state of demux. Beware: if demux is set after the
+        shot then this function will return the new state. There is no way to
+        determine what the state was during the previous shot.
+        """
+        transient = self.s0.transient
+        demux_state = transient.split("DEMUX=",1)[1][0]
+        return int(demux_state)
+
+
+    def pull_plot(self, channels=(), demux=-1):
+        """
+        Pulls data from 53000 or 5300X depending on the status of demux.
+        This function takes a tuple of integers and will return the
+        corresponding data from each 5300X port (if demux is on) and will return
+        the corresponding data filtered from 53000 if demux is off.
+
+        The user can also override the detected demux state if they want to: 1
+        is demux on and 0 is demux off. Default is -1 and means autodetect.
+
+        This function returns an array of the specified channels and plots the
+        data.
+        """
+        data = []
+        if demux == -1:
+            demux = self.get_demux_state()
+        if demux == 1:
+            data = self.read_channels(channels)
+        elif demux == 0:
+            mux_data = self.read_muxed_data()
+            print("mux data = ", mux_data)
+            nchan = self.nchan()
+            if channels == ():
+                channels = list(range(1,nchan+1))
+            for ch in channels:
+                print("Channel - ", ch)
+                data.append(mux_data[ch-1::nchan])
+
+        import matplotlib.pyplot as plt
+        for channel in data:
+            plt.plot(channel)
+        plt.grid(True)
+        plt.show()
         return data
 
 
     def read_muxed_data(self):
+        """
+        A function that returns data from port 53000. Only use if demux is
+        turned off. If demux is turned on then this function will not return the
+        expected muxed data. To check if demux is enabled use the
+        get_demux_state() function.
+        """
         data = self.read_channels((0), -1)
-        return data
+        return data[0]
 
 
     def get_es_indices(self, file_path="default", nchan="default", human_readable=0, return_hex_string=0):
+        """
+        Returns the location of event samples.
+
+        get_es_indices will pull data from a system by default (it will also
+        read in a raw datafile) and reads through the data in order to find the
+        location of the event samples. The system will also return the raw
+        event sample data straight from the system.
+
+        If human_readable is set to 1 then the function will return the hex
+        interpretations of the event sample data. The indices will remain
+        unchanged.
+
+        If return_hex_string is set to 1 (provided human_readable has ALSO been
+        set) then the function will return one single string containing all of
+        the event samples.
+
+        Data returned by the function looks like:
+        [  [Event sample indices], [Event sample data]  ]
+        """
         # a function that return the location of event samples.
         # returns:
         # [ [event sample indices], [ [event sample 1], ...[event sample N] ] ]

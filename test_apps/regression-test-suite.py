@@ -10,9 +10,9 @@ http://eigg-fs:8090/mediawiki/index.php/Products:ACQ400:Regression_Testing
 
 Usage:
 
-python regression-test-suite.py --trg=int --test=post --channels="1,1" acq2106_085 acq2106_126
+python regression-test-suite.py --trg=int --test=post --channels="1,1" UUT1 UUT2
 
-python regression-test-suite.py --trg=ext --test=post --channels="1,1" acq2106_085 acq2106_126
+python regression-test-suite.py --trg=ext --test=post --channels="1,1" UUT1 UUT2
 
 
 
@@ -80,7 +80,12 @@ def create_rgm_stl():
 
 def calculate_frequency(args, uut, divisor):
     # calculate a reasonable frequency from the clock speed of the master uut.
-    freq = str(int(float(uut.s0.SIG_CLK_S1_FREQ.split(" ")[1]) / divisor))
+    clk_freq = (int(float(uut.s0.SIG_CLK_S1_FREQ.split(" ")[1])))
+    print("\n\nSample Rate = ",clk_freq,"\n\n")
+    freq = clk_freq / divisor
+    if int(freq) == 0 :
+        print("\n\nWarning CLK Frequency reading ZERO!!!\n\n")
+        exit()
     return freq
 
 
@@ -99,7 +104,7 @@ def config_gpg(uut, args, trg=1):
     # The following settings are very test specific and so they
     # have not been included in a library function.
     uut.s0.gpg_enable = 0
-    uut.s0.gpg_clk = "1,1,1" # GPG clock is the same as the site.
+    uut.s0.gpg_clk = "1,2,1" # GPG clock is the same as the site.
     uut.s0.gpg_trg = "1,{},1".format(trg)
     uut.s0.gpg_mode = 3 # LOOPWAIT
 
@@ -107,9 +112,14 @@ def config_gpg(uut, args, trg=1):
         stl = create_rgm_stl()
     else:
         stl = create_rtm_stl()
-    uut.load_gpg(stl)
+    try:
+        uut.load_gpg(stl)
+    except Exception:
+        print("Load GPG has failed. If you want to use the GPG please make sure")
+        print("that the GPG package has been enabled.")
+        return False
     uut.s0.gpg_enable = 1
-    return None
+    return True
 
 
 def configure_sig_gen(sig_gen, args, freq):
@@ -170,17 +180,16 @@ def check_es(events):
             return False
     if success_flag == True:
         print("\nES Comparison successful!\n")
+    return True
 
 
 def show_es(events, uuts):
-    # length = len(events[0][1])
-    # for index, uut in enumerate(uuts):
-    #     print('{HN: {fill}{align}{length}}'.format(HN=uut.s0.HN, fill=' ', align='<', length=length))
-        # events[index][1] = '{0: <{length}}'.format(uut.s0.HN + "\n", length=length) + events[index][1]
     uut_list = list(range(0, len(uuts)))
     lines = [events[counter][1].splitlines() for counter in uut_list]
     for l in zip(*lines):
         print(*l, sep='')
+    for event in events:
+        print("{}\n".format(event[0])) # Print indices too!
     return None
 
 
@@ -191,10 +200,31 @@ def save_data(uuts):
     return None
 
 
+def verify_inputs(args):
+    tests = ["post","pre_post", "rtm", "rtm_gpg", "rgm"]
+    if args.test not in tests:
+        print("Please choose from one of the following tests:")
+        print(tests)
+        exit(1)
+    return None
+
+
+def custom_test(args, uuts):
+    return None
+
+
 def run_test(args):
+    CRED = "\x1b[1;31m"
+    CGREEN = "\x1b[1;32m"
+    CYELLOW = "\x1b[1;33m"
+    CEND = "\33[0m"
+
+    plt.figure() # Open a new figure for each test (only in all tests mode).
+
     uuts = []
-    data = []
-    events = []
+    success_flag = True
+    channels = eval(args.channels[0])
+    verify_inputs(args)
 
     for uut in args.uuts:
         uut = acq400_hapi.Acq400(uut)
@@ -209,82 +239,115 @@ def run_test(args):
         freq = calculate_frequency(args, uuts[0], args.clock_divisor)
         configure_sig_gen(sig_gen, args, freq)
 
-    for index, uut in reversed(list(enumerate(uuts))):
+    for iteration in list(range(1, args.loops+1)):
+        data = []
+        events = []
+        plt.clf()
 
-        if args.test == "pre_post":
-            if index == 0:
-                uut.configure_pre_post("master", trigger=args.trg)
+        for index, uut in reversed(list(enumerate(uuts))):
+
+            if args.test == "pre_post":
+                if index == 0:
+                    uut.configure_pre_post("master", trigger=args.trg)
+                else:
+                    # uut.s0.sync_role = "slave"
+                    uut.configure_pre_post("slave")
+
+            elif args.test == "post":
+                if index == 0:
+                    uut.configure_post("master", trigger=args.trg)
+                else:
+                    uut.configure_post("slave", trigger=args.trg)
+
+            elif args.test == "rtm":
+                if index == 0:
+                    uut.configure_rtm("master", trigger=args.trg)
+                else:
+                    uut.configure_rtm("slave")
+
+            elif args.test == "rtm_gpg":
+                if index == 0:
+                    uut.configure_rtm("master", trigger=args.trg, gpg=1)
+                    gpg_config_success = config_gpg(uut, args, trg=0)
+                    if gpg_config_success != True:
+                        print("Breaking out of test {} now.".format(args.test))
+                        break
+                else:
+                    uut.configure_rtm("slave")
+
+            elif args.test == "rgm":
+                if index == 0:
+                    uut.configure_rgm("master", trigger=args.trg, post=75000, gpg=1)
+                    gpg_config_success = config_gpg(uut, args, trg=0)
+                    if gpg_config_success != True:
+                        print("Breaking out of test {} now.".format(args.test))
+                        break
+                else:
+                    uut.s0.sync_role = "slave"
+                    uut.configure_rgm("slave", post=75000)
+
+            uut.s0.set_arm
+            uut.statmon.wait_armed()
+
+        try:
+            # Here the value of gpg_config_success is verified, as we need to
+            # break out of the outer loop if it is false. If it does not exist
+            # then do nothing.
+            if gpg_config_success != True:
+                break
+        except NameError:
+            print("")
+
+        time.sleep(5)
+
+        trigger_system(args, sig_gen)
+
+        for index, uut in enumerate(uuts):
+            try:
+                acq400_hapi.shotcontrol.wait_for_state(uut, "IDLE")
+            except Exception:
+                print("\nshotcontrol has failed. Using statmon instead.")
+                print("You should be able to ignore this diagnostic message.\n")
+                uut.statmon.wait_stopped()
+            if args.demux == 1:
+                data.append(uut.read_channels(*channels[index]))
             else:
-                # uut.s0.sync_role = "slave"
-                uut.configure_pre_post("slave")
+                data.append(uut.read_channels((0), -1))
+            events.append(uut.get_es_indices(human_readable=1, return_hex_string=1))
 
-        elif args.test == "post":
-            if index == 0:
-                uut.configure_post("master", trigger=args.trg)
-            else:
-                uut.configure_post("slave", trigger=args.trg)
+        if args.demux == 0:
+            success_flag = check_es(events)
+            if args.show_es == 1:
+                show_es(events, uuts)
+            save_data(uuts)
+            for index, data_set in enumerate(data):
+                for ch in channels[index]:
+                    plt.plot(data_set[0][ch-1::uuts[index].nchan()])
 
-        elif args.test == "rtm":
-            if index == 0:
-                uut.configure_rtm("master", trigger=args.trg)
-            else:
-                uut.configure_rtm("slave")
-
-        elif args.test == "rtm_gpg":
-            if index == 0:
-                uut.configure_rtm("master", trigger=args.trg, gpg=1)
-                config_gpg(uut, args, trg=0)
-            else:
-                uut.configure_rtm("slave")
-
-        elif args.test == "rgm":
-            if index == 0:
-                uut.configure_rgm("master", trigger=args.trg, post=75000, gpg=1)
-                config_gpg(uut, args, trg=0)
-            else:
-                uut.s0.sync_role = "slave"
-                uut.configure_rgm("slave", post=75000)
-
-        uut.s0.set_arm
-        uut.statmon.wait_armed()
-
-    time.sleep(5)
-
-    trigger_system(args, sig_gen)
-
-    channels = eval(args.channels[0])
-
-
-    for index, uut in enumerate(uuts):
-        # uut.statmon.wait_stopped()
-        acq400_hapi.shotcontrol.wait_for_state(uut, "IDLE")
-        if args.demux == 1:
-            data.append(uut.read_channels(*channels[index]))
         else:
-            data.append(uut.read_channels((0), -1))
-        events.append(uut.get_es_indices(human_readable=1, return_hex_string=1))
-
-    if args.demux == 0:
-        check_es(events)
-        if args.show_es == 1:
-            show_es(events, uuts)
-        save_data(uuts)
-        for index, data_set in enumerate(data):
-            for ch in channels[index]:
-                plt.plot(data_set[0][ch-1::uuts[index].nchan()])
+            for data_set in data:
+                for ch in data_set:
+                    plt.plot(ch)
         plt.grid(True)
-        plt.show()
+        plt.title("Test: {} Run: {}".format(args.test, iteration))
+        plt.pause(0.001)
+        plt.show(block=False)
 
-    else:
-        for data_set in data:
-            for ch in data_set:
-                plt.plot(ch)
-        plt.grid(True)
-        plt.show()
+        if args.custom_test == 1:
+            custom_test(args, uuts)
 
-    # import code
-    # code.interact(local=locals())
-
+        if success_flag == False:
+            print(CRED , "Event samples are not identical. Exiting now. " , CEND)
+            print("Tests run: ", iteration)
+            plt.show()
+            exit(1)
+        else:
+            print(CGREEN + "Test successful. Test number: ", iteration, CEND)
+        # import code
+        # code.interact(local=locals())
+    print("Finished '{}' test. Total tests run: {}".format(args.test, args.loops))
+    plt.pause(0.001)
+    plt.show(block=False)
     return None
 
 
@@ -292,32 +355,56 @@ def run_main():
     parser = argparse.ArgumentParser(description='acq400 regression test.')
 
     parser.add_argument('--test', default="pre_post", type=str,
-    help='Which test to run. Options are: pre_post, rtm, rgm.')
+    help='Which test to run. Options are: all, post, pre_post, rtm, rtm_gpg, rgm. \
+    Default is pre_post.')
 
     parser.add_argument('--trg', default="ext", type=str,
-    help='Which trigger to use. Options are ext and int.')
+    help='Which trigger to use. Options are ext and int. Default is ext.')
 
     parser.add_argument('--config_sig_gen', default=1, type=int,
-    help='If True, configure signal generator.')
+    help='If True, configure signal generator. Default is 1 (True).')
 
     parser.add_argument('--sig_gen_name', default="A-33600-00001", type=str,
-    help='Default IP address.')
+    help='Name of signal generator. Default is A-33600-00001.')
 
-    parser.add_argument('--channels', default=['[1]'], nargs='+',
+    parser.add_argument('--channels', default=['[1],[1]'], nargs='+',
     help='One list per UUT: --channels=[1],[1] plots channel 1 on UUT1 and 2')
 
     parser.add_argument('--clock_divisor', default=20000, type=int,
-    help="The speed at which to run the sig gen. 20,000 is human readable.")
+    help="The speed at which to run the sig gen. 20,000 is human readable and \
+    is default.")
 
     parser.add_argument('--demux', default=1, type=int,
-    help="Whether or not to have demux configured on the UUT.")
+    help="Whether or not to have demux configured on the UUT. Default is 1 \
+    (True)")
 
     parser.add_argument('--show_es', default=1, type=int,
-    help="Whether or not to show the event samples when demux = 0.")
+    help="Whether or not to show the event samples when demux = 0. Default is 1\
+    (True)")
+
+    parser.add_argument('--loops', default=1, type=int,
+    help="Number of iterations to run the test for. Default is 1.")
+
+    parser.add_argument('--custom_test', default=0, type=int,
+    help="This argument allows the user to write a custom test in the custom \
+    test function. Default is disabled (0).")
 
     parser.add_argument('uuts', nargs='+', help="Names of uuts to test.")
 
-    run_test(parser.parse_args())
+    args = parser.parse_args()
+
+    all_tests = ["post", "pre_post", "rtm", "rtm_gpg", "rgm"]
+
+    if args.test.lower() == "all":
+        print("You have selected to run all tests.")
+        print("Now running each test {} times.".format(args.loops))
+        for test in all_tests:
+            args.test = test
+            print("\nNow running: {} test\n".format(test))
+            run_test(args)
+    else:
+        run_test(args)
+    plt.show()
 
 
 if __name__ == '__main__':
