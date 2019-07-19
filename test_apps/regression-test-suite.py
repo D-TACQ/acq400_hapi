@@ -311,7 +311,7 @@ def run_test(args):
                 print("You should be able to ignore this diagnostic message.\n")
                 uut.statmon.wait_stopped()
             if args.demux == 1:
-                data.append(uut.read_channels(*channels[index]))
+                data.append(uut.read_channels(tuple(channels[index])))
             else:
                 data.append(uut.read_channels((0), -1))
             events.append(uut.get_es_indices(human_readable=1, return_hex_string=1))
