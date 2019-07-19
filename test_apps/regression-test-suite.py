@@ -303,13 +303,7 @@ def run_test(args):
         trigger_system(args, sig_gen)
 
         for index, uut in enumerate(uuts):
-            try:
-                # acq400_hapi.shotcontrol.wait_for_state(uut, "IDLE")
-                uut.statmon.wait_stopped()
-            except Exception:
-                print("\nshotcontrol has failed. Using statmon instead.")
-                print("You should be able to ignore this diagnostic message.\n")
-                uut.statmon.wait_stopped()
+            uut.statmon.wait_stopped()
             if args.demux == 1:
                 data.append(uut.read_channels(tuple(channels[index])))
             else:
