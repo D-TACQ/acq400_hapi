@@ -618,7 +618,7 @@ class Acq400:
             nc.sock.close()
 
 
-    def configure_post(self, role, trigger="int", post=100000):
+    def configure_post(self, role, trigger="1,1,1", post=100000):
         """
         Configure UUT for a regular transient capture. Default: internal soft
         trigger starts the capture.
@@ -629,14 +629,15 @@ class Acq400:
 
         Default post samples: 100k.
         """
+        trigger = trigger.split(",")
         self.s0.transient = "PRE=0 POST={} SOFT_TRIGGER=1".format(post)
 
         self.s1.TRG = 1
-        if role == "slave" or trigger == "ext":
+        if role == "slave" or trigger[1] == 1:
             self.s1.TRG_DX = 0
         else:
             self.s1.TRG_DX = 1
-        self.s1.TRG_SENSE = 1
+        self.s1.TRG_SENSE = trigger[2]
 
         self.s1.EVENT0 = 0
         self.s1.EVENT0_DX = 0
@@ -652,7 +653,7 @@ class Acq400:
         return None
 
 
-    def configure_pre_post(self, role, trigger="int", pre=50000, post=100000):
+    def configure_pre_post(self, role, trigger="1,1,1", pre=50000, post=100000):
         """
         Configure UUT for pre/post mode. Default: soft trigger starts the
         data flow and trigger the event on a hard external trigger.
@@ -667,15 +668,16 @@ class Acq400:
         if pre > post:
             print("PRE samples cannot be greater than POST samples. Config not set.")
             return None
-        trg = 1 if trigger == "int" else 0
+        trigger = trigger.split(",")
+        trg = 1 if trigger[1] == 1 else 0
         self.s0.transient = "PRE={} POST={} SOFT_TRIGGER={}".format(pre, post, trg)
 
-        self.s1.TRG = 1
-        if role == "slave" or trigger == "ext":
+        self.s1.TRG = trigger[0]
+        if role == "slave" or trigger[1] == 1:
             self.s1.TRG_DX = 0
         else:
             self.s1.TRG_DX = 1
-        self.s1.TRG_SENSE = 1
+        self.s1.TRG_SENSE = trigger[2]
 
         self.s1.EVENT0 = 1
         self.s1.EVENT0_DX = 0
@@ -690,7 +692,7 @@ class Acq400:
         return None
 
 
-    def configure_rtm(self, role, trigger="ext", post=50000, rtm_translen=5000, gpg=0):
+    def configure_rtm(self, role, trigger="1,1,1", post=50000, rtm_translen=5000, gpg=0):
         """
         Configure UUT for rtm mode. Default: external trigger starts the capture
         and takes 5000 samples, each subsequent trigger gives us another 5000
@@ -710,11 +712,11 @@ class Acq400:
         self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.rtm_translen = rtm_translen
         self.s1.TRG = 1
-        if role == "slave" or trigger == "ext":
+        if role == "slave" or trigger[1] == 1:
             self.s1.TRG_DX = 0
         else:
             self.s1.TRG_DX = 1
-        self.s1.TRG_SENSE = 1
+        self.s1.TRG_SENSE = trigger[2]
 
         self.s1.EVENT0 = 0
         self.s1.EVENT0_DX = 0
@@ -729,7 +731,7 @@ class Acq400:
         return None
 
 
-    def configure_rgm(self, role, trigger="ext", post="100000", gpg=0):
+    def configure_rgm(self, role, trigger="1,1,1", post="100000", gpg=0):
         """
         Configure UUT for RGM mode. Default: external trigger starts the capture
         and the system takes samples every clock whenever the trigger is high.
@@ -747,11 +749,11 @@ class Acq400:
         """
         self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.TRG = 1
-        if role == "slave" or trigger == "ext":
+        if role == "slave" or trigger[1] == 1:
             self.s1.TRG_DX = 0
         else:
             self.s1.TRG_DX = 1
-        self.s1.TRG_SENSE = 1
+        self.s1.TRG_SENSE = trigger[2]
 
         self.s1.EVENT0 = 0
         self.s1.EVENT0_DX = 0
