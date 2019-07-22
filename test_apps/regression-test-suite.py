@@ -94,7 +94,7 @@ def trigger_system(args, sig_gen):
     if args.test != "rtm":
         print("Triggering now.")
         sig_gen.send("TRIG\n".encode())
-        if args.trg == "ext" and args.test == "pre_post":
+        if args.trg[1] == 0 and args.test == "pre_post":
             time.sleep(2)
             sig_gen.send("TRIG\n".encode())
     return None
@@ -132,7 +132,7 @@ def configure_sig_gen(sig_gen, args, freq):
     sig_gen.send("FUNC:SHAP SIN\n".encode())
 
     if args.test == "post":
-        if args.trg == "ext":
+        if args.trg[1] == "1":
             sig_gen.send("BURS:STAT ON\n".encode())
             sig_gen.send("BURS:NCYC 1\n".encode())
             sig_gen.send("TRIG:SOUR BUS\n".encode())
@@ -143,7 +143,7 @@ def configure_sig_gen(sig_gen, args, freq):
     if args.test == "pre_post":
         sig_gen.send("BURS:STAT ON\n".encode())
         sig_gen.send("BURS:NCYC 1\n".encode())
-        if args.trg == "ext":
+        if args.trg[1] == "1":
             sig_gen.send("TRIG:SOUR BUS\n".encode())
         else:
             sig_gen.send("TRIG:SOUR IMM\n".encode())
@@ -353,8 +353,8 @@ def run_main():
     help='Which test to run. Options are: all, post, pre_post, rtm, rtm_gpg, rgm. \
     Default is pre_post.')
 
-    parser.add_argument('--trg', default="ext", type=str,
-    help='Which trigger to use. Options are ext and int. Default is ext.')
+    parser.add_argument('--trg', default="1,0,1", type=str,
+    help='Which trigger to use. Default is 1,0,1.')
 
     parser.add_argument('--config_sig_gen', default=1, type=int,
     help='If True, configure signal generator. Default is 1 (True).')
@@ -387,6 +387,7 @@ def run_main():
     parser.add_argument('uuts', nargs='+', help="Names of uuts to test.")
 
     args = parser.parse_args()
+    args.trg = args.trg.split(",")
 
     all_tests = ["post", "pre_post", "rtm", "rtm_gpg", "rgm"]
 
