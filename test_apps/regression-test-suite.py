@@ -143,10 +143,7 @@ def configure_sig_gen(sig_gen, args, freq):
     if args.test == "pre_post":
         sig_gen.send("BURS:STAT ON\n".encode())
         sig_gen.send("BURS:NCYC 1\n".encode())
-        if args.trg[1] == 0:
-            sig_gen.send("TRIG:SOUR BUS\n".encode())
-        else:
-            sig_gen.send("TRIG:SOUR IMM\n".encode())
+        sig_gen.send("TRIG:SOUR BUS\n".encode())
 
     elif args.test == "rtm" or args.test == "rgm":
         # sig_gen.send("FREQ 1000\n".encode())
