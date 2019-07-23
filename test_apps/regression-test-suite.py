@@ -231,6 +231,7 @@ def run_test(args):
         uut.s0.set_abort
         uut.s0.transient = "DEMUX={}".format(args.demux)
         check_master_slave(args, uut)
+        uut.s0.transient # print transient config
         uuts.append(uut)
 
     if args.config_sig_gen == 1:
