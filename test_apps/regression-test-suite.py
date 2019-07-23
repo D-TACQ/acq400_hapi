@@ -364,7 +364,7 @@ def run_main():
     help='Name of signal generator. Default is A-33600-00001.')
 
     parser.add_argument('--channels', default=['[1],[1]'], nargs='+',
-    help='One list per UUT: --channels=[1],[1] plots channel 1 on UUT1 and 2')
+    help='One list per UUT: --channels=[[1],[1]] plots channel 1 on UUT1 and 2')
 
     parser.add_argument('--clock_divisor', default=20000, type=int,
     help="The speed at which to run the sig gen. 20,000 is human readable and \
