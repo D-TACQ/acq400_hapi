@@ -325,7 +325,7 @@ def run_test(args):
                 for ch in data_set:
                     plt.plot(ch)
         plt.grid(True)
-        plt.title("Test: {} Run: {}".format(args.test, iteration))
+        plt.title("Test: {} Run: {} Trg: {}".format(args.test, iteration, args.trg))
         plt.pause(0.001)
         plt.show(block=False)
 
