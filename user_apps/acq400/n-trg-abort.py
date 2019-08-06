@@ -30,16 +30,20 @@ def run(args):
         while int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1]) != 0:
             continue
 
-
+    counter = 1
     current_trg = int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1])
     end_trg = current_trg + args.n
 
+    print("Setup complete: Please start stream now.")
+
     while current_trg < end_trg:
         current_trg = int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1])
-        print("Looped. Current = {}, End = {}".format(current_trg, end_trg))
+        if args.verbose == 1:
+            print("Loop {}. Current = {}, End = {}".format(counter, current_trg, end_trg))
+        counter += 1
 
     uut.s0.set_abort = 1
-
+    print("Number of triggers met. System has been aborted. Quitting now.")
     return None
 
 
@@ -51,6 +55,9 @@ def main():
 
     parser.add_argument('--reset', default=0, type=int,
     help='Whether or not to reset the trg counter before starting. Default: 0')
+
+    parser.add_argument('--verbose', default=0, type=int,
+    help='Whether or not to print status messages during operation. Default: 0')
 
     parser.add_argument('uut', nargs=1, help="uut ")
 
