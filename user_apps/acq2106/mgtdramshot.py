@@ -54,13 +54,99 @@ from subprocess import call
 import re
 from future import builtins
 from builtins import input
-
+import socket
 import os
+import numpy as np
+import sys
+from future import builtins
 
 LOG = None
 
+
+def make_data_dir(directory, verbose):
+    try:
+        os.makedirs(directory)
+    except Exception:
+        if verbose:
+            print("Tried to create dir but dir already exists")
+        pass
+
+def print_ellipsis(num):
+    str = "."*num
+    sys.stdout.write(str(i))
+
+def validate_streamed_data(good_data, test_data, cycle):
+    test_data = test_data - test_data[0] + 1
+    if not np.array_equal(data, typical_data):
+        print("Discrepency in data found in cycle: {}", cycle)
+    # else:
+    #     print("."*(cycle % 3) + 1, end='', flush=True)
+
+    return None
+
+
+def host_pull(args, uut):
+    # Connect to port 53991 and pull all data.
+
+    cycle = 0
+    total_buf = bytes()
+
+    skt = socket.socket()
+    skt.connect((args.uut[0], 53991))
+    fourMB = (2**20)*4
+
+    bytestogo = fourMB
+    first_run = 1
+    while True:
+
+        buffer = skt.recv(bytestogo)
+        bytestogo = bytestogo - len(buffer)
+        total_buf += buffer
+
+        if buffer == "":
+            print("Buffer empty: quitting now.")
+            break
+
+        if len(total_buf) >= fourMB:
+
+            if first_run == 1:
+                good_data = np.frombuffer(total_buf, dtype=np.uint32)
+                first_run = 0
+
+            bytestogo = fourMB
+            np_buf = np.frombuffer(total_buf, dtype=np.uint32)
+            total_buf = bytes()
+
+            if args.save_data == 1:
+                root = "./{}/{}".format(args.uut[0], cycle)
+                make_data_dir(args.uut[0], 0)
+                np_buf.tofile(root)
+                print("Saved file {} to disk.".format(cycle))
+
+
+            if args.validate != 'no':
+                validate_streamed_data(good_data, np_buf, cycle)
+
+            cycle += 1
+
+    # if args.validate != "no":
+    #     if args.save_data != 1:
+    #         print("")
+    #     print("Starting validation now")
+    #     cycle = 0
+    #     channels_as_longs = (uut.nchan()/2)
+    #     typical_data = np.fromfile("./{}/{}".format(args.uut[0], "0"), dtype=np.uint32)
+    #     for cycle in list(range(0,2000)):
+    #         data = np.fromfile("./{}/{}".format(args.uut[0], cycle), dtype=np.uint32)
+    #         print("Testing cycle: {}".format(cycle))
+    #         data = data - data[0] + 1
+    #         if not np.array_equal(data, typical_data):
+    #             print("Discrepency in data found in cycle: {}", cycle)
+
+    print("Data offloaded and all data validation passed.")
+
 def write_console(message):
-# explicit flush needed to avoid lockup on Windows.    
+# explicit flush needed to avoid lockup on Windows.
     sys.stdout.write(message)
     sys.stdout.flush()
 
@@ -98,23 +184,28 @@ def run_shot(uut, args):
         uut.s14.mgt_run_shot = str(int(args.captureblocks) + 2)
         uut.run_mgt()
 
-    uut.s14.mgt_offload = args.offloadblocks if args.offloadblocks != 'capture' \
-        else '0-{}'.format(args.captureblocks)
-    t1 = datetime.datetime.now()
-    uut.run_mgt(UploadFilter())
-    ttime = datetime.datetime.now()-t1
-    mb = args.captureblocks*4
-    print("upload {} MB done in {} seconds, {} MB/s\n".\
-          format(mb, ttime, mb/ttime.seconds))
-    if args.validate != 'no':
-        cmd = "{} {}".format(args.validate, uut.uut)
-        print("run \"{}\"".format(cmd))
-        rc = call(cmd, shell=True, stdin=0, stdout=1, stderr=2)
-        if rc != 0:
-            print("ERROR called process {} returned {}".format(args.validate, rc))
-            exit(1)
+    if args.host_pull == 1:
+        for loop in list(range(1, args.loop + 1)):
+            host_pull(args, uut)
+    else:
+        uut.s14.mgt_offload = args.offloadblocks if args.offloadblocks != 'capture' \
+            else '0-{}'.format(args.captureblocks)
+        t1 = datetime.datetime.now()
+        uut.run_mgt(UploadFilter())
+        ttime = datetime.datetime.now()-t1
+        mb = args.captureblocks*4
+        print("upload {} MB done in {} seconds, {} MB/s\n".\
+              format(mb, ttime, mb/ttime.seconds))
+        if args.validate != 'no':
+            cmd = "{} {}".format(args.validate, uut.uut)
+            print("run \"{}\"".format(cmd))
+            rc = call(cmd, shell=True, stdin=0, stdout=1, stderr=2)
+            if rc != 0:
+                print("ERROR called process {} returned {}".format(args.validate, rc))
+                exit(1)
 
 def run_shots(args):
+
     global LOG
     LOG = open("mgtdramshot-{}.log".format(args.uut[0]), "w")
     uut = acq400_hapi.Acq2106(args.uut[0], has_mgtdram=True)
@@ -143,8 +234,15 @@ def run_main():
     parser.add_argument('--loop', type=int, default=1, help="loop count")
     parser.add_argument('--captureblocks', type=int, default="2000", help='number of 4MB blocks to capture')
     parser.add_argument('--offloadblocks', type=str, default="capture", help='block list to upload nnn-nnn')
-    parser.add_argument('--validate', type=str, default='no', help='program to validate data')    
+    parser.add_argument('--validate', type=str, default='no', help='program to validate data')
     parser.add_argument('--wait_user', type=int, default=0, help='1: force user input each shot')
+
+    parser.add_argument('--host_pull', type=int, default=0,
+    help='Whether or not to use the HOST PULL method. Default: 0.')
+
+    parser.add_argument('--save_data', type=int, default=1,
+    help='Whether or not to save data to a file in 4MB chunks. Default: 0.')
+
     parser.add_argument('uut', nargs=1, help="uut ")
     run_shots(parser.parse_args())
 
