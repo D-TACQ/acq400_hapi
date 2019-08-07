@@ -63,7 +63,7 @@ def run(args):
 
         if int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1]) != first_counters[pos] + args.n:
 
-            print("WARNING: {} final trigger pulse counter does not equal it's " \
+            print("WARNING: {} final trigger pulse counter does not equal its " \
             "starting counter + {}. Please check for configuration errors."
             .format(uut.s0.HN, args.n))
 
