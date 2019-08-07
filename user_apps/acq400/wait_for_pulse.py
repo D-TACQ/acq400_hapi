@@ -38,13 +38,13 @@ def run(args):
                 continue
 
     counter = 1
-    current_trg = int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1])
+    current_trg = int(uuts[0].s0.SIG_TRG_EXT_COUNT.split(" ")[1])
     end_trg = current_trg + args.n
 
     print("Setup complete: Please start stream now.")
 
     while current_trg < end_trg:
-        current_trg = int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1])
+        current_trg = int(uuts[0].s0.SIG_TRG_EXT_COUNT.split(" ")[1])
         if args.verbose == 1:
             print("Loop {}. Current = {}, End = {}"
                 .format(counter, current_trg, end_trg))
