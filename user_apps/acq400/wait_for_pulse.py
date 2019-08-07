@@ -28,6 +28,7 @@ def run(args):
     if args.reset == 1:
         uut.s0.SIG_TRG_EXT_RESET = 1
         while int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1]) != 0:
+            uut.s0.SIG_TRG_EXT_RESET = 1
             continue
 
     counter = 1
