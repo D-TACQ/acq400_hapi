@@ -37,6 +37,10 @@ def run(args):
                 uut.s0.SIG_TRG_EXT_RESET = 1
                 continue
 
+    first_counters = []
+    for uut in uuts:
+        first_counters.append(int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1]))
+
     counter = 1
     current_trg = int(uuts[0].s0.SIG_TRG_EXT_COUNT.split(" ")[1])
     end_trg = current_trg + args.n
@@ -54,6 +58,14 @@ def run(args):
         uut.s0.set_abort = 1
 
     print("Number of triggers met. System has been stopped. Quitting now.")
+
+    for pos, uut in enumerate(uuts):
+
+        if int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1]) != first_counters[pos] + args.n:
+
+            print("WARNING: {} final trigger pulse counter does not equal it's " \
+            "starting counter + {}. Please check for configuration errors."
+            .format(uut.s0.HN, args.n))
 
     return None
 
