@@ -2,8 +2,8 @@
 
 
 """
-n-trg-abort.py is a script that monitors the number of triggers that the UUT
-recieves and sends the abort command once n triggers have passed.
+wait_for_pulse.py is a script that monitors the number of trigger pulses that
+the UUT recieves and sends the abort command once n triggers have passed.
 
 The script is intended to be run before starting a stream. For example, if the
 user wanted to start the stream on one trigger and stop the stream on the next
@@ -11,7 +11,11 @@ trigger, then the user would set --n=2 as such:
 
 ./wait_for_pulse.py --n=2 --reset=1 acq2106_085
 
-The reset parameter shown above sets the counter to 0
+The reset parameter shown above sets the counter to 0.
+
+wait_for_pulse MUST be running BEFORE the stream starts
+wait_for_pulse does NOT start the stream, some other agent must do that.
+wait_for_pulse will STOP the stream
 """
 
 
@@ -46,10 +50,10 @@ def run(args):
                 .format(counter, current_trg, end_trg))
         counter += 1
 
-    print("Number of triggers met. System has been aborted. Quitting now.")
-
     for uut in uuts:
         uut.s0.set_abort = 1
+
+    print("Number of triggers met. System has been stopped. Quitting now.")
 
     return None
 
