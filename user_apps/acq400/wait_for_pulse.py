@@ -9,7 +9,7 @@ The script is intended to be run before starting a stream. For example, if the
 user wanted to start the stream on one trigger and stop the stream on the next
 trigger, then the user would set --n=2 as such:
 
-./n-trg-abort.py --n=2 --reset=1 acq2106_085
+./wait_for_pulse.py --n=2 --reset=1 acq2106_085
 
 The reset parameter shown above sets the counter to 0
 """
@@ -22,14 +22,16 @@ import argparse
 
 
 def run(args):
-
-    uut = acq400_hapi.Acq400(args.uut[0])
+    uuts = []
+    for uut in args.uuts:
+        uuts.append(acq400_hapi.Acq400(uut))
 
     if args.reset == 1:
-        uut.s0.SIG_TRG_EXT_RESET = 1
-        while int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1]) != 0:
+        for uut in uuts:
             uut.s0.SIG_TRG_EXT_RESET = 1
-            continue
+            while int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1]) != 0:
+                uut.s0.SIG_TRG_EXT_RESET = 1
+                continue
 
     counter = 1
     current_trg = int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1])
@@ -40,11 +42,15 @@ def run(args):
     while current_trg < end_trg:
         current_trg = int(uut.s0.SIG_TRG_EXT_COUNT.split(" ")[1])
         if args.verbose == 1:
-            print("Loop {}. Current = {}, End = {}".format(counter, current_trg, end_trg))
+            print("Loop {}. Current = {}, End = {}"
+                .format(counter, current_trg, end_trg))
         counter += 1
 
-    uut.s0.set_abort = 1
     print("Number of triggers met. System has been aborted. Quitting now.")
+
+    for uut in uuts:
+        uut.s0.set_abort = 1
+
     return None
 
 
@@ -60,7 +66,7 @@ def main():
     parser.add_argument('--verbose', default=0, type=int,
     help='Whether or not to print status messages during operation. Default: 0')
 
-    parser.add_argument('uut', nargs=1, help="uut ")
+    parser.add_argument('uuts', nargs='+', help="uut list")
 
     run(parser.parse_args())
 
