@@ -104,7 +104,7 @@ def host_pull(args, uut):
         total_buf += buffer
 
         if buffer == "":
-            print("Buffer empty: quitting now.")
+            print("Buffer empty: Ending host pull now.")
             break
 
         if len(total_buf) >= fourMB:
