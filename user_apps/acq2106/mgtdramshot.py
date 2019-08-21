@@ -196,7 +196,9 @@ def run_shots(args):
     uut = acq400_hapi.Acq2106(args.uut[0], has_mgtdram=True)
     acq400_hapi.Acq400UI.exec_args(uut, args)
     uut.s14.mgt_taskset = '1'
-
+    if args.validate != 'no':
+        for s in uut.modules:
+            uut.modules[s].simulate = 1
     try:
         for ii in range(0, args.loop):
             t1 = datetime.datetime.now()
