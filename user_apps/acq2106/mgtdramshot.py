@@ -71,9 +71,6 @@ def make_data_dir(directory, verbose):
             print("Tried to create dir but dir already exists")
         pass
 
-def print_ellipsis(num):
-    str = "."*num
-    sys.stdout.write(str(i))
 
 def validate_streamed_data(good_data, test_data, cycle):
     # Using this method there is no detectable overhead.
