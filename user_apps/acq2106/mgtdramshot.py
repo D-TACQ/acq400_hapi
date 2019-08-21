@@ -129,21 +129,8 @@ def host_pull(args, uut):
 
             cycle += 1
 
-    # if args.validate != "no":
-    #     if args.save_data != 1:
-    #         print("")
-    #     print("Starting validation now")
-    #     cycle = 0
-    #     channels_as_longs = (uut.nchan()/2)
-    #     typical_data = np.fromfile("./{}/{}".format(args.uut[0], "0"), dtype=np.uint32)
-    #     for cycle in list(range(0,2000)):
-    #         data = np.fromfile("./{}/{}".format(args.uut[0], cycle), dtype=np.uint32)
-    #         print("Testing cycle: {}".format(cycle))
-    #         data = data - data[0] + 1
-    #         if not np.array_equal(data, typical_data):
-    #             print("Discrepency in data found in cycle: {}", cycle)
-
     print("Data offloaded and all data validation passed.")
+
 
 def write_console(message):
 # explicit flush needed to avoid lockup on Windows.
@@ -174,8 +161,6 @@ class UploadFilter:
                 write_console('\n')
             write_console(">{}\n".format(st))
             self.line = 0
-
-
 
 
 def run_shot(uut, args):
