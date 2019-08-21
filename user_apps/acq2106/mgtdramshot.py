@@ -76,11 +76,11 @@ def print_ellipsis(num):
     sys.stdout.write(str(i))
 
 def validate_streamed_data(good_data, test_data, cycle):
+    # Using this method there is no detectable overhead.
     test_data = test_data - test_data[0] + 1
-    if not np.array_equal(data, typical_data):
-        print("Discrepency in data found in cycle: {}", cycle)
-    # else:
-    #     print("."*(cycle % 3) + 1, end='', flush=True)
+    if not np.array_equal(test_data, good_data):
+        print("Discrepency in data found in cycle: {}, quitting now.".format(cycle))
+        exit(1)
 
     return None
 
