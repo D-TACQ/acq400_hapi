@@ -170,8 +170,8 @@ def run_shot(uut, args):
         uut.run_mgt()
 
     if args.host_pull == 1:
-        for loop in list(range(1, args.loop + 1)):
-            host_pull(args, uut)
+        # for loop in list(range(1, args.loop + 1)):
+        host_pull(args, uut)
     else:
         uut.s14.mgt_offload = args.offloadblocks if args.offloadblocks != 'capture' \
             else '0-{}'.format(args.captureblocks)
