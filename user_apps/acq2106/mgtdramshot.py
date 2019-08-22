@@ -119,6 +119,8 @@ def host_pull(args, uut):
                 make_data_dir(args.uut[0], 0)
                 np_buf.tofile(root)
                 print("Saved file {} to disk.".format(cycle))
+            else:
+                print("Block {} pulled.".format(cycle))
 
 
             if args.validate != 'no':
