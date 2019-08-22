@@ -94,13 +94,16 @@ def host_pull(args, uut):
 
     bytestogo = fourMB
     first_run = 1
-    while True:
+    buffer_empty = False
+    print("Starting host pull now.")
+    while not buffer_empty:
 
         buffer = skt.recv(bytestogo)
         bytestogo = bytestogo - len(buffer)
         total_buf += buffer
 
         if buffer == "":
+            buffer_empty = True
             print("Buffer empty: Ending host pull now.")
             break
 
