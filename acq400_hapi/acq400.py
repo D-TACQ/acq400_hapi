@@ -95,7 +95,7 @@ class StreamClient(netclient.Netclient):
     def __init__(self, addr):
         print("worktodo")
 
-class Channelclient(netclient.Netclient):
+class ChannelClient(netclient.Netclient):
     """handles post shot data for one channel.
 
     Args:
@@ -410,7 +410,7 @@ class Acq400:
     def read_chan(self, chan, nsam = 0):
         if nsam == 0:
             nsam = self.pre_samples()+self.post_samples()
-        cc = Channelclient(self.uut, chan)
+        cc = ChannelClient(self.uut, chan)
         ccraw = cc.read(nsam, data_size=(4 if self.s0.data32 == '1' else 2))
 
         if self.save_data:
