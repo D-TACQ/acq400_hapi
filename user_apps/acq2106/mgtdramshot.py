@@ -84,52 +84,35 @@ def validate_streamed_data(good_data, test_data, cycle):
 
 def host_pull(args, uut):
     # Connect to port 53991 and pull all data.
-
     cycle = 0
     total_buf = bytes()
+    # set up a RawClient to pull data from the mgtdram host_pull port.
+    rc = acq400_hapi.MgtDramPullClient(uut.s0.HN)
+    first_run = True
 
-    skt = socket.socket()
-    skt.connect((args.uut[0], 53991))
-    fourMB = (2**20)*4
+    nchan = uut.nchan()
+    data_size = 4
 
-    bytestogo = fourMB
-    first_run = 1
-    buffer_empty = False
     print("Starting host pull now.")
-    while not buffer_empty:
 
-        buffer = skt.recv(bytestogo)
-        bytestogo = bytestogo - len(buffer)
-        total_buf += buffer
+    for buffer in rc.get_blocks(nchan, ncols=(2**22)/nchan/data_size, data_size=data_size):
 
-        if len(buffer) == 0:
-            buffer_empty = True
-            print("Buffer empty: Ending host pull now.")
-            break
+        if first_run:
+            good_data = buffer
+            first_run = False
 
-        if len(total_buf) >= fourMB:
+        if args.save_data == 1:
+            root = "./{}/{}".format(args.uut[0], cycle)
+            make_data_dir(args.uut[0], 0)
+            buffer.tofile(root)
+            print("Saved file {} to disk.".format(cycle))
+        else:
+            print("Block {} pulled.".format(cycle))
 
-            if first_run == 1:
-                good_data = np.frombuffer(total_buf, dtype=np.uint32)
-                first_run = 0
+        if args.validate != 'no':
+            validate_streamed_data(good_data, buffer, cycle)
 
-            bytestogo = fourMB
-            np_buf = np.frombuffer(total_buf, dtype=np.uint32)
-            total_buf = bytes()
-
-            if args.save_data == 1:
-                root = "./{}/{}".format(args.uut[0], cycle)
-                make_data_dir(args.uut[0], 0)
-                np_buf.tofile(root)
-                print("Saved file {} to disk.".format(cycle))
-            else:
-                print("Block {} pulled.".format(cycle))
-
-
-            if args.validate != 'no':
-                validate_streamed_data(good_data, np_buf, cycle)
-
-            cycle += 1
+        cycle += 1
 
     print("Data offloaded and all data validation passed.")
 
