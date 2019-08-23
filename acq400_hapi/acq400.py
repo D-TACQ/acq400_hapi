@@ -127,6 +127,15 @@ class RawClient(netclient.Netclient):
 
         return np.frombuffer(total_buf, _dtype)
 
+    def get_blocks(self, nelems, data_size=2, ncols=1):
+        block = None
+        while block:
+            block = read(self, nelems, data_size=data_size, ncols=ncols)
+            if block:
+                yield block
+        
+
+
 
 class MgtDramPullClient(RawClient):
     def __init__(self, addr):
