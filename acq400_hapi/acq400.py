@@ -51,6 +51,7 @@ class AcqPorts:
     AWG_ONCE = 54201
     AWG_AUTOREARM = 54202
     MGTDRAM = 53990
+    MGTDRAM_PULL_DATA = 53991
 
 
 class SF:
@@ -95,7 +96,54 @@ class StreamClient(netclient.Netclient):
     def __init__(self, addr):
         print("worktodo")
 
-class Channelclient(netclient.Netclient):
+class RawClient(netclient.Netclient):
+    """ handles raw data from any service port
+    """
+    def __init__(self, addr, port):
+        netclient.Netclient.__init__(self, addr, port)
+
+    def read(self, nelems, data_size=2, ncols=1, maxbuf=0x400000):
+        """read ndata from channel data server, return as np array.
+        Args:
+            nelems number of data elements, each data_size*ncols
+            nelems <=0 :: read until the end
+            
+            data_size : 2|4 short or int
+
+            ncols : optional, to create a 2D array
+        """
+        _dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
+        if nelems <= 0:
+            nelems = 0x80000000             #2GB approximates infinity. what is infinity in python?
+
+        bytestogo = nelems * data_size * ncols
+        total_buf = ""
+
+        while bytestogo > 0:
+            new_buf = self.sock.recv(bytestogo)
+            if not new_buf:
+                break               # end of file
+            total_buf += new_buf    # still dubious of append :-)
+
+        return np.frombuffer(total_buf, _dtype)
+
+    def get_blocks(self, nelems, data_size=2, ncols=1):
+        block = None
+        while block:
+            block = read(self, nelems, data_size=data_size, ncols=ncols)
+            if block:
+                yield block
+        
+
+
+
+class MgtDramPullClient(RawClient):
+    def __init__(self, addr):
+        RawClient.__init__(self, addr, AcqPorts.MGTDRAM_PULL_DATA)
+
+
+
+class ChannelClient(netclient.Netclient):
     """handles post shot data for one channel.
 
     Args:
@@ -410,7 +458,7 @@ class Acq400:
     def read_chan(self, chan, nsam = 0):
         if nsam == 0:
             nsam = self.pre_samples()+self.post_samples()
-        cc = Channelclient(self.uut, chan)
+        cc = ChannelClient(self.uut, chan)
         ccraw = cc.read(nsam, data_size=(4 if self.s0.data32 == '1' else 2))
 
         if self.save_data:
@@ -945,8 +993,8 @@ class Acq2106(Acq400):
         while pm.quit_requested != True:
             time.sleep(1)
 
-
-
+    def create_mgtdram_pull_client(self):
+        return MgtDramPullClient(self.uut)
     
 
 
