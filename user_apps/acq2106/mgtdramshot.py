@@ -102,7 +102,7 @@ def host_pull(args, uut):
         bytestogo = bytestogo - len(buffer)
         total_buf += buffer
 
-        if buffer == "":
+        if len(buffer) == 0:
             buffer_empty = True
             print("Buffer empty: Ending host pull now.")
             break
