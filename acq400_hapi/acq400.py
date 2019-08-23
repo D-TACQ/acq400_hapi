@@ -123,18 +123,17 @@ class RawClient(netclient.Netclient):
             new_buf = self.sock.recv(bytestogo)
             if not new_buf:
                 break               # end of file
+            bytestogo = bytestogo - len(new_buf)
             total_buf += new_buf    # still dubious of append :-)
 
         return np.frombuffer(total_buf, _dtype)
 
     def get_blocks(self, nelems, data_size=2, ncols=1):
-        block = None
-        while block:
-            block = read(self, nelems, data_size=data_size, ncols=ncols)
-            if block:
+        block = np.array([1])
+        while len(block) > 0:
+            block = self.read(nelems, data_size=data_size, ncols=ncols)
+            if len(block) > 0:
                 yield block
-        
-
 
 
 class MgtDramPullClient(RawClient):
