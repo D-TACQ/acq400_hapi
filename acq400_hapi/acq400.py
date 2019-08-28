@@ -902,7 +902,7 @@ class Acq2106(Acq400):
     Defines features specific to ACQ2106
     """
 
-    def __init__(self, _uut, monitor=True, has_mgtdram=False):
+    def __init__(self, _uut, monitor=True, has_mgtdram=False, is_bolo=False):
         print("acq400_hapi.Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         self.mb_clk_min = 100000
@@ -914,7 +914,7 @@ class Acq2106(Acq400):
                 print("uut {} site {} not populated".format(_uut, site))
             self.mod_count += 1
             site = site - 1
-        if (has_mgtdram):
+        if (has_mgtdram) or is_bolo:
             try:
                 self.svc['s14'] = netclient.Siteclient(self.uut, AcqPorts.SITE0+14)
             except socket.error:
