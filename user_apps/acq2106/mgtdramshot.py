@@ -178,7 +178,7 @@ def run_shots(args):
 
     global LOG
     LOG = open("mgtdramshot-{}.log".format(args.uut[0]), "w")
-    uut = acq400_hapi.Acq2106(args.uut[0], has_mgtdram=True)
+    uut = acq400_hapi.Acq2106_Mgtdram8(args.uut[0])
     acq400_hapi.Acq400UI.exec_args(uut, args)
     uut.s14.mgt_taskset = '1'
     if args.validate != 'no':

@@ -949,7 +949,7 @@ class Acq2106(Acq400):
     Defines features specific to ACQ2106
     """
 
-    def __init__(self, _uut, monitor=True, has_mgtdram=False, is_bolo=False):
+    def __init__(self, _uut, monitor=True, has_dsp=False):
         print("acq400_hapi.Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         self.mb_clk_min = 100000
@@ -961,7 +961,7 @@ class Acq2106(Acq400):
                 print("uut {} site {} not populated".format(_uut, site))
             self.mod_count += 1
             site = site - 1
-        if (has_mgtdram) or is_bolo:
+        if has_dsp:
             try:
                 self.svc['s14'] = netclient.Siteclient(self.uut, AcqPorts.SITE0+14)
             except socket.error:
@@ -987,6 +987,13 @@ class Acq2106(Acq400):
             self.s0.SIG_SRC_TRG_1 = "STRIG"
 
 
+    
+class Acq2106_Mgtdram8(Acq2106):
+
+    def __init__(self, uut, monitor=True):
+        print("acq400_hapi.Acq2106_MgtDram8 %s" % (_uut))
+        Acq2106.__init__(self, uut, monitor, has_dsp=True)
+
     def run_mgt(self, _filter = null_filter):
         pm = ProcessMonitor(self.uut, _filter)
         while pm.quit_requested != True:
@@ -994,7 +1001,6 @@ class Acq2106(Acq400):
 
     def create_mgtdram_pull_client(self):
         return MgtDramPullClient(self.uut)
-    
 
 
 

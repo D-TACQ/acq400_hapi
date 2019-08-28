@@ -113,7 +113,7 @@ def run_cal(args):
 
 
 def run_capture(args):
-    uuts = [acq400_hapi.Acq2106(u, is_bolo=True) for u in args.uuts]
+    uuts = [acq400_hapi.Acq2106(u, has_dsp=True) for u in args.uuts]
     shot = set_next_shot(args, even, "Cap")
 
     for u in uuts:
