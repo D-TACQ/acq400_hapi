@@ -113,7 +113,7 @@ def run_cal(args):
 
 
 def run_capture(args):
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
+    uuts = [acq400_hapi.Acq2106(u, is_bolo=True) for u in args.uuts]
     shot = set_next_shot(args, even, "Cap")
 
     for u in uuts:
@@ -137,6 +137,11 @@ def run_capture(args):
 
     for u in uuts:
         u.statmon.wait_stopped()
+
+    for u in uuts:
+        u.s14.DSP_RESET = 1
+        time.sleep(0.1)
+        u.s14.DSP_RESET = 0
 
 
 def run_shots(args):
