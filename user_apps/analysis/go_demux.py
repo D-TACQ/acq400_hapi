@@ -59,7 +59,7 @@ def plot_data(args):
     return None
 
 def print_es(args, esp):
-    rr = args.show_transitions/2-1
+    rr = args.show_transitions/2
     for ii in range(esp-rr,esp+rr+1):
         txt = "{:6d}: ".format(ii)
         for jj in range(0, args.SAMPLE_SIZE_LONGS):
