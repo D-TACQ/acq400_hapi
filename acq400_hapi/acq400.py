@@ -46,6 +46,7 @@ class AcqPorts:
 
     BOLO8_CAL = 45072
     DATA0 = 53000
+    MULTI_EVENT = 53555
     LIVETOP = 53998
     ONESHOT = 53999
     AWG_ONCE = 54201
@@ -178,6 +179,8 @@ class ChannelClient(netclient.Netclient):
         """
         _dtype = np.dtype('i4' if data_size == 4 else 'i2')
         total_buffer = buffer = self.sock.recv(maxbuf)
+
+        print("Hello World")
 
         if int(ndata) == 0 or int(ndata) == -1:
             while True:
