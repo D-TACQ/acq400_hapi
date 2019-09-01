@@ -16,6 +16,7 @@ Windows:
 python .\go_demux.py --data_file="C:/O_DATA/event-1-50000-50000.dat"
 """
 
+from __future__ import division
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,6 +25,7 @@ import acq400_hapi
 import os
 import re
 import time
+
 
 def save_data(args):
     args.raw.tofile(args.data_file)
@@ -59,7 +61,7 @@ def plot_data(args):
     return None
 
 def print_es(args, esp):
-    rr = args.show_transitions/2
+    rr = args.show_transitions//2
     for ii in range(esp-rr,esp+rr+1):
         txt = "{:6d}: ".format(ii)
         for jj in range(0, args.SAMPLE_SIZE_LONGS):
@@ -85,15 +87,15 @@ def show_transitions(args):
 
 
 def make_shorts(args, shorts):
-    args.shorts = np.reshape(shorts, (len(shorts)/args.SAMPLE_SIZE_SHORTS, args.SAMPLE_SIZE_SHORTS))[:,0:args.SHORTCOLS]
+    args.shorts = np.reshape(shorts, (len(shorts)//args.SAMPLE_SIZE_SHORTS, args.SAMPLE_SIZE_SHORTS))[:,0:args.SHORTCOLS]
 
 def make_longs(args, longs):
 #    args.longs = np.reshape(longs, (len(longs)/args.SAMPLE_SIZE_LONGS, args.SAMPLE_SIZE_LONGS))[:,args.SHORTCOLS/2:]
-    args.longs = np.reshape(longs, (len(longs)/args.SAMPLE_SIZE_LONGS, args.SAMPLE_SIZE_LONGS))
+    args.longs = np.reshape(longs, (len(longs)//args.SAMPLE_SIZE_LONGS, args.SAMPLE_SIZE_LONGS))
 
 def uut_file_print(fn):
     # event-012-1567350364-2048-2047.dat
-    m = re.search(r'event-(\d+)-([\d]+)-(\d+)-(\d+).dat', fn)
+    m = re.search(r'event-(\d+)-([\d]+)-(\d+)-(\d+).dat', fn.decode('utf-8'))
     evnum, ts, pre, post = m.groups()
 
     print("fn {} ts {} event {} pre {} post {}".\
@@ -110,12 +112,12 @@ def load_data(args):
 
 def uut_get_next(args, uut):
     client = acq400_hapi.ChannelClient(uut.uut, 556)
-    raw = client.read(0, 2)
-    args.data_file=os.path.basename(raw[:args.SAMPLE_SIZE_SHORTS].tobytes()).strip()
+    raw = client.read(0, data_size=4)
+    args.data_file=os.path.basename(raw[:args.SAMPLE_SIZE_LONGS].tobytes()).strip()
     uut_file_print(args.data_file)
-    args.raw = raw[args.SAMPLE_SIZE_SHORTS:]
-    make_shorts(args, args.raw)
-    make_longs(args, np.frombuffer(args.raw.tobytes(), dtype=np.uint32))
+    args.raw = raw[args.SAMPLE_SIZE_LONGS:]
+    make_longs(args, args.raw)
+    make_shorts(args, np.frombuffer(args.raw.tobytes(), dtype=np.int16))
 
 def run_main():
     parser = argparse.ArgumentParser(description='cs demux')
@@ -128,9 +130,9 @@ def run_main():
     parser.add_argument('--get_next', default=None, type=str, help="[uut] get next mv file from uut")
 
     args = parser.parse_args()
-    args.SAMPLE_SIZE = args.SHORTCOLS*2 + args.LONGCOLS*4
-    args.SAMPLE_SIZE_SHORTS = args.SHORTCOLS + 2*args.LONGCOLS
-    args.SAMPLE_SIZE_LONGS = args.SHORTCOLS/2 + args.LONGCOLS
+    args.SAMPLE_SIZE = int(args.SHORTCOLS*2 + args.LONGCOLS*4)
+    args.SAMPLE_SIZE_SHORTS = int(args.SHORTCOLS + 2*args.LONGCOLS)
+    args.SAMPLE_SIZE_LONGS = int(args.SHORTCOLS//2 + args.LONGCOLS)
     args.fn = "save_file"
 
     if args.get_next:
