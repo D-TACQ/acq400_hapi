@@ -39,22 +39,26 @@ def plot_data(args):
     "CH09",
     "CH16",
     "DI32",
-    "SAMPLE Count",
+    "NSAM",
+    "msec",
     ]
-   
+  
+    
     print("plot_data")
-    f, plots = plt.subplots(4, 1)
+    f, plots = plt.subplots(5, 1)
     plots[0].set_title("GO DATA")
 
-    for sp in range(0,4):
+    for sp in range(0,5):
         if sp==0:
             plots[sp].plot(args.shorts[:,8])
         if sp==1:
             plots[sp].plot(args.shorts[:,15])
         if sp==2:
-            plots[sp].plot(args.longs[:,8+0])
+            plots[sp].plot(args.longs[:,args.L0+0])
         if sp==3:
-            plots[sp].plot(args.longs[:,8+2])
+            plots[sp].plot(args.longs[:,args.L0+2])
+        if sp==4:
+            plots[sp].plot(args.longs[:,args.L0+3])
 
         plots[sp].set(ylabel=axes[sp] )
     plt.show()
@@ -95,7 +99,7 @@ def make_longs(args, longs):
 
 def uut_file_print(fn):
     # event-012-1567350364-2048-2047.dat
-    m = re.search(r'event-(\d+)-([\d]+)-(\d+)-(\d+).dat', fn.decode('utf-8'))
+    m = re.search(r'event-(\d+)-([\d]+)-(\d+)-(\d+).dat', fn.decode('ISO-8859-1'))
     evnum, ts, pre, post = m.groups()
 
     print("fn {} ts {} event {} pre {} post {}".\
@@ -111,7 +115,9 @@ def load_data(args):
     make_longs(args, np.frombuffer(args.raw, dtype=np.uint32))
 
 def uut_get_next(args, uut):
-    client = acq400_hapi.ChannelClient(uut.uut, 556)
+    port = acq400_hapi.AcqPorts.MULTI_EVENT_DISK if args.get_stick == 1 else acq400_hapi.AcqPorts.MULTI_EVENT_TMP
+    # unfortunately ChannelClient port is based from DATA0
+    client = acq400_hapi.ChannelClient(uut.uut, port-acq400_hapi.AcqPorts.DATA0)
     raw = client.read(0, data_size=4)
     args.data_file=os.path.basename(raw[:args.SAMPLE_SIZE_LONGS].tobytes()).strip()
     uut_file_print(args.data_file)
@@ -128,26 +134,35 @@ def run_main():
     parser.add_argument('--show_transitions', default=0, type=int, help="hexdump +/-N samples at transition")
     parser.add_argument('--data_file', default=None, type=str, help="Name of data file")
     parser.add_argument('--get_next', default=None, type=str, help="[uut] get next mv file from uut")
+    parser.add_argument('--get_count', default=1, type=int, help="number of event files to fetch")
+    parser.add_argument('--get_stick', default=1, type=int, help="1: get data from USB stick, 0: from /tmp")
 
     args = parser.parse_args()
     args.SAMPLE_SIZE = int(args.SHORTCOLS*2 + args.LONGCOLS*4)
     args.SAMPLE_SIZE_SHORTS = int(args.SHORTCOLS + 2*args.LONGCOLS)
     args.SAMPLE_SIZE_LONGS = int(args.SHORTCOLS//2 + args.LONGCOLS)
+    args.L0 = int(args.SHORTCOLS//2)
     args.fn = "save_file"
+    first_time = True
+    if not args.get_next:
+        args.get_count = 0
+     
+    while first_time or args.get_count > 0:
+        if args.get_next:
+            uut = acq400_hapi.Acq400(args.get_next)
+            args.save = 1
+            uut_get_next(args, uut)
+            args.get_count = args.get_count - 1
+        elif args.data_file:
+            data = load_data(args)
 
-    if args.get_next:
-        uut = acq400_hapi.Acq400(args.get_next)
-        args.save = 1
-        uut_get_next(args, uut)
-    elif args.data_file:
-        data = load_data(args)
-
-    if args.show_transitions > 0:
-        show_transitions(args)
-    if args.plot == 1:
-        plot_data(args)
-    if args.save == 1:
-        save_data(args)
+        if args.show_transitions > 0:
+            show_transitions(args)
+        if args.plot == 1:
+            plot_data(args)
+        if args.save == 1:
+            save_data(args)
+        first_time = False
 
 if __name__ == '__main__':
     run_main()
