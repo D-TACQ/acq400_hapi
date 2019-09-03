@@ -457,7 +457,7 @@ class Acq400:
 
 
     def read_chan(self, chan, nsam = 0):
-        if nsam == 0:
+        if chan != 0 and nsam == 0:
             nsam = self.pre_samples()+self.post_samples()
         cc = ChannelClient(self.uut, chan)
         ccraw = cc.read(nsam, data_size=(4 if self.s0.data32 == '1' else 2))
