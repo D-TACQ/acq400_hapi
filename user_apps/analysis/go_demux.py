@@ -48,7 +48,7 @@ def plot_data(args):
     
     print("plot_data")
     f, plots = plt.subplots(nsp, 1)
-    plots[0].set_title("GO DATA")
+    plots[0].set_title("GO DATA {} {}".format(args.uut.uut if args.uut else "", args.data_file))
 
     for sp in range(0,nsp):
         (label, arr, idx) = axes[sp]
@@ -150,20 +150,21 @@ def run_main():
     args.SAMPLE_SIZE_LONGS = int(args.SHORTCOLS//2 + args.LONGCOLS)
     args.L0 = int(args.SHORTCOLS//2)
     args.fn = "save_file"
+    args.uut = None
     first_time = True
     if not args.get_next:
         args.get_count = 0
      
     while first_time or args.get_count > 0:
         if args.get_oneshot:
-            uut = acq400_hapi.Acq400(args.get_oneshot)
+            args.uut = acq400_hapi.Acq400(args.get_oneshot)
             args.save = 1
             args.get_count = 0
-            uut_get_oneshot(args, uut)
+            uut_get_oneshot(args, args.uut)
         elif args.get_next:
-            uut = acq400_hapi.Acq400(args.get_next)
+            args.uut = acq400_hapi.Acq400(args.get_next)
             args.save = 1
-            uut_get_next(args, uut)
+            uut_get_next(args, args.uut)
             args.get_count = args.get_count - 1
         elif args.data_file:
             data = load_data(args)
