@@ -63,7 +63,7 @@ def run_shot(args):
     else:
         # print("WARNING: REMOVEME temporary fudge while we get the sync trigger right")
         # master.s0.SIG_SYNC_OUT_TRG_DX = 'd1'
-        print ""
+        print("")
         # enable_trigger(master)
 
     # now run all the slave in parallel. We can do this because they do not share data.
