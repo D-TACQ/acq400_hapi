@@ -35,20 +35,22 @@ def save_data(args):
 def plot_data(args):
     # plot all the data in order (not stacked)
 
-    axes = [
+    axes = (
     "CH09",
     "CH16",
     "DI32",
     "NSAM",
+    "usec",
     "msec",
-    ]
+    )
+    nsp = len(axes)
   
     
     print("plot_data")
-    f, plots = plt.subplots(5, 1)
+    f, plots = plt.subplots(nsp, 1)
     plots[0].set_title("GO DATA")
 
-    for sp in range(0,5):
+    for sp in range(0,nsp):
         if sp==0:
             plots[sp].plot(args.shorts[:,8])
         if sp==1:
@@ -56,9 +58,12 @@ def plot_data(args):
         if sp==2:
             plots[sp].plot(args.longs[:,args.L0+0])
         if sp==3:
-            plots[sp].plot(args.longs[:,args.L0+2])
+            plots[sp].plot(args.longs[:,args.L0+1])
         if sp==4:
+            plots[sp].plot(args.longs[:,args.L0+2])
+        if sp==5:
             plots[sp].plot(args.longs[:,args.L0+3])
+
 
         plots[sp].set(ylabel=axes[sp] )
     plt.show()
@@ -125,6 +130,18 @@ def uut_get_next(args, uut):
     make_longs(args, args.raw)
     make_shorts(args, np.frombuffer(args.raw.tobytes(), dtype=np.int16))
 
+def uut_get_oneshot(args, uut):
+    client = acq400_hapi.ChannelClient(uut.uut, 0)
+    print("reading data, this may take a minute")
+    raw = client.read(0, data_size=4)
+    print("we have data {} lw".format(len(raw)))
+    # todo .. get this info from the box.
+    args.data_file='event-1-9999-4000000-1000000.dat'
+    uut_file_print(args.data_file)
+    args.raw = raw[args.SAMPLE_SIZE_LONGS:]
+    make_longs(args, args.raw)
+#    make_shorts(args, np.frombuffer(args.raw.tobytes(), dtype=np.int16))
+   
 def run_main():
     parser = argparse.ArgumentParser(description='cs demux')
     parser.add_argument('--SHORTCOLS', default=16, type=int, help="number of shorts cols")
@@ -133,6 +150,7 @@ def run_main():
     parser.add_argument('--save', default=0, type=int, help="Save data")
     parser.add_argument('--show_transitions', default=0, type=int, help="hexdump +/-N samples at transition")
     parser.add_argument('--data_file', default=None, type=str, help="Name of data file")
+    parser.add_argument('--get_oneshot', default=None, type=str, help="[uut] pull oneshot data")
     parser.add_argument('--get_next', default=None, type=str, help="[uut] get next mv file from uut")
     parser.add_argument('--get_count', default=1, type=int, help="number of event files to fetch")
     parser.add_argument('--get_stick', default=1, type=int, help="1: get data from USB stick, 0: from /tmp")
@@ -148,7 +166,12 @@ def run_main():
         args.get_count = 0
      
     while first_time or args.get_count > 0:
-        if args.get_next:
+        if args.get_oneshot:
+            uut = acq400_hapi.Acq400(args.get_oneshot)
+            args.save = 1
+            args.get_count = 0
+            uut_get_oneshot(args, uut)
+        elif args.get_next:
             uut = acq400_hapi.Acq400(args.get_next)
             args.save = 1
             uut_get_next(args, uut)
