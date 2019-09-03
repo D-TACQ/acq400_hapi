@@ -36,12 +36,12 @@ def plot_data(args):
     # plot all the data in order (not stacked)
 
     axes = (
-    "CH09",
-    "CH16",
-    "DI32",
-    "NSAM",
-    "usec",
-    "msec",
+     	( "CH09", args.shorts,  8 ),
+	( "CH16", args.shorts, 15 ),
+	( "DI32", args.longs,   args.L0+0 ),
+        ( "NSAM", args.longs,   args.L0+1 ),
+        ( "usec", args.longs,   args.L0+2 ),
+        ( "msec", args.longs,   args.L0+3 )
     )
     nsp = len(axes)
   
@@ -51,21 +51,10 @@ def plot_data(args):
     plots[0].set_title("GO DATA")
 
     for sp in range(0,nsp):
-        if sp==0:
-            plots[sp].plot(args.shorts[:,8])
-        if sp==1:
-            plots[sp].plot(args.shorts[:,15])
-        if sp==2:
-            plots[sp].plot(args.longs[:,args.L0+0])
-        if sp==3:
-            plots[sp].plot(args.longs[:,args.L0+1])
-        if sp==4:
-            plots[sp].plot(args.longs[:,args.L0+2])
-        if sp==5:
-            plots[sp].plot(args.longs[:,args.L0+3])
+        (label, arr, idx) = axes[sp]
+        plots[sp].plot(arr[:,idx])
+        plots[sp].set(ylabel=label)
 
-
-        plots[sp].set(ylabel=axes[sp] )
     plt.show()
     return None
 
