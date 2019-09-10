@@ -323,13 +323,6 @@ class Acq400:
           useful for tracing on a second connection to an active system.
     """     
 
-    @property 
-    def mod_count(self):
-        return self.__mod_count
-    @mod_count.setter
-    def mod_count(self, value):
-        self.__mod_count = value
-
     def init_site_client(self, site):
         svc = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
         self.svc["s%d" % site] = svc
@@ -337,7 +330,7 @@ class Acq400:
 
         if self.awg_site == 0 and svc.module_name.startswith("ao"):
             self.awg_site = site
-        self.__mod_count += 1
+        self.mod_count += 1
 
 
     @classmethod
@@ -369,7 +362,7 @@ class Acq400:
         self.save_data = None
         self.svc = {}
         self.modules = {}
-        self.__mod_count = 0   
+        self.mod_count = 0   
         # channel index from 1,..
         self.cal_eslo = [0, ]  
         self.cal_eoff = [0, ]
