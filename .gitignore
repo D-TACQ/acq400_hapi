@@ -1,5 +1,5 @@
 *.pyc
-
+*.dat
 
 
 user_apps/acq400/waves/

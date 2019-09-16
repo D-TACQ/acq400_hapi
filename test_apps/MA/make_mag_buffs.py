@@ -13,6 +13,11 @@ INCHAN = 4                  # channels in source file
 OUTPAIRS = 4
 OUTQUADS = 1
 
+# fill the quad with CH01,2,3,4
+OUTQUAD_CHAN = (0, 1, 2, 3)
+# fill the quad with CH03
+OUTQUAD_CHAN = (2, 2, 2, 2)  
+
 # Valid 5xACQ436, 1xAO420
 #OUTPAIRS = 5
 #OUTQUADS = 1
@@ -52,13 +57,15 @@ def extend_to_16_ch(args, data):
         # for index, element in enumerate(data[0::4]):
         for index in range(0,len(chunk),INCHAN):
             # duplicate AO1, AO2 for pairs and quad if exists
-            for ch in range(0, OUTPAIRS+OUTQUADS):
+            for ch in range(0, OUTPAIRS):
                 data2[num].append(chunk[index])
                 data2[num].append(chunk[index+1])
             # then include AO3, AO4 and 4 TRASH values
             if OUTQUADS:
-                data2[num].append(chunk[index+2])
-                data2[num].append(chunk[index+3])
+                data2[num].append(chunk[index+OUTQUAD_CHAN[0]])
+                data2[num].append(chunk[index+OUTQUAD_CHAN[1]])
+                data2[num].append(chunk[index+OUTQUAD_CHAN[2]])
+                data2[num].append(chunk[index+OUTQUAD_CHAN[3]])
             for ch in range(0, DMAFILL):
                 data2[num].append(TRASH_MARK)
 
