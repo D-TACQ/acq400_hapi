@@ -61,7 +61,7 @@ def extend_to_16_ch(args, data):
                 data2[num].append(chunk[index])
                 data2[num].append(chunk[index+1])
             # then include AO3, AO4 and 4 TRASH values
-            if OUTQUADS:
+            for ch in range(0, OUTQUADS):
                 data2[num].append(chunk[index+OUTQUAD_CHAN[0]])
                 data2[num].append(chunk[index+OUTQUAD_CHAN[1]])
                 data2[num].append(chunk[index+OUTQUAD_CHAN[2]])
