@@ -993,7 +993,7 @@ class Acq2106(Acq400):
 class Acq2106_Mgtdram8(Acq2106):
 
     def __init__(self, uut, monitor=True):
-        print("acq400_hapi.Acq2106_MgtDram8 %s" % (_uut))
+        print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
         Acq2106.__init__(self, uut, monitor, has_dsp=True)
 
     def run_mgt(self, _filter = null_filter):
