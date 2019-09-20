@@ -69,7 +69,10 @@ def extend_to_n_bytes(args, data):
     final_data = []
     for index, buf in enumerate(data):
         data_size = len(buf) * 2 # Data size in bytes
-        pad_samples = int((args.size - data_size) / 2)
+        if args.size != -1:
+            pad_samples = int((args.size - data_size) / 2)
+        else:
+            pad_samples = 0
         chunk = np.append(buf, pad_samples * [ENDBUF_MARK]) # data is 1MB
         final_data.append(chunk)
         print("{} len:{} samples needed: {} data shape {}".
@@ -79,6 +82,8 @@ def extend_to_n_bytes(args, data):
 
 
 def export_data(args, data):
+    if type(data) != np.ndarray:
+        data = np.array(data).astype(np.int16)
     np.ndarray.tofile(data, args.out)
     return None
 
@@ -95,10 +100,13 @@ def run_main():
     parser = argparse.ArgumentParser(description = 'AWG convert MA1 to MA2')
     parser.add_argument('--datafile', type=str, default="awgdata.dat",
     help="Which datafile to load.")
+
     parser.add_argument('--out', type=str, default="4mb_sines.dat",
     help='The name of the output file')
+
     parser.add_argument('--size', type=int, default=1048576,
     help='Size in bytes of the buffer size required.')
+
     args = parser.parse_args()
     make_buff(args)
 
