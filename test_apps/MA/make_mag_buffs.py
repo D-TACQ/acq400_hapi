@@ -3,6 +3,10 @@
 # NSAMPLES x 4CH x 2BYTE raw file to
 # NSAMPLES x "16CH" x 2BYTES, in 4 x 1MB chunks
 
+# Example usage:
+# ./make_mag_buffs
+# or
+# ./make_mag_buffs --pad_size=-1
 
 import numpy as np
 import argparse
@@ -69,8 +73,8 @@ def extend_to_n_bytes(args, data):
     final_data = []
     for index, buf in enumerate(data):
         data_size = len(buf) * 2 # Data size in bytes
-        if args.size != -1:
-            pad_samples = int((args.size - data_size) / 2)
+        if args.pad_size != -1:
+            pad_samples = int((args.pad_size - data_size) / 2)
         else:
             pad_samples = 0
         chunk = np.append(buf, pad_samples * [ENDBUF_MARK]) # data is 1MB
@@ -104,7 +108,7 @@ def run_main():
     parser.add_argument('--out', type=str, default="4mb_sines.dat",
     help='The name of the output file')
 
-    parser.add_argument('--size', type=int, default=1048576,
+    parser.add_argument('--pad_size', type=int, default=1048576,
     help='Size in bytes of the buffer size required.')
 
     args = parser.parse_args()
