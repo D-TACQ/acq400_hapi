@@ -22,6 +22,10 @@ from os.path import expanduser
 
 def plot_histogram(histo, args):
     plt.bar(histo.keys(), histo.values(), 1)
+    plt.title("Histogram of T_LATCH values. N > 1 means N-1 samples were missed.")
+    plt.ylabel("Number of occurrences on a log scale.")
+    plt.xlabel("T_LATCH differences.")
+    plt.yscale("log")
     plt.show()
     return None
 
