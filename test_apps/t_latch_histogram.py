@@ -55,7 +55,8 @@ def collect_tlatch(args):
 
     # stride through the data in steps of:
     # nchan/2 (real channels are shorts but we have loaded data as longs)
-    t_latch = data[args.nchan/2::args.nchan/2+args.spad_len] # divide nchan by 2 as we are now dealing with long ints.
+    t_latch = data[int(args.nchan/2)::int(args.nchan/2+args.spad_len)] # divide nchan by 2 as we are now dealing with long ints.
+
     return t_latch
 
 
