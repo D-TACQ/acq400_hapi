@@ -22,6 +22,10 @@ from os.path import expanduser
 
 def plot_histogram(histo, args):
     plt.bar(histo.keys(), histo.values(), 1)
+    plt.title("Histogram of T_LATCH values. N > 1 means N-1 samples were missed.")
+    plt.ylabel("Number of occurrences on a log scale.")
+    plt.xlabel("T_LATCH differences.")
+    plt.yscale("log")
     plt.show()
     return None
 
@@ -43,6 +47,9 @@ def collect_dtimes(t_latch, args):
             histo[diff] += 1
         else:
             histo[diff] = 1
+
+    for key in histo:
+        print("T_LATCH differences: ", key, ", happened: ", histo[key], " times")
     return histo
 
 
@@ -55,7 +62,8 @@ def collect_tlatch(args):
 
     # stride through the data in steps of:
     # nchan/2 (real channels are shorts but we have loaded data as longs)
-    t_latch = data[args.nchan/2::args.nchan/2+args.spad_len] # divide nchan by 2 as we are now dealing with long ints.
+    t_latch = data[int(args.nchan/2)::int(args.nchan/2+args.spad_len)] # divide nchan by 2 as we are now dealing with long ints.
+
     return t_latch
 
 
