@@ -47,6 +47,9 @@ def collect_dtimes(t_latch, args):
             histo[diff] += 1
         else:
             histo[diff] = 1
+
+    for key in histo:
+        print("T_LATCH differences: ", key, ", happend: ", histo[key], " times")
     return histo
 
 
