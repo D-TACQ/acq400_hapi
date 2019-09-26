@@ -40,11 +40,12 @@ def configure_shot(args):
 
     pre = intSI(args.pre)
     post = intSI(args.post)
+    trg = args.trg.split(",")[0]
 
     for u in uuts:
         print("uut:%s" % (u.uut))
-        u.s0.transient = "PRE=%d POST=%d SOFT_TRIGGER=%d" % (pre, post, 1 if args.trg == "int" > 0 else 0)
-
+        u.s0.transient = "PRE=%d POST=%d SOFT_TRIGGER=%d" % (pre, post, 1 if trg == "int" > 0 else 0)
+        
 
 
 def run_main():
