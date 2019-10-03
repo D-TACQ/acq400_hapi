@@ -33,30 +33,7 @@ def plot_histogram(histo, args):
     return None
 
 
-def collect_dtimes(t_latch, args):
-    histo = {1: 0, 2: 0, 3: 0}
-    for num, item in enumerate(t_latch):
-        if num == 0 or item == - 2**31 or item == 2**31-1: # Handle the case of 32 bit rollover.
-            # if the number is 0 or is about to roll over then just continue to the next value.
-            continue
-
-        if item == t_latch[num-1] - 1 or item == t_latch[num-1] + 1:
-            if args.ones == 0:
-                # if the diff is one and the args.ones arg is set to false then continue to next value.
-                continue
-
-        diff = item - t_latch[num-1]
-        if diff in histo:
-            histo[diff] += 1
-        else:
-            histo[diff] = 1
-
-    for key in histo:
-        print("T_LATCH differences: ", key, ", happened: ", histo[key], " times")
-    return histo
-
-
-def collect_dtimes_improved(t_latch):
+def collect_dtimes(t_latch):
     histo = {1: 0, 2: 0, 3: 0}
     ideal = np.arange(t_latch[0], t_latch.shape[-1]+t_latch[0])
     if np.array_equal(t_latch, ideal):
@@ -101,10 +78,8 @@ def run_analysis(args):
     t_latch_split = np.array_split(tlatch, 8)
     histo = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        # results = [executor.submit(collect_dtimes_improved, split) for split in t_latch_split]
-        results = executor.map(collect_dtimes_improved, t_latch_split)
+        results = executor.map(collect_dtimes, t_latch_split)
         for result in results:
-            # print(result)
             for key in result:
                 if key in histo:
                     histo[key] += result[key]
