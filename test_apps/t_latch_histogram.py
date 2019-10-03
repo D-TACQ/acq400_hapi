@@ -18,6 +18,9 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from os.path import expanduser
+import os
+import threading
+import concurrent.futures
 
 
 def plot_histogram(histo, args):
@@ -45,11 +48,59 @@ def collect_dtimes(t_latch, args):
         diff = item - t_latch[num-1]
         if diff in histo:
             histo[diff] += 1
+            # print("Histo: {}".format(histo))
         else:
             histo[diff] = 1
 
     for key in histo:
         print("T_LATCH differences: ", key, ", happened: ", histo[key], " times")
+    return histo
+
+
+def collect_dtimes_improved(t_latch):
+    # print("Hello world")
+    # print(t_latch.shape[-1])
+    histo = {1: 0, 2: 0, 3: 0}
+    # ideal = np.arange(t_latch[0], len(t_latch))
+    ideal = np.arange(t_latch[0], t_latch.shape[-1]+t_latch[0])
+    if np.array_equal(t_latch, ideal):
+        histo[1] += len(t_latch)
+    else:
+        pos = 0
+        while True:
+            # t_latch_test = np.subtract(ideal[pos:], t_latch[pos:])
+            t_latch_test = np.subtract(ideal, t_latch)
+            first_nonzero = (t_latch_test != 0).argmax(axis=0)
+            if first_nonzero == 0:
+                # print("Breaking")
+                break
+            # print("first_nonzero = {}".format(first_nonzero))
+            pos = first_nonzero + 1
+            diff = t_latch[first_nonzero] - ideal[first_nonzero]
+            # print("t_latch[first_nonzero] = {}, ideal[first_nonzero] = {}".format(t_latch[first_nonzero], ideal[first_nonzero]))
+            # print("diff = {}".format(diff))
+            if diff in histo:
+                histo[diff] += 1
+                # print("Histo: {}".format(histo))
+            else:
+                histo[diff] = 1
+
+
+            t_latch = t_latch[pos:]
+            # ideal = ideal[pos:]
+            ideal = np.arange(t_latch[0], t_latch.shape[-1]+t_latch[0])
+
+            # print("t_latch length = {}".format(t_latch.shape[-1]))
+
+            if t_latch.shape[-1] == 0:
+                break
+
+    # print("Done")
+
+    # if args.ones == 1:
+    #     histo[0] =
+    # for key in histo:
+    #     print("T_LATCH differences: ", key, ", happened: ", histo[key], " times")
     return histo
 
 
@@ -59,17 +110,66 @@ def collect_tlatch(args):
         data = np.fromfile(home+"/"+args.src, dtype=np.int32)
     else:
         data = np.fromfile(args.src, dtype=np.int32)
+        # data = np.load(args.src, dtype=np.int32, mmap_mode='r')
+        t_latch = data[int(args.nchan/2)::int(args.nchan/2+args.spad_len)]
 
     # stride through the data in steps of:
     # nchan/2 (real channels are shorts but we have loaded data as longs)
-    t_latch = data[int(args.nchan/2)::int(args.nchan/2+args.spad_len)] # divide nchan by 2 as we are now dealing with long ints.
+    # t_latch = data[int(args.nchan/2)::int(args.nchan/2+args.spad_len)] # divide nchan by 2 as we are now dealing with long ints.
+        #
+        # data = np.array([1])
+        # counter = 0
+        # ncols = int((args.nchan/2) + args.spad_len)
+        # read_size = int(100000*ncols)
+        # file_size = int(os.path.getsize(args.src))
+        # t_latch = np.zeros(int(os.path.getsize(args.src)/(ncols)))
+        #
+        # with open(args.src, 'rb') as fid:
+        #     while data.shape[-1] != 0:
+        #
+        #         data = np.fromfile(fid, dtype=np.int32, count=read_size)
+        #
+        #         t_latch[counter:counter+int(read_size/ncols)] = data[int(args.nchan/2)::ncols]
+        #
+        #
+        #         longs_to_go = int(file_size/80 - (counter + read_size))
+        #         if longs_to_go < read_size:
+        #             read_size = longs_to_go
+        #             print("This should only happen once")
+        #
+        #         # counter += read_size
+        #         counter += int(read_size/ncols)
+        #         print("counter = {}".format(counter))
+
+                # print("Counter = {}".format(counter))
+                # print("longs_to_go = {}".format(longs_to_go))
+    # print("T_LATCH: {}".format(t_latch[-10000:]))
+    print("Finished collecting data")
 
     return t_latch
 
 
 def run_analysis(args):
     tlatch = collect_tlatch(args)
-    histo = collect_dtimes(tlatch, args)
+    t_latch_split = np.array_split(tlatch, 8)
+    histo = {}
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # results = [executor.submit(collect_dtimes_improved, split) for split in t_latch_split]
+        results = executor.map(collect_dtimes_improved, t_latch_split)
+        for result in results:
+            print(result)
+            for key in result:
+                if key in histo:
+                    histo[key] += result[key]
+                else:
+                    histo[key] = result[key]
+        # for f in concurrent.futures.as_completed(results):
+            # print(f.result())
+            # for key in histo:
+            #     print("T_LATCH differences: ", key, ", happened: ", histo[key], " times")
+    # histo = collect_dtimes_improved(tlatch, args)
+    for key in histo:
+        print("T_LATCH differences: ", key, ", happened: ", histo[key], " times")
     plot_histogram(histo, args)
     return None
 
