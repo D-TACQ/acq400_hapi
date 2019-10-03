@@ -90,10 +90,9 @@ def collect_tlatch(args):
         data = np.fromfile(home+"/"+args.src, dtype=np.int32)
     else:
         data = np.fromfile(args.src, dtype=np.int32)
-        t_latch = data[int(args.nchan/2)::int(args.nchan/2+args.spad_len)]
 
+    t_latch = data[int(args.nchan/2)::int(args.nchan/2+args.spad_len)]
     print("Finished collecting data")
-
     return t_latch
 
 
@@ -105,7 +104,7 @@ def run_analysis(args):
         # results = [executor.submit(collect_dtimes_improved, split) for split in t_latch_split]
         results = executor.map(collect_dtimes_improved, t_latch_split)
         for result in results:
-            print(result)
+            # print(result)
             for key in result:
                 if key in histo:
                     histo[key] += result[key]
