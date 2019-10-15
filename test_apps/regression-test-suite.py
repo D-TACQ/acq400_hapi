@@ -258,7 +258,7 @@ def run_test(args, axs, plt_count):
         data = []
         events = []
         # plt.clf()
-
+        print("event DEBUG: ", args.event)
         for index, uut in reversed(list(enumerate(uuts))):
 
             if args.test == "pre_post":
@@ -447,6 +447,27 @@ def run_main():
                         run_test(args, axs, plt_count)
             plt.show()
 
+    elif args.trg == "all" and args.event == "all":
+        fig, axs = create_fig(args, args.test)
+        plt_count = -1
+        
+        for trg in all_trgs:
+            args.trg = trg
+            if args.test == "post": # Don't need any events for post mode.
+                args.event = "N/A"
+                print("\nNow running: {} test with" \
+                                    " trigger: {}\n".format(args.test, args.trg))
+                plt_count += 1
+                run_test(args, axs, plt_count)
+            else:
+                for event in all_events:
+                    args.event = event
+                    print("\nNow running: {} test with trigger: {} and" \
+                    " event: {}\n".format(args.test, args.trg, args.event))
+                    plt_count += 1
+                    run_test(args, axs, plt_count)
+        plt.show()
+
     elif args.trg == "all":
         fig, axs = create_fig(args, args.test)
         plt_count = -1
@@ -469,8 +490,12 @@ def run_main():
         plt.show()
 
     else:
+        test = args.test
+        fig, axs = create_fig(args, test)
         args.trg = args.trg.split(",")
         args.trg = [int(i) for i in args.trg]
+        args.event = args.event.split(",")
+        args.event = [int(i) for i in args.event]
         plt_count = -1
         plt_count += 1
         run_test(args, axs, plt_count)
