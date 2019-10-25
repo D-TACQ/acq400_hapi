@@ -730,7 +730,7 @@ class Acq400:
         return None
 
 
-    def configure_rgm(self, role, trigger=[1,1,1], event=[1,1,1], post="100000", gpg=0):
+    def configure_rgm(self, role, trigger=[1,0,1], event=[1,1,1], post="100000", gpg=0):
         """
         Configure UUT for RGM mode. Default: external trigger starts the capture
         and the system takes samples every clock whenever the trigger is high.
@@ -754,9 +754,9 @@ class Acq400:
             self.s1.TRG_DX = 1
         self.s1.TRG_SENSE = trigger[2]
 
-        self.s1.EVENT0 = event[0]
-        self.s1.EVENT0_DX = event[1]
-        self.s1.EVENT0_SENSE = event[2]
+        self.s1.EVENT0 = 0#event[0]
+        self.s1.EVENT0_DX = 0#event[1]
+        self.s1.EVENT0_SENSE = 0
 
         self.s1.RGM = 2
         self.s1.RGM_DX = 0
