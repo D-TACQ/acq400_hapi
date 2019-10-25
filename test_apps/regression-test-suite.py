@@ -248,9 +248,11 @@ def run_test(args, axs, plt_count):
         uut.s0.transient # print transient config
         uuts.append(uut)
 
+
+    sig_gen = socket.socket()
+    sig_gen.connect((args.sig_gen_name, 5025))
+
     if args.config_sig_gen == 1:
-        sig_gen = socket.socket()
-        sig_gen.connect((args.sig_gen_name, 5025))
         freq = calculate_frequency(args, uuts[0], args.clock_divisor)
         configure_sig_gen(sig_gen, args, freq)
 
@@ -450,7 +452,7 @@ def run_main():
     elif args.trg == "all" and args.event == "all":
         fig, axs = create_fig(args, args.test)
         plt_count = -1
-        
+
         for trg in all_trgs:
             args.trg = trg
             if args.test == "post": # Don't need any events for post mode.
