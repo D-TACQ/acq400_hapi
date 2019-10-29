@@ -964,11 +964,13 @@ class Acq2106(Acq400):
         print("acq400_hapi.Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         self.mb_clk_min = 100000
-        sn_site_map = (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB))
-        if has_dsp:
-            sn_site_map = tuple(list(sn_site_map).append(('s14', AcqSites.SITE_DSP)))
 
-        for ( service_name, site ) in sn_site_map:
+        if has_dsp:
+            sn_map = (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB), ('s14', AcqSites.SITE_DSP))
+        else:
+            sn_map = (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB))
+
+        for ( service_name, site ) in sn_map:
             try:
                 self.svc[service_name] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
             except socket.error:
