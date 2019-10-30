@@ -999,6 +999,8 @@ class Acq2106(Acq400):
 
     
 class Acq2106_Mgtdram8(Acq2106):
+    MGT_BLOCK_BYTES = 0x400000
+    MGT_BLOCK_MULTIPLE = 16
 
     def __init__(self, uut, monitor=True):
         print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
