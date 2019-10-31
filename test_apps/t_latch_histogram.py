@@ -18,6 +18,9 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from os.path import expanduser
+import os
+import threading
+import concurrent.futures
 
 
 def plot_histogram(histo, args):
@@ -30,26 +33,31 @@ def plot_histogram(histo, args):
     return None
 
 
-def collect_dtimes(t_latch, args):
+def collect_dtimes(t_latch):
     histo = {1: 0, 2: 0, 3: 0}
-    for num, item in enumerate(t_latch):
-        if num == 0 or item == - 2**31 or item == 2**31-1: # Handle the case of 32 bit rollover.
-            # if the number is 0 or is about to roll over then just continue to the next value.
-            continue
+    ideal = np.arange(t_latch[0], t_latch.shape[-1]+t_latch[0])
+    if np.array_equal(t_latch, ideal):
+        histo[1] += len(t_latch)
+    else:
+        pos = 0
+        while True:
+            t_latch_test = np.subtract(ideal, t_latch)
+            first_nonzero = (t_latch_test != 0).argmax(axis=0)
+            if first_nonzero == 0:
+                break
+            pos = first_nonzero + 1
+            diff = t_latch[first_nonzero] - ideal[first_nonzero]
+            if diff in histo:
+                histo[diff] += 1
+            else:
+                histo[diff] = 1
 
-        if item == t_latch[num-1] - 1 or item == t_latch[num-1] + 1:
-            if args.ones == 0:
-                # if the diff is one and the args.ones arg is set to false then continue to next value.
-                continue
+            t_latch = t_latch[pos:]
+            ideal = np.arange(t_latch[0], t_latch.shape[-1]+t_latch[0])
 
-        diff = item - t_latch[num-1]
-        if diff in histo:
-            histo[diff] += 1
-        else:
-            histo[diff] = 1
+            if t_latch.shape[-1] == 0:
+                break
 
-    for key in histo:
-        print("T_LATCH differences: ", key, ", happened: ", histo[key], " times")
     return histo
 
 
@@ -60,16 +68,26 @@ def collect_tlatch(args):
     else:
         data = np.fromfile(args.src, dtype=np.int32)
 
-    # stride through the data in steps of:
-    # nchan/2 (real channels are shorts but we have loaded data as longs)
-    t_latch = data[int(args.nchan/2)::int(args.nchan/2+args.spad_len)] # divide nchan by 2 as we are now dealing with long ints.
-
+    t_latch = data[int(args.nchan/2)::int(args.nchan/2+args.spad_len)]
+    print("Finished collecting data")
     return t_latch
 
 
 def run_analysis(args):
     tlatch = collect_tlatch(args)
-    histo = collect_dtimes(tlatch, args)
+    t_latch_split = np.array_split(tlatch, 8)
+    histo = {}
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = executor.map(collect_dtimes, t_latch_split)
+        for result in results:
+            for key in result:
+                if key in histo:
+                    histo[key] += result[key]
+                else:
+                    histo[key] = result[key]
+
+    for key in histo:
+        print("T_LATCH differences: ", key, ", happened: ", histo[key], " times")
     plot_histogram(histo, args)
     return None
 
