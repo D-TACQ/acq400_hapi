@@ -55,6 +55,18 @@ class AcqPorts:
     MGTDRAM = 53990
     MGTDRAM_PULL_DATA = 53991
 
+class AcqSites:
+    # site service at AcqPorts.SITE0+ AcqSites.SITEi
+    SITE0 = 0
+    SITE1 = 1
+    SITE2 = 2
+    SITE3 = 3
+    SITE4 = 4
+    SITE5 = 5
+    SITE6 = 6
+    SITE_CA = 13
+    SITE_CB = 12
+    SITE_DSP = 14
 
 class SF:
     """state constants"""
@@ -952,19 +964,18 @@ class Acq2106(Acq400):
         print("acq400_hapi.Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         self.mb_clk_min = 100000
-        site = 13
-        for sm in [ 'cA', 'cB']:
+
+        if has_dsp:
+            sn_map = (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB), ('s14', AcqSites.SITE_DSP))
+        else:
+            sn_map = (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB))
+
+        for ( service_name, site ) in sn_map:
             try:
-                self.svc[sm] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
+                self.svc[service_name] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
             except socket.error:
                 print("uut {} site {} not populated".format(_uut, site))
             self.mod_count += 1
-            site = site - 1
-        if has_dsp:
-            try:
-                self.svc['s14'] = netclient.Siteclient(self.uut, AcqPorts.SITE0+14)
-            except socket.error:
-                print("uut {} site {} not populated".format(_uut, site))            
 
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
         print("set_mb_clk {} {} {}".format(hz, src, fin))
@@ -988,6 +999,8 @@ class Acq2106(Acq400):
 
     
 class Acq2106_Mgtdram8(Acq2106):
+    MGT_BLOCK_BYTES = 0x400000
+    MGT_BLOCK_MULTIPLE = 16
 
     def __init__(self, uut, monitor=True):
         print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
