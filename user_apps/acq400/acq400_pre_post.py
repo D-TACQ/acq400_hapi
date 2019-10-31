@@ -18,7 +18,8 @@ python3 acq400_pre_post.py --data_test=1 --pre=50000 --post=100000 \
 import acq400_hapi
 import argparse
 import numpy as np
-from acq400_configure_transient import configure_shot
+# from acq400_configure_transient import configure_shot
+import acq400_configure_transient
 import argparse
 import matplotlib.pyplot as plt
 import sync_role
@@ -29,7 +30,7 @@ def validate(args, data, shot):
     ch = data[0][0]
     zero_crossings = np.where(np.diff(np.sign(ch)))[0]
     test_range = range(args.pre - 5, args.pre + 5)
-    
+
     for crossing in test_range:
         if crossing in zero_crossings:
             print("{} Test passed - pre/post appears to be working.".format(shot))
@@ -42,13 +43,13 @@ def validate(args, data, shot):
             plt.show()
 
 def configure_shot(args):
-    configure_shot(args)
+    acq400_configure_transient.configure_shot(args)
     sync_role.run_shot(args)
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
 
     for uut in uuts:
         uut.s0.transient = "DEMUX=1"
-        
+
     return uuts
 
 def run_shot(args, uuts, shot):
@@ -56,15 +57,15 @@ def run_shot(args, uuts, shot):
         uut.s0.set_arm
         uut.statmon.wait_armed()
     data = []
-    
+
     for uut in uuts:
         uut.statmon.wait_stopped()
         data.append(uut.read_channels((1)))
 
     if args.data_test == 1:
-        validate(args, data, shot)    
+        validate(args, data, shot)
 
-    
+
 def run_shots(args, uuts):
     for shot in range(0, args.shots):
         run_shot(args, uuts, shot)
@@ -86,7 +87,7 @@ def main():
     parser.add_argument('--clkdiv', default=None, help="optional clockdiv")
 
     parser.add_argument('uuts', nargs='+', help='uut1 [uut2..]')
-    
+
     args = parser.parse_args()
     run_shots(args, configure_shot(args))
 
