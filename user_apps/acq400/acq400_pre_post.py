@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 
 
+"""
+Example usage:
+
+python3 acq400_pre_post.py --data_test=1 --pre=50000 --post=100000 \
+--trg=ext --loops=5 acq1001_084
+"""
+
+
 import acq400_hapi
 import argparse
 import numpy as np
