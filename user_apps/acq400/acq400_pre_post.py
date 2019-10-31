@@ -2,6 +2,12 @@
 
 
 """
+
+A script to loop pre-post captures.
+
+A data_test can also be run, where the system will assume a slow free running
+trigger is given (~0.5Hz) with CH01 sampling a square wave.
+
 Example usage:
 
 python3 acq400_pre_post.py --data_test=1 --pre=50000 --post=100000 \
@@ -15,6 +21,7 @@ import numpy as np
 from acq400_configure_transient import configure_shot
 import argparse
 import matplotlib.pyplot as plt
+
 
 def run_shot(args):
     data = []
