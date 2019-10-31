@@ -21,17 +21,21 @@ import numpy as np
 from acq400_configure_transient import configure_shot
 import argparse
 import matplotlib.pyplot as plt
+import sync_role
 
 
 def run_shot(args):
     data = []
     configure_shot(args)
+    sync_role.run_shot(args)
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
+
+    for uut in uuts:
+        uut.s0.transient = "DEMUX=1"
 
     for loop in range(0, args.loops):
 
         for uut in reversed(uuts):
-            uut.s0.transient = "DEMUX = 1"
             uut.s0.set_arm
             uut.statmon.wait_armed()
 
@@ -66,6 +70,13 @@ def main():
     help='Whether to test the data for the trigger at the pre/post crossover')
     parser.add_argument('--loops', type=int, default=1,
     help='The number of pre-post captures to run.')
+
+    parser.add_argument('--enable_trigger', default=None, help="set this to enable the trigger all other args ignored")
+    parser.add_argument('--toprole', default='master', help="role of top in stack")
+    parser.add_argument('--fclk', default='1000000', help="sample clock rate")
+    parser.add_argument('--fin',  default='1000000', help="external clock rate")
+    parser.add_argument('--clkdiv', default=None, help="optional clockdiv")
+
     parser.add_argument('uuts', nargs='+', help='uut1 [uut2..]')
     run_shot(parser.parse_args())
 
