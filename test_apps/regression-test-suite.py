@@ -29,6 +29,14 @@ from future import builtins
 import matplotlib.pyplot as plt
 
 
+def create_fig(args, test):
+    if test == "post":
+        fig, axs = plt.subplots(3, 1, sharey=True, gridspec_kw={'hspace': 0.9})
+    else:
+        fig, axs = plt.subplots(6, 1, sharey=True, gridspec_kw={'hspace': 0.9})
+    return fig, axs
+
+
 def create_rtm_stl():
     stl =  "0,f\n \
     10000,0\n \
@@ -91,10 +99,11 @@ def calculate_frequency(args, uut, divisor):
 
 def trigger_system(args, sig_gen):
     # if "rtm" not in args.test:
+    time.sleep(1)
     if args.test != "rtm":
         print("Triggering now.")
         sig_gen.send("TRIG\n".encode())
-        if args.trg == "ext" and args.test == "pre_post":
+        if args.trg[1] == 0 and args.test == "pre_post":
             time.sleep(2)
             sig_gen.send("TRIG\n".encode())
     return None
@@ -132,28 +141,32 @@ def configure_sig_gen(sig_gen, args, freq):
     sig_gen.send("FUNC:SHAP SIN\n".encode())
 
     if args.test == "post":
-        if args.trg == "ext":
+        if args.trg[1] == 0:
             sig_gen.send("BURS:STAT ON\n".encode())
             sig_gen.send("BURS:NCYC 1\n".encode())
             sig_gen.send("TRIG:SOUR BUS\n".encode())
-        else:
+        elif args.trg[1] == 1:
             sig_gen.send("BURS:STAT OFF\n".encode())
             sig_gen.send("TRIG:SOUR IMM\n".encode())
+
+        if args.trg[2] == 0:
+            # If ext falling then we need two sine waves
+            print("TRG FALLING set sg")
+            sig_gen.send("BURS:STAT ON\n".encode())
+            sig_gen.send("BURS:NCYC 3\n".encode())
+
 
     if args.test == "pre_post":
         sig_gen.send("BURS:STAT ON\n".encode())
         sig_gen.send("BURS:NCYC 1\n".encode())
-        if args.trg == "ext":
-            sig_gen.send("TRIG:SOUR BUS\n".encode())
-        else:
-            sig_gen.send("TRIG:SOUR IMM\n".encode())
+        sig_gen.send("TRIG:SOUR BUS\n".encode())
 
     elif args.test == "rtm" or args.test == "rgm":
         # sig_gen.send("FREQ 1000\n".encode())
-        sig_gen.send("BURS:STAT ON\n".encode())
-        sig_gen.send("BURS:NCYC 1\n".encode())
         sig_gen.send("TRIG:SOUR IMM\n".encode())
+        sig_gen.send("BURS:STAT OFF\n".encode())
         if args.test == "rgm":
+            sig_gen.send("BURS:STAT ON\n".encode())
             sig_gen.send("BURS:NCYC 5\n".encode())
             sig_gen.send("TRIG:SOUR BUS\n".encode())
     elif args.test == "rtm_gpg":
@@ -213,14 +226,15 @@ def custom_test(args, uuts):
     return None
 
 
-def run_test(args):
+def run_test(args, axs, plt_count):
     CRED = "\x1b[1;31m"
     CGREEN = "\x1b[1;32m"
     CYELLOW = "\x1b[1;33m"
     CEND = "\33[0m"
 
-    plt.figure() # Open a new figure for each test (only in all tests mode).
+    # plt.figure() # Open a new figure for each test (only in all tests mode).
 
+    # fig, axs = plt.subplots(1, 6, sharey=True)
     uuts = []
     success_flag = True
     channels = eval(args.channels[0])
@@ -230,25 +244,28 @@ def run_test(args):
         uut = acq400_hapi.Acq400(uut)
         uut.s0.set_abort
         uut.s0.transient = "DEMUX={}".format(args.demux)
-        check_master_slave(args, uut)
+        # check_master_slave(args, uut)
+        uut.s0.transient # print transient config
         uuts.append(uut)
 
+
+    sig_gen = socket.socket()
+    sig_gen.connect((args.sig_gen_name, 5025))
+
     if args.config_sig_gen == 1:
-        sig_gen = socket.socket()
-        sig_gen.connect((args.sig_gen_name, 5025))
         freq = calculate_frequency(args, uuts[0], args.clock_divisor)
         configure_sig_gen(sig_gen, args, freq)
 
     for iteration in list(range(1, args.loops+1)):
         data = []
         events = []
-        plt.clf()
-
+        # plt.clf()
+        print("event DEBUG: ", args.event)
         for index, uut in reversed(list(enumerate(uuts))):
 
             if args.test == "pre_post":
                 if index == 0:
-                    uut.configure_pre_post("master", trigger=args.trg)
+                    uut.configure_pre_post("master", trigger=args.trg, event=args.event)
                 else:
                     # uut.s0.sync_role = "slave"
                     uut.configure_pre_post("slave")
@@ -261,13 +278,13 @@ def run_test(args):
 
             elif args.test == "rtm":
                 if index == 0:
-                    uut.configure_rtm("master", trigger=args.trg)
+                    uut.configure_rtm("master", trigger=args.trg, event=args.event)
                 else:
                     uut.configure_rtm("slave")
 
             elif args.test == "rtm_gpg":
                 if index == 0:
-                    uut.configure_rtm("master", trigger=args.trg, gpg=1)
+                    uut.configure_rtm("master", trigger=args.trg, gpg=1, event=args.event)
                     gpg_config_success = config_gpg(uut, args, trg=0)
                     if gpg_config_success != True:
                         print("Breaking out of test {} now.".format(args.test))
@@ -303,14 +320,9 @@ def run_test(args):
         trigger_system(args, sig_gen)
 
         for index, uut in enumerate(uuts):
-            try:
-                acq400_hapi.shotcontrol.wait_for_state(uut, "IDLE")
-            except Exception:
-                print("\nshotcontrol has failed. Using statmon instead.")
-                print("You should be able to ignore this diagnostic message.\n")
-                uut.statmon.wait_stopped()
+            uut.statmon.wait_stopped()
             if args.demux == 1:
-                data.append(uut.read_channels(*channels[index]))
+                data.append(uut.read_channels(tuple(channels[index])))
             else:
                 data.append(uut.read_channels((0), -1))
             events.append(uut.get_es_indices(human_readable=1, return_hex_string=1))
@@ -322,16 +334,17 @@ def run_test(args):
             save_data(uuts)
             for index, data_set in enumerate(data):
                 for ch in channels[index]:
-                    plt.plot(data_set[0][ch-1::uuts[index].nchan()])
+                    axs[plt_count].plot(data_set[0][ch-1::uuts[index].nchan()])
 
         else:
             for data_set in data:
                 for ch in data_set:
-                    plt.plot(ch)
-        plt.grid(True)
-        plt.title("Test: {} Run: {}".format(args.test, iteration))
-        plt.pause(0.001)
-        plt.show(block=False)
+                    # plt.plot(ch)
+                    axs[plt_count].plot(ch)
+        axs[plt_count].grid(True)
+        axs[plt_count].set_title("Test: {} Runs: {} Trg: {} Event: {}".format(args.test, args.loops, args.trg, args.event))
+        # plt.pause(0.001)
+        # plt.show(block=False)
 
         if args.custom_test == 1:
             custom_test(args, uuts)
@@ -346,9 +359,10 @@ def run_test(args):
         # import code
         # code.interact(local=locals())
     print("Finished '{}' test. Total tests run: {}".format(args.test, args.loops))
-    plt.pause(0.001)
-    plt.show(block=False)
-    return None
+    # plt.pause(0.001)
+    # plt.show(block=False)
+    # plt.show()
+    return axs[plt_count]
 
 
 def run_main():
@@ -356,10 +370,18 @@ def run_main():
 
     parser.add_argument('--test', default="pre_post", type=str,
     help='Which test to run. Options are: all, post, pre_post, rtm, rtm_gpg, rgm. \
-    Default is pre_post.')
+    Default is pre_post. The "all" option can be used to test every test mode \
+    with every trigger mode.')
 
-    parser.add_argument('--trg', default="ext", type=str,
-    help='Which trigger to use. Options are ext and int. Default is ext.')
+    parser.add_argument('--trg', default="1,0,1", type=str,
+    help='Which trigger to use. Default is 1,0,1. User can also specify \
+    --trg=all so that the chosen test will be run multiple times with all \
+    trigger types.')
+
+    parser.add_argument('--event', default="1,0,1", type=str,
+    help='Which event to use. Default is 1,0,1. User can also specify \
+    --event=all so that the chosen test will be run multiple times with all \
+    event types.')
 
     parser.add_argument('--config_sig_gen', default=1, type=int,
     help='If True, configure signal generator. Default is 1 (True).')
@@ -368,7 +390,7 @@ def run_main():
     help='Name of signal generator. Default is A-33600-00001.')
 
     parser.add_argument('--channels', default=['[1],[1]'], nargs='+',
-    help='One list per UUT: --channels=[1],[1] plots channel 1 on UUT1 and 2')
+    help='One list per UUT: --channels=[[1],[1]] plots channel 1 on UUT1 and 2')
 
     parser.add_argument('--clock_divisor', default=20000, type=int,
     help="The speed at which to run the sig gen. 20,000 is human readable and \
@@ -392,18 +414,93 @@ def run_main():
     parser.add_argument('uuts', nargs='+', help="Names of uuts to test.")
 
     args = parser.parse_args()
-
     all_tests = ["post", "pre_post", "rtm", "rtm_gpg", "rgm"]
+
+    all_trgs = [[1,0,0], [1,0,1], [1,1,1]]
+    all_events = [[1,0,0], [1,0,1]] # Not interested in any soft events.
 
     if args.test.lower() == "all":
         print("You have selected to run all tests.")
-        print("Now running each test {} times.".format(args.loops))
+        print("Now running each test {} times with ALL triggers " \
+                                "and ALL events.".format(args.loops))
+
         for test in all_tests:
             args.test = test
-            print("\nNow running: {} test\n".format(test))
-            run_test(args)
+            fig, axs = create_fig(args, test)
+            # fig, axs = plt.subplots(1, 6, sharey=True)
+            plt_count = -1
+
+            for trg in all_trgs:
+                args.trg = trg
+
+                if test == "post": # Don't need any events for post mode.
+                    args.event = "N/A"
+                    print("\nNow running: {} test with" \
+                                        " trigger: {}\n".format(test, args.trg))
+                    plt_count += 1
+                    run_test(args, axs, plt_count)
+                else:
+
+                    for event in all_events:
+                        args.event = event
+                        print("\nNow running: {} test with trigger: {} and" \
+                        " event: {}\n".format(test, args.trg, args.event))
+                        plt_count += 1
+                        run_test(args, axs, plt_count)
+            plt.show()
+
+    elif args.trg == "all" and args.event == "all":
+        fig, axs = create_fig(args, args.test)
+        plt_count = -1
+
+        for trg in all_trgs:
+            args.trg = trg
+            if args.test == "post": # Don't need any events for post mode.
+                args.event = "N/A"
+                print("\nNow running: {} test with" \
+                                    " trigger: {}\n".format(args.test, args.trg))
+                plt_count += 1
+                run_test(args, axs, plt_count)
+            else:
+                for event in all_events:
+                    args.event = event
+                    print("\nNow running: {} test with trigger: {} and" \
+                    " event: {}\n".format(args.test, args.trg, args.event))
+                    plt_count += 1
+                    run_test(args, axs, plt_count)
+        plt.show()
+
+    elif args.trg == "all":
+        fig, axs = create_fig(args, args.test)
+        plt_count = -1
+        for trg in all_trgs:
+            args.trg = trg
+            plt_count += 1
+            run_test(args, axs, plt_count)
+        plt.show()
+
+    elif args.event == "all":
+        args.trg = args.trg.split(",")
+        args.trg = [int(i) for i in args.trg]
+        print("Hello world!")
+        fig, axs = create_fig(args, args.test)
+        plt_count = -1
+        for event in all_events:
+            args.event = event
+            plt_count += 1
+            run_test(args, axs, plt_count)
+        plt.show()
+
     else:
-        run_test(args)
+        test = args.test
+        fig, axs = create_fig(args, test)
+        args.trg = args.trg.split(",")
+        args.trg = [int(i) for i in args.trg]
+        args.event = args.event.split(",")
+        args.event = [int(i) for i in args.event]
+        plt_count = -1
+        plt_count += 1
+        run_test(args, axs, plt_count)
     plt.show()
 
 
