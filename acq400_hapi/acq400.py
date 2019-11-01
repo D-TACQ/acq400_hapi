@@ -883,6 +883,66 @@ class Acq400:
         return data[0]
 
 
+    def pull_data(self):
+        """
+        A function to pull data based on whatever demux is set to. Should be
+        entirely automated. The function will check what channels are AI
+        channels and pull the data from those channels.
+        """
+
+        demux_state = self.get_demux_state()
+        channels = list(range(1, self.get_ai_channels()+1))
+        nchan = channels[-1]
+
+        if demux_state == 1:
+            data = self.read_channels(channels, -1)
+        elif demux_state == 0:
+            data = []
+            mux_data = self.read_muxed_data()
+            for ch in channels:
+                data.append(mux_data[ch-1::nchan])
+
+        return data
+
+
+    def get_ai_channels(self):
+        """
+        Returns all of the AI channels. This is a more robust way to get the
+        total number of AI channels, as sometimes nchan can be set to include
+        the scratch pad.
+        """
+        ai_channels = 0
+        site_types = self.get_site_types()
+        for ai_site in site_types["AISITES"]:
+            ai_site = "s{}".format(ai_site)
+            ai_channels += int(getattr(getattr(self, ai_site), "NCHAN"))
+
+        return ai_channels
+
+    def get_site_types(self):
+        """
+        Returns a dictionary with keys AISITES, AOSITES, and DIOSITES with the
+        corresponding values as lists of the channels which are AI, AO, and DIO.
+        """
+        AISITES = []
+        AOSITES = []
+        DIOSITES = []
+
+        for site in [1,2,3,4,5,6]:
+            try:
+                module_name = eval('self.s{}.module_name'.format(site))
+                if module_name.startswith('acq'):
+                    AISITES.append(site)
+                elif module_name.startswith('ao'):
+                    AOSITES.append(site)
+                elif module_name.startswith('dio'):
+                    DIOSITES.append(site)
+            except Exception:
+                continue
+
+        site_types = { "AISITES": AISITES, "AOSITES": AOSITES, "DIOSITES": DIOSITES }
+        return site_types
+
     def get_es_indices(self, file_path="default", nchan="default", human_readable=0, return_hex_string=0):
         """
         Returns the location of event samples.
