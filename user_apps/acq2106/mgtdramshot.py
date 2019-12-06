@@ -59,6 +59,8 @@ import os
 import numpy as np
 import sys
 from future import builtins
+import matplotlib.pyplot as plt
+import time
 
 LOG = None
 
@@ -74,9 +76,21 @@ def make_data_dir(directory, verbose):
 
 def validate_streamed_data(good_data, test_data, cycle):
     # Using this method there is no detectable overhead.
-    test_data = test_data - test_data[0] + 1
-    if not np.array_equal(test_data, good_data):
+
+    compare_data = good_data + ((cycle) * good_data[-1])
+
+    if not np.array_equal(test_data, compare_data[0:test_data.size]):
         print("Discrepency in data found in cycle: {}, quitting now.".format(cycle))
+        print("Length good: {}, length test: {}".format(good_data.shape, test_data.shape))
+        f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharey=True)
+        ax1.plot(compare_data)
+        ax1.plot(test_data)
+        ax2.plot(compare_data)
+        ax3.plot(test_data)
+        ax1.grid(True)
+        ax2.grid(True)
+        ax3.grid(True)
+        plt.show()
         exit(1)
 
     return None
@@ -107,15 +121,20 @@ def host_pull(args, uut):
             buffer.tofile(root)
             print("Saved file {} to disk.".format(cycle))
         else:
-            print("Block {} pulled.".format(cycle))
+            print("Block {} pulled, size: {}.".format(cycle, buffer.size))
 
         if args.validate != 'no':
             validate_streamed_data(good_data, buffer, cycle)
 
         cycle += 1
+    
+    if cycle == 0:
+        print("Data offload failed.")
+        print("Pulled {} blocks.".format(cycle))
+        exit(1)
 
     print("Data offloaded and all data validation passed.")
-
+    return 1
 
 def write_console(message):
 # explicit flush needed to avoid lockup on Windows.
