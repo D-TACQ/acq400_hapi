@@ -59,6 +59,8 @@ import os
 import numpy as np
 import sys
 from future import builtins
+import matplotlib.pyplot as plt
+import time
 
 LOG = None
 
@@ -119,15 +121,20 @@ def host_pull(args, uut):
             buffer.tofile(root)
             print("Saved file {} to disk.".format(cycle))
         else:
-            print("Block {} pulled.".format(cycle))
+            print("Block {} pulled, size: {}.".format(cycle, buffer.size))
 
         if args.validate != 'no':
             validate_streamed_data(good_data, buffer, cycle)
 
         cycle += 1
+    
+    if cycle == 0:
+        print("Data offload failed.")
+        print("Pulled {} blocks.".format(cycle))
+        exit(1)
 
     print("Data offloaded and all data validation passed.")
-
+    return 1
 
 def write_console(message):
 # explicit flush needed to avoid lockup on Windows.
