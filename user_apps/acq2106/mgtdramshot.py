@@ -74,9 +74,21 @@ def make_data_dir(directory, verbose):
 
 def validate_streamed_data(good_data, test_data, cycle):
     # Using this method there is no detectable overhead.
-    test_data = test_data - test_data[0] + 1
-    if not np.array_equal(test_data, good_data):
+
+    compare_data = good_data + ((cycle) * good_data[-1])
+
+    if not np.array_equal(test_data, compare_data[0:test_data.size]):
         print("Discrepency in data found in cycle: {}, quitting now.".format(cycle))
+        print("Length good: {}, length test: {}".format(good_data.shape, test_data.shape))
+        f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharey=True)
+        ax1.plot(compare_data)
+        ax1.plot(test_data)
+        ax2.plot(compare_data)
+        ax3.plot(test_data)
+        ax1.grid(True)
+        ax2.grid(True)
+        ax3.grid(True)
+        plt.show()
         exit(1)
 
     return None
