@@ -121,7 +121,7 @@ def host_pull(args, uut):
             buffer.tofile(root)
             print("Saved file {} to disk.".format(cycle))
         else:
-            print("Block {} pulled, size: {}.".format(cycle, buffer.size))
+            print("Block {} pulled, size (in samples): {}.".format(cycle, buffer.size))
 
         if args.validate != 'no':
             validate_streamed_data(good_data, buffer, cycle)
@@ -176,6 +176,7 @@ def run_shot(uut, args):
     if args.host_pull == 1:
         # for loop in list(range(1, args.loop + 1)):
         host_pull(args, uut)
+
     else:
         uut.s14.mgt_offload = args.offloadblocks if args.offloadblocks != 'capture' \
             else '0-{}'.format(args.captureblocks)
