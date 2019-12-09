@@ -133,7 +133,7 @@ def host_pull(args, uut):
         print("Pulled {} blocks.".format(cycle))
         exit(1)
 
-    print("Data offloaded and all data validation passed.")
+    print("Data offloaded {} blocks {}".format(cycle, "" if args.validate == 'no' else "and all data validation passed."))
     return 1
 
 def write_console(message):
