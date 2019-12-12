@@ -13,8 +13,6 @@ def disable_trigger(master):
 
     # print("WARNING: REMOVEME temporary fudge while we get the sync trigger right")
     # master.s0.SIG_SYNC_OUT_TRG_DX = 'd0'
-    master.s0.SIG_SRC_TRG_0 = 'DSP0'
-    master.s0.SIG_SRC_TRG_1 = 'DSP1'
     return None
 
 def enable_trigger(master):
