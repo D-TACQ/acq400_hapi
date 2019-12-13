@@ -1,6 +1,9 @@
-# time,state  at time, set state
-# time: decimal usecs
-# state: 32 bit hex number. 
+# ramp_1step_64samp: State Transition List defines Digital Pattern
+# Format:
+#     time,state  at time, set state
+#     time: decimal usecs
+#     state: 32 bit hex number. 
+#     eg:
 # 00000001 : set DO00 high
 # 00000005 : set DO02 and DO00 high
 
