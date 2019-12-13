@@ -44,6 +44,8 @@ class AcqPorts:
     GPGSTL= 4541
     GPGDUMP = 4543
 
+    WRPG = 4606
+
     BOLO8_CAL = 45072
     DATA0 = 53000
     MULTI_EVENT_TMP = 53555
@@ -581,7 +583,7 @@ class Acq400:
                     return
             raise ValueError("frequency out of range {}".format(hz))
 
-    def load_stl(self, stl, port, trace = False):
+    def load_stl(self, stl, port, trace = False, wait_eof = False):
         termex = re.compile("\n")
         with netclient.Netclient(self.uut, port) as nc:
             lines = stl.split("\n")
@@ -602,26 +604,25 @@ class Acq400:
                     print("< {}".format(rx))
             nc.sock.send("EOF\n".encode())
             nc.sock.shutdown(socket.SHUT_WR)
-            rx = nc.sock.recv(4096)
-            if trace:
-                print("< {}".format(rx))
+            wait_end = True
+            while wait_end:
+                rx = nc.sock.recv(4096)
+                if trace:
+                    print("< {}".format(rx))
+                if (str(rx).find("EOF")) != -1:
+                    break
+                wait_end = wait_eof
+
 
 
     def load_gpg(self, stl, trace = False):
-        self.load_stl(stl, AcqPorts.GPGSTL, trace)
-
-        with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc: 
-            while True:
-                txt = nc.sock.recv(4096)
-                if txt:
-                    print(txt)
-                    if str(txt).find("EOF") != -1:
-                        break
-                else:
-                    break
+        self.load_stl(stl, AcqPorts.GPGSTL, trace, True)
 
     def load_dpg(self, stl, trace = False):
         self.load_stl(stl, AcqPorts.DPGSTL, trace)
+
+    def load_wrpg(self, stl, trace = False):
+        self.load_stl(stl, AcqPorts.WRPG, trace, True)
 
     class AwgBusyError(Exception):
         def __init__(self, value):
