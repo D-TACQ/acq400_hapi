@@ -13,6 +13,8 @@ import socket
 import re
 import sys
 import os
+from threading import Lock
+
 try:
     from future import builtins
     from builtins import input
@@ -95,7 +97,20 @@ class Logclient(Netclient):
         return self.receive_message(self.termex)
 
 
+
+
 class Siteclient(Netclient):   
+    def synchronized(f):
+        def _synchronized(self, *args, **kwargs):      
+            self.lock.acquire()
+            try:
+                rc = f(self, *args, **kwargs)
+            finally:                
+                self.lock.release()
+            return rc
+
+        return _synchronized
+
     """Netclient optimised for site service, may be multi-line response.
     
     Autodetects all knobs and holds them as properties for simple script-like
@@ -105,7 +120,8 @@ class Siteclient(Netclient):
     prevent_autocreate = False
     pat = re.compile(r":")
     
-    def sr(self, message):
+    @synchronized
+    def sr(self, message):        
         """send a command and receive a reply
         
         Args:
@@ -179,6 +195,7 @@ class Siteclient(Netclient):
     def __init__(self, addr, port):
 #        print("Siteclient.init")
         self.knobs = {}
+        self.lock = Lock()
         
         self.show_responses = False
         Netclient.__init__(self, addr, port) 
