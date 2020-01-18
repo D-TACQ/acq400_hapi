@@ -78,9 +78,35 @@ class WrtdAction:
     def __call__(self):
         self.master.s0.wrtd_tx = self.max_triggers
         
-
+def handle_data(uuts, args, shot_controller):
+    if args.save_data:
+        for u in uuts:
+            u.save_data = args.save_data
+    if args.trace_upload:
+        for u in uuts:
+            u.trace = 1
+                        
+    chx, ncol, nchan, nsam = shot_controller.read_channels(eval(args.channels))
+      
+# plot ex: 2 x 8 ncol=2 nchan=8
+# U1 U2      FIG
+# 11 21      1  2
+# 12 22      3  4
+# 13 23
+# ...
+# 18 28     15 16
+    if plot_ok and args.plot_data:
+        for col in range(ncol):
+            for chn in range(0,nchan):
+                fignum = 1 + col + chn*ncol
+                plt.subplot(nchan, ncol, fignum)                
+                plt.plot(chx[col][chn])
+                       
+        plt.show()    
+    
 def upload(args):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts] 
+    st = None
     
     acq400_hapi.cleanup.init()
 
@@ -89,8 +115,7 @@ def upload(args):
     if args.wrtd_tx != 0:
         trigger_action = WrtdAction(uuts[0], args.wrtd_tx)
     elif args.remote_trigger:
-        trigger_action = ActionScript(args.remote_trigger)
-        st = None
+        trigger_action = ActionScript(args.remote_trigger)    
     else:
         trigger_action = None
         st = SOFT_TRIGGER
@@ -109,31 +134,8 @@ def upload(args):
                     elif st:
                         uut.s0.soft_trigger = '1'
                 time.sleep(1)
+        handle_data(uuts, args, shot_controller)
 
-        if args.save_data:
-            for u in uuts:
-                u.save_data = args.save_data
-        if args.trace_upload:
-            for u in uuts:
-                u.trace = 1
-                        
-        chx, ncol, nchan, nsam = shot_controller.read_channels(eval(args.channels))
-      
-# plot ex: 2 x 8 ncol=2 nchan=8
-# U1 U2      FIG
-# 11 21      1  2
-# 12 22      3  4
-# 13 23
-# ...
-# 18 28     15 16
-        if plot_ok and args.plot_data:
-            for col in range(ncol):
-                for chn in range(0,nchan):
-                    fignum = 1 + col + chn*ncol
-                    plt.subplot(nchan, ncol, fignum)                
-                    plt.plot(chx[col][chn])
-                        
-            plt.show()
             
     except acq400_hapi.cleanup.ExitCommand:
         print("ExitCommand raised and caught")
