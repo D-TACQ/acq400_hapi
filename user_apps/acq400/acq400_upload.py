@@ -70,7 +70,15 @@ class ActionScript:
     def __call__(self):
         print("ActionScript: call()")
         call(self.sas)
+
+class WrtdAction:
+    def __init__(self, master, max_triggers = 1):
+        self.master = master
+        self.max_triggers = max_triggers
+    def __call__(self):
+        self.master.s0.wrtd_tx = self.max_triggers
         
+
 def upload(args):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts] 
     
@@ -78,12 +86,15 @@ def upload(args):
 
     shot_controller = acq400_hapi.ShotController(uuts)
 
-    if args.remote_trigger:
+    if args.wrtd_tx != 0:
+        trigger_action = WrtdAction(uuts[0], args.wrtd_tx)
+    elif args.remote_trigger:
         trigger_action = ActionScript(args.remote_trigger)
         st = None
     else:
         trigger_action = None
         st = SOFT_TRIGGER
+        
     try:  
         if args.capture > 0:
             shot_controller.run_shot(soft_trigger = st, remote_trigger = trigger_action)
@@ -151,6 +162,7 @@ def run_main():
     parser.add_argument('--plot_data', default=PLOTDATA, type=int, help="1: plot data")
     parser.add_argument('--capture', default=CAPTURE, type=int, help="1: capture data, 0: wait for someone else to capture, -1: just upload")
     parser.add_argument('--remote_trigger', default=None, type=str, help="your function to fire trigger")
+    parser.add_argument('--wrtd_tx', default=0, type=int, help="release a wrtd_tx when all boards read .. works when free-running trigger")
     parser.add_argument('--channels', default=CHANNELS, type=str, help="comma separated channel list")
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     args = parser.parse_args()
