@@ -57,6 +57,7 @@ except RuntimeError as e:
     plot_ok = 0
 
 import os
+import errno
 import argparse
 import re
 import time
@@ -80,8 +81,10 @@ class WrtdAction:
         
 def handle_data(uuts, args, shot_controller):
     if args.save_data:
+        shotdir = args.save_data.format(increment_shot(args))
         for u in uuts:
-            u.save_data = args.save_data
+            u.save_data = shotdir            
+            
     if args.trace_upload:
         for u in uuts:
             u.trace = 1
@@ -103,6 +106,12 @@ def handle_data(uuts, args, shot_controller):
                 plt.plot(chx[col][chn])
                        
         plt.show()    
+
+
+def set_shot(args, uuts):
+    if args.shot != None:
+        for u in uuts:
+            u.s1.shot = args.shot
     
 def upload(args):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts] 
@@ -120,10 +129,8 @@ def upload(args):
         trigger_action = None
         st = SOFT_TRIGGER
         
-    try:  
-        if args.capture > 0:
-            shot_controller.run_shot(soft_trigger = st, remote_trigger = trigger_action)
-        elif args.capture == 0:
+    try: 
+        if args.capture == 0:
             state = '99'
             while state != '0':
                 state = uuts[0].s0.state.split()[0]
@@ -134,9 +141,15 @@ def upload(args):
                     elif st:
                         uut.s0.soft_trigger = '1'
                 time.sleep(1)
-        handle_data(uuts, args, shot_controller)
-
-            
+            handle_data(uuts, args, shot_controller)
+        else:
+            set_shot(args, uuts)
+            cap = 0
+            while cap < args.capture:
+                shot_controller.run_shot(soft_trigger = st, remote_trigger = trigger_action)
+                handle_data(uuts, args, shot_controller)
+                cap += 1
+        
     except acq400_hapi.cleanup.ExitCommand:
         print("ExitCommand raised and caught")
     finally:
@@ -156,11 +169,39 @@ def uniq(inp):
             out.append(x)
     return out
 
+def save_data_init(args, save_data):
+    save_root = os.path.dirname(save_data)        # ignore shot formatter
+    try:                
+        os.makedirs(save_root)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+    args.shotfile = "{}/SHOT".format(save_root)
+    if os.path.exists(args.shotfile):
+        with open(args.shotfile) as sf:
+            for line in sf:
+                args.shot = int(line)
+    else:
+        args.shot = 0
+        with open(args.shotfile, "w") as sf:
+            sf.write("{}\n".format(args.shot))
+
+def increment_shot(args):
+    with open(args.shotfile) as sf:
+        for line in sf:
+            args.shot = int(line)
+    args.shot += 1
+    
+    with open(args.shotfile, "w") as sf:
+            sf.write("{}\n".format(args.shot)) 
+    return args.shot
+    
+    
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 upload')  
     parser.add_argument('--soft_trigger', default=SOFT_TRIGGER, type=int, help="help use soft trigger on capture")
     parser.add_argument('--trace_upload', default=TRACE_UPLOAD, type=int, help="1: verbose upload")
-    parser.add_argument('--save_data', default=SAVEDATA, type=str, help="store data to specified directory")
+    parser.add_argument('--save_data', default=SAVEDATA, type=str, help="store data to specified directory, suffix {} for shot #")
     parser.add_argument('--plot_data', default=PLOTDATA, type=int, help="1: plot data")
     parser.add_argument('--capture', default=CAPTURE, type=int, help="1: capture data, 0: wait for someone else to capture, -1: just upload")
     parser.add_argument('--remote_trigger', default=None, type=str, help="your function to fire trigger")
@@ -173,6 +214,9 @@ def run_main():
     # encourage single ints to become a list
     if re.search(r'^\d$', args.channels) is not None:
         args.channels += ','
+    args.shot = None
+    if args.save_data:
+        save_data_init(args, args.save_data)
         
     upload(args)
 
