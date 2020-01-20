@@ -14,7 +14,7 @@ import argparse
 def get_args():
     parser = argparse.ArgumentParser(description='Transition test')
 
-    parser.add_argument('--dir', default='/home/peter/FLARE/', type=str, help="Location of data.")
+    parser.add_argument('--dir', default='default', type=str, help="Location of data.")
 
     parser.add_argument('--cutoff', default=5000, type=int, help="Trigger cutoff point.")
 
@@ -26,6 +26,10 @@ def get_args():
     parser.add_argument('uuts', nargs='+', help="Names of uuts to test.")
 
     args = parser.parse_args()
+
+    if args.dir = 'default':
+        args.dir = os.getenv('HOME')
+
     return args
 
 
