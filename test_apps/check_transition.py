@@ -49,6 +49,7 @@ def main(args):
         for num, uut in enumerate(args.uuts):
             uut_data[num,0:] = np.fromfile(args.dir + directory + "/" + uut + "_CH01", dtype=np.int16)
             transition_data[num,0:] = uut_data[num,0:] < args.cutoff
+            
             if transition_data[num,0:].all():
                 print("There was no transition in this data. Skipping shot {} now.".format(directory))
                 break
@@ -74,7 +75,7 @@ def main(args):
                 # of the samples are within the user specified tolerance.
                 tp = int(transition_points[num])
                 # print(tp)
-                if np.allclose(row[tp-2:tp+2], transition_data[0,0:][tp-2:tp+2], atol=args.tol, rtol=0):
+                if np.allclose(uut_data[num,0:][tp-2:tp+2], uut_data[0,0:][tp-2:tp+2], atol=args.tol, rtol=0):
                     if args.verbose == 1:
                         print('Tolerance test passed.')
                     continue
@@ -82,8 +83,8 @@ def main(args):
                 else:
                     
                     print("ERROR FOUND IN DIR: {}".format(directory))
-                    print("{} transition: {}".format(args.uuts[0], uut1_data[49998:50003]))
-                    print("{} transition: {}".format(args.uuts[1], uut2_data[49998:50003]))
+                    print("{} transition: {}".format(args.uuts[0], uut_data[0,0:][tp-2:tp+2]))
+                    print("{} transition: {}".format(args.uuts[1], uut_data[num,0:][tp-2:tp+2]))
                     error_count += 1
 
     print("Count of non-matching transitions: {}".format(error_count))
