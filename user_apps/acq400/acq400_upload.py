@@ -123,6 +123,8 @@ def upload(args):
 
     if args.wrtd_tx != 0:
         trigger_action = WrtdAction(uuts[0], args.wrtd_tx)
+        for u in uuts:
+            u.s0.si5326_tune_phase = 1
     elif args.remote_trigger:
         trigger_action = ActionScript(args.remote_trigger)    
     else:
