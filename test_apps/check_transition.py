@@ -63,6 +63,7 @@ def main(args):
                 continue
 
             else:
+                print("")
                 print("ERROR FOUND IN DIR: {}".format(directory))
                 print("{} transition: {}".format(args.uuts[0], uut1_data[49998:50003]))
                 print("{} transition: {}".format(args.uuts[1], uut2_data[49998:50003]))
