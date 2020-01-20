@@ -37,42 +37,54 @@ def main(args):
     dir_list = next(os.walk(args.dir))[1]
     error_count = 0
 
+    uuts = args.uuts
+
+    shot_length = np.fromfile(args.dir + dir_list[0] + "/" + args.uuts[0] + "_CH01", dtype=np.int16).shape[-1]
+    
+    uut_data = np.zeros((len(args.uuts), shot_length))
+    transition_data = uut_data.copy()
+    transition_points = np.zeros(len(args.uuts))
+
     for directory in dir_list:
-        uut1_data = np.fromfile(args.dir + directory + "/" + args.uuts[0] + "_CH01", dtype=np.int16)
-        uut2_data = np.fromfile(args.dir + directory + "/" + args.uuts[1] + "_CH01", dtype=np.int16)
-
-        # Check where values are less than the specified cutoff.
-        # This gives an array of True/False values.
-        uut1_transition = uut1_data < args.cutoff
-        uut2_transition = uut2_data < args.cutoff
-
-        # Check where the values change from False to True.
-        transition_point1 = np.where(np.roll(uut1_transition,1) != uut1_transition)[0]
-        transition_point2 = np.where(np.roll(uut2_transition,1) != uut2_transition)[0]
+        for num, uut in enumerate(args.uuts):
+            uut_data[num,0:] = np.fromfile(args.dir + directory + "/" + uut + "_CH01", dtype=np.int16)
+            transition_data[num,0:] = uut_data[num,0:] < args.cutoff
+            if transition_data[num,0:].all():
+                print("There was no transition in this data. Skipping shot {} now.".format(directory))
+                break
+            try:
+                transition_points[num] = np.where(np.roll(transition_data[num,0:], 1) != transition_data[num,0:])[0][1]
+            except Exception:
+                print(np.where(np.roll(transition_data[num,0:], 1) != transition_data[num,0:]))
+                print(transition_data[num,0:])
+                transition_points[num] = np.where(np.roll(transition_data[num,0:], 1) != transition_data[num,0:])[0][0]
 
         if args.verbose == 1:
-            print("Dir: {}, 132 transition: {}, 133 transition: {}".format(directory, transition_point1, transition_point2))
+            for num, uut in enumerate(uuts):
+                print("Dir: {}, {} transition: {}".format(directory, uut, transition_points[num]))
 
         # Check if the transition arrays are equal or not.
-        if not np.array_equal(uut1_transition, uut2_transition):
-
-            if args.verbose == 1:
-                print('Quick test failed. Trying tolerance test.')
-
-            # If the transitions are in different places then check the values
-            # of the samples are within the user specified tolerance.
-            if np.allclose(uut1_data[49998:50003], uut2_data[49998:50003], atol=args.tol, rtol=0):
+        for num, row in enumerate(transition_data):
+            if not np.array_equal(row, transition_data[0,0:]):
+                
                 if args.verbose == 1:
-                    print('Tolerance test passed.')
-                continue
+                    print('Quick test failed. Trying tolerance test.')
 
-            else:
-                print("")
-                print("ERROR FOUND IN DIR: {}".format(directory))
-                print("{} transition: {}".format(args.uuts[0], uut1_data[49998:50003]))
-                print("{} transition: {}".format(args.uuts[1], uut2_data[49998:50003]))
+                # If the transitions are in different places then check the values
+                # of the samples are within the user specified tolerance.
+                tp = int(transition_points[num])
+                # print(tp)
+                if np.allclose(row[tp-2:tp+2], transition_data[0,0:][tp-2:tp+2], atol=args.tol, rtol=0):
+                    if args.verbose == 1:
+                        print('Tolerance test passed.')
+                    continue
 
-                error_count += 1
+                else:
+                    
+                    print("ERROR FOUND IN DIR: {}".format(directory))
+                    print("{} transition: {}".format(args.uuts[0], uut1_data[49998:50003]))
+                    print("{} transition: {}".format(args.uuts[1], uut2_data[49998:50003]))
+                    error_count += 1
 
     print("Count of non-matching transitions: {}".format(error_count))
     return None
