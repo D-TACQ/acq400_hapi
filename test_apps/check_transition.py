@@ -27,7 +27,7 @@ def get_args():
 
     args = parser.parse_args()
 
-    if args.dir = 'default':
+    if args.dir == 'default':
         args.dir = os.getenv('HOME')
 
     return args
