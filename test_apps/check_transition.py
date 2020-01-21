@@ -1,5 +1,23 @@
 #!/usr/bin/python3
 
+"""
+Usage: check_transition [UUT1 [UUT2 ...]]
+
+Checks transition points in a multi-shot file set for specified UUT[s]
+PASS when all UUT[s] are synchronized with each other, to +/-0 samples
+PASS when absolute transition point with respect to trigger is 0..+1 samples
+
+Configurable cutoff and tolerance, where:
+
+Cutoff is the "trigger point": samples above trigger point are considered before
+the trigger, samples below are considered after the trigger.
+
+Tolerance comes into effect when two channels have trigger points at different
+samples (e.g. one has a trigger point at 50001 and the other at 50002). If the
+difference of the samples at 50001 are less than tol then we consider the test
+passed, otherwise the test is failed.
+"""
+
 
 import numpy as np
 import matplotlib.pyplot as plt
