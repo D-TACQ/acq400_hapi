@@ -1,10 +1,6 @@
 #!/usr/bin/python3
 
 
-"""
-[ [UUT1 trigger points],  [UUT2 trigger points] ]
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -12,7 +8,10 @@ import argparse
 
 
 def check_transition_data(transition_data, transition_points, uut_data, directory):
-
+    """
+    Loop over all of the transition data and make sure that the trigger points all channels requested
+    line up. If they don't line up then check the samples are within a specified tolerance.
+    """
     error_count = 0
     for num, row in enumerate(transition_data):
         if not np.array_equal(row, transition_data[0,0:]):
