@@ -1,5 +1,23 @@
 #!/usr/bin/python3
 
+"""
+Usage: check_transition [UUT1 [UUT2 ...]]
+
+Checks transition points in a multi-shot file set for specified UUT[s]
+PASS when all UUT[s] are synchronized with each other, to +/-0 samples
+PASS when absolute transition point with respect to trigger is 0..+1 samples
+
+Configurable cutoff and tolerance, where:
+
+Cutoff is the "trigger point": samples above trigger point are considered before
+the trigger, samples below are considered after the trigger.
+
+Tolerance comes into effect when two channels have trigger points at different
+samples (e.g. one has a trigger point at 50001 and the other at 50002). If the
+difference of the samples at 50001 are less than tol then we consider the test
+passed, otherwise the test is failed.
+"""
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -34,14 +52,9 @@ def check_transition_data(transition_data, transition_points, uut_data, director
                 continue
 
             else:
-
                 print("ERROR FOUND IN DIR: {}".format(directory))
-
-                print("{} transition: {}".format(args.uuts[0],
-                                          uut_data[0,0:][tp-2:tp+2]))
-
-                print("{} transition: {}".format(args.uuts[1],
-                                          uut_data[num,0:][tp-2:tp+2]))
+                print("{} transition: {}".format(args.uuts[0], uut_data[0,0:][tp-2:tp+2]))
+                print("{} transition: {}".format(args.uuts[1], uut_data[num,0:][tp-2:tp+2]))
 
                 error_count += 1
 
@@ -50,17 +63,15 @@ def check_transition_data(transition_data, transition_points, uut_data, director
 
 def detect_transition(transition_data, index):
     """
-    A function used to find the transition point in a binary array.
+    A function used to find the transition point in a "binary" array. This just
+    shows the locations in an array where one sample is not equal to the
+    neighbouring sample.
     """
 
     try:
-
-        transition_point = np.where(np.roll(transition_data, 1)
-                           != transition_data)[0][1]
+        transition_point = np.where(np.roll(transition_data, 1) != transition_data)[0][1]
     except Exception:
-
-        transition_point = np.where(np.roll(transition_data, 1)
-                           != transition_data)[0][0]
+        transition_point = np.where(np.roll(transition_data, 1) != transition_data)[0][0]
 
     return transition_point
 
@@ -119,14 +130,11 @@ def main(args):
                       "Skipping shot {} now.".format(directory))
                 break
 
-            transition_points[num] = detect_transition(transition_data[num,0:],
-                                                       num)
+            transition_points[num] = detect_transition(transition_data[num,0:], num)
 
         if args.verbose == 1:
             for num, uut in enumerate(uuts):
-                print("Dir: {}, {} transition: {}".format(directory,
-                                                  uut,
-                                                  transition_points[num]))
+                print("Dir: {}, {} transition: {}".format(directory, uut, transition_points[num]))
 
         # Check if the transition arrays are equal or not.
         error_count += check_transition_data(transition_data,
