@@ -30,6 +30,9 @@ def main(args):
     for index, uut in enumerate(uuts):
         uut.s0.streamtonowhered = 'stop'
         states.append(uut.s0.CONTINUOUS_STATE)
+        uut.s1.SIG_sample_count_RESET = '1'
+        uut.s1.SIG_sample_count_RESET = '0'
+
 
     print("Arming systems now - please wait. Do not trigger yet.")
 
