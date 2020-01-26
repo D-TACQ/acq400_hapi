@@ -7,24 +7,56 @@ A script that streams N samples using streamtonowhered.
 import acq400_hapi
 import argparse
 import time
+import datetime
+import subprocess
+import os
+
+
+def update_states(uuts, states):
+    for index, uut in enumerate(uuts):
+        states[index] = (uut.s0.CONTINUOUS_STATE)
+    return states
 
 
 def main(args):
     uuts = []
+    states = []
+
     for uut in args.uuts:
         uuts.append(acq400_hapi.Acq400(uut))
 
     initial_samples = int(uuts[0].s1.sample_count)
 
+    for index, uut in enumerate(uuts):
+        uut.s0.streamtonowhered = 'stop'
+        states.append(uut.s0.CONTINUOUS_STATE)
+        uut.s1.SIG_sample_count_RESET = '1'
+        uut.s1.SIG_sample_count_RESET = '0'
+
+
+    print("Arming systems now - please wait. Do not trigger yet.")
+
     for uut in reversed(uuts):
         uut.s0.streamtonowhered = 'start'
 
-    while int(uuts[0].s1.sample_count) == initial_samples:
-        time.sleep(1)
+    while not all(elem == 'CONTINUOUS:STATE ARM' for elem in states):
+        states = update_states(uuts, states)
 
-    streamed_samples = int(uuts[0].s1.sample_count)
+    print("All UUTs are armed and ready for trigger.")
+
+    # Included as a comment below is an example of how this
+    # script was tested. If the user wishes to automate
+    # a test that involves this script then a signal generator
+    # may be triggered like so:
+    # os.system("echo 'TRIG' | nc 10.12.196.174 5025")
+
+    while not all(elem == 'CONTINUOUS:STATE RUN' for elem in states):
+        states = update_states(uuts, states)
+        continue
+
+    streamed_samples = 0
     while streamed_samples <= args.samples:
-        print("Streamed {} of {} samples".format(streamed_samples, args.samples), end = '\r')
+        print("Streamed {} of {} samples".format(streamed_samples, args.samples))
         streamed_samples = int(uuts[0].s1.sample_count)
         time.sleep(1)
 
