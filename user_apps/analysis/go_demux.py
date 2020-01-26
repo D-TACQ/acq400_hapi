@@ -124,8 +124,11 @@ def uut_get_oneshot(args, uut):
     print("reading data, this may take a minute")
     raw = client.read(0, data_size=4)
     print("we have data {} lw".format(len(raw)))
-    # todo .. get this info from the box.
-    args.data_file='event-1-9999-4000000-1000000.dat'
+
+    pre = uut.s0.TRANS_ACT_PRE.split()[1]
+    post = uut.s0.TRANS_ACT_POST.split()[1]
+    args.data_file='event-1-{}-{}-{}.dat'.format(uut.s1.event_time, pre, post)
+
     uut_file_print(args.data_file)
     args.raw = raw[args.SAMPLE_SIZE_LONGS:]
     make_longs(args, args.raw)
