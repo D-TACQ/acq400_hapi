@@ -8,8 +8,6 @@ files in channelised order.
 
 
 import acq400_hapi
-import numpy as np
-import matplotlib.pyplot as plt
 import argparse
 import socket
 import os
@@ -47,7 +45,7 @@ def configure_uut(args, uut):
 def start_stream(args, uut):
     data_file = None
     skt = socket.socket()
-    skt.connect((args.uut[0], 4210))
+    skt.connect((args.uut[0], acq400_hapi.AcqPorts.STREAM))
 
     data_file = open("{}/{}".format(args.data_dir, "muxed_data.dat"), "wb")
     bytes_written = 0
