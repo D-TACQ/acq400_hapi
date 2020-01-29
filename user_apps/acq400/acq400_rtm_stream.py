@@ -9,7 +9,6 @@ files in channelised order.
 
 import acq400_hapi
 import argparse
-import socket
 import os
 import datetime
 import time
@@ -41,29 +40,34 @@ def configure_uut(args, uut):
     uut.s0.bufferlen = args.rtm_translen * int(uut.nchan())
     return None
 
+class FileSink:
+    def __init__(self, args):
+        self.data_file = open("{}/{}".format(args.data_dir, "muxed_data.dat"), "wb")
+        self.bytes_written = 0
+        
+    def __call__(self, data):
+        self.data_file.write(data)
 
-def start_stream(args, uut):
-    data_file = None
-    skt = socket.socket()
-    skt.connect((args.uut[0], acq400_hapi.AcqPorts.STREAM))
-
+        self.bytes_written += len(data)
+        if self.bytes_written % 2**12 == 0:
+            print("pages written: {}".format(self.bytes_written / 1024**2))
+        return False
+    
+def FileSinkFun(args):
     data_file = open("{}/{}".format(args.data_dir, "muxed_data.dat"), "wb")
     bytes_written = 0
-
-    # while True is okay for now, as we don't know how long the capture should
-    # actually be. Once the length is decided this should be adjusted.
-    while True:
-
-        data = skt.recv(4096*32*2)
+    
+    def sink(data):
+        nonlocal bytes_written
         data_file.write(data)
 
         bytes_written += len(data)
-        if bytes_written % 2**20 == 0:
-            print("megabytes written: {}".format(bytes_written / 1024**2))
-
-
-    return None
-
+        if bytes_written % 2**12 == 0:
+            print("pages written: {}".format(bytes_written / 1024**2))
+        return False
+    
+    return sink
+    
 
 def main():
     parser = argparse.ArgumentParser(description='Streaming RTM')
@@ -86,9 +90,10 @@ def main():
 
     nchan = uut.nchan()
 
-    configure_uut(args, uut)
+    #configure_uut(args, uut)
     create_data_dir(args)
-    start_stream(args, uut)
+    #uut.stream(FileSink(args))
+    uut.stream(FileSinkFun(args))
 
     return None
 
