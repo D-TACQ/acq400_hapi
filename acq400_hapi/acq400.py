@@ -1014,6 +1014,12 @@ class Acq400:
                 event_samples = es_string
 
         return [indices, event_samples]
+    
+    def stream(self, sink):
+        nc = netclient.Netclient(self.uut, AcqPorts.STREAM)
+        finished = False
+        while not sink(nc.sock.recv(4096*32*2)):
+            continue
 
 
 class Acq2106(Acq400):
