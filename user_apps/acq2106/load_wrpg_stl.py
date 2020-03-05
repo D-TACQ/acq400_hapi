@@ -88,13 +88,28 @@ def load_stl_file(uut, stl_file):
     with open(stl_file, 'r') as fp:
         uut.load_wrpg(fp.read(), uut.s0.trace)
 
+class SendsWrtd:
+    def __init__(self, uut):
+        self.uut = uut
+    def __call__(self):
+        self.uut.s0.wrtd_tx_immediate='1'
+
 def run_wrpg(args):
     uut = acq400_hapi.acq400.Acq400(args.uut[0])
-    load_stl_file(uut, args.stl)
+    if args.shots > 0:
+        shot = 0
+        shot_controller = acq400_hapi.ShotController([uut])
+        while shot < args.shots:
+            load_stl_file(uut, args.stl)
+            shot_controller.run_shot(remote_trigger=SendsWrtd(uut))
+            shot = shot + 1
+    else:
+        load_stl_file(uut, args.stl)
 
 def run_main():
     parser = argparse.ArgumentParser(description="load_wrpg_stl")
     parser.add_argument('--stl', default='none', type=str, help='stl file')
+    parser.add_argument('--shots', default=0, type=int, help='run a series of shots, with immediate trigger')
     parser.add_argument('uut', nargs=1, help="uut")
     run_wrpg(parser.parse_args())
 
