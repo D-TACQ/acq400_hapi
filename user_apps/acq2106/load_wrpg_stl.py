@@ -107,7 +107,7 @@ def tee_shots(args, uut, shot):
     uut.s0.GPG_TRG_DX = 'd0'
     uut.s0.GPG_TRG_SENSE = 'rising'
     uut.s0.transient= 'POST=100000'
-    uut.s1.TRG = 'external'
+    uut.s1.TRG = 'enable'
     uut.s1.TRG_DX = 'd0'
     uut.s1.TRG_SENSE = 'rising'
 
