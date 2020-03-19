@@ -107,7 +107,7 @@ def create_npdata(args, nblk, nchn):
 
     for counter in range(nchn):
        if channel_required(args, counter):
-           channels.append(np.zeros((nblk*args.NSAM), dtype=args.np_data_type))
+           channels.append(np.zeros((int(nblk)*args.NSAM), dtype=args.np_data_type))
 
        else:
            channels.append(np.zeros(16, dtype=args.np_data_type))
@@ -193,7 +193,7 @@ def read_data(args, NCHAN):
             break
         if blkfile != "analysis.py" and blkfile != "root":
 
-            print blkfile, blknum
+            print(blkfile, blknum)
             # concatenate 3 blocks to ensure modulo 3 channel align
             if iblock == 0:
                 data = np.fromfile(blkfile, dtype=args.np_data_type)
@@ -215,9 +215,9 @@ def read_data(args, NCHAN):
             blocks += 1
             iblock = 0
 
-    print "length of data = ", len(raw_channels)
-    print "length of data[0] = ", len(raw_channels[0])
-    print "length of data[1] = ", len(raw_channels[1])
+    print("length of data = ", len(raw_channels))
+    print("length of data[0] = ", len(raw_channels[0]))
+    print("length of data[1] = ", len(raw_channels[1]))
     return raw_channels
 
 def read_data_file(args, NCHAN):
@@ -248,7 +248,7 @@ def save_data(args, raw_channels):
         data_file = open("{}/{}_{:02d}.dat".format(args.saveroot, uutname, enum+1), "wb+")
         channel.tofile(data_file, '')
 
-    print "data saved to directory: {}".format(args.saveroot)
+    print("data saved to directory: {}".format(args.saveroot))
     with open("{}/format".format(args.saveroot), 'w') as fmt:
         fmt.write("# dirfile format file for {}\n".format(uutname))
         for enum, channel in enumerate(raw_channels):
@@ -258,12 +258,15 @@ def save_data(args, raw_channels):
 
 
 def plot_mpl(args, raw_channels):
-    print "Plotting with MatPlotLib. Subrate = {}".format(args.mpl_subrate)
+    print("Plotting with MatPlotLib. Subrate = {}".format(args.mpl_subrate))
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
     num_of_ch = len(args.pc_list)
     f, plots = plt.subplots(num_of_ch, 1)
     for num, sp in enumerate(args.pc_list):
-        plots[num].plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrate])
+        try:
+            plots[num].plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrate])
+        except TypeError:
+            plots.plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrate])
     plt.show()
     return None
 
@@ -273,7 +276,7 @@ def plot_data_kst(args, raw_channels):
     llen = len(raw_channels[0])
     if args.egu == 1:
         if args.xdt == 0:
-            print "WARNING ##### NO CLOCK RATE PROVIDED. TIME SCALE measured by system."
+            print("WARNING ##### NO CLOCK RATE PROVIDED. TIME SCALE measured by system.")
             raw_input("Please press enter if you want to continue with innacurate time base.")
             time1 = float(args.the_uut.s0.SIG_CLK_S1_FREQ.split(" ")[-1])
             xdata = np.linspace(0, llen/time1, num=llen)
@@ -352,7 +355,7 @@ def process_data(args):
     NCHAN = args.nchan
     if args.double_up:
         NCHAN = args.nchan * 2
-        print "nchan = ", args.nchan
+        print("nchan = ", args.nchan)
 
     raw_data = read_data(args, NCHAN) if not os.path.isfile(args.src) else read_data_file(args, NCHAN)
 
