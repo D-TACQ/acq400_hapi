@@ -70,11 +70,11 @@ def analyse_data(data, args):
 
     sample_counter_col = 49-1
     sfp_seq_num = 33-1
-    # print("Checking sample counters.")
+    print("Checking sample counters.")
     check_counters(data[sample_counter_col::args.nchan],
     col_name="sample counter")
 
-    # print("Checking SFP seq numbers.")
+    print("Checking SFP seq numbers.")
     check_counters(data[sfp_seq_num::args.nchan],
     skip_on_val=-0x11111112, skip_on_zero=1, col_name="sfp sequence counter")
 
