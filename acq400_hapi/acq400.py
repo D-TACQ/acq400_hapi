@@ -791,8 +791,8 @@ class Acq400:
     def configure_transient(self, pre=0, post=100000,
         sig_DX='d0', auto_soft_trigger=0, demux=1, edge='rising'):
         """
-        Confgure uut for transient capture.
-        sig_DX is the signal line responsible for TRIGGER or EVENT depening on mode;
+        Configure uut for transient capture.
+        sig_DX is the signal line responsible for TRIGGER or EVENT depending on mode;
         function makes appropriate selection.
         Function is aware of sync_role and sets sig_DX accordingly
         """
