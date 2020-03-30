@@ -63,17 +63,11 @@ def get_esi(chx):
             print("{} {}".format(ii, [chx[ic][ii] for ic in range(len(chx))]))
 
     for ich, ch in enumerate(chx):
-        print("ich {} len(chx) {}".format(ich, len(chx)))
+        if VERBOSE:
+            print("ich {} len(chx) {}".format(ich, len(chx)))
         if ich%8 == 0:
-            print("scanning ES on ich {}".format(ich))
-            for ii in range(0, len(ch)):
-                if ch[ii] == 0xaa55f154:
-                    print("es at {}".format(ii))
-                    if ich == 1:
-                        print("es detail at {} {} {}".format(ich, ii, [chx[ic][ii] for ic in range(0,32,8)]))
-                # esi in shorts
-                    esi[ich/8].append(ii)
-                    esc[ich/8].append(chx[ich-1][ii])
+            esi[ich/8] = np.where(ch == 0xaa55f154)[0]
+            esc[ich/8] = [chx[ich-1][ii] for ii in esi[ich/8]]
 
     print("esi lengths {}".format([len(esi[ii]) for ii in range(0, len(esi))]))
 
