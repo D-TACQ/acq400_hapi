@@ -11,8 +11,11 @@ import threading
 
 def disable_trigger(master):
 
-    # print("WARNING: REMOVEME temporary fudge while we get the sync trigger right")
-    # master.s0.SIG_SYNC_OUT_TRG_DX = 'd0'
+    #master.s0.SIG_SRC_TRG_0 = 'NONE'
+    #master.s0.SIG_SRC_TRG_1 = 'NONE'
+    master.s0.SIG_SRC_TRG_0 = 'HOSTB'
+    master.s0.SIG_SRC_TRG_1 = 'HOSTA'
+
     return None
 
 def enable_trigger(master):
