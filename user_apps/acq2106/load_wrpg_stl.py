@@ -88,13 +88,49 @@ def load_stl_file(uut, stl_file):
     with open(stl_file, 'r') as fp:
         uut.load_wrpg(fp.read(), uut.s0.trace)
 
+class SendsWrtd:
+    def __init__(self, uut):
+        self.uut = uut
+    def __call__(self):
+        self.uut.s0.wrtd_tx_immediate='1'
+
+class EnablesWrtt:
+    def __init__ (self, uut):
+        self.uut = uut
+    def __call__ (self):
+        self.uut.s0.SIG_SRC_TRG_0 = 'WRTT'
+
+def tee_shots(args, uut, shot):
+    uut.s1.shot = shot    
+    uut.s0.SIG_SRC_TRG_0 = 'HOSTB'  # gate external trigger OFF
+    uut.s0.GPG_TRG = 'external'
+    uut.s0.GPG_TRG_DX = 'd0'
+    uut.s0.GPG_TRG_SENSE = 'rising'
+    uut.s0.transient= 'POST=100000'
+    uut.s1.TRG = 'enable'
+    uut.s1.TRG_DX = 'd0'
+    uut.s1.TRG_SENSE = 'rising'
+
 def run_wrpg(args):
     uut = acq400_hapi.acq400.Acq400(args.uut[0])
-    load_stl_file(uut, args.stl)
+    if args.shots > 0:
+	shot = 0
+	tee_shots(args, uut, shot)
+        
+        shot_controller = acq400_hapi.ShotController([uut])
+        while shot < args.shots:
+            load_stl_file(uut, args.stl)
+	    rt = SendsWrtd(uut) if args.trg == 'WrtdImmediate' else EnablesWrtt(uut)
+            shot_controller.run_shot(remote_trigger=rt)
+            shot = shot + 1
+    else:
+        load_stl_file(uut, args.stl)
 
 def run_main():
     parser = argparse.ArgumentParser(description="load_wrpg_stl")
     parser.add_argument('--stl', default='none', type=str, help='stl file')
+    parser.add_argument('--trg', default='"WrtdImmediate', help="shot trigger: WrtdImmediate or WRTT")
+    parser.add_argument('--shots', default=0, type=int, help='run a series of shots, with immediate trigger')
     parser.add_argument('uut', nargs=1, help="uut")
     run_wrpg(parser.parse_args())
 
