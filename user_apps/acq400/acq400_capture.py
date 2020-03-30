@@ -34,6 +34,11 @@ import sys
 import acq400_hapi
 import argparse
 
+def selects_trg_src(uut, src):
+    def select_trg_src():
+        uut.s0.SIG_SRC_TRG_0 = src
+    return select_trg_src
+
 def run_shot(args):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
 
@@ -49,8 +54,10 @@ def run_shot(args):
     shot_controller = acq400_hapi.ShotController(uuts)
 
     try:
-        shot_controller.run_shot(soft_trigger=args.soft_trigger)
-        acq400_hapi.cleanup.sleep(1.0)            
+        rt = None if  args.hard_trigger_src is None else selects_trg_src(uuts[0], args.hard_trigger_src)
+        st = args.soft_trigger
+        shot_controller.run_shot(soft_trigger=st, remote_trigger=rt)
+        acq400_hapi.cleanup.sleep(1.0)
 
     except acq400_hapi.cleanup.ExitCommand:
         print("ExitCommand raised and caught")
@@ -61,14 +68,11 @@ def run_shot(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='run capture, with optional transient configuration')
-    parser.add_argument('--soft_trigger', type=int, default=True)
+    parser.add_argument('--soft_trigger', type=int, default=1)
+    parser.add_argument('--hard_trigger_src', default=None, help="EXT")
     parser.add_argument('--transient', default='notouch', help='transient control string use commas rather than spaces')
     parser.add_argument('uuts', nargs='+', help='uut1 [uut2..]')
     run_shot(parser.parse_args())
 
 if __name__ == '__main__':
     run_main()
-
-
-
-
