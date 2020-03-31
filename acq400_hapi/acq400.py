@@ -123,7 +123,7 @@ class RawClient(netclient.Netclient):
         Args:
             nelems number of data elements, each data_size*ncols
             nelems <=0 :: read until the end
-            
+
             data_size : 2|4 short or int
 
             ncols : optional, to create a 2D array
@@ -166,9 +166,9 @@ class ChannelClient(netclient.Netclient):
 
         ch (int) : channel number 1..N
 
-    """    
-    def __init__(self, addr, ch):        
-        netclient.Netclient.__init__(self, addr, AcqPorts.DATA0+ch) 
+    """
+    def __init__(self, addr, ch):
+        netclient.Netclient.__init__(self, addr, AcqPorts.DATA0+ch)
 
 # on Linux, recv returns on ~mtu
 # on Windows, it may buffer up, and it's very slow unless we use a larger buffer
@@ -182,10 +182,10 @@ class ChannelClient(netclient.Netclient):
             maxbuf=4096 : max bytes to read per packet
 
         Returns:
-            np: data array 
+            np: data array
 
         * TODO buffer +=
-   
+
          this is probably horribly inefficient probably better::
 
           retbuf = np.array(dtype, ndata)
@@ -217,7 +217,7 @@ def signal_handler(signal, frame):
 
 class Statusmonitor:
     """ monitors the status channel
-    
+
     Efficient event-driven monitoring in a separate thread
     """
     st_re = re.compile(r"([0-9]) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9])+" )
@@ -249,7 +249,7 @@ class Statusmonitor:
                         print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status[0], status1[0]))
                         self.quit_requested = True
                         os.kill(self.main_pid, signal.SIGINT)
-                        sys.exit(1)                                            
+                        sys.exit(1)
                 self.status = status1
             elif self.trace > 1:
                 print("%s <%s>" % (repr(self), st))
@@ -266,34 +266,34 @@ class Statusmonitor:
 
 #        print("wait_%s 88 %d" % (descr, ev.is_set()))
         ev.clear()
-#        print("wait_%s 99 %d" % (descr, ev.is_set()))        
+#        print("wait_%s 99 %d" % (descr, ev.is_set()))
 
     def wait_armed(self):
         """
-        blocks until uut is ARMED                    
+        blocks until uut is ARMED
         """
         self.wait_event(self.armed, "armed")
 
     def wait_stopped(self):
         """
-        blocks until uut is STOPPED                    
-        """        
+        blocks until uut is STOPPED
+        """
         self.wait_event(self.stopped, "stopped")
 
     trace = int(os.getenv("STATUSMONITOR_TRACE", "0"))
 
     def __init__(self, _uut, _status):
-        self.quit_requested = False        
+        self.quit_requested = False
         self.trace = Statusmonitor.trace
         self.uut = _uut
         self.main_pid = os.getpid()
         self.status = _status
         self.stopped = threading.Event()
         self.armed = threading.Event()
-        self.logclient = netclient.Logclient(_uut, AcqPorts.TSTAT)        
+        self.logclient = netclient.Logclient(_uut, AcqPorts.TSTAT)
         self.st_thread = threading.Thread(target=self.st_monitor)
         self.st_thread.setDaemon(True)
-        self.st_thread.start()             
+        self.st_thread.start()
 
 
 class NullFilter:
@@ -308,7 +308,7 @@ class ProcessMonitor:
     def st_monitor(self):
         while self.quit_requested == False:
             st = self.logclient.poll()
-            self.output_filter(st)            
+            self.output_filter(st)
             match = self.st_re.search(st)
             if match:
                 self.quit_requested = True
@@ -333,9 +333,9 @@ class Acq400:
     Args:
         _uut (str) : ip-address or dns name
 
-        monitor=True (bool) : set false to stub monitor, 
+        monitor=True (bool) : set false to stub monitor,
           useful for tracing on a second connection to an active system.
-    """     
+    """
 
     def init_site_client(self, site):
         svc = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
@@ -368,7 +368,7 @@ class Acq400:
 
         return uuts
 
-    
+
     def __init__(self, _uut, monitor=True):
         self.NL = re.compile(r"(\n)")
         self.uut = _uut
@@ -376,17 +376,17 @@ class Acq400:
         self.save_data = None
         self.svc = {}
         self.modules = {}
-        self.mod_count = 0   
+        self.mod_count = 0
         # channel index from 1,..
-        self.cal_eslo = [0, ]  
+        self.cal_eslo = [0, ]
         self.cal_eoff = [0, ]
         self.mb_clk_min = 4000000
-        
+
         s0 = self.svc["s0"] = netclient.Siteclient(self.uut, AcqPorts.SITE0)
         sl = s0.SITELIST.split(",")
         sl.pop(0)
         self.awg_site = 0
-        site_enumerators = {} 
+        site_enumerators = {}
         for sm in sl:
             site_enumerators[sm] = \
                     threading.Thread(target=self.init_site_client,\
@@ -402,7 +402,7 @@ class Acq400:
 # init _status so that values are valid even if this Acq400 doesn't run a shot ..
         _status = [int(x) for x in s0.state.split(" ")]
         if monitor:
-            self.statmon = Statusmonitor(self.uut, _status)        
+            self.statmon = Statusmonitor(self.uut, _status)
 
 
     def __getattr__(self, name):
@@ -474,7 +474,7 @@ class Acq400:
         ccraw = cc.read(nsam, data_size=(4 if self.s0.data32 == '1' else 2))
 
         if self.save_data:
-            try:                
+            try:
                 os.makedirs(self.save_data)
             except OSError as exception:
                 if exception.errno != errno.EEXIST:
@@ -531,7 +531,7 @@ class Acq400:
                 if buf:
                     print(buf)
                 else:
-                    break            
+                    break
 
     def clear_counters(self):
         for s in self.svc:
@@ -554,7 +554,7 @@ class Acq400:
         # valid roles: master or slave
         if role == "master":
             self.set_sync_routing_master()
-        elif role == "slave":            
+        elif role == "slave":
             self.set_sync_routing_slave()
         else:
             raise ValueError("undefined role {}".format(role))
@@ -638,7 +638,7 @@ class Acq400:
 
         with netclient.Netclient(self.uut, port) as nc:
             nc.sock.send(data)
-            nc.sock.shutdown(socket.SHUT_WR) 
+            nc.sock.shutdown(socket.SHUT_WR)
             while True:
                 rx = nc.sock.recv(128)
                 if not rx or rx.startswith(b"DONE"):
@@ -656,11 +656,11 @@ class Acq400:
                 if rx.startswith(eof):
                     break
             nc.sock.shutdown(socket.SHUT_RDWR)
-            nc.sock.close() 
+            nc.sock.close()
 
         return txt
 
-    def run_oneshot(self):        
+    def run_oneshot(self):
         with netclient.Netclient(self.uut, AcqPorts.ONESHOT) as nc:
             while True:
                 rx = nc.receive_message(self.NL, 256)
@@ -668,7 +668,7 @@ class Acq400:
                 if rx.startswith("SHOT_COMPLETE"):
                     break
             nc.sock.shutdown(socket.SHUT_RDWR)
-            nc.sock.close()            
+            nc.sock.close()
 
     def run_livetop(self):
         with netclient.Netclient(self.uut, AcqPorts.LIVETOP) as nc:
@@ -787,6 +787,33 @@ class Acq400:
         self.s0.SIG_EVENT_SRC_0 = 1 if gpg == 1 else 0
 
         return None
+
+    def configure_transient(self, pre=0, post=100000,
+        sig_DX='d0', auto_soft_trigger=0, demux=1, edge='rising'):
+        """
+        Configure uut for transient capture.
+        sig_DX is the signal line responsible for TRIGGER or EVENT depending on mode;
+        function makes appropriate selection.
+        Function is aware of sync_role and sets sig_DX accordingly
+        """
+        sync_role = self.s0.sync_role
+        if sync_role == 'role not set' and sync_role == 'slave':
+            sig_DX = 'd0'
+
+        sigdef = "1,{},{}".format(sig_DX[1], 1 if edge == 'rising' else 0)
+
+        if pre > 0:
+            self.s1.event0 = sigdef
+            self.s1.trg = '1,1,1'
+        else:
+            self.s1.event0 = '0,0,0'
+            self.s1.trg = sigdef
+
+        self.s0.transient = "PRE={} POST={} SOFT_TRIGGER={} DEMUX={}".\
+            format(pre, post, auto_soft_trigger, demux)
+
+
+
 
 
     def configure_rgm(self, role, trigger=[1,0,1], event=[1,1,1], post="100000", gpg=0):
@@ -1014,7 +1041,7 @@ class Acq400:
                 event_samples = es_string
 
         return [indices, event_samples]
-    
+
     def stream(self, sink):
         nc = netclient.Netclient(self.uut, AcqPorts.STREAM)
         finished = False
@@ -1058,14 +1085,14 @@ class Acq2106(Acq400):
         Acq400.set_sync_routing_slave(self)
         self.s0.SYS_CLK_OE_CLK1_ZYNQ = '1'
 
-    def set_master_trg(self, trg, edge = "rising", enabled=True):        
+    def set_master_trg(self, trg, edge = "rising", enabled=True):
         if trg == "fp":
             self.s0.SIG_SRC_TRG_0 = "EXT" if enabled else "HOSTB"
         elif trg == "int":
             self.s0.SIG_SRC_TRG_1 = "STRIG"
 
 
-    
+
 class Acq2106_Mgtdram8(Acq2106):
     MGT_BLOCK_BYTES = 0x400000
     MGT_BLOCK_MULTIPLE = 16
@@ -1104,4 +1131,3 @@ def run_unit_test():
 
 if __name__ == '__main__':
     run_unit_test()
-
