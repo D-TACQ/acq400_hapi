@@ -33,6 +33,7 @@ python acq1001_awg_demo.py --files="../acq400/waves/example_awg" --capture=1 --a
 
 import numpy as np
 import matplotlib.pyplot as plt
+import re
 import argparse
 
 
@@ -46,15 +47,15 @@ def create_array(nsam, args):
     # be aware that the astype(np.int16) function used below will wrap back to -32768 if a number larger than 32767 is
     # used. The same goes for numbers < -32768: they wrap up to 32767.
 
-    sine_wave = np.sin(np.linspace(0, 2*np.pi, nsam)) # Creates sine wave
-    sine_wave = 32767 * sine_wave # Scales the sine wave to 16 bit
-    sine_wave = np.rint(sine_wave) # round the sine wave to integers
+    fxn = args.fx(np.linspace(-np.pi, np.pi, nsam)) # Creates sine wave
+    fxn = 32767 * fxn # Scales the sine wave to 16 bit
+    fxn = np.rint(fxn) # round the sine wave to integers
 
     # An empty list is created that will eventually contain our waveform
     waveform = []
 
     # For every point in the sine wave: duplicate it nchan times (one value for each one of the channels)
-    for num in sine_wave:
+    for num in fxn:
         waveform.extend(args.nchan*[num]) # extends the single value taken from the sine wave data across 32 channels.
 
     if args.even_ch_to_zeros == 1: # if this argument is chosen then all of the even channels will be set to 0.
@@ -78,17 +79,24 @@ def create_array(nsam, args):
 
 def generate_awg(args):
     waveform = create_array(args.nsam, args)
-    waveform.tofile("{}/{}-{}-{}.dat".format(args.dir, args.fn, args.nchan, args.nsam), "")
+    fname = args.fn.split(".")
+    if len(fname) == 1:
+        fname = fname[0]
+    else:
+        fname = fname[1]
+
+    waveform.tofile("{}/{}-{}-{}.dat".format(args.dir, fname, args.nchan, args.nsam), "")
 
 
 def run_main():
     parser = argparse.ArgumentParser(description='generate awg waveform')
+    parser.add_argument('--fn', default='np.sin', help="Generator function default:np.sin()")
     parser.add_argument('--nsam', default=30000, type=int, help="Size of wave to generate.")
     parser.add_argument('--nchan', default=32, type=int, help="Number of channels in AO module.")
     parser.add_argument('--even_ch_to_zeros', default=0, type=int, help="Whether to set even channels to zero.")
     parser.add_argument('--dir', default="waves", type=str, help="Location to save files")
     args = parser.parse_args()
-    args.fn = "sin"
+    args.fx = eval(args.fn)
     generate_awg(args)
 
 
