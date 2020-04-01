@@ -23,38 +23,21 @@ from acq400_hapi import netclient as netclient
 import argparse
 
 
-def _load_awg(uut, fn, port):
-    eof = False
-    bn = 0
+def _load_awg(uut, fn, autorearm):
     with open(fn, "rb") as fd:
-        with netclient.Netclient(uut.uut, port) as nc:
-            while not eof:
-                chunk = fd.read(0x100000)
-                if len(chunk) == 0:
-                    eof = True
-                else:
-                    nc.sock.send(chunk)
-                    sys.stderr.write('\r{}'.format(bn))
-                    bn += 1
-            nc.sock.shutdown(socket.SHUT_WR)
-            sys.stderr.write('\nsocket SHUT_WR, wait for DONE\n')
-            while True:
-                rx = nc.sock.recv(128)
-                if not rx or rx.startswith(b"DONE"):
-                    break
-            nc.sock.close()
-            sys.stderr.write("DONE\n")
-        
+        uut.load_awg(fd.read(), autorearm=autorearm)
+
 def load_awg(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
-    _load_awg(uut, args.file, 54201)
+    _load_awg(uut, args.file, args.mode==2)
 
 
-            
+
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 load awg simplest')
     parser.add_argument('--file', default="", help="file to load")
+    parser.add_argument('--mode', default=2, type=int, help="mode: 1 oneshot, 2 oneshot_autorearm")
     parser.add_argument('uuts', nargs=1, help="uut ")
     load_awg(parser.parse_args())
 
@@ -62,6 +45,3 @@ def run_main():
 
 if __name__ == '__main__':
     run_main()
-
-
-
