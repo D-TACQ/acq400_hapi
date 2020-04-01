@@ -677,6 +677,18 @@ class Acq400:
             nc.sock.close()
 
 
+    def disable_trigger(self):
+        #master.s0.SIG_SRC_TRG_0 = 'NONE'
+        #master.s0.SIG_SRC_TRG_1 = 'NONE'
+        self.s0.SIG_SRC_TRG_0 = 'HOSTB'
+        self.s0.SIG_SRC_TRG_1 = 'HOSTA'
+
+    def enable_trigger(self, trg_0='EXT', trg_1='STRIG'):
+        if trg_0 is not None:
+            self.s0.SIG_SRC_TRG_0 = trg_0
+        if trg_1 is not None:
+            self.s0.SIG_SRC_TRG_1 = trg_1
+
     def configure_post(self, role, trigger=[1,1,1], post=100000):
         """
         Configure UUT for a regular transient capture. Default: internal soft

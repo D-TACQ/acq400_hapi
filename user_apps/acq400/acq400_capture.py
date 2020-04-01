@@ -41,6 +41,7 @@ def selects_trg_src(uut, src):
 
 def run_shot(args):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
+    master = uuts[0]
 
     acq400_hapi.cleanup.init()
 
@@ -50,6 +51,9 @@ def run_shot(args):
 #        if hasattr(uut.s0, 'TIM_CTRL_LOCK'):
 #            print("LOCKDOWN {}".format(uut))
 #            uut.s0.TIM_CTRL_LOCK = 1
+
+    if args.hard_trigger_src is not None:
+        master.disable_trigger()
 
     shot_controller = acq400_hapi.ShotController(uuts)
 
