@@ -134,7 +134,7 @@ def get_data(args):
     print("chx 99")
     return chx
 
-VALUE_ERRORS = 0
+VALUE_ERRORS = 10
 
 def fix_args(chx, args):
     args.nburst = len(chx[0,:,0]) - VALUE_ERRORS
