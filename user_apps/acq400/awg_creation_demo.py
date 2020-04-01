@@ -47,7 +47,8 @@ def create_array(nsam, args):
     # be aware that the astype(np.int16) function used below will wrap back to -32768 if a number larger than 32767 is
     # used. The same goes for numbers < -32768: they wrap up to 32767.
 
-    fxn = args.fx(np.linspace(-np.pi, np.pi, nsam)) # Creates sine wave
+    limit = 2*np.pi*args.w 
+    fxn = args.fx(np.linspace(-limit/2, limit/2, nsam)) # Creates sine wave
     fxn = 32767 * fxn # Scales the sine wave to 16 bit
     fxn = np.rint(fxn) # round the sine wave to integers
 
@@ -85,12 +86,13 @@ def generate_awg(args):
     else:
         fname = fname[1]
 
-    waveform.tofile("{}/{}-{}-{}.dat".format(args.dir, fname, args.nchan, args.nsam), "")
+    waveform.tofile("{}/{}-{}-{}.dat".format(args.dir, "{}{}".format(fname, "" if args.w == 1 else str(args.w)), args.nchan, args.nsam), "")
 
 
 def run_main():
     parser = argparse.ArgumentParser(description='generate awg waveform')
     parser.add_argument('--fn', default='np.sin', help="Generator function default:np.sin()")
+    parser.add_argument('--w', default=1, type=int, help="Angular frequency")
     parser.add_argument('--nsam', default=30000, type=int, help="Size of wave to generate.")
     parser.add_argument('--nchan', default=32, type=int, help="Number of channels in AO module.")
     parser.add_argument('--even_ch_to_zeros', default=0, type=int, help="Whether to set even channels to zero.")
