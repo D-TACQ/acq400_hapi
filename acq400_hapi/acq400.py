@@ -232,21 +232,24 @@ class Statusmonitor:
             if match:
                 statuss = match.groups()
                 status1 = [int(x) for x in statuss]
-                if self.trace:
+                if self.trace > 1:
                     print("%s <%s" % (repr(self), status1))
                 if self.status != None:
 #                    print("Status check %s %s" % (self.status0[0], status[0]))
                     if self.status[SF.STATE] != 0 and status1[SF.STATE] == 0:
-                        print("%s STOPPED!" % (self.uut))
+                        if self.trace:
+                            print("%s STOPPED!" % (self.uut))
                         self.stopped.set()
                         self.armed.clear()
 #                print("status[0] is %d" % (status[0]))
                     if status1[SF.STATE] == 1:
-                        print("%s ARMED!" % (self.uut))
+                        if self.trace:
+                            print("%s ARMED!" % (self.uut))
                         self.armed.set()
                         self.stopped.clear()
                     if self.status[SF.STATE] == 0 and status1[SF.STATE] > 1:
-                        print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status[0], status1[0]))
+                        if self.trace:
+                            print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status[0], status1[0]))
                         self.quit_requested = True
                         os.kill(self.main_pid, signal.SIGINT)
                         sys.exit(1)
