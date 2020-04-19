@@ -1070,15 +1070,15 @@ class Acq2106(Acq400):
     Defines features specific to ACQ2106
     """
 
-    def __init__(self, _uut, monitor=True, has_dsp=False):
+    def __init__(self, _uut, monitor=True, has_dsp=False, has_comms=True):
         print("acq400_hapi.Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         self.mb_clk_min = 100000
-
+        sn_map = ()
+        if has_comms:
+            sn_map += (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB))
         if has_dsp:
-            sn_map = (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB), ('s14', AcqSites.SITE_DSP))
-        else:
-            sn_map = (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB))
+            sn_map += (('s14', AcqSites.SITE_DSP),)
 
         for ( service_name, site ) in sn_map:
             try:
@@ -1105,6 +1105,16 @@ class Acq2106(Acq400):
             self.s0.SIG_SRC_TRG_0 = "EXT" if enabled else "HOSTB"
         elif trg == "int":
             self.s0.SIG_SRC_TRG_1 = "STRIG"
+
+
+    def set_MR(self, enable, evsel0=4, evsel1=5, MR10DEC=8):
+        if enable:
+            self.s1.ACQ480_MR_EVSEL_0 = 'd{}'.format(evsel0)
+            self.s1.ACQ480_MR_EVSEL_1 = 'd{}'.format(evsel1)
+            self.s1.ACQ480_MR_10DEC = 'dec{}'.format(MR10DEC)
+            self.s1.ACQ480_MR_EN = '1'
+        else:
+            self.s1.ACQ480_MR_EN = '0'
 
 
 
