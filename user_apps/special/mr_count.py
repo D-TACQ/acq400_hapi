@@ -26,7 +26,7 @@ def mr_count(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq2106_mr_count')
-    parser.add_argument('chfile', nargs=1, default="/dev/acq400/data/1/01", help="uuts")
+#    parser.add_argument('chfile', nargs=1, default="/dev/acq400/data/1/01", help="uuts")
     mr_count(parser.parse_args())
 
 
