@@ -11,10 +11,9 @@ import argparse
 
 
 def mr_count(args):
-#ch01 = np.fromfile("/tmp/01", dtype=np.int16)
-	ch01 = np.fromfile("/dev/acq400/data/1/01", dtype=np.int16)
+	ch01 = np.fromfile(args.chfile, dtype=np.int16)
 
-	print(len(ch01))
+	print("{} len {}".format(args.chfile, len(ch01)))
 
 	mm1 = 3
 
@@ -26,7 +25,7 @@ def mr_count(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq2106_mr_count')
-#    parser.add_argument('chfile', nargs=1, default="/dev/acq400/data/1/01", help="uuts")
+    parser.add_argument('--chfile', default="/dev/acq400/data/1/01", help="uuts")
     mr_count(parser.parse_args())
 
 
