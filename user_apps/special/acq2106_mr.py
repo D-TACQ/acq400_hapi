@@ -101,7 +101,7 @@ def run_main():
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     parser.add_argument('--stl', default='none', type=str, help='stl file')
     parser.add_argument('--Fclk', default=40000000, type=int, help="base clock frequency")
-    parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT")
+    parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0")
     parser.add_argument('--set_arm', default='0', help="1: set arm" )
     parser.add_argument('--evsel0', default=4, type=int, help="dX number for evsel0")
     parser.add_argument('--MR10DEC', default=8, type=int, help="decimation value")
