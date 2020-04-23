@@ -15,11 +15,6 @@ def create_time_base(data):
 	# tb is a field in MDS TREE, 1:1 mapping with raw data
 	tb = np.bitwise_and(data, [0b00000011])
 
-	indices = np.where(np.diff(tb) != 0)[0] # Where there is ANY change in timebase
-	vals = tb[indices] # The value at the point where there is a change
-	#rates = {0: 50, 1: 25, 2: 200}
-	#rates = {0: 50, 1: 25, 2: 800}
-
 	# decims is a field in MDS TREE, 1:1 mapping with hardware settings. 2: is variable
 	decims = { 0: 2, 1: 1, 2: 32}
 	# dt is a field in MDS TREE, 1:1 mapping with MBCLOCK setting
