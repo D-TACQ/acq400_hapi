@@ -11,32 +11,29 @@ first_run = 1
 
 
 def create_time_base(data):
+	# data is 1 dimensional, surely ?
+	# tb is a field in MDS TREE, 1:1 mapping with raw data
 	tb = np.bitwise_and(data, [0b00000011])
 
 	indices = np.where(np.diff(tb) != 0)[0] # Where there is ANY change in timebase
 	vals = tb[indices] # The value at the point where there is a change
 	#rates = {0: 50, 1: 25, 2: 200}
 	#rates = {0: 50, 1: 25, 2: 800}
-	rates = {0: 2, 1: 1, 2: 32}
+
+	# decims is a field in MDS TREE, 1:1 mapping with hardware settings. 2: is variable
+	decims = { 0: 2, 1: 1, 2: 32}
+	# dt is a field in MDS TREE, 1:1 mapping with MBCLOCK setting
 	dt = 25.0
-	
-	tb_final = np.zeros(data.shape[-1])
-	for num, entry in enumerate(indices):
-		step = rates[vals[num]]
-		prev_time = tb_final[indices[num-1]-1]
-		current_time = prev_time + (indices[num] - indices[num-1]) * step
 
-		if num == 0:
-			tb_final[0:indices[num]] = np.arange(0, indices[num] * rates[vals[num]], rates[vals[num]])
-		else:
-			tb_final[indices[num-1]:indices[num]] = np.arange(prev_time, current_time, step)
-	
-	step = rates[tb[entry+1]]
-	prev_time = tb_final[indices[num]-1]
-	current_time = prev_time + (data.shape[-1] - indices[num]) * step
-	tb_final[indices[num]:] = np.arange(prev_time, current_time, step)
+	# tb_final is a TEMPORARY value, created on demand from MDS VALUE actions (gets) on TREE
+	# tb_final does NOT have a field (ideally, the MDS server will cache it to avoid recalc over N chan..)
+	tb_final = np.zeros(len(data))
+	ttime = 0
+	for ix, idec in enumerate(tb):
+		ttime += decims[idec] * dt
+		tb_final[ix] = ttime 
 
-	return tb_final * 1e-9
+	return tb_final
 
 def error_check(data):
 	result = np.bitwise_and(data, [0b00000011])
