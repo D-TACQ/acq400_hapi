@@ -110,7 +110,8 @@ def get_esi(chx):
     print("get_esi returns nbursts {} blen {} ".format(lmin, bmin))
     return lmin, bmin, esi
 
-FRONTPORCH = 30
+#FRONTPORCH = 30
+FRONTPORCH=0
 
 def get_data(args):
     srcs = get_src_names(args.root)
