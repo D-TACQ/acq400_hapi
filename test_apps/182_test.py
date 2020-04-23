@@ -25,8 +25,8 @@ def create_time_base(data):
 	tb_final = np.zeros(len(data))
 	ttime = 0
 	for ix, idec in enumerate(tb):
-		ttime += decims[idec] * dt
 		tb_final[ix] = ttime 
+		ttime += decims[idec] * dt
 
 	return tb_final
 
