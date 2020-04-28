@@ -48,6 +48,7 @@ class AcqPorts:
 
     BOLO8_CAL = 45072
     DATA0 = 53000
+    DATAT = 53333
     MULTI_EVENT_TMP = 53555
     MULTI_EVENT_DISK = 53556
     LIVETOP = 53998
@@ -487,6 +488,25 @@ class Acq400:
                 ccraw.tofile(fid, '')
 
         return ccraw
+
+    def read_decims(self, nsam = 0):
+        if nsam == 0:
+            nsam = self.pre_samples()+self.post_samples()
+        cc = ChannelClient(self.uut, AcqPorts.DATAT-AcqPorts.DATA0)
+        ccraw = cc.read(nsam, data_size=1)
+
+        if self.save_data:
+            try:
+                os.makedirs(self.save_data)
+            except OSError as exception:
+                if exception.errno != errno.EEXIST:
+                    raise
+
+            with open("%s/%s_DEC" % (self.save_data, self.uut, chan), 'wb') as fid:
+                ccraw.tofile(fid, '')
+
+        return ccraw
+
 
     def nchan(self):
         return int(self.s0.NCHAN)
