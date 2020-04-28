@@ -193,7 +193,8 @@ class ChannelClient(netclient.Netclient):
           retbuf[cursor].
 
         """
-        _dtype = np.dtype('i4' if data_size == 4 else 'i2')
+        _dtypes = { 1 : 'i1', 2: 'i2', 4: 'i4' }
+        _dtype = np.dtype('_dtypes[data_size])
         total_buffer = buffer = self.sock.recv(maxbuf)
 
         if int(ndata) == 0 or int(ndata) == -1:
