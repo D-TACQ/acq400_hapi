@@ -22,6 +22,7 @@ from acq400_hapi import awg_data
 import argparse
 from future import builtins
 from builtins import input
+import numpy as np
 
 
 def load_awg(args):
@@ -32,6 +33,12 @@ def load_awg(args):
         uut.s1.playloop_maxshot = '1'
         print "allow system to run final shot and return to idle"
     else:
+        if args.awg_extend > 1:
+            data = np.fromfile(args.file, dtype=np.int32)
+            new_awg = np.tile(data, (1,args.awg_extend))
+            uut.load_awg(new_awg, autorearm=False)
+            return None
+
         work = awg_data.RunsFiles(uut, args.file.split(","))
         _autorearm = True if args.autorearm == 1 else False
         work.load(autorearm=_autorearm)
@@ -45,6 +52,7 @@ def run_main():
     parser.add_argument('--autorearm', default=0, type=int, help="enable autorearm mode")
     parser.add_argument('--clear_autorearm', default=0, help="clear previous autorearm mode")
     parser.add_argument('--trg', default="int", help='trg "int|ext rising|falling"')
+    parser.add_argument('--awg_extend', default=1, type=int, help='Number of times the AWG is repeated.')
     parser.add_argument('uuts', nargs=1, help="uut ")
     load_awg(parser.parse_args())
 
