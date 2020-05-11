@@ -36,6 +36,7 @@ def get_args():
 
     parser.add_argument('--dac', default=5, type=int, help='AO module site')
     parser.add_argument('--adc', default=1, type=int, help='ADC module site')
+    parser.add_argument('--ch', default=1, type=int, help='channel to control')
 
     parser.add_argument('uut', nargs=1, help="uut")
 
@@ -45,7 +46,7 @@ def get_args():
 
 def main():
     args = get_args()
-    control_loop(args, 1)
+    control_loop(args, args.ch)
     return None
 
 
