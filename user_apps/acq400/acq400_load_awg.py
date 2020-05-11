@@ -23,21 +23,28 @@ from acq400_hapi import netclient as netclient
 import argparse
 
 
-def _load_awg(uut, fn, autorearm):
-    with open(fn, "rb") as fd:
-        uut.load_awg(fd.read(), autorearm=autorearm)
+def file_extender(fd, ext_count):
+    buf = fd.read()
+    buf0 = buf
+
+    while ext_count > 1:
+        buf += buf0
+        ext_count -= 1
+        
+    return buf
+        
 
 def load_awg(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
-    _load_awg(uut, args.file, args.mode==2)
-
-
+    with open(fn, "rb") as fd:
+        uut.load_awg(file_extender(fd, args.awg_extend), autorearm=args.mode==2)
 
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 load awg simplest')
     parser.add_argument('--file', default="", help="file to load")
     parser.add_argument('--mode', default=2, type=int, help="mode: 1 oneshot, 2 oneshot_autorearm")
+    parser.add_argument('--awg_extend', default=1, type=int, help='Number of times the AWG is repeated.')
     parser.add_argument('uuts', nargs=1, help="uut ")
     load_awg(parser.parse_args())
 
