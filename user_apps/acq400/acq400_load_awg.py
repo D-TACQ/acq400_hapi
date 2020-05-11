@@ -36,6 +36,7 @@ def file_extender(fd, ext_count):
 
 def load_awg(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
+    acq400_hapi.Acq400UI.exec_args_playtrg(uut, args)
     with open(args.file, "rb") as fd:
         uut.load_awg(file_extender(fd, args.awg_extend), autorearm=args.mode==2)
     if args.soft_trigger:
@@ -48,6 +49,7 @@ def run_main():
     parser.add_argument('--mode', default=2, type=int, help="mode: 1 oneshot, 2 oneshot_autorearm")
     parser.add_argument('--awg_extend', default=1, type=int, help='Number of times the AWG is repeated.')
     parser.add_argument('--soft_trigger', default=1, type=int, help='Emit soft trigger')
+    acq400_hapi.Acq400UI.add_argument_playtrg(parser)
     parser.add_argument('uuts', nargs=1, help="uut ")
     load_awg(parser.parse_args())
 
