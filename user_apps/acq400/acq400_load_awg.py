@@ -36,7 +36,7 @@ def file_extender(fd, ext_count):
 
 def load_awg(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
-    with open(fn, "rb") as fd:
+    with open(args.file, "rb") as fd:
         uut.load_awg(file_extender(fd, args.awg_extend), autorearm=args.mode==2)
     if args.soft_trigger:
         uut.s0.soft_trigger = '1'
