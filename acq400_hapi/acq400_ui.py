@@ -95,8 +95,6 @@ class Acq400UI:
         """ and execute all the args
         """
         print("exec_args" )
-        if args.trg:
-            Acq400UI._exec_args_trg(uut, args, args.trg)
         if args.clk:
             Acq400UI._exec_args_clk(uut, args.clk)
         if args.sim:
@@ -105,3 +103,5 @@ class Acq400UI:
             Acq400UI._exec_args_trace(uut, args.trace)
         if args.post != None:
             Acq400UI._exec_args_transient(uut, args)
+        if args.trg:
+            Acq400UI._exec_args_trg(uut, args, args.trg)
