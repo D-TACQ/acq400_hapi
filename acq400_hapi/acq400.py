@@ -48,6 +48,7 @@ class AcqPorts:
 
     BOLO8_CAL = 45072
     DATA0 = 53000
+    DATAT = 53333
     MULTI_EVENT_TMP = 53555
     MULTI_EVENT_DISK = 53556
     LIVETOP = 53998
@@ -192,7 +193,8 @@ class ChannelClient(netclient.Netclient):
           retbuf[cursor].
 
         """
-        _dtype = np.dtype('i4' if data_size == 4 else 'i2')
+        _dtypes = { 1 : 'i1', 2: 'i2', 4: 'i4' }
+        _dtype = np.dtype(_dtypes[data_size])
         total_buffer = buffer = self.sock.recv(maxbuf)
 
         if int(ndata) == 0 or int(ndata) == -1:
@@ -232,21 +234,24 @@ class Statusmonitor:
             if match:
                 statuss = match.groups()
                 status1 = [int(x) for x in statuss]
-                if self.trace:
+                if self.trace > 1:
                     print("%s <%s" % (repr(self), status1))
                 if self.status != None:
 #                    print("Status check %s %s" % (self.status0[0], status[0]))
                     if self.status[SF.STATE] != 0 and status1[SF.STATE] == 0:
-                        print("%s STOPPED!" % (self.uut))
+                        if self.trace:
+                            print("%s STOPPED!" % (self.uut))
                         self.stopped.set()
                         self.armed.clear()
 #                print("status[0] is %d" % (status[0]))
                     if status1[SF.STATE] == 1:
-                        print("%s ARMED!" % (self.uut))
+                        if self.trace:
+                            print("%s ARMED!" % (self.uut))
                         self.armed.set()
                         self.stopped.clear()
                     if self.status[SF.STATE] == 0 and status1[SF.STATE] > 1:
-                        print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status[0], status1[0]))
+                        if self.trace:
+                            print("ERROR: %s skipped ARM %d -> %d" % (self.uut, self.status[0], status1[0]))
                         self.quit_requested = True
                         os.kill(self.main_pid, signal.SIGINT)
                         sys.exit(1)
@@ -485,6 +490,25 @@ class Acq400:
 
         return ccraw
 
+    def read_decims(self, nsam = 0):
+        if nsam == 0:
+            nsam = self.pre_samples()+self.post_samples()
+        cc = ChannelClient(self.uut, AcqPorts.DATAT-AcqPorts.DATA0)
+        ccraw = cc.read(nsam, data_size=1)
+
+        if self.save_data:
+            try:
+                os.makedirs(self.save_data)
+            except OSError as exception:
+                if exception.errno != errno.EEXIST:
+                    raise
+
+            with open("%s/%s_DEC" % (self.save_data, self.uut, chan), 'wb') as fid:
+                ccraw.tofile(fid, '')
+
+        return ccraw
+
+
     def nchan(self):
         return int(self.s0.NCHAN)
 
@@ -630,14 +654,16 @@ class Acq400:
         def __str__(self):
             return repr(self.value)
 
-    def load_awg(self, data, autorearm=False):
+    def load_awg(self, data, autorearm=False, repeats=1):
         if self.awg_site > 0:
             if self.modules[self.awg_site].task_active == '1':
                 raise self.AwgBusyError("awg busy")
         port = AcqPorts.AWG_AUTOREARM if autorearm else AcqPorts.AWG_ONCE
 
         with netclient.Netclient(self.uut, port) as nc:
-            nc.sock.send(data)
+            while repeats:
+                nc.sock.send(data)
+                repeats -= 1
             nc.sock.shutdown(socket.SHUT_WR)
             while True:
                 rx = nc.sock.recv(128)
@@ -676,6 +702,18 @@ class Acq400:
             nc.sock.shutdown(socket.SHUT_RDWR)
             nc.sock.close()
 
+
+    def disable_trigger(self):
+        #master.s0.SIG_SRC_TRG_0 = 'NONE'
+        #master.s0.SIG_SRC_TRG_1 = 'NONE'
+        self.s0.SIG_SRC_TRG_0 = 'HOSTB'
+        self.s0.SIG_SRC_TRG_1 = 'HOSTA'
+
+    def enable_trigger(self, trg_0='EXT', trg_1='STRIG'):
+        if trg_0 is not None:
+            self.s0.SIG_SRC_TRG_0 = trg_0
+        if trg_1 is not None:
+            self.s0.SIG_SRC_TRG_1 = trg_1
 
     def configure_post(self, role, trigger=[1,1,1], post=100000):
         """
@@ -1055,15 +1093,15 @@ class Acq2106(Acq400):
     Defines features specific to ACQ2106
     """
 
-    def __init__(self, _uut, monitor=True, has_dsp=False):
+    def __init__(self, _uut, monitor=True, has_dsp=False, has_comms=True):
         print("acq400_hapi.Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         self.mb_clk_min = 100000
-
+        sn_map = ()
+        if has_comms:
+            sn_map += (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB))
         if has_dsp:
-            sn_map = (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB), ('s14', AcqSites.SITE_DSP))
-        else:
-            sn_map = (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB))
+            sn_map += (('s14', AcqSites.SITE_DSP),)
 
         for ( service_name, site ) in sn_map:
             try:
@@ -1090,6 +1128,16 @@ class Acq2106(Acq400):
             self.s0.SIG_SRC_TRG_0 = "EXT" if enabled else "HOSTB"
         elif trg == "int":
             self.s0.SIG_SRC_TRG_1 = "STRIG"
+
+
+    def set_MR(self, enable, evsel0=4, evsel1=5, MR10DEC=8):
+        if enable:
+            self.s1.ACQ480_MR_EVSEL_0 = 'd{}'.format(evsel0)
+            self.s1.ACQ480_MR_EVSEL_1 = 'd{}'.format(evsel1)
+            self.s1.ACQ480_MR_10DEC = 'dec{}'.format(MR10DEC)
+            self.s1.ACQ480_MR_EN = '1'
+        else:
+            self.s1.ACQ480_MR_EN = '0'
 
 
 

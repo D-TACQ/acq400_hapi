@@ -28,7 +28,8 @@ for u in uuts:
     u.s0.streamtonowhered = 'stop'
     u.s0.set_abort = 1
 
-
-
-
-
+    try:
+        u.s1.AWG_MODE_ABO = '1'
+        u.s1.AWG_MODE_ABO = '0'
+    except:
+        pass

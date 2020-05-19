@@ -9,18 +9,8 @@ import os
 import signal
 import threading
 
-def disable_trigger(master):
 
-    #master.s0.SIG_SRC_TRG_0 = 'NONE'
-    #master.s0.SIG_SRC_TRG_1 = 'NONE'
-    master.s0.SIG_SRC_TRG_0 = 'HOSTB'
-    master.s0.SIG_SRC_TRG_1 = 'HOSTA'
 
-    return None
-
-def enable_trigger(master):
-    master.s0.SIG_SRC_TRG_0 = 'EXT'
-    master.s0.SIG_SRC_TRG_1 = 'STRIG'
 
 def expand_role(args, urole):
     # fpmaster          # fpclk, fptrg
@@ -48,7 +38,7 @@ def configure_slave(name, args, postfix):
 def run_shot(args):
     master = acq400_hapi.Acq400(args.uuts[0])
     if args.enable_trigger:
-        enable_trigger(master)
+        master.enable_trigger()
         return
 
     args.postfix = []       # master specials
@@ -60,7 +50,7 @@ def run_shot(args):
                                             args.fclk, args.fin, " ".join(args.postfix), " ".join(postfix))
 
     if args.external_trigger:
-        disable_trigger(master)
+        master.disable_trigger()
     else:
         # print("WARNING: REMOVEME temporary fudge while we get the sync trigger right")
         # master.s0.SIG_SYNC_OUT_TRG_DX = 'd1'

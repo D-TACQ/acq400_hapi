@@ -110,7 +110,8 @@ def get_esi(chx):
     print("get_esi returns nbursts {} blen {} ".format(lmin, bmin))
     return lmin, bmin, esi
 
-FRONTPORCH = 30
+#FRONTPORCH = 30
+FRONTPORCH=0
 
 def get_data(args):
     srcs = get_src_names(args.root)
@@ -134,7 +135,7 @@ def get_data(args):
     print("chx 99")
     return chx
 
-VALUE_ERRORS = 0
+VALUE_ERRORS = 10
 
 def fix_args(chx, args):
     args.nburst = len(chx[0,:,0]) - VALUE_ERRORS

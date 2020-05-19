@@ -9,7 +9,7 @@ channel can be different (they will not be different for this example). The user
 necessary and to any value necessary i.e the values do not need to be the same across channels (channel 1 could be a
 sine wave, channel 2 could be a sinc wave etc).
 
-In this script we are outputting the same identical sine wave across all 32 channels for sine_size number of samples.
+In this script we are outputting the same identical sine wave across all 32 channels for nsam number of samples.
 There is also an argument called even_ch_to_zeros that, if set, will set all of the even channels to zero to illustrate
 how the channels are ordered.
 
@@ -21,7 +21,7 @@ python awg_creation_demo.py
 
 To create binary file with even channels set to 0 and a wave size of 3000 samples.
 
-python awg_creation_demo.py --sine_size=3000 --even_ch_to_zeros=1
+python awg_creation_demo.py --nsam=3000 --even_ch_to_zeros=1
 
 
 
@@ -33,12 +33,13 @@ python acq1001_awg_demo.py --files="../acq400/waves/example_awg" --capture=1 --a
 
 import numpy as np
 import matplotlib.pyplot as plt
+import re
 import argparse
 
 
-def create_array(sine_size, args):
+def create_array(nsam, args):
 
-    # function that creates an array with sine_size * nchan elements
+    # function that creates an array with nsam * nchan elements
 
     # Firstly, an array containing a sine wave is generated. This is entirely arbitrary and is meant to demonstrate a
     # waveform being generated. We scale the sine wave by 32767 because the DACs are 16 bit.
@@ -46,15 +47,16 @@ def create_array(sine_size, args):
     # be aware that the astype(np.int16) function used below will wrap back to -32768 if a number larger than 32767 is
     # used. The same goes for numbers < -32768: they wrap up to 32767.
 
-    sine_wave = np.sin(np.linspace(0, 2*np.pi, sine_size)) # Creates sine wave
-    sine_wave = 32767 * sine_wave # Scales the sine wave to 16 bit
-    sine_wave = np.rint(sine_wave) # round the sine wave to integers
+    limit = 2*np.pi*args.w 
+    fxn = args.fx(np.linspace(-limit/2, limit/2, nsam)) # Creates sine wave
+    fxn = 32767 * fxn # Scales the sine wave to 16 bit
+    fxn = np.rint(fxn) # round the sine wave to integers
 
     # An empty list is created that will eventually contain our waveform
     waveform = []
 
     # For every point in the sine wave: duplicate it nchan times (one value for each one of the channels)
-    for num in sine_wave:
+    for num in fxn:
         waveform.extend(args.nchan*[num]) # extends the single value taken from the sine wave data across 32 channels.
 
     if args.even_ch_to_zeros == 1: # if this argument is chosen then all of the even channels will be set to 0.
@@ -76,28 +78,28 @@ def create_array(sine_size, args):
     return waveform
 
 
-def write_array_to_disk(waveform, dir):
-    # function that writes numpy array to disk.
-    # This is just a binary file.
-    waveform.tofile(dir, "")
-    return None
-
-
 def generate_awg(args):
-    #function that generates an awg waveform
+    waveform = create_array(args.nsam, args)
+    fname = args.fn.split(".")
+    if len(fname) == 1:
+        fname = fname[0]
+    else:
+        fname = fname[1]
 
-    waveform = create_array(args.sine_size, args)
-
-    write_array_to_disk(waveform, args.dir)
+    waveform.tofile("{}/{}-{}-{}.dat".format(args.dir, "{}{}".format(fname, "" if args.w == 1 else str(args.w)), args.nchan, args.nsam), "")
 
 
 def run_main():
     parser = argparse.ArgumentParser(description='generate awg waveform')
-    parser.add_argument('--sine_size', default=30000, type=int, help="Size of sine wave to generate.")
+    parser.add_argument('--fn', default='np.sin', help="Generator function default:np.sin()")
+    parser.add_argument('--w', default=1, type=int, help="Angular frequency")
+    parser.add_argument('--nsam', default=30000, type=int, help="Size of wave to generate.")
     parser.add_argument('--nchan', default=32, type=int, help="Number of channels in AO module.")
     parser.add_argument('--even_ch_to_zeros', default=0, type=int, help="Whether to set even channels to zero.")
-    parser.add_argument('--dir', default="waves/example_awg", type=str, help="Location to save files")
-    generate_awg(parser.parse_args())
+    parser.add_argument('--dir', default="waves", type=str, help="Location to save files")
+    args = parser.parse_args()
+    args.fx = eval(args.fn)
+    generate_awg(args)
 
 
 if __name__ == '__main__':

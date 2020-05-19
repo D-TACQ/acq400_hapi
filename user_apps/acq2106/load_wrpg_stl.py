@@ -98,11 +98,11 @@ class EnablesWrtt:
     def __init__ (self, uut):
         self.uut = uut
     def __call__ (self):
-        self.uut.s0.SIG_SRC_TRG_0 = 'WRTT'
+        self.uut.s0.SIG_SRC_TRG_0 = 'WRTT0'
 
 def tee_shots(args, uut, shot):
     uut.s1.shot = shot    
-    uut.s0.SIG_SRC_TRG_0 = 'HOSTB'  # gate external trigger OFF
+    uut.s0.SIG_SRC_TRG_0 = 'NONE'  # gate external trigger OFF
     uut.s0.GPG_TRG = 'external'
     uut.s0.GPG_TRG_DX = 'd0'
     uut.s0.GPG_TRG_SENSE = 'rising'

@@ -23,38 +23,33 @@ from acq400_hapi import netclient as netclient
 import argparse
 
 
-def _load_awg(uut, fn, port):
-    eof = False
-    bn = 0
-    with open(fn, "rb") as fd:
-        with netclient.Netclient(uut.uut, port) as nc:
-            while not eof:
-                chunk = fd.read(0x100000)
-                if len(chunk) == 0:
-                    eof = True
-                else:
-                    nc.sock.send(chunk)
-                    sys.stderr.write('\r{}'.format(bn))
-                    bn += 1
-            nc.sock.shutdown(socket.SHUT_WR)
-            sys.stderr.write('\nsocket SHUT_WR, wait for DONE\n')
-            while True:
-                rx = nc.sock.recv(128)
-                if not rx or rx.startswith(b"DONE"):
-                    break
-            nc.sock.close()
-            sys.stderr.write("DONE\n")
+def file_extender(fd, ext_count):
+    buf = fd.read()
+    buf0 = buf
+
+    while ext_count > 1:
+        buf += buf0
+        ext_count -= 1
         
+    return buf
+        
+
 def load_awg(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
-    _load_awg(uut, args.file, 54201)
+    acq400_hapi.Acq400UI.exec_args_playtrg(uut, args)
+    with open(args.file, "rb") as fd:
+        uut.load_awg(file_extender(fd, args.awg_extend), autorearm=args.mode==2)
+    if args.soft_trigger:
+        uut.s0.soft_trigger = '1'
 
-
-            
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 load awg simplest')
     parser.add_argument('--file', default="", help="file to load")
+    parser.add_argument('--mode', default=2, type=int, help="mode: 1 oneshot, 2 oneshot_autorearm")
+    parser.add_argument('--awg_extend', default=1, type=int, help='Number of times the AWG is repeated.')
+    parser.add_argument('--soft_trigger', default=1, type=int, help='Emit soft trigger')
+    acq400_hapi.Acq400UI.add_argument_playtrg(parser)
     parser.add_argument('uuts', nargs=1, help="uut ")
     load_awg(parser.parse_args())
 
@@ -62,6 +57,3 @@ def run_main():
 
 if __name__ == '__main__':
     run_main()
-
-
-
