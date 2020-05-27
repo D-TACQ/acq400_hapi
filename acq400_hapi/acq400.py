@@ -69,6 +69,7 @@ class AcqSites:
     SITE6 = 6
     SITE_CA = 13
     SITE_CB = 12
+    SITE_CC = 11
     SITE_DSP = 14
 
 class SF:
@@ -1099,7 +1100,7 @@ class Acq2106(Acq400):
         self.mb_clk_min = 100000
         sn_map = ()
         if has_comms:
-            sn_map += (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB))
+            sn_map += (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB), ('cC', AcqSites.SITE_CC))
         if has_dsp:
             sn_map += (('s14', AcqSites.SITE_DSP),)
 
