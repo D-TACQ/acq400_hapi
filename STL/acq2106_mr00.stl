@@ -1,0 +1,8 @@
+# MR control STL, normalised usec delays, MR00=0, MR01=1 MR10=2
+# MR00, 20MHz, 20 points/usec, 10000 points in 500usec
+# MR10,  5MHz,  5 points/usec, 10000 points in 2000usec
+# MR01, 40MHz, 40 points/usec,  4000 points in 100usec [max]
+# Ideal test freq: 1/4 cycle in 100usec : 400usec cycle: 2.5kHz, 5cycles in 2msec
+0,0           # go 4000 usec at 5M, 10 cycles, 20k points +0p
+7800,0
+
