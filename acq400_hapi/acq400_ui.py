@@ -1,7 +1,9 @@
 
 import argparse
 from . import acq400
-from .shotcontrol import intSI as intSI
+from . import intSI
+from .intSIAction import intSI_cvt
+from .intSIAction import intSIAction
 
 class Acq400UI:
     """ Common UI features for consistent args handling across all apps
@@ -35,9 +37,9 @@ class Acq400UI:
 
 
         if len(c_args) > 1:
-            _hz = intSI(c_args[1])
+            _hz = intSI_cvt(c_args[1])
             if len(c_args) > 2:
-                _fin = intSI(c_args[2])
+                _fin = intSI_cvt(c_args[2])
 
         if src == 'ext' or src == 'fpclk':
             uut.set_mb_clk(hz=_hz, src="fpclk", fin=_fin)
@@ -63,10 +65,8 @@ class Acq400UI:
 
     @staticmethod
     def _exec_args_transient(uut, args):
-        pre = intSI(args.pre)
-        post = intSI(args.post)
-        uut.configure_transient(pre=pre, post=post, \
-            auto_soft_trigger=(1 if pre>0 else 0), demux=args.demux)
+        uut.configure_transient(pre=args.pre, post=args.post, \
+            auto_soft_trigger=(1 if args.pre>0 else 0), demux=args.demux)
 
     executors = []
 
@@ -102,14 +102,14 @@ class Acq400UI:
         """ generate standard args list
 
         Args:
-             post: set False to disable createing the arg, becomes client app resposibility
+             post: set False to disable creating the arg, becomes client app resposibility
 
         """
         if transient:
             if pre:
-                parser.add_argument('--pre', default=0, type=int, help='pre-trigger samples')
+                parser.add_argument('--pre', default=0, action=intSIAction, help='pre-trigger samples')
             if post:
-                parser.add_argument('--post', default=100000, type=int, help='post-trigger samples')
+                parser.add_argument('--post', default=100000, action=intSIAction, help='post-trigger samples')
             if demux > -1:
                 parser.add_argument('--demux', default='{}'.format(demux), type=int, help='embedded demux')
 
@@ -118,7 +118,7 @@ class Acq400UI:
         parser.add_argument('--sim', default=None, help='s1[,s2,s3..] list of sites to run in simulate mode')
         parser.add_argument('--trace', default=None, help='1 : enable command tracing')
 
-    
+
     @staticmethod
     def exec_args(uut, args):
         """ and execute all the args
