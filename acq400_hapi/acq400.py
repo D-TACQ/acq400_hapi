@@ -27,7 +27,11 @@ import os
 import errno
 import signal
 import sys
-from . import netclient
+if __name__ == '__main__':
+    import netclient
+else:
+    from . import netclient
+
 import numpy as np
 import socket
 import timeit
@@ -1094,13 +1098,15 @@ class Acq2106(Acq400):
     Defines features specific to ACQ2106
     """
 
-    def __init__(self, _uut, monitor=True, has_dsp=False, has_comms=True):
+    def __init__(self, _uut, monitor=True, has_dsp=False, has_comms=True, has_wr=False):
         print("acq400_hapi.Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor)
         self.mb_clk_min = 100000
         sn_map = ()
         if has_comms:
-            sn_map += (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB), ('cC', AcqSites.SITE_CC))
+            sn_map += (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB))
+        if has_wr:
+            sn_map += (('cC', AcqSites.SITE_CC), )
         if has_dsp:
             sn_map += (('s14', AcqSites.SITE_DSP),)
 
