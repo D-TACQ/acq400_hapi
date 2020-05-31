@@ -96,6 +96,11 @@ def run_mr(args):
         master.s0.SIG_SRC_TRG_0 = 'EXT'
         rt = selects_trg_src(master, args.trg0_src)
 
+    if args.tune_si5326:
+        for u in uuts:
+            print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
+            u.s0.si5326_tune_phase = 1
+
     for u in args.uuts:
         acq400_hapi.Acq400UI.exec_args(u, args)
         u.s0.gpg_trg = '1,0,1'
@@ -119,6 +124,7 @@ def run_main():
     parser.add_argument('--Fclk', default=40*intSI.DEC.M, action=intSIAction, help="base clock frequency")
     parser.add_argument('--WRTD_DELAY_NS', default=50*intSI.DEC.M, action=intSIAction, help='WRTD trigger delay')
     parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0")
+    parser.add_argument('--tune_si5326', default=1, type=int, help="tune_si5326 (takes 60s), default:1")
     parser.add_argument('--set_arm', default='0', help="1: set arm" )
     parser.add_argument('--evsel0', default=4, type=int, help="dX number for evsel0")
     parser.add_argument('--MR10DEC', default=8, type=int, help="decimation value")
