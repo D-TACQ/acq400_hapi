@@ -82,6 +82,7 @@ def allows_one_wrtd(uut):
 def run_postprocess_command(cmd, uut_names):
     syscmd = "{} {}".format(cmd, " ".join(uut_names))
     print("run {}".format(syscmd))
+    os.system(syscmd)
 
 def run_mr(args):
     args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
