@@ -3,19 +3,6 @@ import sys
 import threading
 import time
 
-def intSI(x):
-    x = str(x)
-    units = x.find('M')
-    if units >= 0:
-        return int(x[0:units])*1000000
-    else:
-        units = x.find('k')
-        if units >= 0:
-            return int(x[0:units])*1000
-        else:
-            return int(x)
-
-
 def wait_for_state(uut, state, timeout=0):
     UUTS = [uut]
     time0 = 0
