@@ -2,6 +2,15 @@ import signal
 import sys
 import threading
 import time
+import os
+import errno
+
+try:
+    import matplotlib.pyplot as plt
+    plot_ok = 1
+except RuntimeError as e:
+    print("Sorry, plotting not available {}".format(e))
+    plot_ok = 0
 
 def wait_for_state(uut, state, timeout=0):
     UUTS = [uut]
@@ -159,8 +168,97 @@ class ShotController:
 
         return (chx, len(self.uuts), len(chx[0]), len(chx[0][0]))
 
+
     def __init__(self, _uuts, shot=None):
         self.uuts = _uuts
         if shot != None:
             for u in self.uuts:
                 u.s1.shot = shot
+
+
+class ShotControllerWithDataHandler(ShotController):
+    def handle_data(self, args):
+        if args.save_data:
+            shotdir = args.save_data.format(self.increment_shot(args))
+            for u in self.uuts:
+                u.save_data = shotdir
+
+        if args.trace_upload:
+            for u in self.uuts:
+                u.trace = 1
+
+        chx, ncol, nchan, nsam = self.read_channels(eval(args.channels))
+
+    # plot ex: 2 x 8 ncol=2 nchan=8
+    # U1 U2      FIG
+    # 11 21      1  2
+    # 12 22      3  4
+    # 13 23
+    # ...
+    # 18 28     15 16
+        if plot_ok and args.plot_data:
+            for col in range(ncol):
+                for chn in range(0,nchan):
+                    fignum = 1 + col + chn*ncol
+                    plt.subplot(nchan, ncol, fignum)
+                    plt.plot(chx[col][chn])
+
+            plt.show()
+
+    @staticmethod
+    def save_data_init(args, save_data):
+        save_root = os.path.dirname(save_data)        # ignore shot formatter
+        if save_root != '':
+            try:
+                os.makedirs(save_root)
+            except OSError as exception:
+                if exception.errno != errno.EEXIST:
+                    raise
+        else:
+            save_root = '.'
+
+        args.shotfile = "{}/SHOT".format(save_root)
+        if os.path.exists(args.shotfile):
+            with open(args.shotfile) as sf:
+                for line in sf:
+                    args.shot = int(line)
+        else:
+            args.shot = 0
+            with open(args.shotfile, "w") as sf:
+                sf.write("{}\n".format(args.shot))
+
+    @staticmethod
+    def increment_shot(args):
+        with open(args.shotfile) as sf:
+            for line in sf:
+                args.shot = int(line)
+        args.shot += 1
+
+        with open(args.shotfile, "w") as sf:
+                sf.write("{}\n".format(args.shot))
+        return args.shot
+
+    def run_shot(self, soft_trigger=False, acq1014_ext_trigger=0,
+            remote_trigger=None):
+            super().run_shot(soft_trigger, acq1014_ext_trigger, remote_trigger)
+            if self.args.save_data or self.args.plot_data:
+                self.handle_data(self.args)
+
+    def __init__(self, _uuts, args, shot=None):
+        ShotController.__init__(self, _uuts, shot)
+        self.args = args
+        if args.save_data:
+            self.save_data_init(args, args.save_data)
+
+SAVEDATA=os.getenv("SAVEDATA", None)
+PLOTDATA=int(os.getenv("PLOTDATA", "0"))
+TRACE_UPLOAD=int(os.getenv("TRACE_UPLOAD", "0"))
+CHANNELS=os.getenv("CHANNELS", "()")
+
+class ShotControllerUI:
+        @staticmethod
+        def add_args(parser):
+            parser.add_argument('--save_data', default=SAVEDATA, type=str, help="store data to specified directory, suffix {} for shot #")
+            parser.add_argument('--plot_data', default=PLOTDATA, type=int, help="1: plot data")
+            parser.add_argument('--trace_upload', default=TRACE_UPLOAD, type=int, help="1: verbose upload")
+            parser.add_argument('--channels', default=CHANNELS, type=str, help="comma separated channel list")

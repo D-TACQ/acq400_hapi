@@ -49,12 +49,6 @@ optional arguments:
 import sys
 import acq400_hapi
 import numpy as np
-try:
-    import matplotlib.pyplot as plt
-    plot_ok = 1
-except RuntimeError as e:
-    print("Sorry, plotting not available {}".format(e))
-    plot_ok = 0
 
 import os
 import errno
@@ -78,48 +72,19 @@ class WrtdAction:
         self.max_triggers = max_triggers
     def __call__(self):
         self.master.s0.wrtd_tx = self.max_triggers
-        
-def handle_data(uuts, args, shot_controller):
-    if args.save_data:
-        shotdir = args.save_data.format(increment_shot(args))
-        for u in uuts:
-            u.save_data = shotdir            
-            
-    if args.trace_upload:
-        for u in uuts:
-            u.trace = 1
-                        
-    chx, ncol, nchan, nsam = shot_controller.read_channels(eval(args.channels))
-      
-# plot ex: 2 x 8 ncol=2 nchan=8
-# U1 U2      FIG
-# 11 21      1  2
-# 12 22      3  4
-# 13 23
-# ...
-# 18 28     15 16
-    if plot_ok and args.plot_data:
-        for col in range(ncol):
-            for chn in range(0,nchan):
-                fignum = 1 + col + chn*ncol
-                plt.subplot(nchan, ncol, fignum)                
-                plt.plot(chx[col][chn])
-                       
-        plt.show()    
-
 
 def set_shot(args, uuts):
     if args.shot != None:
         for u in uuts:
             u.s1.shot = args.shot
-    
+
 def upload(args):
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts] 
+    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     st = None
-    
+
     acq400_hapi.cleanup.init()
 
-    shot_controller = acq400_hapi.ShotController(uuts)
+    shot_controller = acq400_hapi.ShotControllerWithDataHandler(uuts, args)
 
     if args.wrtd_tx != 0:
         trigger_action = WrtdAction(uuts[0], args.wrtd_tx)
@@ -127,12 +92,12 @@ def upload(args):
             print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
             u.s0.si5326_tune_phase = 1
     elif args.remote_trigger:
-        trigger_action = ActionScript(args.remote_trigger)    
+        trigger_action = ActionScript(args.remote_trigger)
     else:
         trigger_action = None
         st = SOFT_TRIGGER
-        
-    try: 
+
+    try:
         if args.capture == 0:
             state = '99'
             while state != '0':
@@ -150,20 +115,15 @@ def upload(args):
             cap = 0
             while cap < args.capture:
                 shot_controller.run_shot(soft_trigger = st, remote_trigger = trigger_action)
-                handle_data(uuts, args, shot_controller)
                 cap += 1
-        
+
     except acq400_hapi.cleanup.ExitCommand:
         print("ExitCommand raised and caught")
     finally:
-        print("Finally, going down")    
-    
+        print("Finally, going down")
+
 SOFT_TRIGGER=int(os.getenv("SOFT_TRIGGER", "1"))
-TRACE_UPLOAD=int(os.getenv("TRACE_UPLOAD", "0"))
-SAVEDATA=os.getenv("SAVEDATA", None)
-PLOTDATA=int(os.getenv("PLOTDATA", "0"))
 CAPTURE=int(os.getenv("CAPTURE", "0"))
-CHANNELS=os.getenv("CHANNELS", "()")
 
 def uniq(inp):
     out = []
@@ -172,44 +132,15 @@ def uniq(inp):
             out.append(x)
     return out
 
-def save_data_init(args, save_data):
-    save_root = os.path.dirname(save_data)        # ignore shot formatter
-    try:                
-        os.makedirs(save_root)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-    args.shotfile = "{}/SHOT".format(save_root)
-    if os.path.exists(args.shotfile):
-        with open(args.shotfile) as sf:
-            for line in sf:
-                args.shot = int(line)
-    else:
-        args.shot = 0
-        with open(args.shotfile, "w") as sf:
-            sf.write("{}\n".format(args.shot))
 
-def increment_shot(args):
-    with open(args.shotfile) as sf:
-        for line in sf:
-            args.shot = int(line)
-    args.shot += 1
-    
-    with open(args.shotfile, "w") as sf:
-            sf.write("{}\n".format(args.shot)) 
-    return args.shot
-    
-    
+
 def run_main():
-    parser = argparse.ArgumentParser(description='acq400 upload')  
+    parser = argparse.ArgumentParser(description='acq400 upload')
+    acq400_hapi.ShotControllerUI.add_args(parser)
     parser.add_argument('--soft_trigger', default=SOFT_TRIGGER, type=int, help="help use soft trigger on capture")
-    parser.add_argument('--trace_upload', default=TRACE_UPLOAD, type=int, help="1: verbose upload")
-    parser.add_argument('--save_data', default=SAVEDATA, type=str, help="store data to specified directory, suffix {} for shot #")
-    parser.add_argument('--plot_data', default=PLOTDATA, type=int, help="1: plot data")
     parser.add_argument('--capture', default=CAPTURE, type=int, help="1: capture data, 0: wait for someone else to capture, -1: just upload")
     parser.add_argument('--remote_trigger', default=None, type=str, help="your function to fire trigger")
     parser.add_argument('--wrtd_tx', default=0, type=int, help="release a wrtd_tx when all boards read .. works when free-running trigger")
-    parser.add_argument('--channels', default=CHANNELS, type=str, help="comma separated channel list")
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     args = parser.parse_args()
     # deduplicate (yes, some non-optimal apps call with duplicated uuts, wastes time)
@@ -218,9 +149,7 @@ def run_main():
     if re.search(r'^\d$', args.channels) is not None:
         args.channels += ','
     args.shot = None
-    if args.save_data:
-        save_data_init(args, args.save_data)
-        
+
     upload(args)
 
 
@@ -228,7 +157,3 @@ def run_main():
 
 if __name__ == '__main__':
     run_main()
-
-
-
-

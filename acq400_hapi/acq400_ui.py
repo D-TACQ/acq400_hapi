@@ -1,9 +1,13 @@
 
 import argparse
+import os
+
 from . import acq400
 from . import intSI
 from .intSI import intSI_cvt
 from .intSI import intSIAction
+
+
 
 class Acq400UI:
     """ Common UI features for consistent args handling across all apps
@@ -97,6 +101,7 @@ class Acq400UI:
         parser.add_argument('--playtrg', default=None, help='int|ext,rising|falling')
 
 
+
     @staticmethod
     def add_args(parser, transient=False, post=True, pre=True, demux=1):
         """ generate standard args list
@@ -117,6 +122,7 @@ class Acq400UI:
         parser.add_argument('--trg', default=None, help='int|ext,rising|falling')
         parser.add_argument('--sim', default=None, help='s1[,s2,s3..] list of sites to run in simulate mode')
         parser.add_argument('--trace', default=None, help='1 : enable command tracing')
+
 
 
     @staticmethod
