@@ -477,11 +477,14 @@ class Acq400:
         return np.add(np.multiply(raw, eslo), eoff)
 
 
-    def read_chan(self, chan, nsam = 0):
+    def read_chan(self, chan, nsam = 0, data_size = None):
         if chan != 0 and nsam == 0:
             nsam = self.pre_samples()+self.post_samples()
+        if data_size == None:
+            data_size = 4 if self.s0.data32 == '1' else 2
+
         cc = ChannelClient(self.uut, chan)
-        ccraw = cc.read(nsam, data_size=(4 if self.s0.data32 == '1' else 2))
+        ccraw = cc.read(nsam, data_size=data_size)
 
         if self.save_data:
             try:
@@ -533,12 +536,13 @@ class Acq400:
     #      print("channels {}".format(channels))
 
         chx = []
+        data_size = 4 if self.s0.data32 == '1' else 2
         for ch in channels:
             if self.trace:
                 print("%s CH%02d start.." % (self.uut, ch))
                 start = timeit.default_timer()
 
-            chx.append(self.read_chan(ch, nsam))
+            chx.append(self.read_chan(ch, nsam, data_size=data_size))
 
             if self.trace:
                 tt = timeit.default_timer() - start

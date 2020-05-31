@@ -109,7 +109,7 @@ def upload(args):
                     elif st:
                         uut.s0.soft_trigger = '1'
                 time.sleep(1)
-            handle_data(uuts, args, shot_controller)
+            shot_controller.handle_data(args)
         else:
             set_shot(args, uuts)
             cap = 0
