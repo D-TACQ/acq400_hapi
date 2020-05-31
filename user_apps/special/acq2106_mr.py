@@ -66,7 +66,7 @@ def denormalise_stl(args):
 
     return "\n".join(args.stl_literal_lines)
 
-NONE = 'DSP0'     # TODO: explicit "NONE" source would be clearer.
+NONE = 'NONE'
 
 def selects_trg_src(uut, src):
     def select_trg_src():
@@ -75,6 +75,7 @@ def selects_trg_src(uut, src):
 
 def allows_one_wrtd(uut):
     def allow_one_wrtd():
+        uut.s0.SIG_SRC_TRG_0 = 'WRTT0'
         uut.cC.WRTD_TX = 1
         uut.cC.wrtd_tx = 1
     return allow_one_wrtd
@@ -84,8 +85,7 @@ def run_postprocess_command(cmd, uut_names):
     print("run {}".format(syscmd))
     os.system(syscmd)
 
-def run_mr(args):
-    args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
+def tee_up(args):
     master = args.uuts[0]
     with open(args.stl, 'r') as fp:
         args.stl = fp.read()
@@ -93,8 +93,8 @@ def run_mr(args):
     lit_stl = denormalise_stl(args)
 
     master.s0.SIG_SRC_TRG_0 = NONE
+
     if args.trg0_src == "WRTT0":
-        master.s0.SIG_SRC_TRG_0 = 'WRTT0'
         master.cC.WRTD_TX = 0
         master.cC.wrtd_commit_tx = 1
         rt = allows_one_wrtd(master)
@@ -118,7 +118,11 @@ def run_mr(args):
         u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
         u.s0.GPG_ENABLE = '1'
 
+def run_mr(args):
+    args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
+
     if args.set_arm != 0:
+        tee_up(args)
         shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
         shot_controller.run_shot(remote_trigger=rt)
     else:
