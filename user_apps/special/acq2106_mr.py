@@ -97,10 +97,10 @@ def tee_up(args):
     if args.trg0_src == "WRTT0":
         master.cC.WRTD_TX = 0
         master.cC.wrtd_commit_tx = 1
-        rt = allows_one_wrtd(master)
+        args.rt = allows_one_wrtd(master)
     else:
         master.s0.SIG_SRC_TRG_0 = 'EXT'
-        rt = selects_trg_src(master, args.trg0_src)
+        args.rt = selects_trg_src(master, args.trg0_src)
 
     if args.tune_si5326:
         for u in args.uuts:
@@ -124,7 +124,7 @@ def run_mr(args):
     if args.set_arm != 0:
         tee_up(args)
         shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
-        shot_controller.run_shot(remote_trigger=rt)
+        shot_controller.run_shot(remote_trigger=args.rt)
     else:
         shot_controller.handle_data(args)
 
