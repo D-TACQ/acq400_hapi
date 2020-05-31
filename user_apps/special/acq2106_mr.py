@@ -32,7 +32,44 @@ import acq400_hapi
 from acq400_hapi import intSIAction
 from acq400_hapi import intSI
 import argparse
+import os
 import re
+
+import numpy as np
+try:
+    import matplotlib.pyplot as plt
+    plot_ok = 1
+except RuntimeError as e:
+    print("Sorry, plotting not available {}".format(e))
+    plot_ok = 0
+
+def handle_data(uuts, args, shot_controller):
+    if args.save_data:
+        shotdir = args.save_data.format(increment_shot(args))
+        for u in uuts:
+            u.save_data = shotdir
+
+    if args.trace_upload:
+        for u in uuts:
+            u.trace = 1
+
+    chx, ncol, nchan, nsam = shot_controller.read_channels(eval(args.channels))
+
+# plot ex: 2 x 8 ncol=2 nchan=8
+# U1 U2      FIG
+# 11 21      1  2
+# 12 22      3  4
+# 13 23
+# ...
+# 18 28     15 16
+    if plot_ok and args.plot_data:
+        for col in range(ncol):
+            for chn in range(0,nchan):
+                fignum = 1 + col + chn*ncol
+                plt.subplot(nchan, ncol, fignum)
+                plt.plot(chx[col][chn])
+
+        plt.show()
 
 """
 denormalise_stl(args): convert from usec to clock ticks. round to modulo decval
@@ -97,7 +134,7 @@ def run_mr(args):
         rt = selects_trg_src(master, args.trg0_src)
 
     if args.tune_si5326:
-        for u in uuts:
+        for u in args.uuts:
             print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
             u.s0.si5326_tune_phase = 1
 
@@ -115,6 +152,11 @@ def run_mr(args):
     if args.set_arm != 0:
         shot_controller = acq400_hapi.ShotController(args.uuts)
         shot_controller.run_shot(remote_trigger=rt)
+        if args.save_data or args.plot_data:
+            handle_data(uuts, args, shot_controller)
+
+SAVEDATA=os.getenv("SAVEDATA", None)
+PLOTDATA=int(os.getenv("PLOTDATA", "0"))
 
 
 def run_main():
@@ -129,6 +171,9 @@ def run_main():
     parser.add_argument('--evsel0', default=4, type=int, help="dX number for evsel0")
     parser.add_argument('--MR10DEC', default=8, type=int, help="decimation value")
     parser.add_argument('--verbose', type=int, default=0, help='Print extra debug info.')
+    parser.add_argument('--save_data', default=SAVEDATA, type=str, help="store data to specified directory, suffix {} for shot #")
+    parser.add_argument('--fake_epics4_data', default=SAVEDATA, type=str, help="store data to specified directory, suffix {} for shot #")
+    parser.add_argument('--plot_data', default=PLOTDATA, type=int, help="1: plot data")
     parser.add_argument('uut', nargs='+', help="uuts")
     run_mr(parser.parse_args())
 
