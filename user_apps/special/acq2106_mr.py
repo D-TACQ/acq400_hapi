@@ -79,6 +79,10 @@ def allows_one_wrtd(uut):
         uut.cC.wrtd_tx = 1
     return allow_one_wrtd
 
+def run_postprocess_command(args, cmd):
+    syscmd = "{} {}".format(cmd, " ".join(args.uut))
+    print("run {}".format(syscmd))
+
 def run_mr(args):
     args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
     master = args.uuts[0]
@@ -116,6 +120,13 @@ def run_mr(args):
     if args.set_arm != 0:
         shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
         shot_controller.run_shot(remote_trigger=rt)
+    else:
+        shot_controller.handle_data(args)
+
+    if args.get_epics4:
+        run_postprocess_command(args.get_epics4)
+    if args.get_mdsplus:
+        run_postprocess_command(args.get_mdsplus)
 
 
 def run_main():
@@ -131,7 +142,8 @@ def run_main():
     parser.add_argument('--evsel0', default=4, type=int, help="dX number for evsel0")
     parser.add_argument('--MR10DEC', default=8, type=int, help="decimation value")
     parser.add_argument('--verbose', type=int, default=0, help='Print extra debug info.')
-    parser.add_argument('--fake_epics4_data', default=acq400_hapi.SAVEDATA, type=str, help="store data to specified directory, suffix {} for shot #")
+    parser.add_argument('--get_epics4', default=None, type=str, help="run script [args] to store EPICS4 data")
+    parser.add_argument('--get_mdsplus', default=None, type=str, help="run script [args] to store mdsplus data")
     parser.add_argument('uut', nargs='+', help="uuts")
     run_mr(parser.parse_args())
 
