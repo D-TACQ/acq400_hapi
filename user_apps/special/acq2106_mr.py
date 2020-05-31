@@ -120,10 +120,10 @@ def tee_up(args):
 
 def run_mr(args):
     args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
+    shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
 
     if args.set_arm != 0:
         tee_up(args)
-        shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
         shot_controller.run_shot(remote_trigger=args.rt)
     else:
         shot_controller.handle_data(args)
@@ -143,7 +143,7 @@ def run_main():
     parser.add_argument('--WRTD_DELAY_NS', default=50*intSI.DEC.M, action=intSIAction, help='WRTD trigger delay')
     parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0")
     parser.add_argument('--tune_si5326', default=1, type=int, help="tune_si5326 (takes 60s), default:1")
-    parser.add_argument('--set_arm', default='0', help="1: set arm" )
+    parser.add_argument('--set_arm', default='0', type=int, help="1: set arm" )
     parser.add_argument('--evsel0', default=4, type=int, help="dX number for evsel0")
     parser.add_argument('--MR10DEC', default=8, type=int, help="decimation value")
     parser.add_argument('--verbose', type=int, default=0, help='Print extra debug info.')
