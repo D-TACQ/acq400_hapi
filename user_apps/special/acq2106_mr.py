@@ -29,6 +29,8 @@ optional arguments:
 """
 
 import acq400_hapi
+from acq400_hapi import intSIAction
+from acq400_hapi import intSI
 import argparse
 import re
 
@@ -70,8 +72,14 @@ def selects_trg_src(uut, src):
         uut.s0.SIG_SRC_TRG_0 = src
     return select_trg_src
 
+def allows_one_wrtd(uut):
+    def allow_one_wrtd():
+        uut.cC.WRTD_TX = 1
+        uut.cC.wrtd_tx = 1
+    return allow_one_wrtd
+
 def run_mr(args):
-    args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False) for u in args.uut ]
+    args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
     master = args.uuts[0]
     with open(args.stl, 'r') as fp:
         args.stl = fp.read()
@@ -79,6 +87,14 @@ def run_mr(args):
     lit_stl = denormalise_stl(args)
 
     master.s0.SIG_SRC_TRG_0 = NONE
+    if args.trg0_src == "WRTT0":
+        master.s0.SIG_SRC_TRG_0 = 'WRTT0'
+        master.cC.WRTD_TX = 0
+        master.cC.wrtd_commit_tx = 1
+        rt = allows_one_wrtd(master)
+    else:
+        master.s0.SIG_SRC_TRG_0 = 'EXT'
+        rt = selects_trg_src(master, args.trg0_src)
 
     for u in args.uuts:
         acq400_hapi.Acq400UI.exec_args(u, args)
@@ -93,14 +109,15 @@ def run_mr(args):
 
     if args.set_arm != 0:
         shot_controller = acq400_hapi.ShotController(args.uuts)
-        shot_controller.run_shot(remote_trigger=selects_trg_src(master, args.trg0_src))
+        shot_controller.run_shot(remote_trigger=rt)
 
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq2106_mr')
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     parser.add_argument('--stl', default='none', type=str, help='stl file')
-    parser.add_argument('--Fclk', default=40000000, type=int, help="base clock frequency")
+    parser.add_argument('--Fclk', default=40*intSI.DEC.M, action=intSIAction, help="base clock frequency")
+    parser.add_argument('--WRTD_DELAY_NS', default=50*intSI.DEC.M, action=intSIAction, help='WRTD trigger delay')
     parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0")
     parser.add_argument('--set_arm', default='0', help="1: set arm" )
     parser.add_argument('--evsel0', default=4, type=int, help="dX number for evsel0")
