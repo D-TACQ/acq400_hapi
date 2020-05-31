@@ -2,8 +2,8 @@
 import argparse
 from . import acq400
 from . import intSI
-from .intSIAction import intSI_cvt
-from .intSIAction import intSIAction
+from .intSI import intSI_cvt
+from .intSI import intSIAction
 
 class Acq400UI:
     """ Common UI features for consistent args handling across all apps
