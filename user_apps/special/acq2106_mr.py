@@ -120,7 +120,7 @@ def run_mr(args):
 def run_main():
     parser = argparse.ArgumentParser(description='acq2106_mr')
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
-    parser.add_argument('--stl', default='none', type=str, help='stl file')
+    parser.add_argument('--stl', default='./STL/acq2106_mr00.stl', type=str, help='stl file')
     parser.add_argument('--Fclk', default=40*intSI.DEC.M, action=intSIAction, help="base clock frequency")
     parser.add_argument('--WRTD_DELAY_NS', default=50*intSI.DEC.M, action=intSIAction, help='WRTD trigger delay')
     parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0")
