@@ -79,8 +79,8 @@ def allows_one_wrtd(uut):
         uut.cC.wrtd_tx = 1
     return allow_one_wrtd
 
-def run_postprocess_command(args, cmd):
-    syscmd = "{} {}".format(cmd, " ".join(args.uut))
+def run_postprocess_command(cmd, uut_names):
+    syscmd = "{} {}".format(cmd, " ".join(uut_names))
     print("run {}".format(syscmd))
 
 def run_mr(args):
@@ -124,9 +124,9 @@ def run_mr(args):
         shot_controller.handle_data(args)
 
     if args.get_epics4:
-        run_postprocess_command(args.get_epics4)
+        run_postprocess_command(args.get_epics4, args.uut)
     if args.get_mdsplus:
-        run_postprocess_command(args.get_mdsplus)
+        run_postprocess_command(args.get_mdsplus, args.uut)
 
 
 def run_main():
