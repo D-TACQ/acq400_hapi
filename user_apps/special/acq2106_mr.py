@@ -110,8 +110,12 @@ def tee_up(args):
 
     if args.tune_si5326:
         for u in args.uuts:
-            print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
-            u.s0.si5326_tune_phase = 1
+            if args.tune_si5326 == 2:
+                if int(u.cC.Si5326_TUNEPHASE_OK.split(" ")[1]) == 1:
+                    print("{} TUNEPHASE_OK, skip".format(u))
+                else:
+                    print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
+                    u.s0.si5326_tune_phase = 1
 
     for u in args.uuts:
         acq400_hapi.Acq400UI.exec_args(u, args)
