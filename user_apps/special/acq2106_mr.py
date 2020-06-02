@@ -85,9 +85,15 @@ def run_postprocess_command(cmd, uut_names):
     print("run {}".format(syscmd))
     os.system(syscmd)
 
+def open_safe(fn, mode):
+    try:
+        return open(fn, mode)
+    except:
+        return open("{}/{}".format(os.getenv("PYTHONPATH", '.'), fn), mode)
+
 def tee_up(args):
     master = args.uuts[0]
-    with open(args.stl, 'r') as fp:
+    with open_safe(args.stl, 'r') as fp:
         args.stl = fp.read()
 
     lit_stl = denormalise_stl(args)
