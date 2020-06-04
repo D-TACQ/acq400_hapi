@@ -14,7 +14,7 @@ class Acq400UI:
     """
     @staticmethod
     def _exec_args_trg(uut, args, trg):
-        print("exec_args_trg {}".format(trg))
+#        print("exec_args_trg {}".format(trg))
         if trg == 'notouch':
             return
         (typ, edge) = ('int', 'rising')
@@ -24,7 +24,7 @@ class Acq400UI:
             typ = trg
 
         triplet = "1,%d,%d" % (0 if typ == 'ext' else 1, 0 if edge == 'falling' else 1)
-        print("triplet={}".format(triplet))
+#        print("triplet={}".format(triplet))
         if args.pre != 0:
             uut.s1.trg = "1,1,1"
             uut.s1.event0 = triplet
@@ -129,7 +129,7 @@ class Acq400UI:
     def exec_args(uut, args):
         """ and execute all the args
         """
-        print("exec_args" )
+#        print("exec_args" )
         if args.clk:
             Acq400UI._exec_args_clk(uut, args.clk)
         if args.sim:
