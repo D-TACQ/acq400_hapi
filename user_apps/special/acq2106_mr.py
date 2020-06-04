@@ -101,6 +101,7 @@ def tee_up(args):
     master.s0.SIG_SRC_TRG_0 = NONE
 
     if args.trg0_src == "WRTT0":
+	master.s0.wr_trg_src = '1,0,1'
         master.cC.WRTD_TX = 0
         master.cC.wrtd_commit_tx = 1
         args.rt = allows_one_wrtd(master)
