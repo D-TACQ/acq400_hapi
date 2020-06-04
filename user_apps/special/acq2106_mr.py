@@ -108,11 +108,14 @@ def tee_up(args):
         master.s0.SIG_SRC_TRG_0 = 'EXT'
         args.rt = selects_trg_src(master, args.trg0_src)
 
+    for u in args.uuts[1:]:
+        u.s0.SIG_SRC_TRG_0 = "WRTT0"
+
     if args.tune_si5326:
         for u in args.uuts:
             if args.tune_si5326 == 2:
                 if int(u.cC.Si5326_TUNEPHASE_OK.split(" ")[1]) == 1:
-                    print("{} TUNEPHASE_OK, skip".format(u))
+                    print("{} TUNEPHASE_OK, skip".format(u.uut))
                 else:
                     print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
                     u.s0.si5326_tune_phase = 1
