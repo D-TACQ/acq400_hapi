@@ -616,7 +616,7 @@ class Acq400:
                     return
             raise ValueError("frequency out of range {}".format(hz))
 
-    def load_stl(self, stl, port, trace = False, wait_eof = False):
+    def load_stl(self, stl, port, trace = False, wait_eof = True, wait_eol = True):
         termex = re.compile("\n")
         with netclient.Netclient(self.uut, port) as nc:
             lines = stl.split("\n")
@@ -632,13 +632,13 @@ class Acq400:
                         print("skip comment")
                     continue
                 nc.sock.send((ll+"\n").encode())
-                rx = nc.sock.recv(4096)
-                if trace:
-                    print("< {}".format(rx))
+                if wait_eol:
+                    rx = nc.sock.recv(4096)
+                    if trace:
+                        print("< {}".format(rx))
             nc.sock.send("EOF\n".encode())
             nc.sock.shutdown(socket.SHUT_WR)
-            wait_end = True
-            while wait_end:
+            while wait_eof:
                 rx = nc.sock.recv(4096)
                 if trace:
                     print("< {}".format(rx))
@@ -649,13 +649,13 @@ class Acq400:
 
 
     def load_gpg(self, stl, trace = False):
-        self.load_stl(stl, AcqPorts.GPGSTL, trace, True)
+        self.load_stl(stl, AcqPorts.GPGSTL, trace)
 
     def load_dpg(self, stl, trace = False):
-        self.load_stl(stl, AcqPorts.DPGSTL, trace)
+        self.load_stl(stl, AcqPorts.DPGSTL, trace, wait_eol=False)
 
     def load_wrpg(self, stl, trace = False):
-        self.load_stl(stl, AcqPorts.WRPG, trace, True)
+        self.load_stl(stl, AcqPorts.WRPG, trace)
 
     class AwgBusyError(Exception):
         def __init__(self, value):
