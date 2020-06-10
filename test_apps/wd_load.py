@@ -90,7 +90,7 @@ def chans2stl(channels):
 def save_stl(stl, file_name):
     with open(file_name, 'w+') as file:
         for num in range(0,len(stl[0])):
-            file.write("{} {}".format(int(stl[0][num]), hex(int(stl[1][num]))))
+            file.write("{} {}\n".format(int(stl[0][num]), hex(int(stl[1][num]))))
     return None
 
 
