@@ -27,6 +27,7 @@ def wd2np(wave, breaks):
     # Takes wavedrom syntax and creates a numpy array of 1s and 0s.
     binary_wave = []
     wave = list(wave)
+    break_counter = 0
     for num, character in enumerate(wave):
         # print(character)
 
@@ -41,7 +42,8 @@ def wd2np(wave, breaks):
             # Treat pipe as breaks * last state where breaks is either always
             # the same value, or is a list of values.
             try:
-                binary_wave = binary_wave + int(breaks[num]) * [int(wave[num-1])]
+                binary_wave = binary_wave + int(breaks[break_counter]) * [int(wave[num-1])]
+                break_counter += 1
             except:
                 binary_wave = binary_wave + int(breaks[0]) * [int(wave[num-1])]
 
