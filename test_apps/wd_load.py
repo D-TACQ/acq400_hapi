@@ -45,7 +45,7 @@ def wd2np(wave, breaks):
                 binary_wave = binary_wave + int(breaks[break_counter]) * [int(wave[num-1])]
                 break_counter += 1
             except:
-                binary_wave = binary_wave + int(breaks[0]) * [int(wave[num-1])]
+                binary_wave = binary_wave + int(breaks[-1]) * [int(wave[num-1])]
 
     return np.array(binary_wave)
 
