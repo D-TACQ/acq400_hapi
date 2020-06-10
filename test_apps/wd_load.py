@@ -12,7 +12,6 @@ def get_args():
     parser.add_argument('--breaks',  default='100', help="How many clock ticks a line break is.")
     parser.add_argument('--print_stl',  default=1, help="Print resultant STL or not.")
     parser.add_argument('--file_name',  default='wd.stl', help="Name of file to save stl to.")
-    parser.add_argument('uut', nargs='+', help="uut")
     args = parser.parse_args()
     args.breaks = [ int(item) for item in args.breaks.split(',') ]
     return args
