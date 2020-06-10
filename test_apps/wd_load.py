@@ -29,7 +29,6 @@ def wd2np(wave, breaks):
     wave = list(wave)
     break_counter = 0
     for num, character in enumerate(wave):
-        # print(character)
 
         if character == '1':
             binary_wave.append(1)
@@ -62,24 +61,34 @@ def strip_json(json, breaks):
         # of somewhere that changes and add one since the dimension of the new
         # array is off by 1 since we took the diff.
         change_locations = np.where(np.abs(np.diff(binary_wave)) == 1) + np.array([1])
-        change_values = binary_wave[change_locations]
-        stl = np.array([change_locations, change_values, binary_wave])
-        # channels.append(wd2np(json, breaks))
+        stl = np.array([change_locations, binary_wave])
         channels.append(stl)
     return channels
 
 
 def chans2stl(channels):
-    # indexes = np.concatenate()
+    # This function takes a list of N channels, each with 2 sublists where
+    # the first sublist is the location of any changes in value in the second
+    # list, the second is a full binary array of 1s and 0s for that channel.
+
     left_col = np.array([])
     for chan in channels:
+        # Append all of the locations of a change in value to left_col.
         left_col = np.concatenate((left_col, chan[0][0]))
-    left_col = np.unique(left_col) # removes duplicates and sorts.
+    left_col = np.unique(left_col) # removes duplicate entries and sorts.
 
     right_col = np.zeros(left_col.shape[-1])
     left_col = left_col.astype(np.uint32)
+
     for num, chan in enumerate(channels):
-        right_col = right_col + (chan[2][left_col] * 2**num)
+        # For each change in value add (value ** N) where N = channel index (1,2,3 etc).
+        if len(chan[1]) < left_col[-1]:
+            # If one ch has more entries than another extend chs that are short.
+            difference = int(left_col[-1] - len(chan[1])) + 1
+            extension = np.full((1, difference), int(chan[1][-1]))[0]
+            chan[1] = np.concatenate((chan[1], extension))
+
+        right_col += (chan[1][left_col] * 2**num)
 
     left_col = np.concatenate((np.array([0]), left_col))
     right_col = np.concatenate((np.array([0]), right_col))
