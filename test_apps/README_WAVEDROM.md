@@ -62,3 +62,53 @@ In our original example the output STL will now change to the following:
 
 Notice that instead of increasing by 100 again (to 210), we increase by 300 (to 410) where the second pipe is located.
 
+## Combining single channel STL files
+
+The script can also be used to combine single channel STL files into a single STL file to be loaded to the acq400 series digital output device. Here is a simple example of combining three single channel STL files into a single STL file which could be loaded to the device:
+
+### Single channel STL files:
+
+In this example these STL files are saved to disk so the script can pick them up:
+
+ta.stl:
+
+    0 0
+    100 1
+    110 0
+
+tb.stl:
+
+    0 0
+    200 1
+    210 0
+    400 1
+    410 0
+
+and tc.stl:
+
+    0 0
+    100 1
+    110 0
+    1000 1
+    1010 0
+
+
+### Command to combine the files:
+
+To combine the files we can use the following command:
+
+    python3 wd_load.py --input_file="./wd.json" --breaks="100,300" --stl=d0=ta.stl,d1=tb.stl,d2=tc.stl
+
+This will then output the following:
+
+    0 0x0
+    100 0x5
+    110 0x0
+    200 0x2
+    210 0x0
+    400 0x2
+    410 0x0
+    1000 0x4
+    1010 0x0
+
+Which is the correct composite STL from the combination of the three waves above. The STL is also saved to disk. The name of the output file can be configured from the command line using the --output_file parameter.
