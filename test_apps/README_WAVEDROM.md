@@ -97,7 +97,7 @@ and tc.stl:
 
 To combine the files we can use the following command:
 
-    python3 wd_load.py --input_file="./wd.json" --breaks="100,300" --stl=d0=ta.stl,d1=tb.stl,d2=tc.stl
+    python3 wd_load.py  --stl=d0=ta.stl,d1=tb.stl,d2=tc.stl
 
 This will then output the following:
 
