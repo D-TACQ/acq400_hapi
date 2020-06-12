@@ -1,8 +1,8 @@
-# load_wd.py
+# create_gpg_stl.py
 
 ## Usage
 
-load_wd.py loads a local JSON file created in the style of a wavedrom JSON file to create an STL file. This STL file can then loaded to acq400 series digital output devices. This makes it easier for users to create their own custom digital output patterns and use them with their digital output device.
+create_gpg_stl.py loads a local JSON file created in the style of a wavedrom JSON file to create an STL file. This STL file can then loaded to acq400 series digital output devices. This makes it easier for users to create their own custom digital output patterns and use them with their digital output device.
 
 An example STL file would be something like this:
 
@@ -13,7 +13,7 @@ An example STL file would be something like this:
 
 Note that this example is only two channels for the sake of brevity. Save this to a file inside the test_apps directory and then use the load_wd.py script like so:
 
-    python3 wd_load.py --file="./wd.json"
+    python3 create_gpg_stl.py --file="./wd.json"
 
 This will print the corresponding STL to the terminal, but will also save it to ./wd.stl. It should look something like this if you are using the above example:
 
@@ -45,7 +45,7 @@ The WaveDrom signals above are a collection of 1s, 0s, .s, and |s. There are oth
 
 The pipe can be configured to by a single, repeatable gap or the user can pass a list of delays to use for the pipe. If we use our example from the previous section and adjust our command to:
 
-    python3 wd_load.py --file="./wd.json" --breaks="100,300"
+    python3 create_gpg_stl.py --file="./wd.json" --breaks="100,300"
 
 In our original example the output STL will now change to the following:
 
@@ -97,7 +97,7 @@ and tc.stl:
 
 To combine the files we can use the following command:
 
-    python3 wd_load.py  --stl=d0=ta.stl,d1=tb.stl,d2=tc.stl
+    python3 create_gpg_stl.py  --stl=d0=ta.stl,d1=tb.stl,d2=tc.stl
 
 This will then output the following:
 
@@ -112,3 +112,4 @@ This will then output the following:
     1010 0x0
 
 Which is the correct composite STL from the combination of the three waves above. The STL is also saved to disk. The name of the output file can be configured from the command line using the --output_file parameter.
+
