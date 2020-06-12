@@ -1,10 +1,14 @@
 # create_gpg_stl.py
 
-## Usage
+## What does the script do?
 
-create_gpg_stl.py loads a local JSON file created in the style of a wavedrom JSON file to create an STL file. This STL file can then loaded to acq400 series digital output devices. This makes it easier for users to create their own custom digital output patterns and use them with their digital output device.
+create_gpg_stl.py either:
+- loads a local JSON file created in the style of a wavedrom JSON file to create an STL file. This STL file can then loaded to acq400 series digital output devices. This makes it easier for users to create their own custom digital output patterns and use them with their digital output device.
+- loads multiple single channel STL files into a single STL file that can then be loaded to an acq400 digital output device.
 
-An example STL file would be something like this:
+## Loading a WaveDrom JSON file.
+
+An example JSON file would be something like this:
 
     {"signal": [
       {"name": "req", "wave": "0.1..0|1.01|01"},
@@ -13,7 +17,7 @@ An example STL file would be something like this:
 
 Note that this example is only two channels for the sake of brevity. Save this to a file inside the test_apps directory and then use the load_wd.py script like so:
 
-    python3 create_gpg_stl.py --file="./wd.json"
+    python3 create_gpg_stl.py --wd_input_file="./wd.json"
 
 This will print the corresponding STL to the terminal, but will also save it to ./wd.stl. It should look something like this if you are using the above example:
 
@@ -45,7 +49,7 @@ The WaveDrom signals above are a collection of 1s, 0s, .s, and |s. There are oth
 
 The pipe can be configured to by a single, repeatable gap or the user can pass a list of delays to use for the pipe. If we use our example from the previous section and adjust our command to:
 
-    python3 create_gpg_stl.py --file="./wd.json" --breaks="100,300"
+    python3 create_gpg_stl.py --wd_input_file="./wd.json" --breaks="100,300"
 
 In our original example the output STL will now change to the following:
 
@@ -111,5 +115,5 @@ This will then output the following:
     1000 0x4
     1010 0x0
 
-Which is the correct composite STL from the combination of the three waves above. The STL is also saved to disk. The name of the output file can be configured from the command line using the --output_file parameter.
+Which is the correct composite STL from the combination of the three waves above. The STL is also saved to disk. The name of the output file can be configured from the command line using the wd_output_file parameter.
 

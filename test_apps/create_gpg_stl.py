@@ -8,10 +8,10 @@ import json
 
 def get_args():
     parser = argparse.ArgumentParser(description='Use wavedrom JSON file for dpg')
-    parser.add_argument('--input_file',  default='./wd.json', help="Which JSON file to use to load dpg.")
+    parser.add_argument('--wd_input_file',  default='./wd.json', help="Which JSON file to use to load dpg.")
     parser.add_argument('--breaks',  default='100', help="How many clock ticks a line break is.")
     parser.add_argument('--print_stl',  default=1, help="Print resultant STL or not.")
-    parser.add_argument('--output_file',  default='wd.stl', help="Name of file to save stl to.")
+    parser.add_argument('--wd_output_file',  default='wd.stl', help="Name of file to save stl to.")
     parser.add_argument('--stl', default='none', type=str,
     help='If this option is used then single channel STL files can be used. For more info see README_WAVEDROM.md')
 
@@ -141,13 +141,13 @@ def main():
 
     if args.stl == 'none':
         # If the user has not specified an STL assume using JSON.
-        data = load_json(args.input_file)
+        data = load_json(args.wd_input_file)
         channels = strip_json(data, args.breaks)
     else:
         channels = load_stl(args.stl)
 
     stl = chans2stl(channels)
-    save_stl(stl, args.output_file)
+    save_stl(stl, args.wd_output_file)
     if args.print_stl:
         for num in range(0,len(stl[0])):
             print(int(stl[0][num]), hex(int(stl[1][num])))
