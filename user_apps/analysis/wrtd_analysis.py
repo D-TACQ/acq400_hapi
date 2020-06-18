@@ -5,6 +5,7 @@ from acq400_hapi import intSIAction
 from acq400_hapi import intSI
 
 import numpy as np
+import matplotlib.pyplot as plt
 import math
 
 
@@ -50,14 +51,18 @@ def analyse(args):
                 (uut, rx, nrx, cur, ts, adj, diff, stat) = line.split(' ')
                 if not uut in uuts.keys():
                     uuts[uut] = {}
-                uuts[uut][int(nrx.split(':')[1])] = { 'diff': int(diff.split(':')[1]), 'stat': stat }
+                uuts[uut][int(nrx.split(':')[1])] = { 'nrx': int(nrx.split(':')[1]), 'diff': int(diff.split(':')[1]), 'stat': stat }
                 #print(uuts[uut][int(nrx.split(':')[1])])
             except ValueError:
                 pass
 
     for u, samples in uuts.items():
-        m1, m2, m3, m4 = mmm([samples[i]['diff'] for i in samples.keys()], float(args.wrtd_delta_ns))
-        print("{} min:{:4d} max:{:4d} mean:{:4d} rms:{:4d} usec".format(u, m1, m2, m3, m4))
+        diffs = [samples[i]['diff'] for i in samples.keys()]
+#        hg, bins = np.histogram([(float(args.wrtd_delta_ns)-d)*1e-6 for d in diffs],bins=20)
+#        plt.plot(hg)
+#        plt.show()
+        m1, m2, m3, m4 = mmm(diffs, float(args.wrtd_delta_ns))
+        print("{} n:{} min:{:4d} max:{:4d} mean:{:4d} rms:{:4d} usec".format(u, len(samples), m1, m2, m3, m4))
 
 
 
