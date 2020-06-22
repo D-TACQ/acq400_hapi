@@ -54,8 +54,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import hil_plot_support as pltsup
 import zero_offset
-from future import builtins
-from builtins import input
+if sys.version_info < (3, 0):
+    from future import builtins
+    from builtins import input
 
 
 def run_target(uut, args):

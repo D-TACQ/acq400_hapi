@@ -52,13 +52,12 @@ from acq400_hapi import awg_data
 import argparse
 from subprocess import call
 import re
-from future import builtins
-from builtins import input
+if sys.version_info < (3, 0):
+    from future import builtins
+    from builtins import input
 import socket
 import os
 import numpy as np
-import sys
-from future import builtins
 import matplotlib.pyplot as plt
 import time
 

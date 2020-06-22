@@ -15,8 +15,9 @@ Linux:
 Windows:
 python .\go_demux.py --data_file="C:/O_DATA/event-1-50000-50000.dat"
 """
-
-from __future__ import division
+import sys
+if sys.version_info < (3, 0):
+    from __future__ import division
 
 import numpy as np
 import matplotlib.pyplot as plt

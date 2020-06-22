@@ -8,8 +8,10 @@ ustc_sync_role ::: set master slave clocking for ustc stack
 import argparse
 import acq400_hapi
 import time
-from future import builtins
-from builtins import input
+import sys
+if sys.version_info < (3, 0):
+    from future import builtins
+    from builtins import input
 
 
 def run_main(args):

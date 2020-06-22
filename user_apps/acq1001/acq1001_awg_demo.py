@@ -32,7 +32,8 @@ import sys
 import acq400_hapi
 from acq400_hapi import awg_data
 import argparse
-from future import builtins
+if sys.version_info < (3, 0):
+    from future import builtins
 from builtins import input
 
         

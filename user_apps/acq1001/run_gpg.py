@@ -27,12 +27,13 @@ optional arguments:
   --hdmi_master HDMI_MASTER
                         clk, trg and gpg drive HDMI outputs
 """
-
-from __future__ import division
+import sys
+if sys.version_info < (3, 0):
+    from __future__ import division
+    from builtins import input
 import acq400_hapi
 import argparse
 import re
-from builtins import input
 
 
 def gen_stl(uut, pulse_train, args):
