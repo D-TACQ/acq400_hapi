@@ -15,11 +15,13 @@ import sys
 import os
 from threading import Lock
 
-try:
-    from future import builtins
-    from builtins import input
-except:
-    print("No builtins/future found. Some features might not work correctly.")
+
+if sys.version_info < (3, 0):
+    try:
+        from future import builtins
+        from builtins import input
+    except:
+        print("No builtins/future found. Some features might not work correctly.")
 
 
 class Netclient:
