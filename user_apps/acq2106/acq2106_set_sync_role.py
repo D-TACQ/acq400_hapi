@@ -29,8 +29,10 @@ optional arguments:
 import argparse
 import acq400_hapi
 import time
-from future import builtins
-from builtins import input
+import sys
+if sys.version_info < (3, 0):
+    from future import builtins
+    from builtins import input
 
 def set_mb_clk(uut, clkdef):
     fmt = acq400_hapi.intSI_cvt

@@ -9,11 +9,12 @@ Usage:
 python3.6 cpsc2_test.py --data /home/sean/PROJECTS/workspace/cpsc2_data/small/bigrawlogfile2 --zoom 36000 36500
 """
 
-from __future__ import print_function
-from future import builtins
+import sys
+if sys.version_info < (3, 0):
+    from __future__ import print_function
+    from future import builtins
 import argparse
 import numpy as np
-import sys
 import matplotlib.pyplot as plt
 
 
