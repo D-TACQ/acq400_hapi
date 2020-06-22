@@ -32,8 +32,10 @@ import acq400_hapi
 from acq400_hapi import intSIAction
 from acq400_hapi import intSI
 import argparse
+import threading
 import os
 import re
+import sys
 
 """
 denormalise_stl(args): convert from usec to clock ticks. round to modulo decval
@@ -91,6 +93,37 @@ def open_safe(fn, mode):
     except:
         return open("{}/{}".format(os.getenv("PYTHONPATH", '.'), fn), mode)
 
+def tune_action(u):
+    def _tune_action():
+        u.s0.si5326_tune_phase = 1
+    return _tune_action
+
+
+def _tune_up_mt(args):
+    thx = []
+    for u in args.uuts:
+        if args.tune_si5326 == 2:
+            if int(u.cC.Si5326_TUNEPHASE_OK.split(" ")[1]) == 1:
+                print("{} TUNEPHASE_OK, skip".format(u.uut))
+                continue
+
+        print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
+        th = threading.Thread(target=tune_action(u))
+        th.start()
+        thx.append(th)
+
+    for t in thx:
+        t.join()
+
+def tune_up_mt(args):
+    if args.tune_si5326 == 0:
+        return
+
+    _tune_up_mt(args)
+
+    if args.tune_si5326 == -1:
+        sys.exit('tuneup done')
+
 def tee_up(args):
     master = args.uuts[0]
     with open_safe(args.stl, 'r') as fp:
@@ -113,15 +146,6 @@ def tee_up(args):
     for u in args.uuts[1:]:
         u.s0.SIG_SRC_TRG_0 = "WRTT0"
 
-    if args.tune_si5326:
-        for u in args.uuts:
-            if args.tune_si5326 == 2:
-                if int(u.cC.Si5326_TUNEPHASE_OK.split(" ")[1]) == 1:
-                    print("{} TUNEPHASE_OK, skip".format(u.uut))
-                else:
-                    print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
-                    u.s0.si5326_tune_phase = 1
-
     for u in args.uuts:
         acq400_hapi.Acq400UI.exec_args(u, args)
         u.s0.gpg_trg = '1,0,1'
@@ -135,6 +159,7 @@ def tee_up(args):
 
 def run_mr(args):
     args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
+    tune_up_mt(args)
     shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
 
     if args.set_arm != 0:
