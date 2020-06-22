@@ -54,8 +54,9 @@ import os
 import subprocess
 
 import hil_plot_support as pltsup
-from future import builtins
-from builtins import input
+if sys.version_info < (3, 0):
+    from future import builtins
+    from builtins import input
 
 
 def run_shots(args):

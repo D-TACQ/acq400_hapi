@@ -35,8 +35,9 @@ import sys
 import acq400_hapi
 from acq400_hapi import awg_data
 import argparse
-from future import builtins
-from builtins import input
+if sys.version_info < (3, 0):
+    from future import builtins
+    from builtins import input
 
 def store_file(it, rdata, nchan, nsam):
     fn = 'DATA/ai%04d.dat' % (it)
