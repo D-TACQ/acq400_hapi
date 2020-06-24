@@ -1,4 +1,3 @@
-import signal
 import sys
 import threading
 import time
@@ -7,10 +6,8 @@ import errno
 
 try:
     import matplotlib.pyplot as plt
-    plot_ok = 1
-except RuntimeError as e:
-    print("Sorry, plotting not available {}".format(e))
-    plot_ok = 0
+except Exception as e:
+    plt = e
 
 def wait_for_state(uut, state, timeout=0):
     UUTS = [uut]
@@ -196,14 +193,17 @@ class ShotControllerWithDataHandler(ShotController):
     # 13 23
     # ...
     # 18 28     15 16
-        if plot_ok and args.plot_data:
-            for col in range(ncol):
-                for chn in range(0,nchan):
-                    fignum = 1 + col + chn*ncol
-                    plt.subplot(nchan, ncol, fignum)
-                    plt.plot(chx[col][chn])
+        if args.plot_data:
+            if isinstance(plt, Exception):
+                print("Sorry, plotting not available")
+            else:
+                for col in range(ncol):
+                    for chn in range(0,nchan):
+                        fignum = 1 + col + chn*ncol
+                        plt.subplot(nchan, ncol, fignum)
+                        plt.plot(chx[col][chn])
+                plt.show()
 
-            plt.show()
 
     @staticmethod
     def save_data_init(args, save_data):
