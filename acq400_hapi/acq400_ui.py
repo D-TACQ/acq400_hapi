@@ -6,7 +6,8 @@ from . import acq400
 from . import intSI
 from .intSI import intSI_cvt
 from .intSI import intSIAction
-
+from . import acq400_uut_handler
+from .acq400_uut_handler import uut_handler
 
 
 class Acq400UI:
@@ -103,7 +104,7 @@ class Acq400UI:
 
 
     @staticmethod
-    def add_args(parser, transient=False, post=True, pre=True, demux=1):
+    def add_args(parser, transient=False, post=True, pre=True, uuts=False, demux=1):
         """ generate standard args list
 
         Args:
@@ -117,6 +118,9 @@ class Acq400UI:
                 parser.add_argument('--post', default=100000, action=intSIAction, help='post-trigger samples')
             if demux > -1:
                 parser.add_argument('--demux', default='{}'.format(demux), type=int, help='embedded demux')
+
+        if uuts:
+            parser.add_argument('uuts', nargs='+', action=uut_handler, help="uuts")
 
         parser.add_argument('--clk', default=None, help='int|ext|zclk|xclk,fpclk,SR,[FIN]')
         parser.add_argument('--trg', default=None, help='int|ext,rising|falling')
