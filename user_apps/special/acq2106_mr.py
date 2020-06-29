@@ -133,9 +133,11 @@ def tee_up(args):
 
     master.s0.SIG_SRC_TRG_0 = NONE
 
-    if args.trg0_src == "WRTT0":
-        master.s0.wr_trg_src = '1,0,1'
+    trg0_src = args.trg0_src.split(',')
+    if trg0_src[0] == "WRTT0":
+        master.s0.wr_trg_src = '1,{},1'.format(1 if len(trg0_src)==2 and trg0_src[1]=='RP' else 0)
         master.cC.WRTD_TX = 0
+        master.cC.WRTD_DELTA_NS = args.WRTD_DELTA_NS
         master.cC.wrtd_commit_tx = 1
         args.rt = allows_one_wrtd(master)
     else:
@@ -179,8 +181,8 @@ def run_main():
     acq400_hapi.ShotControllerUI.add_args(parser)
     parser.add_argument('--stl', default='./STL/acq2106_mr00.stl', type=str, help='stl file')
     parser.add_argument('--Fclk', default=40*intSI.DEC.M, action=intSIAction, help="base clock frequency")
-    parser.add_argument('--WRTD_DELAY_NS', default=50*intSI.DEC.M, action=intSIAction, help='WRTD trigger delay')
-    parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0")
+    parser.add_argument('--WRTD_DELTA_NS', default=50*intSI.DEC.M, action=intSIAction, help='WRTD trigger delay')
+    parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0, WRTT0,RP")
     parser.add_argument('--tune_si5326', default=1, type=int, help="tune_si5326 (takes 60s), default:1")
     parser.add_argument('--set_arm', default='0', type=int, help="1: set arm" )
     parser.add_argument('--evsel0', default=4, type=int, help="dX number for evsel0")
