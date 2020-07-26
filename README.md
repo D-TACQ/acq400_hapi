@@ -8,7 +8,8 @@ python module to connect to remote hosts
 
 ## Installation
 
-### ** Recommended ** Use Latest Github
+### Use Latest Github
+**Recommended** 
 
 ... and use PYTHONPATH to reference the library when used from anyway.
 ```bash
@@ -57,7 +58,7 @@ allowing access to post-shot data on 53000+ch
 each knob on the site is presented as a property of the connection, so that 
 simple bash-script-like syntax can be used
 
-** NOTE ** on Name Service:
+**NOTE** on Name Service:
 HAPI uses regular DNS for name resolution.
 *Ideally* your UUT has a DNS name that matches the hostname
 
@@ -65,8 +66,10 @@ How to tell?
 ping acq2106_123
 
 If that works, you have DNS.
-If it doesn't, well HAPI will work with a raw IP address, but it's much clearer to set up a local "DNS".
-That doesn't have to be full DNS subsystem, all you need is to set the name mapping in your system's hosts file:
+If it doesn't, well HAPI will work with a raw IP address, but it's much clearer to set up a "local DNS".
+All our examples use the convention hostname IS dnsname.
+
+The "local DNS" doesn't have to be full DNS subsystem, all you need is to set the name mapping in your system's hosts file:
  * Linux : /etc/hosts/
  * Windows : C:\Windows\System32\Drivers\etc\hosts
 
