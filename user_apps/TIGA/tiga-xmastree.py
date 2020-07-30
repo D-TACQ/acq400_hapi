@@ -144,11 +144,18 @@ CYCLE,d3,d2,d1,d0      # flashes in second
 3 1,2,3,0
 4 1,2,3,4
 
-Load all sites.
+Load the SAME STL to all sites.
+1 1,0,0,0 1,0,0,0 1,0,0,0 1,0,0,0
+2 1,2,0,0 1,2,0,0 1,2,0,0 1,2,0,0
+3 1,2,3,0 1,2,3,0 1,2,3,0 1,2,3,0
+4 1,2,3,4 1,2,3,4 1,2,3,4 1,2,3,4
 PG2 triggers on SOFT_TRIGGER
 PG3,4,5 trigger on SITE-1 TRG
+ie the PG3 start trigger is the PG2 output trigger
 
-CYCLE PG2 PG3 PG4 PG5
+Then, when it runs, each site is triggered in turn when the PREVIOUS site outputs a trigger.
+
+CYCLE PG2 PG3 PG4 PG5   ** APPEARANCE, not STL
 1 1,0,0,0 0,0,0,0 0,0,0,0 0,0,0,0
 2 1,2,0,0 1,0,0,0 0,0,0,0 0,0,0,0
 3 1,2,3,0 1,2,0,0 1,0,0,0 0,0,0,0
