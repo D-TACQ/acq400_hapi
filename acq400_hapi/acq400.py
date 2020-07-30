@@ -1207,5 +1207,11 @@ def run_unit_test():
         print("SITE:%s MODEL:%s" % (sx, uut.svc[sx].sr("MODEL")))
 
 
+def sigsel(enable=1, dx=1, site=None, edge=1):
+    if not site is None:
+        return "{},{},{}".format(enable, site+1, edge)
+    else:
+        return "{},{},{}".format(enable, dx, edge)
+
 if __name__ == '__main__':
     run_unit_test()
