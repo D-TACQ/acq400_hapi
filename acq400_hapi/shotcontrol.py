@@ -79,10 +79,19 @@ class ShotController:
         for t in self.tp:
             t.join()
 
-    def arm_shot(self):
-        for u in self.uuts:
+    def arm_shot_action(u):
+        def _arm_shot_action():
             print("%s set_arm" % (u.uut))
             u.s0.set_arm = 1
+        return _arm_shot_action
+
+
+    def arm_shot(self):
+        thx = [ threading.Thread(target=ShotController.arm_shot_action(u)) for u in self.uuts ]
+        for t in thx:
+            t.start()
+        for t in thx:
+            t.join()
         self.wait_armed()
 
     def abort_shot(self):
