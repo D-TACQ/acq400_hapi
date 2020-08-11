@@ -157,6 +157,8 @@ def tee_up(args):
         u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0), 'GPG')
         u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
         u.s0.GPG_ENABLE = '1'
+        if args.set_shot is not None:
+            u.s1.shot = args.set_shot
 
 def run_mr(args):
     args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
@@ -185,6 +187,7 @@ def run_main():
     parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0, WRTT0,RP")
     parser.add_argument('--tune_si5326', default=1, type=int, help="tune_si5326 (takes 60s), default:1")
     parser.add_argument('--set_arm', default='0', type=int, help="1: set arm" )
+    parser.add_argument('--set_shot', default=None, type=int, help="set this shot number on all UUTS before shot")
     parser.add_argument('--evsel0', default=4, type=int, help="dX number for evsel0")
     parser.add_argument('--MR10DEC', default=8, type=int, help="decimation value")
     parser.add_argument('--verbose', type=int, default=0, help='Print extra debug info.')
