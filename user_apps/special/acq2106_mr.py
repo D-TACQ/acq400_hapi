@@ -91,7 +91,7 @@ def open_safe(fn, mode):
     try:
         return open(fn, mode)
     except:
-        return open("{}/{}".format(os.getenv("PYTHONPATH", '.'), fn), mode)
+        return open("{}/{}".format(os.getenv("HAPIDIR", '.'), fn), mode)
 
 def tune_action(u):
     def _tune_action():
