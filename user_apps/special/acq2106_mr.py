@@ -124,12 +124,42 @@ def tune_up_mt(args):
     if args.tune_si5326 == -1:
         sys.exit('tuneup done')
 
+def tee_up_action(u, args):
+    acq400_hapi.Acq400UI.exec_args(u, args)
+    if u != args.uuts[0]:
+        u.s0.SIG_SRC_TRG_0 = "WRTT0"
+    u.s0.gpg_trg = '1,0,1'
+    u.s0.gpg_clk = '1,1,1'
+    u.s0.GPG_ENABLE = '0'
+    u.load_gpg(args.lit_stl, args.verbose > 1)
+    u.set_MR(True, evsel0=args.evsel0, evsel1=args.evsel0+1, MR10DEC=args.MR10DEC)
+    u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0), 'GPG')
+    u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
+    u.s0.GPG_ENABLE = '1'
+    if args.set_shot is not None:
+        u.s1.shot = args.set_shot
+
+def tee_up_mt_action(u, args):
+    def _tee_up_mt_action():
+        tee_up_action(u, args)
+    return _tee_up_mt_action
+    
+def tee_up_mt(args):
+    thx = []
+    for u in args.uuts:
+        th = threading.Thread(target=tee_up_mt_action(u, args))
+        th.start()
+        thx.append(th)
+    
+    for t in thx:
+        t.join()
+
 def tee_up(args):
     master = args.uuts[0]
     with open_safe(args.stl, 'r') as fp:
         args.stl = fp.read()
 
-    lit_stl = denormalise_stl(args)
+    args.lit_stl = denormalise_stl(args)
 
     master.s0.SIG_SRC_TRG_0 = NONE
 
@@ -144,21 +174,11 @@ def tee_up(args):
         master.s0.SIG_SRC_TRG_0 = 'EXT'
         args.rt = selects_trg_src(master, args.trg0_src)
 
-    for u in args.uuts[1:]:
-        u.s0.SIG_SRC_TRG_0 = "WRTT0"
-
-    for u in args.uuts:
-        acq400_hapi.Acq400UI.exec_args(u, args)
-        u.s0.gpg_trg = '1,0,1'
-        u.s0.gpg_clk = '1,1,1'
-        u.s0.GPG_ENABLE = '0'
-        u.load_gpg(lit_stl, args.verbose > 1)
-        u.set_MR(True, evsel0=args.evsel0, evsel1=args.evsel0+1, MR10DEC=args.MR10DEC)
-        u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0), 'GPG')
-        u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
-        u.s0.GPG_ENABLE = '1'
-        if args.set_shot is not None:
-            u.s1.shot = args.set_shot
+    if args.tee_up_mt:
+        tee_up_mt(args)
+    else:
+        for u in args.uuts:
+            tee_up_action(u, args)
 
 def run_mr(args):
     args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
@@ -193,6 +213,7 @@ def run_main():
     parser.add_argument('--verbose', type=int, default=0, help='Print extra debug info.')
     parser.add_argument('--get_epics4', default=None, type=str, help="run script [args] to store EPICS4 data")
     parser.add_argument('--get_mdsplus', default=None, type=str, help="run script [args] to store mdsplus data")
+    parser.add_argument('--tee_up_mt', default=1, type=int, help="multi thread init for speed")
     parser.add_argument('uut', nargs='+', help="uuts")
     run_mr(parser.parse_args())
 
