@@ -36,6 +36,7 @@ import threading
 import os
 import re
 import sys
+from libpasteurize.fixes import fix_kwargs
 
 """
 denormalise_stl(args): convert from usec to clock ticks. round to modulo decval
@@ -128,6 +129,8 @@ def tee_up_action(u, args):
     acq400_hapi.Acq400UI.exec_args(u, args)
     if u != args.uuts[0]:
         u.s0.SIG_SRC_TRG_0 = "WRTT0"
+        
+    u.wrtt0 = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
     u.s0.gpg_trg = '1,0,1'
     u.s0.gpg_clk = '1,1,1'
     u.s0.GPG_ENABLE = '0'
@@ -153,6 +156,9 @@ def tee_up_mt(args):
     
     for t in thx:
         t.join()
+        
+
+        
 
 def tee_up(args):
     master = args.uuts[0]
@@ -180,8 +186,27 @@ def tee_up(args):
         for u in args.uuts:
             tee_up_action(u, args)
 
+def post_shot_check_action(u, args):
+    def _post_shot_check_action():
+        u.wrtt0_after = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
+    return _post_shot_check_action
+
+def post_shot_checks(args):
+    thx = [ threading.Thread(target=post_shot_check_action(u, args)) for u in args.uuts ]
+    for t in thx:
+        t.start()
+    for t in thx:
+        t.join()
+    
+    report = [ "wrtt0 count:" ]
+    for u in args.uuts:
+            report.append("{} {}".format(u.wrtt0_after, "OK" if u.wrtt0_after == u.wrtt0+1 else "FAIL"))
+    print(" ".join(report))
+            
+
 def run_mr(args):
     args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
+    
     tune_up_mt(args)
     shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
 
@@ -191,6 +216,7 @@ def run_mr(args):
     else:
         shot_controller.handle_data(args)
 
+    post_shot_checks(args)
     if args.get_epics4:
         run_postprocess_command(args.get_epics4, args.uut)
     if args.get_mdsplus:
