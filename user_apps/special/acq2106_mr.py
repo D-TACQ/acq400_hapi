@@ -38,6 +38,20 @@ import re
 import sys
 from libpasteurize.fixes import fix_kwargs
 
+
+from functools import wraps
+from time import time
+
+def timing(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        ts = time()
+        result = f(*args, **kw)
+        te = time()
+        print('TIMING:func:%r took: %2.2f sec' % (f.__name__, te-ts))
+        return result
+    return wrap
+
 """
 denormalise_stl(args): convert from usec to clock ticks. round to modulo decval
 """
@@ -129,8 +143,11 @@ def tee_up_action(u, args):
     acq400_hapi.Acq400UI.exec_args(u, args)
     if u != args.uuts[0]:
         u.s0.SIG_SRC_TRG_0 = "WRTT0"
+
+    if args.set_shot is not None:
+        u.s1.shot = args.set_shot
+        u.cC.WR_WRTT0_RESET = 1
         
-    u.wrtt0 = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
     u.s0.gpg_trg = '1,0,1'
     u.s0.gpg_clk = '1,1,1'
     u.s0.GPG_ENABLE = '0'
@@ -139,9 +156,8 @@ def tee_up_action(u, args):
     u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0), 'GPG')
     u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
     u.s0.GPG_ENABLE = '1'
-    if args.set_shot is not None:
-        u.s1.shot = args.set_shot
-        u.cC.WR_WRTT0_RESET = 1
+
+    u.wrtt0 = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
 
 def tee_up_mt_action(u, args):
     def _tee_up_mt_action():
@@ -160,7 +176,7 @@ def tee_up_mt(args):
         
 
         
-
+@timing
 def tee_up(args):
     master = args.uuts[0]
     with open_safe(args.stl, 'r') as fp:
@@ -204,7 +220,19 @@ def post_shot_checks(args):
             report.append("{} {}".format(u.wrtt0_after, "OK" if u.wrtt0_after == u.wrtt0+1 else "FAIL"))
     print(" ".join(report))
             
-
+@timing
+def run_shot(args, shot_controller):
+    shot_controller.run_shot(remote_trigger=args.rt)
+    
+@timing 
+def run_epics_offload(args):
+    shot_controller.run_shot(remote_trigger=args.rt)
+    
+@timing
+def run_mdsplus_offload(args):
+    run_postprocess_command(args.get_mdsplus, args.uut)
+    
+@timing    
 def run_mr(args):
     args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
     
@@ -213,15 +241,16 @@ def run_mr(args):
 
     if args.set_arm != 0:
         tee_up(args)
-        shot_controller.run_shot(remote_trigger=args.rt)
+        run_shot(args, shot_controller)
     else:
         shot_controller.handle_data(args)
 
     post_shot_checks(args)
     if args.get_epics4:
-        run_postprocess_command(args.get_epics4, args.uut)
+        run_epics_offload(args)
+    
     if args.get_mdsplus:
-        run_postprocess_command(args.get_mdsplus, args.uut)
+        run_mdsplus_offload(args)
 
 
 def run_main():
