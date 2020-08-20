@@ -141,6 +141,7 @@ def tee_up_action(u, args):
     u.s0.GPG_ENABLE = '1'
     if args.set_shot is not None:
         u.s1.shot = args.set_shot
+        u.cC.WR_WRTT0_RESET = 1
 
 def tee_up_mt_action(u, args):
     def _tee_up_mt_action():
