@@ -13,15 +13,15 @@ The full document is recommended reading for new users, but for returning users 
 
 ### Internal clock and trigger:
 
-    ./user_apps/acq400/sync_role.py acq2106_279
-    ./user_apps/acq400/acq400_configure_transient.py --pre=0 --post=100000 --trg=int,rising acq2106_279
-    ./user_apps/acq400/acq400_upload.py --plot=1 --capture=1 --save_data="acq2106_279_{}" acq2106_279
+    ./user_apps/acq400/sync_role.py acq2106_123
+    ./user_apps/acq400/acq400_configure_transient.py --pre=0 --post=100000 --trg=int,rising acq2106_123
+    ./user_apps/acq400/acq400_upload.py --plot=1 --capture=1 --save_data="acq2106_123_{}" acq2106_123
 
 ### External clock and trigger
 
-    ./user_apps/acq400/sync_role.py --toprole=fpmaster --fin=1M --fclk=1M acq2106_279
-    ./user_apps/acq400/acq400_configure_transient.py --pre=0 --post=100000 --trg=ext,rising acq2106_279
-    ./user_apps/acq400/acq400_upload.py --soft_trigger=0 --plot=1 --capture=1 --save_data="acq2106_279_{}" acq2106_279
+    ./user_apps/acq400/sync_role.py --toprole=fpmaster --fin=1M --fclk=1M acq2106_123
+    ./user_apps/acq400/acq400_configure_transient.py --pre=0 --post=100000 --trg=ext,rising acq2106_123
+    ./user_apps/acq400/acq400_upload.py --soft_trigger=0 --plot=1 --capture=1 --save_data="acq2106_123_{}" acq2106_123
 
 ## Using sync_role
 
@@ -173,14 +173,14 @@ Not all of the arguments are necessary for basic usage.
 
 ### Arm, upload and plot
 
-    ./user_apps/acq400/acq400_upload.py --plot_data=1 --capture=1 --save_data="acq2106_279_{}" acq2106_279
+    ./user_apps/acq400/acq400_upload.py --plot_data=1 --capture=1 --save_data="acq2106_123_{}" acq2106_123
 
-This command line example will **arm** the UUT (at which point the UUT will either wait for an external trigger or trigger itself using an internal trigger), **wait** for the transient capture to finish and **offload** the data to a directory named acq2106_279_XX where XX is the shot number. The script will then **plot** the data using matplotlib for the user.
+This command line example will **arm** the UUT (at which point the UUT will either wait for an external trigger or trigger itself using an internal trigger), **wait** for the transient capture to finish and **offload** the data to a directory named acq2106_123_XX where XX is the shot number. The script will then **plot** the data using matplotlib for the user.
 
 ### Arm, upload and plot a subset of channels
 
 To tell acq400_upload.py that you're only interested in saving and plotting a subset of the available channels, the user should use the **--channels argument** as shown in the excerpt below:
 
-    user_apps/acq400/acq400_upload.py --plot=1 --channels=1,2,3,4 --capture=1 --save_data="acq2106_279_{}" acq2106_279
+    user_apps/acq400/acq400_upload.py --plot=1 --channels=1,2,3,4 --capture=1 --save_data="acq2106_123_{}" acq2106_123
 
 
