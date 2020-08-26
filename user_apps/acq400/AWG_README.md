@@ -89,6 +89,7 @@ To create a single sine wave the user can do the following in python:
 The plot is included to demonstrate what we have done so far:
 
 ![enter image description here](https://user-images.githubusercontent.com/36033499/91312594-52564c80-e7ac-11ea-97a1-fe7fb2af27db.png)
+
 Now that there is a variable 'y' which contains a numpy array with a full scale sine wave, the user can begin extending the sine wave over 32 channels.
 
 ```python
@@ -201,4 +202,5 @@ To tell acq400_upload.py that you're only interested in saving and plotting a su
 For the sake of not plotting 32 identical channels, the command line in the section above was used to pull only the first 4 channels of the first AI module (with the AO module connected via VHDCI). The following image was the result:
 
 ![enter image description here](https://user-images.githubusercontent.com/36033499/91315252-618ac980-e7af-11ea-8dcb-edd7a43f9583.png)
+
 As can be seen from the image above, the AO module is outputting the wave plotted in the section on creating a sine wave on every channel. 
