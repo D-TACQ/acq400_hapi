@@ -110,7 +110,7 @@ Note how the channels are aligned in the array, with sample 1 for channels 1 to 
 
 To upload an AWG file to the UUT it is recommended to use:
 
-    user_apps/acq400/acq400_upload.py
+    user_apps/acq400/acq400_load_awg.py
 
 ### Available command line arguments
 
