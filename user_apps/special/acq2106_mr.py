@@ -36,6 +36,21 @@ import threading
 import os
 import re
 import sys
+from libpasteurize.fixes import fix_kwargs
+
+
+from functools import wraps
+from time import time
+
+def timing(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        ts = time()
+        result = f(*args, **kw)
+        te = time()
+        print('TIMING:func:%r took: %2.2f sec' % (f.__name__, te-ts))
+        return result
+    return wrap
 
 """
 denormalise_stl(args): convert from usec to clock ticks. round to modulo decval
@@ -91,7 +106,7 @@ def open_safe(fn, mode):
     try:
         return open(fn, mode)
     except:
-        return open("{}/{}".format(os.getenv("PYTHONPATH", '.'), fn), mode)
+        return open("{}/{}".format(os.getenv("HAPIDIR", '.'), fn), mode)
 
 def tune_action(u):
     def _tune_action():
@@ -124,53 +139,118 @@ def tune_up_mt(args):
     if args.tune_si5326 == -1:
         sys.exit('tuneup done')
 
+def tee_up_action(u, args):
+    acq400_hapi.Acq400UI.exec_args(u, args)
+    if u != args.uuts[0]:
+        u.s0.SIG_SRC_TRG_0 = "WRTT0"
+
+    if args.set_shot is not None:
+        u.s1.shot = args.set_shot
+        u.cC.WR_WRTT0_RESET = 1
+        
+    u.s0.gpg_trg = '1,0,1'
+    u.s0.gpg_clk = '1,1,1'
+    u.s0.GPG_ENABLE = '0'
+    u.load_gpg(args.lit_stl, args.verbose > 1)
+    u.set_MR(True, evsel0=args.evsel0, evsel1=args.evsel0+1, MR10DEC=args.MR10DEC)
+    u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0), 'GPG')
+    u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
+    u.s0.GPG_ENABLE = '1'
+
+    u.wrtt0 = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
+
+def tee_up_mt_action(u, args):
+    def _tee_up_mt_action():
+        tee_up_action(u, args)
+    return _tee_up_mt_action
+    
+def tee_up_mt(args):
+    thx = []
+    for u in args.uuts:
+        th = threading.Thread(target=tee_up_mt_action(u, args))
+        th.start()
+        thx.append(th)
+    
+    for t in thx:
+        t.join()
+        
+
+        
+@timing
 def tee_up(args):
     master = args.uuts[0]
     with open_safe(args.stl, 'r') as fp:
         args.stl = fp.read()
 
-    lit_stl = denormalise_stl(args)
+    args.lit_stl = denormalise_stl(args)
 
     master.s0.SIG_SRC_TRG_0 = NONE
 
-    if args.trg0_src == "WRTT0":
-        master.s0.wr_trg_src = '1,0,1'
+    trg0_src = args.trg0_src.split(',')
+    if trg0_src[0] == "WRTT0":
+        master.s0.wr_trg_src = '1,{},1'.format(1 if len(trg0_src)==2 and trg0_src[1]=='RP' else 0)
         master.cC.WRTD_TX = 0
+        master.cC.WRTD_DELTA_NS = args.WRTD_DELTA_NS
         master.cC.wrtd_commit_tx = 1
         args.rt = allows_one_wrtd(master)
     else:
         master.s0.SIG_SRC_TRG_0 = 'EXT'
         args.rt = selects_trg_src(master, args.trg0_src)
 
-    for u in args.uuts[1:]:
-        u.s0.SIG_SRC_TRG_0 = "WRTT0"
+    if args.tee_up_mt:
+        tee_up_mt(args)
+    else:
+        for u in args.uuts:
+            tee_up_action(u, args)
 
+def post_shot_check_action(u, args):
+    def _post_shot_check_action():
+        u.wrtt0_after = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
+    return _post_shot_check_action
+
+def post_shot_checks(args):
+    thx = [ threading.Thread(target=post_shot_check_action(u, args)) for u in args.uuts ]
+    for t in thx:
+        t.start()
+    for t in thx:
+        t.join()
+    
+    report = [ "wrtt0 count:" ]
     for u in args.uuts:
-        acq400_hapi.Acq400UI.exec_args(u, args)
-        u.s0.gpg_trg = '1,0,1'
-        u.s0.gpg_clk = '1,1,1'
-        u.s0.GPG_ENABLE = '0'
-        u.load_gpg(lit_stl, args.verbose > 1)
-        u.set_MR(True, evsel0=args.evsel0, evsel1=args.evsel0+1, MR10DEC=args.MR10DEC)
-        u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0), 'GPG')
-        u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
-        u.s0.GPG_ENABLE = '1'
-
+            report.append("{} {}".format(u.wrtt0_after, "OK" if u.wrtt0_after == u.wrtt0+1 else "FAIL"))
+    print(" ".join(report))
+            
+@timing
+def run_shot(args, shot_controller):
+    shot_controller.run_shot(remote_trigger=args.rt)
+    
+@timing 
+def run_epics_offload(args):
+    shot_controller.run_shot(remote_trigger=args.rt)
+    
+@timing
+def run_mdsplus_offload(args):
+    run_postprocess_command(args.get_mdsplus, args.uut)
+    
+@timing    
 def run_mr(args):
     args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
+    
     tune_up_mt(args)
     shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
 
     if args.set_arm != 0:
         tee_up(args)
-        shot_controller.run_shot(remote_trigger=args.rt)
+        run_shot(args, shot_controller)
     else:
         shot_controller.handle_data(args)
 
+    post_shot_checks(args)
     if args.get_epics4:
-        run_postprocess_command(args.get_epics4, args.uut)
+        run_epics_offload(args)
+    
     if args.get_mdsplus:
-        run_postprocess_command(args.get_mdsplus, args.uut)
+        run_mdsplus_offload(args)
 
 
 def run_main():
@@ -179,15 +259,17 @@ def run_main():
     acq400_hapi.ShotControllerUI.add_args(parser)
     parser.add_argument('--stl', default='./STL/acq2106_mr00.stl', type=str, help='stl file')
     parser.add_argument('--Fclk', default=40*intSI.DEC.M, action=intSIAction, help="base clock frequency")
-    parser.add_argument('--WRTD_DELAY_NS', default=50*intSI.DEC.M, action=intSIAction, help='WRTD trigger delay')
-    parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0")
+    parser.add_argument('--WRTD_DELTA_NS', default=50*intSI.DEC.M, action=intSIAction, help='WRTD trigger delay')
+    parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0, WRTT0,RP")
     parser.add_argument('--tune_si5326', default=1, type=int, help="tune_si5326 (takes 60s), default:1")
     parser.add_argument('--set_arm', default='0', type=int, help="1: set arm" )
+    parser.add_argument('--set_shot', default=None, type=int, help="set this shot number on all UUTS before shot")
     parser.add_argument('--evsel0', default=4, type=int, help="dX number for evsel0")
     parser.add_argument('--MR10DEC', default=8, type=int, help="decimation value")
     parser.add_argument('--verbose', type=int, default=0, help='Print extra debug info.')
     parser.add_argument('--get_epics4', default=None, type=str, help="run script [args] to store EPICS4 data")
     parser.add_argument('--get_mdsplus', default=None, type=str, help="run script [args] to store mdsplus data")
+    parser.add_argument('--tee_up_mt', default=1, type=int, help="multi thread init for speed")
     parser.add_argument('uut', nargs='+', help="uuts")
     run_mr(parser.parse_args())
 

@@ -15,11 +15,13 @@ import sys
 import os
 from threading import Lock
 
-try:
-    from future import builtins
-    from builtins import input
-except:
-    print("No builtins/future found. Some features might not work correctly.")
+
+if sys.version_info < (3, 0):
+    try:
+        from future import builtins
+        from builtins import input
+    except:
+        print("No builtins/future found. Some features might not work correctly.")
 
 
 class Netclient:
@@ -60,12 +62,12 @@ class Netclient:
         self.__port = int(port)
         try:
             self.sock = socket.socket()
+            if Netclient.trace > 1:
+                print("Netclient(%s, %d) connect" % (self.__addr, self.__port))
+            self.sock.connect((self.__addr, self.__port))
         except socket.error as e:
             print("Netclient {}.{} connect fail {}".format(addr, port, e))
             raise e
-        if Netclient.trace > 1:
-            print("Netclient(%s, %d) connect" % (self.__addr, self.__port))
-        self.sock.connect((self.__addr, self.__port))
 
     def __enter__(self):
         return self

@@ -18,6 +18,8 @@ def expand_role(args, urole):
     # master            # mbclk, strg
     # master,fptrg      # mbclk, fptrg
 
+
+       
     if urole == "fpmaster" or urole == "master,fptrg":
         args.external_trigger = True
     else:
@@ -29,6 +31,7 @@ def expand_role(args, urole):
     if urole == "master,fptrg":
         args.postfix.append("TRG:DX=d0")
         return "master"
+    args.postfix.append("TRG:SENSE={}".format(args.trgsense))
     return urole
 
 def configure_slave(name, args, postfix):
@@ -47,7 +50,8 @@ def run_shot(args):
         args.postfix.append("CLKDIV={}".args.clkdiv)
 
     master.s0.sync_role = "{} {} {} {}".format(expand_role(args, args.toprole),
-                                            args.fclk, args.fin, " ".join(args.postfix), " ".join(postfix))
+                                            args.fclk, args.fin, 
+                                            " ".join(args.postfix), " ".join(postfix))
 
     if args.external_trigger:
         master.disable_trigger()
@@ -75,6 +79,7 @@ def run_main():
     parser.add_argument('--fclk', default='1000000', help="sample clock rate")
     parser.add_argument('--fin',  default='1000000', help="external clock rate")
     parser.add_argument('--clkdiv', default=None, help="optional clockdiv")
+    parser.add_argument('--trgsense', default='rising', help="trigger sense rising unless falling specified")
     parser.add_argument('uuts', nargs='+', help="uut ")
     run_shot(parser.parse_args())
 

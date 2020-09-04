@@ -50,6 +50,9 @@ class AcqPorts:
 
     WRPG = 4606
 
+    DIO482_PG_STL = 45001  
+    DIO482_PG_DUMP = DIO482_PG_STL+2
+    
     BOLO8_CAL = 45072
     DATA0 = 53000
     DATAT = 53333
@@ -355,8 +358,8 @@ class Acq400:
         if self.awg_site == 0 and svc.module_name.startswith("ao"):
             self.awg_site = site
         self.mod_count += 1
-
-
+        
+    
     @classmethod
     def create_uuts(cls, uut_names):
         """ create_uuts():  factory .. create them in parallel
@@ -408,6 +411,8 @@ class Acq400:
         for sm in sl:
 #            print("join {}".format(site_enumerators[sm]))
             site_enumerators[sm].join(10.0)
+            
+        self.sites = [int(s.split('=')[0]) for s in sl]
 
 # init _status so that values are valid even if this Acq400 doesn't run a shot ..
         _status = [int(x) for x in s0.state.split(" ")]
@@ -649,8 +654,9 @@ class Acq400:
 
 
     def load_gpg(self, stl, trace = False):
-        self.load_stl(stl, AcqPorts.GPGSTL, trace)
+            self.load_stl(stl, AcqPorts.GPGSTL, trace)
 
+        
     def load_dpg(self, stl, trace = False):
         self.load_stl(stl, AcqPorts.DPGSTL, trace, wait_eol=False)
 
@@ -1169,6 +1175,19 @@ class Acq2106_Mgtdram8(Acq2106):
         return MgtDramPullClient(self.uut)
 
 
+class Acq2106_TIGA(Acq2106):
+   
+    def __init__(self, uut, monitor=True):
+        print("acq400_hapi.Acq2106_TIGA %s" % (uut))
+        Acq2106.__init__(self, uut, monitor, has_wr=True)
+        self.pg_sites = [ sx for sx in range(1,6+1) if sx in self.sites and self.svc["s{}".format(sx)].MTYPE == '7B' ]
+            
+    def load_dio482pg(self, site, stl, trace = False):
+        self.load_stl(stl, AcqPorts.DIO482_PG_STL+site*10, trace)
+        
+    def set_DO(self, site, dox, value = 'P'):
+        self.svc["s{}".format(site)].set_knob("DO_{}".format(dox), value)
+    
 
 def run_unit_test():
     SERVER_ADDRESS = '10.12.132.22'
@@ -1187,6 +1206,12 @@ def run_unit_test():
     for sx in sorted(uut.svc):
         print("SITE:%s MODEL:%s" % (sx, uut.svc[sx].sr("MODEL")))
 
+
+def sigsel(enable=1, dx=1, site=None, edge=1):
+    if not site is None:
+        return "{},{},{}".format(enable, site+1, edge)
+    else:
+        return "{},{},{}".format(enable, dx, edge)
 
 if __name__ == '__main__':
     run_unit_test()
