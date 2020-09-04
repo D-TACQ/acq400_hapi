@@ -68,7 +68,7 @@ while True:
 	#plt.plot(tb_final, model)
 	plt.show()
 
-	if not np.allclose(model, data, rtol=1, atol=1500):
+	if not True: #np.allclose(model, data, rtol=1, atol=1500):
 	#if np.allclose(model, data, rtol=1, atol=1500):
 		print("Please check shot {} visually.".format(shot))
 		close = np.isclose(model, data, rtol=1, atol=1000)

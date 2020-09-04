@@ -27,8 +27,12 @@ def mmm(stats, base):
 #    print("mmm len {} {}".format(len(stats), stats))
 #    print("{} {} {} {}".format(max, min, sum, sumsq))
 
-    for xx in stats:
+    for ix, st in enumerate(stats):
+        xx = st[0]
         delta = base-xx
+        if delta < 0:
+            print("NEGATIVE {} {} {} {}".format(ix, xx, delta, st[1]))
+            break
         if delta > max:
             max = delta
         if delta < min:
@@ -57,7 +61,7 @@ def analyse(args):
                 pass
 
     for u, samples in uuts.items():
-        diffs = [samples[i]['diff'] for i in samples.keys()]
+        diffs = [(samples[i]['diff'], samples[i]) for i in samples.keys()]
 #        hg, bins = np.histogram([(float(args.wrtd_delta_ns)-d)*1e-6 for d in diffs],bins=20)
 #        plt.plot(hg)
 #        plt.show()
