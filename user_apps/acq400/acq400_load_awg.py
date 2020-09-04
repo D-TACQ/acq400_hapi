@@ -33,7 +33,7 @@ def timing(f):
         ts = time()
         result = f(*args, **kw)
         te = time()
-        print('TIMING:func:%r took: %2.2f sec' % (f.__name__, te-ts))
+        print('....TIMING:func:%r took: %2.2f sec' % (f.__name__, te-ts))
         return result
     return wrap
 
@@ -51,19 +51,41 @@ def file_extender(fd, ext_count):
 
 @timing
 def load_awg(args, uut, rep):
+    args.shot = uut.modules[args.aosite].shot
     if args.mode == 1 or (args.mode == 2 and rep == 0):
         acq400_hapi.Acq400UI.exec_args_playtrg(uut, args)
-        with open(args.file, "rb") as fd:
-            uut.load_awg(file_extender(fd, args.awg_extend), autorearm=args.mode==2)
+        loaded = 0
+ 
+        while loaded != 1:
+            try:
+                with open(args.file, "rb") as fd:
+                    uut.load_awg(file_extender(fd, args.awg_extend), autorearm=args.mode==2)
+                    loaded = 1
+            except Exception as e:
+                if loaded == 0:
+                    print("First time: caught {}, abort and retry".format(e))
+                    loaded = -1
+                    uut.modules[args.aosite].playloop_oneshot = '1'
+                    uut.modules[args.aosite].awg_abort = '1'
+                    sleep(0.1)
+                else:
+                    print("Retry failed: caught {} FAIL".format(e))
+                    exit(1)    
+               
     if args.soft_trigger:
         uut.s0.soft_trigger = '1'
 
 @timing
 def wait_completion(args, uut):
-   while uut.modules[args.aosite].task_active == '1' or  uut.modules[args.aosite].completed_shot == '0':
-       sleep(0.1)
+   if args.mode == 1:
+       while uut.modules[args.aosite].task_active == '1' or  uut.modules[args.aosite].completed_shot == '0':
+           sleep(0.1)
        # print("polling completion")
+   if args.mode == 2:
+       while args.shot == uut.modules[args.aosite].shot:
+           sleep(0.1)
 
+@timing
 def load_awg_top(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
     for rep in range(0, args.reps):
@@ -71,6 +93,7 @@ def load_awg_top(args):
             print("rep {}".format(rep))
         load_awg(args, uut, rep)
         wait_completion(args, uut)
+    print("playloop_length {}".format(uut.modules[args.aosite].playloop_length))
 
 
 def run_main():
