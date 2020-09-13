@@ -382,7 +382,15 @@ class Acq400:
         return uuts
 
 
+    uuts = {}
+    
     def __init__(self, _uut, monitor=True):
+        try:
+            self.__dict__ = uuts[_uut]
+            return
+        except KeyError:
+            continue
+        
         self.NL = re.compile(r"(\n)")
         self.uut = _uut
         self.trace = 0
@@ -418,6 +426,7 @@ class Acq400:
         _status = [int(x) for x in s0.state.split(" ")]
         if monitor:
             self.statmon = Statusmonitor(self.uut, _status)
+        uuts[_uut] = self.__dict__
 
 
     def __getattr__(self, name):
