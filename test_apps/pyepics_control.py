@@ -30,7 +30,7 @@ def control_loop(args):
     return None
 
 
-def get_args():
+def get_args(argStr=None):
     parser = argparse.ArgumentParser(description='PyEPICS control example')
 
     parser.add_argument('--target', default=5, type=int,
@@ -44,14 +44,13 @@ def get_args():
 
     parser.add_argument('uut', nargs='+', help="uut")
 
-    args = parser.parse_args()
-    return args
+    return parser.parse_args(argStr)
+
 
 
 def main():
-    args = get_args()
-    control_loop(args)
-    return None
+    return(control_loop(get_args()))
+
 
 
 if __name__ == '__main__':
