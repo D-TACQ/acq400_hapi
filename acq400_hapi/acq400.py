@@ -386,7 +386,7 @@ class Acq400:
     
     def __init__(self, _uut, monitor=True):
         try:
-            self.__dict__ = uuts[_uut]
+            self.__dict__ = Acq400.uuts[_uut]
             return
         except KeyError:
             continue
@@ -426,7 +426,7 @@ class Acq400:
         _status = [int(x) for x in s0.state.split(" ")]
         if monitor:
             self.statmon = Statusmonitor(self.uut, _status)
-        uuts[_uut] = self.__dict__
+        Acq400.uuts[_uut] = self.__dict__
 
 
     def __getattr__(self, name):
