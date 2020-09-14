@@ -96,7 +96,7 @@ def load_awg_top(args):
     print("playloop_length {}".format(uut.modules[args.aosite].playloop_length))
 
 
-def run_main():
+def get_args(argStr=None):
     parser = argparse.ArgumentParser(description='acq400 load awg simplest')
     parser.add_argument('--file', default="", help="file to load")
     parser.add_argument('--mode', default=2, type=int, help="mode: 1 oneshot, 2 oneshot_autorearm")
@@ -106,8 +106,11 @@ def run_main():
     parser.add_argument('--aosite', default=1, type=int, help='Site of AO module')
     acq400_hapi.Acq400UI.add_argument_playtrg(parser)
     parser.add_argument('uuts', nargs=1, help="uut ")
+    return parser.parse_args(argStr)
 
-    load_awg_top(parser.parse_args())
+
+def run_main():
+    load_awg_top(get_args())
 
 # execution starts here
 
