@@ -389,7 +389,7 @@ class Acq400:
             self.__dict__ = Acq400.uuts[_uut]
             return
         except KeyError:
-            continue
+            pass
         
         self.NL = re.compile(r"(\n)")
         self.uut = _uut
