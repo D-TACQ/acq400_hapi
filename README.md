@@ -23,7 +23,8 @@ export PYTHONPATH=~/PROJECTS/acq400_hapi
 
 PIP has the advantage of installing a system library, however it's not updated as frequently as the Github source, so some feature may be lacking.
 
-V2.0.0 : works with Python 2.7 and 3.x
+V2.0.0 : works with Python 2.7 and 3.x  
+**Python 2.x is now deprecated, please try to use Python3. On systems where python 2 is the default, there is usually a python3 runtime, recommended**
 
 Now needs the "future" feature:
 on linux:
