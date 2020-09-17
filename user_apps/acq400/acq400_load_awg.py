@@ -92,7 +92,8 @@ def load_awg_top(args):
         if rep > 0:
             print("rep {}".format(rep))
         load_awg(args, uut, rep)
-        wait_completion(args, uut)
+        if args.reps > 1:
+            wait_completion(args, uut)
     print("playloop_length {}".format(uut.modules[args.aosite].playloop_length))
 
 
