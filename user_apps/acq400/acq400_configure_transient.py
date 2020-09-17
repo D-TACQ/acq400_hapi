@@ -46,7 +46,8 @@ def get_args(argStr=None):
 
 
 def run_main():
-    configure_shot(get_args(), [acq400_hapi.Acq400(u) for u in args.uuts])
+    args = get_args()
+    configure_shot(args, [acq400_hapi.Acq400(u) for u in args.uuts])
 
 
 # execution starts here
