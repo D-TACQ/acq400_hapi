@@ -24,11 +24,18 @@ class Acq400UI:
         except:
             typ = trg
 
-        triplet = "1,%d,%d" % (0 if typ == 'ext' else 1, 0 if edge == 'falling' else 1)
+        if typ == 'ext':
+            dx = 0
+        else:
+            args.auto_soft_trigger = True
+            dx = 1
+            
+        triplet = "1,%d,%d" % (dx, 0 if edge == 'falling' else 1)
 #        print("triplet={}".format(triplet))
         if args.pre != 0:
             uut.s1.trg = "1,1,1"
             uut.s1.event0 = triplet
+            args.auto_soft_trigger = True
         else:
             uut.s1.trg = triplet
             uut.s1.event0 = "0,0,0"
@@ -71,7 +78,7 @@ class Acq400UI:
     @staticmethod
     def _exec_args_transient(uut, args):
         uut.configure_transient(pre=args.pre, post=args.post, \
-            auto_soft_trigger=(1 if args.pre>0 else 0), demux=args.demux)
+            auto_soft_trigger=(1 if args.auto_soft_trigger or args.pre>0 else 0), demux=args.demux)
 
     executors = []
 
@@ -126,6 +133,7 @@ class Acq400UI:
         parser.add_argument('--trg', default=None, help='int|ext,rising|falling')
         parser.add_argument('--sim', default=None, help='s1[,s2,s3..] list of sites to run in simulate mode')
         parser.add_argument('--trace', default=None, help='1 : enable command tracing')
+        parser.add_argument('--auto_soft_trigger', default=0, type=int, help='force soft trigger generation')
 
 
 
@@ -140,7 +148,8 @@ class Acq400UI:
             Acq400UI._exec_args_sim(uut, args.sim)
         if args.trace:
             Acq400UI._exec_args_trace(uut, args.trace)
-        if args.post != None:
-            Acq400UI._exec_args_transient(uut, args)
         if args.trg:
             Acq400UI._exec_args_trg(uut, args, args.trg)
+        if args.post != None:
+            Acq400UI._exec_args_transient(uut, args)
+        
