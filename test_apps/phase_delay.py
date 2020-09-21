@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import argparse
 from scipy.signal import hilbert, chirp
 
+
 def run_test(args):
 
     # Load files
@@ -15,23 +16,24 @@ def run_test(args):
     x2 = ch2
 
     # Remove offsets
-    x1 = x1 - np.mean(x1);
-    x2 = x2 - np.mean(x2);
+    x1 = x1 - np.mean(x1)
+    x2 = x2 - np.mean(x2)
 
     # Scale x2 to match x1
     m1 = np.mean(abs(x1))
     x2 = x2 * (m1/np.mean(abs(x2)))
 
-    #Difference
+    # Difference
     y3 = (x2 - x1) / m1
 
     if args.method == 1:
         # Using 'Taylor Series' method
-        phase_diff = np.mean(abs(np.subtract(x2,x1)) / m1)
+        phase_diff = np.mean(abs(np.subtract(x2, x1)) / m1)
 
     elif args.method == 2:
         # Using phase sensitive detector
-        phase_diff = np.arccos( np.dot(x1,x2) / (np.linalg.norm(x1)*np.linalg.norm(x2)) )
+        phase_diff = np.arccos(
+            np.dot(x1, x2) / (np.linalg.norm(x1)*np.linalg.norm(x2)))
 
     elif args.method == 3:
         # FFT method
@@ -55,18 +57,25 @@ def run_test(args):
     degrees = phase_diff * (1/(np.pi / 180))
     print "Phase difference in degrees = ", degrees
     #sec = phase_diff / (360 * args.fsig);
-    sec = degrees / (360 * args.fsig);
+    sec = degrees / (360 * args.fsig)
     print "Difference in seconds is ", sec
     print "Difference as % of sample clock ", sec * 100 * args.s_clk
 
+
 def run_main():
-    parser = argparse.ArgumentParser(description = 'awg speed test')
-    parser.add_argument('--file1', type=str, default="CH01", help='ch1 file name.')
-    parser.add_argument('--file2', type=str, default="CH02", help='ch2 file name.')
-    parser.add_argument('--method', type=int, default=1, help='Which method to use.')
-    parser.add_argument('--fsig', type=int, default=10, help='Frequency of the signal.')
-    parser.add_argument('--s_clk', type=int, default=43500, help='Frequency of the clk.')
-    parser.add_argument('--type', type=int, default=16, help='16 or 32 bit data')
+    parser = argparse.ArgumentParser(description='awg speed test')
+    parser.add_argument('--file1', type=str,
+                        default="CH01", help='ch1 file name.')
+    parser.add_argument('--file2', type=str,
+                        default="CH02", help='ch2 file name.')
+    parser.add_argument('--method', type=int, default=1,
+                        help='Which method to use.')
+    parser.add_argument('--fsig', type=int, default=10,
+                        help='Frequency of the signal.')
+    parser.add_argument('--s_clk', type=int, default=43500,
+                        help='Frequency of the clk.')
+    parser.add_argument('--type', type=int, default=16,
+                        help='16 or 32 bit data')
     args = parser.parse_args()
     args.type = np.int16 if args.type == 16 else np.int32
     run_test(args)

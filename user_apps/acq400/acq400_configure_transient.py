@@ -37,11 +37,16 @@ def configure_shot(args, uuts):
             uut.s0.TIM_CTRL_LOCK = 0
         acq400_hapi.Acq400UI.exec_args(uut, args)
 
-def run_main():
+
+def get_args(argStr=None):
     parser = argparse.ArgumentParser(description='configure multiple acq400')
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     parser.add_argument('uuts', nargs='+', help="uut pairs: m1,m2 [s1,s2 ...]")
-    args = parser.parse_args()
+    return parser.parse_args(argStr)
+
+
+def run_main():
+    args = get_args()
     configure_shot(args, [acq400_hapi.Acq400(u) for u in args.uuts])
 
 

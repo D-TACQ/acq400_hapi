@@ -133,8 +133,7 @@ def uniq(inp):
     return out
 
 
-
-def run_main():
+def get_args(argStr=None):
     parser = argparse.ArgumentParser(description='acq400 upload')
     acq400_hapi.ShotControllerUI.add_args(parser)
     parser.add_argument('--soft_trigger', default=SOFT_TRIGGER, type=int, help="help use soft trigger on capture")
@@ -142,7 +141,12 @@ def run_main():
     parser.add_argument('--remote_trigger', default=None, type=str, help="your function to fire trigger")
     parser.add_argument('--wrtd_tx', default=0, type=int, help="release a wrtd_tx when all boards read .. works when free-running trigger")
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
-    args = parser.parse_args()
+
+    return parser.parse_args(argStr)
+
+
+def run_main():
+    args = get_args()
     # deduplicate (yes, some non-optimal apps call with duplicated uuts, wastes time)
     args.uuts = uniq(args.uuts)
     # encourage single ints to become a list

@@ -22,16 +22,19 @@ def write_array_to_disk(waveform, dir):
 
 
 def generate_awg(args):
-    #function that generates an awg waveform
+    # function that generates an awg waveform
     waveform = create_array(args.size, args.value)
     write_array_to_disk(waveform, args.dir)
 
 
 def run_main():
     parser = argparse.ArgumentParser(description='generate awg waveform')
-    parser.add_argument('--size', default=320000, type=int, help="Size of array to generate.")
-    parser.add_argument('--value', default=16384, type=int, help="What vlaues to store in array.")
-    parser.add_argument('--dir', default="waves/dc_line", type=str, help="Location to save files")
+    parser.add_argument('--size', default=320000, type=int,
+                        help="Size of array to generate.")
+    parser.add_argument('--value', default=16384, type=int,
+                        help="What vlaues to store in array.")
+    parser.add_argument('--dir', default="waves/dc_line",
+                        type=str, help="Location to save files")
     generate_awg(parser.parse_args())
 
 

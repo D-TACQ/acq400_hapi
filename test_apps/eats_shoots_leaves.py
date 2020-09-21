@@ -13,8 +13,10 @@ def run_command(args):
     buffer = skt.sock.recv(args.rxlen)
     print(buffer)
 
+
 def run_main():
-    parser = argparse.ArgumentParser(description="connect to panda service, output data")
+    parser = argparse.ArgumentParser(
+        description="connect to panda service, output data")
     parser.add_argument('--cmd', default="NO_STATUS NO_HEADER")
     parser.add_argument('--port', default="8889")
     parser.add_argument('--rxlen', default=4096)
@@ -22,6 +24,6 @@ def run_main():
     run_command(parser.parse_args())
 # execution starts here
 
+
 if __name__ == '__main__':
     run_main()
-
