@@ -38,7 +38,7 @@ def create_fig(args, test):
 
 
 def create_rtm_stl():
-    stl =  "0,f\n \
+    stl = "0,f\n \
     10000,0\n \
     20000,f\n \
     30000,0\n \
@@ -89,9 +89,9 @@ def create_rgm_stl():
 def calculate_frequency(args, uut, divisor):
     # calculate a reasonable frequency from the clock speed of the master uut.
     clk_freq = (int(float(uut.s0.SIG_CLK_S1_FREQ.split(" ")[1])))
-    print("\n\nSample Rate = ",clk_freq,"\n\n")
+    print("\n\nSample Rate = ", clk_freq, "\n\n")
     freq = clk_freq / divisor
-    if int(freq) == 0 :
+    if int(freq) == 0:
         print("\n\nWarning CLK Frequency reading ZERO!!!\n\n")
         exit()
     return freq
@@ -113,9 +113,9 @@ def config_gpg(uut, args, trg=1):
     # The following settings are very test specific and so they
     # have not been included in a library function.
     uut.s0.gpg_enable = 0
-    uut.s0.gpg_clk = "1,2,1" # GPG clock is the same as the site.
+    uut.s0.gpg_clk = "1,2,1"  # GPG clock is the same as the site.
     uut.s0.gpg_trg = "1,{},1".format(trg)
-    uut.s0.gpg_mode = 3 # LOOPWAIT
+    uut.s0.gpg_mode = 3  # LOOPWAIT
 
     if args.test == "rgm":
         stl = create_rgm_stl()
@@ -154,7 +154,6 @@ def configure_sig_gen(sig_gen, args, freq):
             print("TRG FALLING set sg")
             sig_gen.send("BURS:STAT ON\n".encode())
             sig_gen.send("BURS:NCYC 3\n".encode())
-
 
     if args.test == "pre_post":
         sig_gen.send("BURS:STAT ON\n".encode())
@@ -202,7 +201,7 @@ def show_es(events, uuts):
     for l in zip(*lines):
         print(*l, sep='')
     for event in events:
-        print("{}\n".format(event[0])) # Print indices too!
+        print("{}\n".format(event[0]))  # Print indices too!
     return None
 
 
@@ -214,7 +213,7 @@ def save_data(uuts):
 
 
 def verify_inputs(args):
-    tests = ["post","pre_post", "rtm", "rtm_gpg", "rgm"]
+    tests = ["post", "pre_post", "rtm", "rtm_gpg", "rgm"]
     if args.test not in tests:
         print("Please choose from one of the following tests:")
         print(tests)
@@ -245,9 +244,8 @@ def run_test(args, axs, plt_count):
         uut.s0.set_abort
         uut.s0.transient = "DEMUX={}".format(args.demux)
         # check_master_slave(args, uut)
-        uut.s0.transient # print transient config
+        uut.s0.transient  # print transient config
         uuts.append(uut)
-
 
     sig_gen = socket.socket()
     sig_gen.connect((args.sig_gen_name, 5025))
@@ -265,7 +263,8 @@ def run_test(args, axs, plt_count):
 
             if args.test == "pre_post":
                 if index == 0:
-                    uut.configure_pre_post("master", trigger=args.trg, event=args.event)
+                    uut.configure_pre_post(
+                        "master", trigger=args.trg, event=args.event)
                 else:
                     # uut.s0.sync_role = "slave"
                     uut.configure_pre_post("slave")
@@ -278,13 +277,15 @@ def run_test(args, axs, plt_count):
 
             elif args.test == "rtm":
                 if index == 0:
-                    uut.configure_rtm("master", trigger=args.trg, event=args.event)
+                    uut.configure_rtm(
+                        "master", trigger=args.trg, event=args.event)
                 else:
                     uut.configure_rtm("slave")
 
             elif args.test == "rtm_gpg":
                 if index == 0:
-                    uut.configure_rtm("master", trigger=args.trg, gpg=1, event=args.event)
+                    uut.configure_rtm(
+                        "master", trigger=args.trg, gpg=1, event=args.event)
                     gpg_config_success = config_gpg(uut, args, trg=0)
                     if gpg_config_success != True:
                         print("Breaking out of test {} now.".format(args.test))
@@ -294,7 +295,8 @@ def run_test(args, axs, plt_count):
 
             elif args.test == "rgm":
                 if index == 0:
-                    uut.configure_rgm("master", trigger=args.trg, post=75000, gpg=1)
+                    uut.configure_rgm(
+                        "master", trigger=args.trg, post=75000, gpg=1)
                     gpg_config_success = config_gpg(uut, args, trg=0)
                     if gpg_config_success != True:
                         print("Breaking out of test {} now.".format(args.test))
@@ -325,7 +327,8 @@ def run_test(args, axs, plt_count):
                 data.append(uut.read_channels(tuple(channels[index])))
             else:
                 data.append(uut.read_channels((0), -1))
-            events.append(uut.get_es_indices(human_readable=1, return_hex_string=1))
+            events.append(uut.get_es_indices(
+                human_readable=1, return_hex_string=1))
 
         if args.demux == 0:
             success_flag = check_es(events)
@@ -342,7 +345,8 @@ def run_test(args, axs, plt_count):
                     # plt.plot(ch)
                     axs[plt_count].plot(ch)
         axs[plt_count].grid(True)
-        axs[plt_count].set_title("Test: {} Runs: {} Trg: {} Event: {}".format(args.test, args.loops, args.trg, args.event))
+        axs[plt_count].set_title("Test: {} Runs: {} Trg: {} Event: {}".format(
+            args.test, args.loops, args.trg, args.event))
         # plt.pause(0.001)
         # plt.show(block=False)
 
@@ -350,7 +354,7 @@ def run_test(args, axs, plt_count):
             custom_test(args, uuts)
 
         if success_flag == False:
-            print(CRED , "Event samples are not identical. Exiting now. " , CEND)
+            print(CRED, "Event samples are not identical. Exiting now. ", CEND)
             print("Tests run: ", iteration)
             plt.show()
             exit(1)
@@ -369,46 +373,46 @@ def run_main():
     parser = argparse.ArgumentParser(description='acq400 regression test.')
 
     parser.add_argument('--test', default="pre_post", type=str,
-    help='Which test to run. Options are: all, post, pre_post, rtm, rtm_gpg, rgm. \
+                        help='Which test to run. Options are: all, post, pre_post, rtm, rtm_gpg, rgm. \
     Default is pre_post. The "all" option can be used to test every test mode \
     with every trigger mode.')
 
     parser.add_argument('--trg', default="1,0,1", type=str,
-    help='Which trigger to use. Default is 1,0,1. User can also specify \
+                        help='Which trigger to use. Default is 1,0,1. User can also specify \
     --trg=all so that the chosen test will be run multiple times with all \
     trigger types.')
 
     parser.add_argument('--event', default="1,0,1", type=str,
-    help='Which event to use. Default is 1,0,1. User can also specify \
+                        help='Which event to use. Default is 1,0,1. User can also specify \
     --event=all so that the chosen test will be run multiple times with all \
     event types.')
 
     parser.add_argument('--config_sig_gen', default=1, type=int,
-    help='If True, configure signal generator. Default is 1 (True).')
+                        help='If True, configure signal generator. Default is 1 (True).')
 
     parser.add_argument('--sig_gen_name', default="A-33600-00001", type=str,
-    help='Name of signal generator. Default is A-33600-00001.')
+                        help='Name of signal generator. Default is A-33600-00001.')
 
     parser.add_argument('--channels', default=['[1],[1]'], nargs='+',
-    help='One list per UUT: --channels=[[1],[1]] plots channel 1 on UUT1 and 2')
+                        help='One list per UUT: --channels=[[1],[1]] plots channel 1 on UUT1 and 2')
 
     parser.add_argument('--clock_divisor', default=20000, type=int,
-    help="The speed at which to run the sig gen. 20,000 is human readable and \
+                        help="The speed at which to run the sig gen. 20,000 is human readable and \
     is default.")
 
     parser.add_argument('--demux', default=1, type=int,
-    help="Whether or not to have demux configured on the UUT. Default is 1 \
+                        help="Whether or not to have demux configured on the UUT. Default is 1 \
     (True)")
 
     parser.add_argument('--show_es', default=1, type=int,
-    help="Whether or not to show the event samples when demux = 0. Default is 1\
+                        help="Whether or not to show the event samples when demux = 0. Default is 1\
     (True)")
 
     parser.add_argument('--loops', default=1, type=int,
-    help="Number of iterations to run the test for. Default is 1.")
+                        help="Number of iterations to run the test for. Default is 1.")
 
     parser.add_argument('--custom_test', default=0, type=int,
-    help="This argument allows the user to write a custom test in the custom \
+                        help="This argument allows the user to write a custom test in the custom \
     test function. Default is disabled (0).")
 
     parser.add_argument('uuts', nargs='+', help="Names of uuts to test.")
@@ -416,13 +420,13 @@ def run_main():
     args = parser.parse_args()
     all_tests = ["post", "pre_post", "rtm", "rtm_gpg", "rgm"]
 
-    all_trgs = [[1,0,0], [1,0,1], [1,1,1]]
-    all_events = [[1,0,0], [1,0,1]] # Not interested in any soft events.
+    all_trgs = [[1, 0, 0], [1, 0, 1], [1, 1, 1]]
+    all_events = [[1, 0, 0], [1, 0, 1]]  # Not interested in any soft events.
 
     if args.test.lower() == "all":
         print("You have selected to run all tests.")
-        print("Now running each test {} times with ALL triggers " \
-                                "and ALL events.".format(args.loops))
+        print("Now running each test {} times with ALL triggers "
+              "and ALL events.".format(args.loops))
 
         for test in all_tests:
             args.test = test
@@ -433,18 +437,18 @@ def run_main():
             for trg in all_trgs:
                 args.trg = trg
 
-                if test == "post": # Don't need any events for post mode.
+                if test == "post":  # Don't need any events for post mode.
                     args.event = "N/A"
-                    print("\nNow running: {} test with" \
-                                        " trigger: {}\n".format(test, args.trg))
+                    print("\nNow running: {} test with"
+                          " trigger: {}\n".format(test, args.trg))
                     plt_count += 1
                     run_test(args, axs, plt_count)
                 else:
 
                     for event in all_events:
                         args.event = event
-                        print("\nNow running: {} test with trigger: {} and" \
-                        " event: {}\n".format(test, args.trg, args.event))
+                        print("\nNow running: {} test with trigger: {} and"
+                              " event: {}\n".format(test, args.trg, args.event))
                         plt_count += 1
                         run_test(args, axs, plt_count)
             plt.show()
@@ -455,17 +459,17 @@ def run_main():
 
         for trg in all_trgs:
             args.trg = trg
-            if args.test == "post": # Don't need any events for post mode.
+            if args.test == "post":  # Don't need any events for post mode.
                 args.event = "N/A"
-                print("\nNow running: {} test with" \
-                                    " trigger: {}\n".format(args.test, args.trg))
+                print("\nNow running: {} test with"
+                      " trigger: {}\n".format(args.test, args.trg))
                 plt_count += 1
                 run_test(args, axs, plt_count)
             else:
                 for event in all_events:
                     args.event = event
-                    print("\nNow running: {} test with trigger: {} and" \
-                    " event: {}\n".format(args.test, args.trg, args.event))
+                    print("\nNow running: {} test with trigger: {} and"
+                          " event: {}\n".format(args.test, args.trg, args.event))
                     plt_count += 1
                     run_test(args, axs, plt_count)
         plt.show()

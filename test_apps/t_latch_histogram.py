@@ -87,7 +87,8 @@ def run_analysis(args):
                     histo[key] = result[key]
 
     for key in histo:
-        print("T_LATCH differences: ", key, ", happened: ", histo[key], " times")
+        print("T_LATCH differences: ", key,
+              ", happened: ", histo[key], " times")
     plot_histogram(histo, args)
     return None
 
@@ -99,11 +100,13 @@ def run_main():
                                                             "This is the default case and so this will dwarf the other "
                                                             "numbers in the histogram.")
     parser.add_argument('--src', default="PROJECTS/AFHBA404/afhba.0.log", type=str, help="Location to pull data "
-                                                                                          "from for analysis.")
+                        "from for analysis.")
     parser.add_argument('--nchan', default=128, type=int, help="How many physical channels are contained in the data"
                                                                "EXCLUDING SCRATCHPAD.")
-    parser.add_argument('--spad_len', default=16, type=int, help="How long the scratchpad is. Default is 16 long words")
-    parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
+    parser.add_argument('--spad_len', default=16, type=int,
+                        help="How long the scratchpad is. Default is 16 long words")
+    parser.add_argument('--verbose', default=0, type=int,
+                        help='Prints status messages as the stream is running')
     # parser.add_argument('uuts', nargs='+', help="uuts")
     run_analysis(parser.parse_args())
 

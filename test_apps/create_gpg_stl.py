@@ -7,22 +7,26 @@ import json
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description='Use wavedrom JSON file for dpg')
-    parser.add_argument('--wd_input_file',  default='./wd.json', help="Which JSON file to use to load dpg.")
-    parser.add_argument('--breaks',  default='100', help="How many clock ticks a line break is.")
-    parser.add_argument('--print_stl',  default=1, help="Print resultant STL or not.")
-    parser.add_argument('--wd_output_file',  default='wd.stl', help="Name of file to save stl to.")
+    parser = argparse.ArgumentParser(
+        description='Use wavedrom JSON file for dpg')
+    parser.add_argument('--wd_input_file',  default='./wd.json',
+                        help="Which JSON file to use to load dpg.")
+    parser.add_argument('--breaks',  default='100',
+                        help="How many clock ticks a line break is.")
+    parser.add_argument('--print_stl',  default=1,
+                        help="Print resultant STL or not.")
+    parser.add_argument('--wd_output_file',  default='wd.stl',
+                        help="Name of file to save stl to.")
     parser.add_argument('--stl', default='none', type=str,
-    help='If this option is used then single channel STL files can be used. For more info see README_WAVEDROM.md')
-
+                        help='If this option is used then single channel STL files can be used. For more info see README_WAVEDROM.md')
 
     args = parser.parse_args()
 
     if args.stl != 'none':
         args.stl = args.stl.split(',')
-        args.stl = [ string.split('=') for string in args.stl ]
+        args.stl = [string.split('=') for string in args.stl]
 
-    args.breaks = [ int(item) for item in args.breaks.split(',') ]
+    args.breaks = [int(item) for item in args.breaks.split(',')]
     return args
 
 
@@ -50,10 +54,12 @@ def wd2np(wave, breaks):
             # Treat pipe as breaks * last state where breaks is either always
             # the same value, or is a list of values.
             try:
-                binary_wave = binary_wave + int(breaks[break_counter]) * [int(wave[num-1])]
+                binary_wave = binary_wave + \
+                    int(breaks[break_counter]) * [int(wave[num-1])]
                 break_counter += 1
             except:
-                binary_wave = binary_wave + int(breaks[-1]) * [int(wave[num-1])]
+                binary_wave = binary_wave + \
+                    int(breaks[-1]) * [int(wave[num-1])]
 
     return np.array(binary_wave)
 
@@ -69,7 +75,8 @@ def strip_json(json, breaks):
         # abs to change -1s to 1s, then use where to only take the locations
         # of somewhere that changes and add one since the dimension of the new
         # array is off by 1 since we took the diff.
-        change_locations = np.where(np.abs(np.diff(binary_wave)) == 1) + np.array([1])
+        change_locations = np.where(
+            np.abs(np.diff(binary_wave)) == 1) + np.array([1])
         stl = np.array([change_locations, binary_wave])
         channels.append(stl)
     return channels
@@ -84,7 +91,7 @@ def chans2stl(channels):
     for chan in channels:
         # Append all of the locations of a change in value to left_col.
         left_col = np.concatenate((left_col, chan[0][0]))
-    left_col = np.unique(left_col) # removes duplicate entries and sorts.
+    left_col = np.unique(left_col)  # removes duplicate entries and sorts.
     right_col = np.zeros(left_col.shape[-1])
     left_col = left_col.astype(np.uint32)
 
@@ -108,8 +115,9 @@ def chans2stl(channels):
 
 def save_stl(stl, output_file):
     with open(output_file, 'w+') as file:
-        for num in range(0,len(stl[0])):
-            file.write("{} {}\n".format(int(stl[0][num]), hex(int(stl[1][num]))))
+        for num in range(0, len(stl[0])):
+            file.write("{} {}\n".format(
+                int(stl[0][num]), hex(int(stl[1][num]))))
     return None
 
 
@@ -122,9 +130,9 @@ def load_stl(stl_desc):
     for index, file in enumerate(stl_desc):
         with open(file[1]) as file:
             stl = file.read()
-        stl = [ string.split(" ") for string in stl.split("\n") ][:-1]
-        left = [ int(item[0]) for item in stl ]
-        right = [ int(item[1]) for item in stl ]
+        stl = [string.split(" ") for string in stl.split("\n")][:-1]
+        left = [int(item[0]) for item in stl]
+        right = [int(item[1]) for item in stl]
         right_col = np.array([])
         diff = np.diff(left)
         for num, item in enumerate(diff):
@@ -149,7 +157,7 @@ def main():
     stl = chans2stl(channels)
     save_stl(stl, args.wd_output_file)
     if args.print_stl:
-        for num in range(0,len(stl[0])):
+        for num in range(0, len(stl[0])):
             print(int(stl[0][num]), hex(int(stl[1][num])))
     return None
 
