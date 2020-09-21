@@ -63,6 +63,9 @@ def process_last(line):
         print("control m100")
         control(err/TARGET)
         return 100
+    
+    print("TARGET Achieved, quitting...")
+    exit(0)
                
         
 def process():
