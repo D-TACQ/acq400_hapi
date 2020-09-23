@@ -24,11 +24,6 @@ import time
 from builtins import int
 
 
-# AD9854 class in the making ..
-def FTW1(ratio):
-    return format(int(ratio * pow(2, 48)), '012x')
-
-
 def set_upd_clk_fpga(uut, idds, value):
     if idds == 0:
         uut.s2.ddsA_upd_clk_fpga = value
@@ -40,19 +35,19 @@ def freq(sig):
     return float(sig.split(" ")[1])
 
 
-def init_chirp(uut, idds):
-    # SETTING KAKA'AKOS CHIRP
-    #
-    # Set AD9854 clock remap to 25 MHz
-    dds = uut.ddsA if idds == 0 else uut.ddsB
-
+def init_remapper(uut):
+# Set AD9854 clock remap to 25 MHz
     uut.ddsC.CR = '004C0041'
-    uut.ddsC.FTW1 = FTW1(1.0/12.0)
+    uut.ddsC.FTW1 = RAD3DDS.ratio2ftw(1.0/12.0)
 
 # Program AD9512 secondary clock to choose 25 MHz from the AD9854 remap
     uut.clkdB.CSPD = '02'
     uut.clkdB.UPDATE = '01'
-
+        
+def init_chirp(uut, idds):
+    # SETTING KAKA'AKOS CHIRP
+    #
+    dds = uut.ddsA if idds == 0 else uut.ddsB
 
 # Program the chirp using Kaka'ako parameters
     set_upd_clk_fpga(uut, idds, '1')
@@ -66,6 +61,7 @@ def init_chirp(uut, idds):
     dds.CR = '004C8761'
     set_upd_clk_fpga(uut, idds, '0')
 
+def init_trigger(uut):
 # Set the trigger
 # lera_acq_setup
 # we assume a 25MHz from ddsC
@@ -104,8 +100,10 @@ def run_test(args):
 
     for test in range(0, args.test):
         uut.s2.RADCELF_init = 1
+        init_remapper(uut)
         init_chirp(uut, 0)
         init_chirp(uut, 1)
+        init_trigger(uut)
         verify_chirp(uut, test)
 
 

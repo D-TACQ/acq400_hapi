@@ -23,6 +23,14 @@ from . import netclient
 
 class RAD3DDS(acq400.Acq400):
     
+    @staticmethod
+    def ftw2ratio(ftw):
+        return float(int('0x{}'.format(ftw), 16)/float(0x1000000000000))
+    
+    @staticmethod
+    def ratio2ftw(ratio):
+        return format(int(ratio * pow(2, 48)), '012x')
+
     def __init__(self, _uut, monitor=True):
             acq400.Acq400.__init__(self, _uut, monitor)
             site = 4

@@ -22,14 +22,11 @@ KP=0.05
 
 uut = acq400_hapi.RAD3DDS("localhost")
 
-def ftw2ratio(ftw):
-    return float(int('0x{}'.format(ftw), 16)/float(0x1000000000000))
-
 def control(prop_err):
     ftw1 = uut.ddsC.FTW1
-    xx = ftw2ratio(ftw1)
+    xx = RAD3DDS.ftw2ratio(ftw1)
     yy = xx - prop_err*KP
-    ftw1_yy = format(int(yy*pow(2, 48)), '012x')
+    ftw1_yy = RAD3DDS.ratio2ftw(yy)
     
     print("XX:{} ratio:{} - err:{} * KP:{} => yy:{} YY:{}".format(ftw1, xx, prop_err, KP, yy, ftw1_yy))
     
@@ -38,6 +35,8 @@ def control(prop_err):
     uut.s2.ddsC_upd_clk_fpga = '0'
     
 def process_last(line):
+# compute updated output based on error band return #secs to sleep. 
+# NB: MUST not be too quick for the counter, which is itself quite slow..
     #print(line)
     mfdata = {}
     for pair in line.split():
@@ -50,7 +49,7 @@ def process_last(line):
     if abs(err) > 2:
         print("control m1")
         control(err/TARGET)
-        return 1
+        return 3
     
     err = mfdata['m10'] - TARGET
     if abs(err) > 0.2 and abs(err) < 2:
