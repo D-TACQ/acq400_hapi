@@ -62,6 +62,7 @@ class AcqPorts:
     ONESHOT = 53999
     AWG_ONCE = 54201
     AWG_AUTOREARM = 54202
+    AWG_CONTINUOUS = 54205
     MGTDRAM = 53990
     MGTDRAM_PULL_DATA = 53991
 
@@ -678,11 +679,11 @@ class Acq400:
         def __str__(self):
             return repr(self.value)
 
-    def load_awg(self, data, autorearm=False, repeats=1):
+    def load_awg(self, data, autorearm=False, continuous=False, repeats=1):
         if self.awg_site > 0:
             if self.modules[self.awg_site].task_active == '1':
                 raise self.AwgBusyError("awg busy")
-        port = AcqPorts.AWG_AUTOREARM if autorearm else AcqPorts.AWG_ONCE
+        port = AcqPorts.AWG_CONTINUOUS if continuous else AcqPorts.AWG_AUTOREARM if autorearm else AcqPorts.AWG_ONCE
 
         with netclient.Netclient(self.uut, port) as nc:
             while repeats:
