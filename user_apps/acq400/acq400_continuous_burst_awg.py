@@ -31,7 +31,47 @@ def get_distributor_sites(args, uut):
             args.nchan = nc
             print("nchan set {}".format(args.nchan))
             return
+          
+def configure_master_site(args, uut):
+    for site in uut.sites:
+        uut.modules[site].trg = '1,0,1'        
+        uut.modules[site].rtm = 1 if args.burst_length > 0 else 0
+        uut.modules[site].burst = '3,0,1' if args.burst_length > 0 else '0,0,0'
+        uut.modules[site].rtm_translen = args.burst_length
+        break
+    
+    
+def load_burstlen_equals_wavelen(args, uut):
+    # load a sequence of waveforms to be loaded and played in turn
+    work=acq400_hapi.awg_data.RainbowGen(uut, args.nchan, args.length, False)
+    while True:    
+        for f in work.load(continuous=True):
+            print("Loaded %s" % (f))
+            if args.delay:
+                time.sleep(args.delay)
+            else:
+                input("hit return for next WF")
+                uut.modules[site].AWG_MODE_ABO = '1'
+                uut.modules[site].playloop_length = '0'
+
+def load_multiple_bursts_in_one_wavelen(args, uut):
+    # build a sequence of bursts to load in one waveform
+    work=acq400_hapi.awg_data.RainbowGen(uut, args.nchan, args.burst_length, False)
+    awg = np.zeros((0, args.nchan))
+    while len(awg)/args.nchan < args.length:
+        for ch in range(args.nchan):
+            awx = work.build(ch)
+            awg = np.append(awg, awx)
+            if len(awg)/args.nchan >= args.length:
+                break
             
+    uut.load_awg(awg.astype(np.int16), continuous=True)    
+        
+    input("hit return to stop")
+    uut.modules[site].AWG_MODE_ABO = '1'
+    uut.modules[site].playloop_length = '0'
+    
+                                   
 def run_awg(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
     get_distributor_sites(args, uut)
@@ -43,43 +83,13 @@ def run_awg(args):
     uut.s0.dist_bufferlen_play = bufferlen
     uut.s0.dist_bufferlen_load = bufferlen
     
-    for site in uut.sites:
-        uut.modules[site].trg = '1,0,1'        
-        uut.modules[site].rtm = 1 if args.burst_length > 0 else 0
-        uut.modules[site].burst = '3,0,1' if args.burst_length > 0 else '0,0,0'
-        uut.modules[site].rtm_translen = args.burst_length
-        break
-    
-    
+    configure_master_site(args, uut)
     
     if args.burst_length == args.length:
-        # load a sequence of waveforms to be loaded and played in turn
-        work=acq400_hapi.awg_data.RainbowGen(uut, args.nchan, args.length, False)
-        while True:    
-            for f in work.load(continuous=True):
-                print("Loaded %s" % (f))
-                if args.delay:
-                    time.sleep(args.delay)
-                else:
-                    input("hit return for next WF")
-                    uut.modules[site].AWG_MODE_ABO = '1'
-                    uut.modules[site].playloop_length = '0'
+        load_burstlen_equals_wavelen(args, uut)
     else:
-        # build a sequence of bursts to load in one waveform
-        work=acq400_hapi.awg_data.RainbowGen(uut, args.nchan, args.burst_length, False)
-        awg = np.zeros((0, args.nchan))
-        while len(awg)/args.nchan < args.length:
-            for ch in range(args.nchan):
-                awx = work.build(ch)
-                awg = np.append(awg, awx)
-                if len(awg)/args.nchan >= args.length:
-                    break
-            
-        uut.load_awg(awg.astype(np.int16), continuous=True)    
-        
-        input("hit return to stop")
-        uut.modules[site].AWG_MODE_ABO = '1'
-        uut.modules[site].playloop_length = '0'
+        load_multiple_bursts_in_one_wavelen(args, uut)
+
 
     
     
