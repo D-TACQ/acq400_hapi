@@ -38,7 +38,7 @@ def freq(sig):
 def init_remapper(uut):
 # Set AD9854 clock remap to 25 MHz
     uut.ddsC.CR = '004C0041'
-    uut.ddsC.FTW1 = RAD3DDS.ratio2ftw(1.0/12.0)
+    uut.ddsC.FTW1 = acq400_hapi.RAD3DDS.ratio2ftw(1.0/12.0)
 
 # Program AD9512 secondary clock to choose 25 MHz from the AD9854 remap
     uut.clkdB.CSPD = '02'
@@ -96,7 +96,7 @@ def verify_chirp(uut, test):
 
 
 def run_test(args):
-    uut = acq400_hapi.RAD3DDS(args.uut[0])
+    uut = acq400_hapi.RAD3DDS(args.uut)
 
     for test in range(0, args.test):
         uut.s2.RADCELF_init = 1
@@ -111,7 +111,7 @@ def run_main():
     parser = argparse.ArgumentParser(description='radcelf-chirp-init')
     parser.add_argument('--test', default=1, type=int,
                         help="set number of tests to run")
-    parser.add_argument('uut', nargs=1, help="uut")
+    parser.add_argument('uut', nargs='?', default="localhost", help="uut")
     run_test(parser.parse_args())
 
 # execution starts here
