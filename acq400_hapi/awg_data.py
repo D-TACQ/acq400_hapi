@@ -105,17 +105,20 @@ class RainbowGen:
         for ch in range(nchan):
             self.aw[:,ch] = self.rainbow(ch)            
 
+    def build(self, ch):
+        aw1 = np.copy(self.aw)
+        aw1[:,ch] = np.add(np.multiply(self.sinc(ch),5),2)
+        awr = (aw1*(2**15-1)/10)/self.gain
+        for chx in range(len(self.current)):
+            awr[:,self.ao0+chx] += self.current[chx]
+        return awr
+    
     def load(self, autorearm = False, continuous=False):
         for ii in range(99999 if self.run_forever else 1):
             for ch in range(self.nchan):        
-                aw1 = np.copy(self.aw)
-                aw1[:,ch] = np.add(np.multiply(self.sinc(ch),5),2)
-                print("loading array ", aw1.shape)
-                awr = (aw1*(2**15-1)/10)/self.gain
-                for chx in range(len(self.current)):
-                    awr[:,self.ao0+chx] += self.current[chx]
-                self.uut.load_awg(awr.astype(np.int16), autorearm=autorearm, continuous=continuous)
-                print("loaded array ", aw1.shape)
+                print("loading array ", self.aw.shape)        
+                self.uut.load_awg(self.build(ch).astype(np.int16), autorearm=autorearm, continuous=continuous)
+                print("loaded array ", self.aw.shape)
                 yield ch
 
 class Pulse:

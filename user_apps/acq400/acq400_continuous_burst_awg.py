@@ -15,6 +15,7 @@ import acq400_hapi
 import argparse
 import time
 
+import numpy as np
 
 # AWG "Feature"
 MINBUFFERS = 4
@@ -43,35 +44,63 @@ def run_awg(args):
     uut.s0.dist_bufferlen_load = bufferlen
     
     for site in uut.sites:
-        uut.modules[site].trg = '1,0,1'
-        uut.modules[site].rtm = 1
-        uut.modules[site].burst = '3,0,1'
-        uut.modules[site].rtm_translen = args.length
+        uut.modules[site].trg = '1,0,1'        
+        uut.modules[site].rtm = 1 if args.burst_length > 0 else 0
+        uut.modules[site].burst = '3,0,1' if args.burst_length > 0 else '0,0,0'
+        uut.modules[site].rtm_translen = args.burst_length
         break
     
-    while True:    
+    
+    
+    if args.burst_length == args.length:
+        # load a sequence of waveforms to be loaded and played in turn
         work=acq400_hapi.awg_data.RainbowGen(uut, args.nchan, args.length, False)
-
-        for f in work.load(continuous=True):
-            print("Loaded %s" % (f))
-            if args.delay:
-                time.sleep(args.delay)
-            else:
-                input("hit return for next WF")
-            uut.modules[site].AWG_MODE_ABO = '1'
-            uut.modules[site].playloop_length = '0'
+        while True:    
+            for f in work.load(continuous=True):
+                print("Loaded %s" % (f))
+                if args.delay:
+                    time.sleep(args.delay)
+                else:
+                    input("hit return for next WF")
+                    uut.modules[site].AWG_MODE_ABO = '1'
+                    uut.modules[site].playloop_length = '0'
+    else:
+        # build a sequence of bursts to load in one waveform
+        work=acq400_hapi.awg_data.RainbowGen(uut, args.nchan, args.burst_length, False)
+        awg = np.zeros((0, args.nchan))
+        while len(awg)/args.nchan < args.length:
+            for ch in range(args.nchan):
+                awx = work.build(ch)
+                awg = np.append(awg, awx)
+                if len(awg)/args.nchan >= args.length:
+                    break
+            
+        uut.load_awg(awg.astype(np.int16), continuous=True)    
+        
+        input("hit return to stop")
+        uut.modules[site].AWG_MODE_ABO = '1'
+        uut.modules[site].playloop_length = '0'
 
     
     
- 
+BURST_IS_AWGLEN = -1 
  
 def run_main():
     parser = argparse.ArgumentParser(description='acq1001 awg demo')
     parser.add_argument('--length', type=int, default=8192, help="AWG length")
+    parser.add_argument('--burst_length', type=int, default=BURST_IS_AWGLEN, 
+        help="Burst length : {} same as AWG, 0: no burst, >0 special [sub] length".format(BURST_IS_AWGLEN))
     parser.add_argument('--delay', type=int, default=0, help="auto switch on this delay")
     parser.add_argument('--trgDX', type=int, default=0, help="trigger DX line")
     parser.add_argument('uuts', nargs=1, help="uut ")
-    run_awg(parser.parse_args())
+    args = parser.parse_args()
+    if args.burst_length == BURST_IS_AWGLEN:
+        args.burst_length = args.length
+    elif args.burst_length > 0:
+        if args.burst_length > args.length:
+            args.burst_length = args.length
+            print("WARNING: setting burst_length equal to awg length")
+    run_awg(args)
            
 if __name__ == '__main__':
     run_main()
