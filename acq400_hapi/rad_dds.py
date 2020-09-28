@@ -20,12 +20,14 @@ Created on Sun Jan  8 12:36:38 2017
 
 from . import acq400
 from . import netclient
+from builtins import staticmethod
 
 
 class AD9854:
     class CR:
         regular_en = '004C0061'
         chirp_en   = '004C8761'
+        low_power  ='00440041'
     
     @staticmethod
     def ftw2ratio(ftw):
@@ -34,7 +36,27 @@ class AD9854:
     @staticmethod
     def ratio2ftw(ratio):
         return format(int(ratio * pow(2, 48)), '012x')  
-      
+  
+class AD9512:
+    class DIVX:
+        div4 = '1100'
+        passthru = '0080'
+        
+    @staticmethod
+    def setDIVX(clkd, value):
+        clkd.DIV0     = value
+        clkd.DIV1     = value
+        clkd.DIV2     = value
+        clkd.DIV3     = value
+        clkd.DIV4     = value
+        clkd.UPDATE   = 1
+        
+    @staticmethod
+    def clocksON(clkd):        
+        clkd.LVPECL1 = '08'
+        clkd.LVPECL0 = '08'
+        clkd.UPDATE  = 1 
+         
 class RAD3DDS(acq400.Acq400):
     
     @staticmethod
@@ -46,12 +68,16 @@ class RAD3DDS(acq400.Acq400):
     def ratio2ftw(ratio):
         return AD9854.ratio2ftw(ratio)
     
+    @staticmethod
+    def pulse(knob):
+        knob = 1
+        knob = 0
+    
     def radcelf_init(self):
         # port of original RADCELF_init shell script
     #Reset the entire clock chain
-        self.s2.clkd_hard_reset = 1
-        self.s2.clkd_hard_reset = 0
-
+        RAD3DDS.pulse(self.s2.clkd_hard_reset)
+        
         self.clkdA.CSPD     = '00'
         self.clkdA.UPDATE   = '01'
 
@@ -65,27 +91,14 @@ class RAD3DDS(acq400.Acq400):
         self.clkdB.LVPECL2  = '0a'
         self.clkdB.LVDS3    = '08'
         self.clkdB.UPDATE   = '01'
-
 #Set all the clkdA AD9512 dividers to divide by 4 to avoid overheat
 #100MHz / 4 = 25Mhz source clock
-        self.clkdA.DIV0     = '1100'
-        self.clkdA.DIV1     = '1100'
-        self.clkdA.DIV2     = '1100'
-        self.clkdA.DIV3     = '1100'
-        self.clkdA.DIV4     = '1100'
-        self.clkdA.UPDATE   = 1
-        
+        AD9512.setDIVX(self.clkdA, AD9512.DIVX.div4)       
         # set clkdB to pass-thru
-        self.clkdB.DIV0     = '0080'
-        self.clkdB.DIV1     = '0080'
-        self.clkdB.DIV2     = '0080'
-        self.clkdB.DIV3     = '0080'
-        self.clkdB.DIV4     = '0080'
-        self.clkdB.UPDATE   = 1
-        
+        AD9512.setDIVX(self.clkdB, AD9512.DIVX.pass_thru)
+            
 # Reset the DDS
-        self.s2.ddsX_hard_reset = 1
-        self.s2.ddsX_hard_reset = 0
+        RAD3DDS.pulse(self.s2.ddsX_hard_reset)
     
 #Switch the clocks off on the DDS Devices to stop I/O Updates
 
@@ -98,20 +111,16 @@ class RAD3DDS(acq400.Acq400):
         self.clkdB.LVPECL1  = '0a'
         self.clkdB.UPDATE   = 1
 
-#Write to the Control Registers on the 3 DDS devices - 
+# Write to the Control Registers on the 3 DDS devices - 
 # External I/O Update and SDO On
 # Set the RefClk Multiplier on at x4 switch off the Inverse Sinc Filter
-        self.ddsA.CR = '00440041'
-        self.ddsB.CR = '00440041'
-        self.ddsC.CR = '00440041'
+        self.ddsA.CR = AD9854.CR.low_power
+        self.ddsB.CR = AD9854.CR.low_power
+        self.ddsC.CR = AD9854.CR.low_power
 
 #Switch the Clocks back on again
-        self.clkdA.LVPECL1 = '08'
-        self.clkdA.LVPECL0 = '08'
-        self.clkdB.LVPECL1 = '08'
-        self.clkdB.LVPECL0 = '08'
-        self.clkdA.UPDATE  = 1
-        self.clkdB.UPDATE  = 1
+        AD9512.clocksON(self.clkdA)
+        AD9512.clocksON(self.clkdB)
 
 # tell FPGA to take over the clocking
         self.s2.ddsA_upd_clk_fpga = 1

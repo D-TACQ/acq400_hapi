@@ -176,6 +176,7 @@ def run_test(args):
             ttime = time.time() + args.gps_sync
             for uut in uuts:
                 uut.s2.trigger_at = ttime
+            time.sleep(args.gps_sync+1)
         
         if not args.noverify:
             for uut in uuts:
@@ -190,7 +191,7 @@ def run_main():
     parser.add_argument('--debug', default=0, type=int, help="1: trace 2: step")
     parser.add_argument('--noverify', default=0, type=int, help="do not verify (could be waiting gps)")
     parser.add_argument('--gps_sync', default=0, type=int, help="syncronize with GPSPPS >1: autotrigger at + gps_sync s")
-    parser.add_argument('--legacy_radcelf_init', default=0, type=int, "help use old script in case all-python does not work")
+    parser.add_argument('--legacy_radcelf_init', default=0, type=int, help="use old script in case all-python does not work")
     parser.add_argument('uuts', nargs='*', default=["localhost"], help="uut")
     args = parser.parse_args()
     if args.debug: 
