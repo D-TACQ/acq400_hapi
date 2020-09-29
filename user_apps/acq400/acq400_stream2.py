@@ -57,6 +57,7 @@ Some usage examples are included below:
 
 
 import acq400_hapi
+import numpy as np
 import os
 import time
 import argparse
@@ -85,7 +86,7 @@ def make_data_dir(directory, verbose):
 
 
 def run_stream(args):
-    remove_stale_data(args)
+    # remove_stale_data(args)
     data_len_so_far = 0
     RXBUF_LEN = 4096
     cycle = 1
@@ -97,6 +98,13 @@ def run_stream(args):
     make_data_dir(root, args.verbose)
     start_time = time.time()
     data_length = 0
+
+    if args.es_stream:
+        uut = acq400_hapi.Acq400(args.uuts[0])
+        nchan = uut.s0.NCHAN
+        ssb = uut.s0.ssb
+        RXBUF_LEN = int(ssb)
+
     if args.filesize > args.totaldata:
         args.filesize = args.totaldata
 
@@ -105,7 +113,11 @@ def run_stream(args):
     while time.time() < (start_time + args.runtime) and data_len_so_far < args.totaldata:
 
         bytestogo = args.filesize - data_length
-        rxbuf_len = RXBUF_LEN if bytestogo > RXBUF_LEN else bytestogo
+
+        if args.es_stream == 1 or bytestogo > RXBUF_LEN:
+            rxbuf_len = RXBUF_LEN
+        else:
+            rxbuf_len = bytestogo
 
         data = skt.recv(rxbuf_len)
 
@@ -126,11 +138,21 @@ def run_stream(args):
             print("Streaming time remaining: ", -1 * (time.time() - (start_time + args.runtime)))
             print("\n" * 2)
 
-        if data_length >= args.filesize:
+        if args.es_stream == 1:
+            if np.frombuffer(data, dtype=np.uint32)[2] == np.uint32(0xaa55f152):
+                new_file_flag = True
+                print("True")
+            else:
+                new_file_flag = False
+        else:
+            new_file_flag = True if data_length >= args.filesize else False
+
+        if new_file_flag:
             file_num += 1
             data_length = 0
             data_file.close()
             data_file = None
+            new_file_flag = False
 
 
 def run_main():
@@ -139,6 +161,7 @@ def run_main():
     parser.add_argument('-totaldata', '--totaldata', default=sys.maxsize, action=acq400_hapi.intSIAction, decimal = False)
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=sys.maxsize, type=int, help="How long to stream data for")
+    parser.add_argument('--es_stream', default=0, type=int, help="Stream with ES. New file is used for each ES.")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uuts', nargs='+', help="uuts")
     run_stream(parser.parse_args())
