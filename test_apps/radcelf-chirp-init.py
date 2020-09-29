@@ -179,6 +179,7 @@ def init_dual_chirp(args, uut):
     gps_sync(uut, gps_sync_chirp_en=args.gps_sync, hold_en=True)
     init_chirp(uut, 0)
     init_chirp(uut, 1)
+    gps_sync(uut, gps_sync_chirp_en=args.gps_sync)
     init_trigger(uut)
 
         
