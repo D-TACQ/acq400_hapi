@@ -22,42 +22,10 @@ import acq400_hapi
 import argparse
 import time
 from builtins import int
-from acq400_hapi import AD9854
+from acq400_hapi import AD9854 
+from acq400_hapi import Debugger
 
-import logging
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-class Debugger(object):
-    """ Debug a method and return it back"""
-
-    enabled = 0
-
-    def __init__(self, func):
-        self.func = func
-
-    def __call__(self, *args, **kwargs):
-        if self.enabled:
-            logger.debug(f'{"Enter" if self.enabled > 2 else "Entering"} : {self.func.__name__}')
-            logger.debug(f'args, kwargs : {args, kwargs}')
-            
-            if self.enabled > 2:
-                inp = input("q/C?")
-                if inp == 'q':
-                    exit(1)
-                    
-        rc = self.func(*args, **kwargs)
-        
-        if self.enabled:
-            logger.debug(f'{self.func.__name__} returned : {rc}')
-            if self.enabled > 1:
-                logger.debug(f'Exit : {self.func.__name__}')
-                inp = input("q/C?")
-                if inp == 'q':
-                    exit(1)
-            
-        return rc
     
     
 def set_upd_clk_fpga(uut, idds, value):

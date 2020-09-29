@@ -49,13 +49,13 @@ class AD9512:
         clkd.DIV2     = value
         clkd.DIV3     = value
         clkd.DIV4     = value
-        clkd.UPDATE   = 1
+        clkd.UPDATE   = '01'
         
     @staticmethod
     def clocksON(clkd):        
         clkd.LVPECL1 = '08'
         clkd.LVPECL0 = '08'
-        clkd.UPDATE  = 1 
+        clkd.UPDATE  = '01'
          
 class RAD3DDS(acq400.Acq400):
     
@@ -109,7 +109,7 @@ class RAD3DDS(acq400.Acq400):
 #The two Main DDS devices on device clkB Outputs 0 and 1
         self.clkdB.LVPECL0  = '0a'
         self.clkdB.LVPECL1  = '0a'
-        self.clkdB.UPDATE   = 1
+        self.clkdB.UPDATE   = '01'
 
 # Write to the Control Registers on the 3 DDS devices - 
 # External I/O Update and SDO On
