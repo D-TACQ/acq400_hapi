@@ -95,7 +95,7 @@ class RAD3DDS(acq400.Acq400):
 #100MHz / 4 = 25Mhz source clock
         AD9512.setDIVX(self.clkdA, AD9512.DIVX.div4)       
         # set clkdB to pass-thru
-        AD9512.setDIVX(self.clkdB, AD9512.DIVX.pass_thru)
+        AD9512.setDIVX(self.clkdB, AD9512.DIVX.passthru)
             
 # Reset the DDS
         RAD3DDS.pulse(self.s2.ddsX_hard_reset)
