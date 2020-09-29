@@ -116,6 +116,8 @@ def upload(args):
             while cap < args.capture:
                 shot_controller.run_shot(soft_trigger = st, remote_trigger = trigger_action)
                 cap += 1
+            if args.capture == -1:
+                shot_controller.handle_data(args)
 
     except acq400_hapi.cleanup.ExitCommand:
         print("ExitCommand raised and caught")
