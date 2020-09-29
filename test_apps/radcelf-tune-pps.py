@@ -13,6 +13,7 @@ KPROP=0.05  : 0.5 was unstable. Must be some error in my calcs, but this does co
 
 import sys
 import acq400_hapi
+from acq400_hapi import AD9854
 import argparse
 import time
 from builtins import int
@@ -24,9 +25,9 @@ uut = acq400_hapi.RAD3DDS("localhost")
 
 def control(prop_err):
     ftw1 = uut.ddsC.FTW1
-    xx = RAD3DDS.ftw2ratio(ftw1)
+    xx = AD9854.ftw2ratio(ftw1)
     yy = xx - prop_err*KP
-    ftw1_yy = RAD3DDS.ratio2ftw(yy)
+    ftw1_yy = AD9854.ratio2ftw(yy)
     
     print("XX:{} ratio:{} - err:{} * KP:{} => yy:{} YY:{}".format(ftw1, xx, prop_err, KP, yy, ftw1_yy))
     

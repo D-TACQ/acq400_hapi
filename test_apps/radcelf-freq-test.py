@@ -8,15 +8,10 @@
 
 import sys
 import acq400_hapi
+from acq400_hapi import AD9854
 import argparse
 import time
 from builtins import int
-
-
-# AD9854 class in the making ..
-def FTW1(ratio):
-    return format(int(ratio * pow(2, 48)), '012x')
-
 
 def set_upd_clk_fpga(uut, idds, value):
     if idds == 0:
@@ -38,7 +33,7 @@ def init_clk(uut):
     global FINT
 # Set AD9854 clock remap to 25 MHz
     uut.ddsC.CR = '004C0041'
-    uut.ddsC.FTW1 = FTW1(1.0/CMULT)
+    uut.ddsC.FTW1 = AD9854.ratio2ftw(1.0/CMULT)
 # Program AD9512 secondary clock to choose 25 MHz from the AD9854 remap
     uut.clkdB.CSPD = '02'
     uut.clkdB.UPDATE = '01'
@@ -53,10 +48,10 @@ def set_freq(uut, dds, freq):
     global DBG
 # X12, SINC off
     dds.CR = '004C0041'
-    dds.FTW1 = FTW1(freq/FINT)
+    dds.FTW1 = AD9854.ratio2ftw(freq/FINT)
     if DBG:
         print("set_freq %s %.3e FINT %.3e FTW1 %s" % ("ddsA" if uut.ddsA == dds else "ddsB",
-                                                      freq, FINT, FTW1(freq/FINT)))
+                                                      freq, FINT, AD9854.ratio2ftw(freq/FINT)))
 
 
 def valid_freq(actual, target):

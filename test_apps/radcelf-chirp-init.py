@@ -22,7 +22,7 @@ import acq400_hapi
 import argparse
 import time
 from builtins import int
-from acq400_hapi import AD9854 as AD9854
+from acq400_hapi import AD9854
 
 import logging
 
@@ -175,7 +175,8 @@ def init_dual_chirp(args, uut):
     radcelf_init(uut, args.legacy_radcelf_init)
     gps_sync(uut, gps_sync_chirp_en=args.gps_sync)
     reset_counters(uut)
-    init_remapper(uut)    
+    if args.noinitremapper == 0:
+        init_remapper(uut)    
     gps_sync(uut, gps_sync_chirp_en=args.gps_sync, hold_en=True)
     init_chirp(uut, 0)
     init_chirp(uut, 1)
@@ -208,6 +209,7 @@ def run_main():
                         help="set number of tests to run")
     parser.add_argument('--debug', default=0, type=int, help="1: trace 2: step")
     parser.add_argument('--noverify', default=0, type=int, help="do not verify (could be waiting gps)")
+    parser.add_argument('--noinitremapper', default=1, type=int, help="keep existing clock remapper ")
     parser.add_argument('--gps_sync', default=0, type=int, help="syncronize with GPSPPS >1: autotrigger at + gps_sync s")
     parser.add_argument('--legacy_radcelf_init', default=0, type=int, help="use old script in case all-python does not work")
     parser.add_argument('uuts', nargs='*', default=["localhost"], help="uut")
