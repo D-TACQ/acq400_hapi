@@ -25,6 +25,7 @@ from builtins import int
 from acq400_hapi import AD9854 as AD9854
 
 import logging
+from samba.dcerpc.spoolss import DMPAPER_10X14
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -114,13 +115,30 @@ def init_trigger(uut):
     except:
         print("ACQ435 not fitted")
 
+
+GPS_SYNC_DDSA = 0x1
+GPS_SYNC_DDSB = 0x2
+GPS_SYNC_DDSX = 0x3
+
+def _gps_sync(dds, gps_sync_chirpen, holden):
+    if gps_sync_chirp_en:
+        dds.gps_sync_chirp = 1
+        if holden:
+            dds.gps_engage_hold = 1
+            # dds_gps_arm_pps executed later
+        else:
+            dds.gps_arm_pps = 0
+            dds.gps_engage_hold = 0
+    else:
+        dds.gps_sync_chirp = 0
 @Debugger
-def gps_sync_hold(args, uut, en):
-    uut.s2.dds_gps_sync_chirp = 1 if args.gps_sync != 0 else 0
-    if args.gps_sync:
-        if en == 0:
-            uut.s2.dds_gps_arm_pps = 0
-        uut.s2.dds_gps_engage_hold = 1 if en else 0
+def gps_sync(uut, ddsX=GPS_SYNC_DDSX, gps_sync_chirpen=False, holden=False):
+    if ddsX&GPS_SYNC_DDSA:
+        _gps_sync(uut.ddsA, gps_sync_chirpen, holden)
+    if ddsX&GPS_SYNC_DDSB:
+        _gps_sync(uut.ddsB, gps_sync_chirpen, holden)
+
+        
   
 @Debugger
 def radcelf_init(uut, legacy):
@@ -154,12 +172,13 @@ def verify_chirp(uut, test):
 
 
 def init_dual_chirp(args, uut):
+    gps_sync(uut, gps_sync_chirpen=False)
     uut.s2.dds_gps_sync_chirp = 0     
     radcelf_init(uut, args.legacy_radcelf_init)
-    gps_sync_hold(args, uut, 0)
+    gps_sync(uut, gps_sync_chirpen=args.gps_sync)
     reset_counters(uut)
     init_remapper(uut)    
-    gps_sync_hold(args, uut, args.gps_sync != 0)
+    gps_sync(uut, gps_sync_chirpen=args.gps_sync, holden=True)
     init_chirp(uut, 0)
     init_chirp(uut, 1)
     init_trigger(uut)
