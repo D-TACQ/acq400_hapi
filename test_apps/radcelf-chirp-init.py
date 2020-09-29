@@ -25,7 +25,6 @@ from builtins import int
 from acq400_hapi import AD9854 as AD9854
 
 import logging
-from samba.dcerpc.spoolss import DMPAPER_10X14
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
