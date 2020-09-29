@@ -119,10 +119,10 @@ GPS_SYNC_DDSA = 0x1
 GPS_SYNC_DDSB = 0x2
 GPS_SYNC_DDSX = 0x3
 
-def _gps_sync(dds, gps_sync_chirpen, holden):
+def _gps_sync(dds, gps_sync_chirp_en, hold_en):
     if gps_sync_chirp_en:
         dds.gps_sync_chirp = 1
-        if holden:
+        if hold_en:
             dds.gps_engage_hold = 1
             # dds_gps_arm_pps executed later
         else:
@@ -131,11 +131,11 @@ def _gps_sync(dds, gps_sync_chirpen, holden):
     else:
         dds.gps_sync_chirp = 0
 @Debugger
-def gps_sync(uut, ddsX=GPS_SYNC_DDSX, gps_sync_chirpen=False, holden=False):
+def gps_sync(uut, ddsX=GPS_SYNC_DDSX, gps_sync_chirp_en=False, hold_en=False):
     if ddsX&GPS_SYNC_DDSA:
-        _gps_sync(uut.ddsA, gps_sync_chirpen, holden)
+        _gps_sync(uut.ddsA, gps_sync_chirp_en, hold_en)
     if ddsX&GPS_SYNC_DDSB:
-        _gps_sync(uut.ddsB, gps_sync_chirpen, holden)
+        _gps_sync(uut.ddsB, gps_sync_chirp_en, hold_en)
 
         
   
@@ -171,13 +171,12 @@ def verify_chirp(uut, test):
 
 
 def init_dual_chirp(args, uut):
-    gps_sync(uut, gps_sync_chirpen=False)
-    uut.s2.dds_gps_sync_chirp = 0     
+    gps_sync(uut, gps_sync_chirp_en=False)
     radcelf_init(uut, args.legacy_radcelf_init)
-    gps_sync(uut, gps_sync_chirpen=args.gps_sync)
+    gps_sync(uut, gps_sync_chirp_en=args.gps_sync)
     reset_counters(uut)
     init_remapper(uut)    
-    gps_sync(uut, gps_sync_chirpen=args.gps_sync, holden=True)
+    gps_sync(uut, gps_sync_chirp_en=args.gps_sync, hold_en=True)
     init_chirp(uut, 0)
     init_chirp(uut, 1)
     init_trigger(uut)
