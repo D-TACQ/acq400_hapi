@@ -1106,11 +1106,11 @@ class Acq400:
 
         return [indices, event_samples]
 
-    def stream(self, sink):
+    def stream(self, sink, recvlen=4096*32*2, port=AcqPorts.STREAM):
         nc = netclient.Netclient(self.uut, AcqPorts.STREAM)
         finished = False
-        while not sink(nc.sock.recv(4096*32*2)):
-            continue
+        while not sink(nc.sock.recv(recvlen)):
+            continue 
 
 
 class Acq2106(Acq400):
