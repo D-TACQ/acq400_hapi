@@ -22,6 +22,10 @@ TARGET=25000000.00
 KP=0.05
 
 uut = acq400_hapi.RAD3DDS("localhost")
+print("configured clkdDB routing to source CLK from ddsC")
+uut.clkdB.CSPD = '02'
+uut.clkdB.UPDATE = '01'
+
 
 def control(prop_err):
     ftw1 = uut.ddsC.FTW1
@@ -59,7 +63,7 @@ def process_last(line):
         return 10
     
     err = mfdata['m100'] - TARGET
-    if  abs(err) > 0.02 and abs(err) < 0.2:
+    if  abs(err) > 0.02 and abs(err) < 2:
         print("control m100")
         control(err/TARGET)
         return 100
