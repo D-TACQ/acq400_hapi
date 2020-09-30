@@ -57,13 +57,13 @@ def process_last(line):
         return 3
     
     err = mfdata['m10'] - TARGET
-    if abs(err) > 0.2 and abs(err) < 2:
+    if abs(err) > 0.2 and abs(err) < 3:
         print("control m10")
         control(err/TARGET)
         return 10
     
     err = mfdata['m100'] - TARGET
-    if  abs(err) > 0.02 and abs(err) < 2:
+    if  abs(err) > 0.02 and abs(err) < 3:
         print("control m100")
         control(err/TARGET)
         return 100
