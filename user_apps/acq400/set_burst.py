@@ -49,7 +49,7 @@ def configure_bm(args, uuts):
         u.s1.RGM_SENSE  = args.sense
         u.s1.es_enable  = args.es_enable
         u.s1.RTM_TRANSLEN = args.rtm_translen if args.rgm == 'RTM' else 0
-        u.s0.transient  = 'POST={} DEMUX={}'.format(args.post, args.demux)
+        u.s0.transient  = 'PRE={} POST={} DEMUX={}'.format(args.pre, args.post, args.demux)
         u.s0.set_knob('SIG_SRC_TRG_1', 'GPG1' if args.gpg == 'on' and args.dx == 'd1' else 'STRIG')
 
 def run_shot(args, uuts):
@@ -83,6 +83,7 @@ def run_main():
     parser.add_argument('--sense', default='rising', type=str, help='rising|falling')
     parser.add_argument('--rtm_translen', default=1234, type=int, help='transient length')
     parser.add_argument('--post', default=100000, type=int, help='shot length')
+    parser.add_argument('--pre', default=0, type=int, help='pre shot length')
     parser.add_argument('--trg', default='1,0,1', type=str, help='shot trigger triplet')
     parser.add_argument('--es_enable', default=1, type=int, help='0 disables Event Signature')
     parser.add_argument('--trace', default=0, type=int, help='1: enable command trace')
