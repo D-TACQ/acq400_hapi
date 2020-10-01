@@ -209,7 +209,11 @@ class ShotControllerWithDataHandler(ShotController):
                 for col in range(ncol):
                     for chn in range(0,nchan):
                         fignum = 1 + col + chn*ncol
-                        plt.subplot(nchan, ncol, fignum)
+                        if hasattr(args, 'one_plot'):
+                            if not args.one_plot:
+                                plt.subplot(nchan, ncol, fignum)
+                        else:
+                            plt.subplot(nchan, ncol, fignum)
                         plt.plot(chx[col][chn])
                 plt.show()
 
