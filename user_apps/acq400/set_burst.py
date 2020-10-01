@@ -49,11 +49,11 @@ def configure_bm(args, uuts):
         u.s1.RGM_SENSE  = args.sense
         u.s1.es_enable  = args.es_enable
         u.s1.RTM_TRANSLEN = args.rtm_translen if args.rgm == 'RTM' else 0
+        u.s0.transient  = 'POST={} DEMUX={}'.format(args.post, args.demux)
+        u.s0.set_knob('SIG_SRC_TRG_1', 'GPG1' if args.gpg == 'on' and args.dx == 'd1' else 'STRIG')
 
 def run_shot(args, uuts):
     for u in uuts:
-        u.s0.transient  = 'POST={} DEMUX={}'.format(args.post, args.demux)
-        u.s0.set_knob('SIG_SRC_TRG_1', 'GPG1' if args.gpg == 'on' and args.dx == 'd1' else 'STRIG')
         u.s0.set_arm = 1
 
     for u in uuts:
