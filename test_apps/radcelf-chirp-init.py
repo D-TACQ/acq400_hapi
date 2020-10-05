@@ -41,31 +41,30 @@ def freq(sig):
 
 @Debugger
 def init_remapper(uut):
-# Set AD9854 clock remap to 25 MHz
-    uut.ddsC.CR = '004C0041'
-    uut.ddsC.FTW1 = AD9854.ratio2ftw(1.0/12.0)
-
 # Program AD9512 secondary clock to choose 25 MHz from the AD9854 remap
     uut.clkdB.CSPD = '02'
     uut.clkdB.UPDATE = '01'
 
 @Debugger        
-def init_chirp(uut, idds):
+def init_chirp(uut, idds, chirps_per_sec=5):
     # SETTING KAKA'AKOS CHIRP
     #
     dds = uut.ddsA if idds == 0 else uut.ddsB
 
 # Program the chirp using Kaka'ako parameters
-    set_upd_clk_fpga(uut, idds, '1')
-    dds.CR = '004C0061'
+    set_upd_clk_fpga(uut, idds, '1')   # Values are strobed in with normal FPGA IOUPDATE
+    dds.CR = acq400_hapi.AD9854.CRX(12)   # '004C0061'
     dds.FTW1 = '172B020C49BA'
     dds.DFR = '0000000021D1'
-    dds.UCR = '01F01FD0'
+#    dds.UCR = '01F01FD0'                               # KAKA'AKOS original, deprecated
+#    dds.UCR = acq400_hapi.AD9854.UCR(5)                # '01C9C37F'    # 5Hz
+    dds.UCR =  acq400_hapi.AD9854.UCR(chirps_per_sec)   # '002DC6BF'    # 50Hz is easier to see on a scope    
     dds.RRCR = '000001'
     dds.IPDMR = '0FFF'
     dds.QPDMR = '0FFF'
-    dds.CR = '004C8761'
-    set_upd_clk_fpga(uut, idds, '0')
+    set_upd_clk_fpga(uut, idds, '0')    # Final value strobed in by PPS linked IOUPDATE
+    dds.CR = acq400_hapi.AD9854.CRX(12, chirp=True)   # '004C8761' 
+   
 
 @Debugger
 def init_trigger(uut):
@@ -105,8 +104,15 @@ def gps_sync(uut, ddsX=GPS_SYNC_DDSX, gps_sync_chirp_en=False, hold_en=False):
     if ddsX&GPS_SYNC_DDSB:
         _gps_sync(uut.ddsB, gps_sync_chirp_en, hold_en)
 
-        
-  
+
+@Debugger
+def chirp_off(uut): 
+    uut.ddsA.CR = AD9854.CRX_chirp_off()      
+    uut.ddsB.CR = AD9854.CRX_chirp_off()
+    
+    while uut.chirp_freq(0) != 0 and uut.chirp_freq(1) != 0:
+        print("waiting for chirp to stop {} {}".format(uut.chirp_freq(0), uut.chirp_freq(1)))
+       
 @Debugger
 def radcelf_init(uut, legacy):
     if legacy:
@@ -127,7 +133,7 @@ def verify_chirp(uut, test):
     retry = 0
 
     while retry < 10:
-        if valid_chirp(freq(uut.s0.SIG_TRG_S2_FREQ)) and valid_chirp(freq(uut.s0.SIG_TRG_S3_FREQ)):
+        if valid_chirp(uut.chirp_freq(0)) and valid_chirp(uut.chirp_freq(1)):
             print("test:%d  PASS %s %s" %
                   (test, uut.s0.SIG_TRG_S2_FREQ, uut.s0.SIG_TRG_S3_FREQ))
             return True
@@ -139,15 +145,16 @@ def verify_chirp(uut, test):
 
 
 def init_dual_chirp(args, uut):
+    chirp_off(uut)    
     gps_sync(uut, gps_sync_chirp_en=False)
-    radcelf_init(uut, args.legacy_radcelf_init)
     gps_sync(uut, gps_sync_chirp_en=args.gps_sync)
-    reset_counters(uut)
-    if args.noinitremapper == 0:
-        init_remapper(uut)    
+    reset_counters(uut)   
+    init_remapper(uut)    
     gps_sync(uut, gps_sync_chirp_en=args.gps_sync, hold_en=True)
-    init_chirp(uut, 0)
-    init_chirp(uut, 1)
+    
+    init_chirp(uut, 0, chirps_per_sec=args.chirps_per_sec)
+    init_chirp(uut, 1, chirps_per_sec=args.chirps_per_sec)
+    
     gps_sync(uut, gps_sync_chirp_en=args.gps_sync)
     init_trigger(uut)
 
@@ -177,9 +184,8 @@ def run_main():
                         help="set number of tests to run")
     parser.add_argument('--debug', default=0, type=int, help="1: trace 2: step")
     parser.add_argument('--noverify', default=0, type=int, help="do not verify (could be waiting gps)")
-    parser.add_argument('--noinitremapper', default=1, type=int, help="keep existing clock remapper ")
     parser.add_argument('--gps_sync', default=0, type=int, help="syncronize with GPSPPS >1: autotrigger at + gps_sync s")
-    parser.add_argument('--legacy_radcelf_init', default=0, type=int, help="use old script in case all-python does not work")
+    parser.add_argument('--chirps_per_sec', default=5, type=int, help="chirps per second")    
     parser.add_argument('uuts', nargs='*', default=["localhost"], help="uut")
     args = parser.parse_args()
     if args.debug: 

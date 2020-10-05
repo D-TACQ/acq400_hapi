@@ -22,17 +22,8 @@ TARGET=25000000.00
 KP=0.05
 
 uut = acq400_hapi.RAD3DDS("localhost")
-print("configured clkdDB routing to source CLK from ddsC")
-uut.clkdB.CSPD = '02'
-uut.clkdB.UPDATE = '01'
+time.sleep(50)
 
-
-print("Initialise DDS C to a ratio of 1.0 for nominal 25 MHz")
-uut.s2.ddsC_upd_clk_fpga = '1'
-uut.ddsC.CR   = '004C0041'
-uut.ddsC.FTW1 = AD9854.ratio2ftw(1.0/12.0)
-time.sleep(30)
-print("Starting Tuning")
 
 def control(prop_err,KPL):
     ftw1 = uut.ddsC.FTW1
@@ -56,38 +47,13 @@ def process_last(line):
         (key, value) = pair.split("=")
         mfdata[key] = float(value)
         
-    err = mfdata['m1'] - TARGET
-    print("M1 error {}".format(err))
-    if abs(err) > 1:
-        print("control m1")
-        control(err/TARGET,0.05)
-        return 2
-
-    err = mfdata['m10'] - TARGET
-    print("M10 error {}".format(err))
-    if abs(err) > 0.2:
-        print("control m10")
-        control(err/TARGET,0.03)
-        return 10
-
-    err = mfdata['m30'] - TARGET
-    print("M30 error {}".format(err))
-    if  abs(err) > 0.031:
-        print("control m30")
-        control(err/TARGET,0.02)
-        return 30        
 
     err = mfdata['m100'] - TARGET
     print("M100 error {}".format(err))
-    if  abs(err) > 0.011:
-        print("control m100")
-        control(err/TARGET,0.015)
-        return 100
-    
-    print("TARGET Achieved, quitting...")
-    exit(0)
-               
-        
+    print("control m100")
+    control(err/TARGET,0.02)
+    return 100
+
 def process():
     with open("/dev/shm/meanfreq.txt", "r") as mf:
         lines = mf.readlines()
@@ -97,3 +63,4 @@ def process():
 while True:
     time.sleep(process())
     
+

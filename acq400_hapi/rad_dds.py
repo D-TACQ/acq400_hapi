@@ -25,9 +25,20 @@ from builtins import staticmethod
 
 class AD9854:
     class CR:
-        regular_en = '004C0061'
-        chirp_en   = '004C8761'
-        low_power  ='00440041'
+        regular_en = '00400061'
+        chirp_en   = '00408761'
+        low_power  ='00400041'
+        
+    @staticmethod
+    # CR for clock * n
+    def CRX(n = 4, chirp=False):            
+        return '{:08x}'.format(int(n << 16) | int(AD9854.CR.chirp_en if chirp else AD9854.CR.regular_en, 16))
+        
+    @staticmethod
+    # UCR for chirps_per_sec
+    def UCR(chirps_per_sec, intclk=299999999):
+        return '{:08x}'.format(int(intclk/2/chirps_per_sec))
+        
     
     @staticmethod
     def ftw2ratio(ftw):
@@ -36,6 +47,10 @@ class AD9854:
     @staticmethod
     def ratio2ftw(ratio):
         return format(int(ratio * pow(2, 48)), '012x')  
+    
+    @staticmethod
+    def CRX_chirp_off(n = 4):
+        return '{:08x}'.format(int(n << 16) | int(AD9854.CR.low_power, 16))
   
 class AD9512:
     class DIVX:
@@ -72,6 +87,9 @@ class RAD3DDS(acq400.Acq400):
     def pulse(knob):
         knob = 1
         knob = 0
+    
+    def chirp_freq(self, idds):
+        return acq400.Acq400.freq(self.s0.get_knob('SIG_TRG_S2_FREQ' if idds==0 else 'SIG_TRG_S3_FREQ'))
     
     def radcelf_init(self):
         # port of original RADCELF_init shell script

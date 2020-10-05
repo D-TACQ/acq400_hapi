@@ -1121,6 +1121,10 @@ class Acq400:
                 yield chunk
             else:
                 break
+            
+    @staticmethod
+    def freq(sig):
+        return float(sig.split(" ")[1])
 
 
 class Acq2106(Acq400):
