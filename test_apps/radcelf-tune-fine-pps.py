@@ -36,6 +36,7 @@ def control(prop_err,KPL):
     uut.s2.ddsC_upd_clk_fpga = '1'
     uut.ddsC.FTW1 = ftw1_yy
     uut.s2.ddsC_upd_clk_fpga = '0'
+    uut.s0.spad2 = ftw1_yy[5:]             # write low 4 bytes to spad2 for in-data signaling
     
 def process_last(line):
 # compute updated output based on error band return #secs to sleep. 
