@@ -142,6 +142,7 @@ def get_args(argStr=None):
     parser.add_argument('--capture', default=CAPTURE, type=int, help="1: capture data, 0: wait for someone else to capture, -1: just upload")
     parser.add_argument('--remote_trigger', default=None, type=str, help="your function to fire trigger")
     parser.add_argument('--wrtd_tx', default=0, type=int, help="release a wrtd_tx when all boards read .. works when free-running trigger")
+    parser.add_argument('--one_plot', default=0, type=int, help="Whether or not to take a new subplot for each channel.")
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
 
     return parser.parse_args(argStr)

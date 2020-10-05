@@ -553,17 +553,24 @@ class Acq400:
 
         chx = []
         data_size = 4 if self.s0.data32 == '1' else 2
-        for ch in channels:
-            if self.trace:
-                print("%s CH%02d start.." % (self.uut, ch))
-                start = timeit.default_timer()
+        demux_state = int(self.s0.transient.split("DEMUX=",1)[1][0])
+        if demux_state:
+            for ch in channels:
+                if self.trace:
+                    print("%s CH%02d start.." % (self.uut, ch))
+                    start = timeit.default_timer()
 
-            chx.append(self.read_chan(ch, nsam, data_size=data_size))
+                chx.append(self.read_chan(ch, nsam, data_size=data_size))
 
-            if self.trace:
-                tt = timeit.default_timer() - start
-                print("%s CH%02d complete.. %.3f s %.2f MB/s" %
-                      (self.uut, ch, tt, len(chx[-1])*2/1000000/tt))
+                if self.trace:
+                    tt = timeit.default_timer() - start
+                    print("%s CH%02d complete.. %.3f s %.2f MB/s" %
+                        (self.uut, ch, tt, len(chx[-1])*2/1000000/tt))
+        else:
+            data = np.array(self.read_chan(0, nsam, data_size=data_size))
+            data = data.reshape((-1, int(self.s0.NCHAN)))
+            data = data[:,np.array(channels)-1].transpose()
+            chx = [ item for item in data ]
 
         return chx
 

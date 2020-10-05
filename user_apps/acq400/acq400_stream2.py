@@ -86,21 +86,30 @@ def make_data_dir(directory, verbose):
 
 
 def run_stream(args):
-    # remove_stale_data(args)
+    remove_stale_data(args)
+    uut = acq400_hapi.Acq400(args.uuts[0])
     data_len_so_far = 0
     RXBUF_LEN = 4096
     cycle = 1
     root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
     file_num = 0
 
+    if args.port == "STREAM":
+        port = acq400_hapi.AcqPorts.STREAM
+    elif args.port == "SPY":
+        port = acq400_hapi.AcqPorts.DATA_SPY
+        uut.s0.CONTINUOUS = "0"
+        uut.s0.CONTINUOUS = "1"
+    else:
+        port = args.port
+
     skt = socket.socket()
-    skt.connect((args.uuts[0], 4210))
+    skt.connect((args.uuts[0], port))
     make_data_dir(root, args.verbose)
     start_time = time.time()
     data_length = 0
 
     if args.es_stream:
-        uut = acq400_hapi.Acq400(args.uuts[0])
         nchan = uut.s0.NCHAN
         ssb = uut.s0.ssb
         RXBUF_LEN = int(ssb)
@@ -162,6 +171,7 @@ def run_main():
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=sys.maxsize, type=int, help="How long to stream data for")
     parser.add_argument('--es_stream', default=0, type=int, help="Stream with ES. New file is used for each ES.")
+    parser.add_argument('--port', default='STREAM', type=str, help="Which port to stream from. STREAM=4210, SPY=53667, other: use number provided.")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uuts', nargs='+', help="uuts")
     run_stream(parser.parse_args())
