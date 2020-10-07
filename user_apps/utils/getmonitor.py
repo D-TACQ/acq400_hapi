@@ -34,6 +34,16 @@ def getvolts(uut, monxml, kex, verbose=0):
                 print(key, value)
             else:
                 print(value)
+        else:            
+            for m in kex.finditer(acqdata[0].text):
+                try:
+                    value = m.group(1)
+                except:
+                    value = m.group()
+                if verbose == 2:
+                    print(uut, value)
+                else:
+                    print(value)                              
 
 
 def run_main():
