@@ -5,6 +5,21 @@ Created on 6 Oct 2020
 @author: pgm
 
 Pulls one of the ACQ400 http ajax monitor files, parses and prints user selected values
+
+Examples:
+    [pgm@hoy5 utils]$ ./getmonitor.py --verbose=2 --key='VA[PN]' acq2106_119 acq2106_276
+    acq2106_119 VAN -13.1
+    acq2106_119 VAP 12.78
+    acq2106_276 VAN -13.0
+    acq2106_276 VAP 12.89
+
+    ./getmonitor.py --verbose=2 --key='.*AGGSTA.0x0c (\w+).*' --monxml=acq4000.xml \
+        acq2106_119 acq2106_261 acq2106_262
+    acq2106_119 0x00000066
+    acq2106_261 0x00000025
+    acq2106_262 0x00000100
+
+
 '''
 
 
