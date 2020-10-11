@@ -66,25 +66,16 @@ def init_chirp(uut, idds, chirps_per_sec=5):
     dds.CR = acq400_hapi.AD9854.CRX(12, chirp=True)   # '004C8761' 
    
 
-@Debugger
-def init_trigger(uut):
-# Set the trigger
-# lera_acq_setup
-# we assume a 25MHz from ddsC
-# trigger from site 3 ddsA
-    try:
-        uut.s1.trg = '1,3,1'
-        uut.s1.clk = '1,3,1'
-        uut.s1.hi_res_mode = '1'
-# 25 MHz/4 = 6.25MHz / 512 = SR 12207
-        uut.s1.CLKDIV = '4'
-    except:
-        print("ACQ435 not fitted")
 
 
 GPS_SYNC_DDSA = 0x1
 GPS_SYNC_DDSB = 0x2
 GPS_SYNC_DDSX = 0x3
+
+@Debugger
+def init_trigger(uut, dx='ddsA'):
+        uut.s1.trg = '1,{},rising'.format('d3' if dds == 'ddsA' else 'd4' if dds == 'ddsB' else dx)
+
 
 def _gps_sync(dds, gps_sync_chirp_en, hold_en):
     if gps_sync_chirp_en:
@@ -156,7 +147,7 @@ def init_dual_chirp(args, uut):
     init_chirp(uut, 1, chirps_per_sec=args.chirps_per_sec)
     
     gps_sync(uut, gps_sync_chirp_en=args.gps_sync)
-    init_trigger(uut)
+    init_trigger(uut, dx=args.trigger_adc_dx)
 
         
 def run_test(args):
@@ -164,7 +155,13 @@ def run_test(args):
 
     for test in range(0, args.test):
         for uut in uuts:
-            init_dual_chirp(args, uut)
+            chirp_off(uut)
+            
+        if args.chirps_per_sec == 0:
+            break
+        
+        for uut in uuts:
+            init_dual_chirp(args, uut)            
           
         if args.gps_sync > 1:
             ttime = time.time() + args.gps_sync
@@ -185,7 +182,8 @@ def run_main():
     parser.add_argument('--debug', default=0, type=int, help="1: trace 2: step")
     parser.add_argument('--noverify', default=0, type=int, help="do not verify (could be waiting gps)")
     parser.add_argument('--gps_sync', default=0, type=int, help="syncronize with GPSPPS >1: autotrigger at + gps_sync s")
-    parser.add_argument('--chirps_per_sec', default=5, type=int, help="chirps per second")    
+    parser.add_argument('--chirps_per_sec', default=5, type=int, help="chirps per second")
+    parser.add_argument('--trigger_adc_dx', default='ddsA', help="trigger ACQ on ddsA or ddsB or dX [X=0,1,2,3,4,5,6]")    
     parser.add_argument('uuts', nargs='*', default=["localhost"], help="uut")
     args = parser.parse_args()
     if args.debug: 
