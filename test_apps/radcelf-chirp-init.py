@@ -65,17 +65,18 @@ def set_upd_clk_fpga(uut, ddsX, value):
         uut.s2.ddsB_upd_clk_fpga = value
 
 
-def freq(sig):
-    return float(sig.split(" ")[1])
-
-
 @Debugger
 def init_remapper(uut):
 # Program AD9512 secondary clock to choose 25 MHz from the AD9854 remap
     uut.clkdB.CSPD = '02'
     uut.clkdB.UPDATE = '01'
 
-
+    ddsc_ratio = AD9854.ftw2ratio(uut.ddsC.FTW1)
+    
+    if ddsc_ratio < 0.073 or ddsc_ratio > 0.093:
+        print('system was not tuned, set default 300/12')
+        uut.ddsC.CR = '004C0041'
+        uut.ddsC.FTW1 = AD9854.ratio2ftw(1.0/12.0)         
 
 
 @Debugger        
