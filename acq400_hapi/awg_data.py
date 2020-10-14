@@ -105,9 +105,11 @@ class RainbowGen:
         for ch in range(nchan):
             self.aw[:,ch] = self.rainbow(ch)            
 
-    def build(self, ch):
+    def build(self, ch, sinc_off_ch=-1):
+        if sinc_off_ch == -1:
+            sinc_off_ch = ch
         aw1 = np.copy(self.aw)
-        aw1[:,ch] = np.add(np.multiply(self.sinc(ch),5),2)
+        aw1[:,ch] = np.add(np.multiply(self.sinc(sinc_off_ch),5),2)
         awr = (aw1*(2**15-1)/10)/self.gain
         for chx in range(len(self.current)):
             awr[:,self.ao0+chx] += self.current[chx]
