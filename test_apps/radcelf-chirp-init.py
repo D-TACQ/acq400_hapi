@@ -108,6 +108,9 @@ def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
 @Debugger
 def init_trigger(uut, dx='ddsA'):
         uut.s1.trg = '1,{},rising'.format('d3' if dx == 'ddsA' else 'd4' if dx == 'ddsB' else dx)
+        uut.s1.sync= '1,0,1'
+        uut.s0.SIG_SRC_SYNC_0 = 'PPS'
+
 
 
 def _gps_sync(dds, gps_sync_chirp_en, hold_en):
