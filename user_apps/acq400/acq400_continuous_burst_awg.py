@@ -38,6 +38,7 @@ def configure_master_site(args, uut):
         uut.modules[site].rtm = 1 if args.burst_length > 0 else 0
         uut.modules[site].burst = '3,0,1' if args.burst_length > 0 else '0,0,0'
         uut.modules[site].rtm_translen = args.burst_length
+        #uut.modules[site].AWG_BURSTLEN = args.burst_length
         break
     
     
@@ -60,7 +61,8 @@ def load_multiple_bursts_in_one_wavelen(args, uut):
     awg = np.zeros((0, args.nchan))
     while len(awg)/args.nchan < args.length:
         for ch in range(args.nchan):
-            awx = work.build(ch)
+            awx = work.build(ch, sinc_off_ch=0)
+            awx[:,args.nchan-1] = range(0,args.burst_length)
             awg = np.append(awg, awx)
             if len(awg)/args.nchan >= args.length:
                 break
@@ -68,9 +70,14 @@ def load_multiple_bursts_in_one_wavelen(args, uut):
     uut.load_awg(awg.astype(np.int16), continuous=True)    
         
     input("hit return to stop")
+    site = uut.sites[0]
     uut.modules[site].AWG_MODE_ABO = '1'
     uut.modules[site].playloop_length = '0'
     
+import numpy as np  
+
+PAGE = 4096
+PAGEM = (PAGE-1)  
                                    
 def run_awg(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
@@ -78,10 +85,23 @@ def run_awg(args):
     
     wavelen = args.length * 2 * args.nchan
     bufferlen = int(uut.s0.bufferlen)
-    if wavelen < 4 * bufferlen:
-        bufferlen = args.length * 2 * args.nchan / MINBUFFERS
-    uut.s0.dist_bufferlen_play = bufferlen
-    uut.s0.dist_bufferlen_load = bufferlen
+    if wavelen <= MINBUFFERS * bufferlen:
+        play_bufferlen = int(wavelen / MINBUFFERS)
+    else:
+        # pick larges buffer such than nbuffers is an even number
+        nbuffers = int(np.ceil(wavelen/bufferlen))
+        if nbuffers%2 != 0:
+            nbuffers += 1
+        play_bufferlen = int(wavelen/nbuffers)
+        
+        while play_bufferlen&7 and nbuffers < 20:
+           nbuffers += 2
+           play_bufferlen = int(wavelen/nbuffers)
+        wl_act = play_bufferlen*nbuffers
+        print("wavelen {} play_bufferlen {} nbuffers {} p*n {} {}".\
+              format(wavelen, play_bufferlen, nbuffers, wl_act, "OK" if wl_act == wavelen else "UNEQUAL"))
+            
+    uut.s0.dist_bufferlen_play = play_bufferlen
     
     configure_master_site(args, uut)
     
@@ -104,6 +124,9 @@ def run_main():
     parser.add_argument('--trgDX', type=int, default=0, help="trigger DX line")
     parser.add_argument('uuts', nargs=1, help="uut ")
     args = parser.parse_args()
+    if args.length%64:
+        args.length = (args.length&(64-1)) + 64
+        print("rounding up length to next multiple of 64 {}". args.length)
     if args.burst_length == BURST_IS_AWGLEN:
         args.burst_length = args.length
     elif args.burst_length > 0:
