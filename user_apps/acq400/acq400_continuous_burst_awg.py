@@ -36,9 +36,8 @@ def configure_master_site(args, uut):
     for site in uut.sites:
         uut.modules[site].trg = '1,0,1'        
         uut.modules[site].rtm = 1 if args.burst_length > 0 else 0
-        uut.modules[site].burst = '3,0,1' if args.burst_length > 0 else '0,0,0'
-        uut.modules[site].rtm_translen = args.burst_length
-        #uut.modules[site].AWG_BURSTLEN = args.burst_length
+        uut.modules[site].burst = '3,0,1' if args.burst_length > 0 else '0,0,0'        
+        uut.modules[site].AWG_BURSTLEN = args.burst_length
         break
     
     
@@ -73,8 +72,18 @@ def load_multiple_bursts_in_one_wavelen(args, uut):
     site = uut.sites[0]
     uut.modules[site].AWG_MODE_ABO = '1'
     uut.modules[site].playloop_length = '0'
-    
+
+
+def tee_adc(uut_name, burstlen):
+    print("tee_adc {} .. we assume it's ready to go with a triggered transient".format(uut_name))
+    uut = acq400_hapi.Acq400(uut_name)
+    uut.s1.RTM_TRANSLEN = burstlen
+    uut.s0.TRANSIENT_SET_ARM = 1
+    uut.s0.TRANSIENT_SET_ARM = 0
+      
 import numpy as np  
+
+
 
 PAGE = 4096
 PAGEM = (PAGE-1)  
@@ -122,6 +131,7 @@ def run_main():
         help="Burst length : {} same as AWG, 0: no burst, >0 special [sub] length".format(BURST_IS_AWGLEN))
     parser.add_argument('--delay', type=int, default=0, help="auto switch on this delay")
     parser.add_argument('--trgDX', type=int, default=0, help="trigger DX line")
+    parser.add_argument('--monitor_uut', default=None, help="url of capture ADC")
     parser.add_argument('uuts', nargs=1, help="uut ")
     args = parser.parse_args()
     if args.length%64:
@@ -133,6 +143,8 @@ def run_main():
         if args.burst_length > args.length:
             args.burst_length = args.length
             print("WARNING: setting burst_length equal to awg length")
+    if args.monitor_uut:
+        tee_adc(args.monitor_uut, args.burst_length)
     run_awg(args)
            
 if __name__ == '__main__':
