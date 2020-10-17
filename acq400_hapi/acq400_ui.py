@@ -148,8 +148,8 @@ class Acq400UI:
             Acq400UI._exec_args_sim(uut, args.sim)
         if args.trace:
             Acq400UI._exec_args_trace(uut, args.trace)
-        if args.trg:
-            Acq400UI._exec_args_trg(uut, args, args.trg)
         if args.post != None:
             Acq400UI._exec_args_transient(uut, args)
+        if args.trg:
+            Acq400UI._exec_args_trg(uut, args, args.trg)
         
