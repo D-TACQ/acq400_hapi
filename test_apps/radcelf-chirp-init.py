@@ -190,17 +190,19 @@ def init_dual_chirp(args, uut):
         init_chirp(uut, GPS_SYNC_DDSB, chirps_per_sec=args.chirps_per_sec, gps_sync=args.gps_sync!=0)
     
     gps_sync(uut, ddsX=args.ddsX, gps_sync_chirp_en=args.gps_sync)
-    init_trigger(uut, dx=args.trigger_adc_dx)
+    
 
         
 def run_test(args):
     uuts = [acq400_hapi.RAD3DDS(u) for u in args.uuts]
 
     for test in range(0, args.test):
+              
         for uut in uuts:
+            init_trigger(uut, dx=args.trigger_adc_dx)
             chirp_off(uut)
             
-        if args.chirps_per_sec == 0:
+        if args.stop or args.chirps_per_sec == 0:
             break
         
         for uut in uuts:
@@ -227,7 +229,9 @@ def run_main():
     parser.add_argument('--ddsX', default=0x3, type=int, help="ddsA=1, ddsB=2, ddsA+ddsB=3")
     parser.add_argument('--gps_sync', default=0, type=int, help="syncronize with GPSPPS >1: autotrigger at + gps_sync s")
     parser.add_argument('--chirps_per_sec', default=5, type=int, help="chirps per second")
-    parser.add_argument('--trigger_adc_dx', default='ddsA', help="trigger ACQ on ddsA or ddsB or dX [X=0,1,2,3,4,5,6]")    
+    parser.add_argument('--stop', action="store_true", help="--stop uuts : stop chirp and quit [no value]")
+    parser.add_argument('--trigger_adc_dx', default='ddsA', help="trigger ACQ on ddsA or ddsB or dX [X=0,1,2,3,4,5,6]")
+    parser.add_argument('--init_trigger', action="store_true", help="--init_trigger : configure trigger only")    
     parser.add_argument('uuts', nargs='*', default=["localhost"], help="uut")
     args = parser.parse_args()
     if args.debug: 
