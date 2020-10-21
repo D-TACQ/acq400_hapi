@@ -219,7 +219,7 @@ def run_test(args):
         if args.gps_sync > 1:
             ttime = time.time() + args.gps_sync
             for uut in uuts:
-                # d5: PPS trigger is free running, select on at on trigger (aka during the second before
+                # d5: PPS trigger is free running, select at on_trigger (aka during the second before
                 uut.s2.trigger_at = "{} {}".format('--trg=1,d5,rising' if args.trigger_adc_dx=='d5' else '', ttime)
             time.sleep(args.gps_sync+1)
         
