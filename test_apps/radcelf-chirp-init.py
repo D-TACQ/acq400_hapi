@@ -107,7 +107,13 @@ def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
 
 @Debugger
 def init_trigger(uut, dx='ddsA'):
-        uut.s1.trg = '1,{},rising'.format('d3' if dx == 'ddsA' else 'd4' if dx == 'ddsB' else dx)
+        trg_def = '1,{},rising'.format('d3' if dx == 'ddsA' else 'd4' if dx == 'ddsB' else dx)
+        uut.s1.event1 = trg_def
+        uut.s1.es_enable = 0
+        if dx == 'd5':
+            print("PPS trigger is free running, disable to start")
+            trg_def = '1,{},rising'.format('d7')
+        uut.s1.trg = trg_def
         uut.s1.sync= '1,0,1'
         uut.s0.SIG_SRC_SYNC_0 = 'PPS'
 
@@ -199,6 +205,8 @@ def run_test(args):
     for test in range(0, args.test):
               
         for uut in uuts:
+            if args.stop:
+                uut.s0.set_abort = 1
             init_trigger(uut, dx=args.trigger_adc_dx)
             chirp_off(uut)
             
@@ -211,7 +219,8 @@ def run_test(args):
         if args.gps_sync > 1:
             ttime = time.time() + args.gps_sync
             for uut in uuts:
-                uut.s2.trigger_at = ttime
+                # d5: PPS trigger is free running, select on at on trigger (aka during the second before
+                uut.s2.trigger_at = "{} {}".format('--trg=1,d5,rising' if args.trigger_adc_dx=='d5' else '', ttime)
             time.sleep(args.gps_sync+1)
         
         if not args.noverify:
@@ -230,7 +239,7 @@ def run_main():
     parser.add_argument('--gps_sync', default=0, type=int, help="syncronize with GPSPPS >1: autotrigger at + gps_sync s")
     parser.add_argument('--chirps_per_sec', default=5, type=int, help="chirps per second")
     parser.add_argument('--stop', action="store_true", help="--stop uuts : stop chirp and quit [no value]")
-    parser.add_argument('--trigger_adc_dx', default='ddsA', help="trigger ACQ on ddsA or ddsB or dX [X=0,1,2,3,4,5,6]")
+    parser.add_argument('--trigger_adc_dx', default='ddsA', help="trigger ACQ on ddsA or ddsB or dX [X=0,1,2,3,4,5,6]")    
     parser.add_argument('--init_trigger', action="store_true", help="--init_trigger : configure trigger only")    
     parser.add_argument('uuts', nargs='*', default=["localhost"], help="uut")
     args = parser.parse_args()
