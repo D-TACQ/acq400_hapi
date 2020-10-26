@@ -159,7 +159,13 @@ def radcelf_init(uut, legacy):
         uut.s2.RADCELF_init = 1
     else:
         uut.radcelf_init()
-    
+  
+@Debugger
+def arm_uut(uut):
+    print("{} DISABLE ACQ43X_SAMPLE_RATE, set MBCLK to /4".format(uut.uut))
+    uut.s1.ACQ43X_SAMPLE_RATE = 0
+    uut.s0.mb_clk = "25000 6250"
+    uut.s0.CONTINUOUS = '1'
 
 
 def valid_chirp(freq):
@@ -213,6 +219,9 @@ def run_test(args):
         if args.stop or args.chirps_per_sec == 0:
             break
         
+        for uut in uuts:
+            arm_uut(uut)
+            
         for uut in uuts:
             init_dual_chirp(args, uut)            
           

@@ -74,6 +74,10 @@ class AD9512:
          
 class RAD3DDS(acq400.Acq400):
     
+    @staticmethod 
+    def best_clock_pps_sync(fs):
+        return fs//512 * 512;
+    
     @staticmethod
     def ftw2ratio(ftw):
         return AD9854.ftw2ratio(ftw)

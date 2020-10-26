@@ -52,7 +52,7 @@ def process_last(line):
     err = mfdata['m100'] - TARGET
     print("M100 error {}".format(err))
     print("control m100")
-    control(err/TARGET,0.02)
+    control(err/TARGET, KP*0.25)
     return 100
 
 def process():
@@ -61,7 +61,24 @@ def process():
         
     return process_last(lines[-1])
     
-while True:
-    time.sleep(process())
+def radcelf_tune(fclk):
+    TARGET = fclk
+    while True:
+        time.sleep(process())
     
 
+def run_main():
+    parser = argparse.ArgumentParser("radcelf-tune-pps [fclk]")
+    parser.add_argument('--best', default=True, help="select BEST clock for PPS sync")
+    parser.add_argument('--Kp', default=0.05, type=float, help="Kp, proportional control constant" )
+    parser.add_argument('fclk', nargs=1, default=25000000, type=int, help="required clock frequency")
+    args = parser.parse_args()
+    KP = args.kp
+    if args.best:
+        fbest =acq400_hapi.RAD3DDS.best_clock_pps_sync(args.fclk)
+        if fbest != args.fclk:
+            print("Selected BEST clock {} => {}".format(args.fclk, fbest))
+        fclk = fbest
+    else:
+        fclk = args.fclk
+    radcelf_tune(fclk)
