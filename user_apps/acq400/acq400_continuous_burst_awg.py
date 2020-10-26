@@ -77,7 +77,9 @@ def load_multiple_bursts_in_one_wavelen(args, uut):
 def tee_adc(uut_name, burstlen):
     print("tee_adc {} .. we assume it's ready to go with a triggered transient".format(uut_name))
     uut = acq400_hapi.Acq400(uut_name)
+    uut.s1.rgm = '3,0,1'
     uut.s1.RTM_TRANSLEN = burstlen
+    uut.s0.transient = 'PRE=0 POST=100000'
     uut.s0.TRANSIENT_SET_ARM = 1
     uut.s0.TRANSIENT_SET_ARM = 0
       
