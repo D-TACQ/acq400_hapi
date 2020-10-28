@@ -211,8 +211,7 @@ def run_test(args):
     for test in range(0, args.test):
               
         for uut in uuts:
-            if args.stop:
-                uut.s0.set_abort = 1
+            uut.s0.CONTINUOUS = '0'
             init_trigger(uut, dx=args.trigger_adc_dx)
             chirp_off(uut)
             
