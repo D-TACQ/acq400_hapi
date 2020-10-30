@@ -39,13 +39,14 @@ def get_args():
     return args
 
 
-def get_file(directory):
+def get_file(args, directory):
     global file
 
     file_counter = int(file // 1)
     if not os.path.isdir(directory):
         print("Dir passed to thread: {} does not exist.".format(directory))
         sys.exit(1)
+
     while True:
 
         latest_dir = [x[0] for x in os.walk(directory)][-1]
@@ -55,8 +56,11 @@ def get_file(directory):
         if len(files) < 2:
             time.sleep(1)
             continue
-        # return_file = files[-2]
-        return_file = "{}/{:04}".format(latest_dir, file_counter)
+
+        if args.lt == 1:
+            return_file = files[-2]
+        if args.lt == 2:
+            return_file = "{}/{:04}".format(latest_dir, file_counter)
         if not os.path.isfile(return_file):
             print("No more valid files found. Exiting now.")
             sys.exit(0)
