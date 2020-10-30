@@ -108,28 +108,30 @@ def open_safe(fn, mode):
     except:
         return open("{}/{}".format(os.getenv("HAPIDIR", '.'), fn), mode)
 
-def tune_action(u):
+def tune_action(args, u):
     def _tune_action():
+        if args.tune_si5326 == 2:
+            if int(u.cC.Si5326_TUNEPHASE_OK.split(" ")[1]) == 1:
+                if args.verbose:
+                    print("{} TUNEPHASE_OK, skip".format(u.uut))
+                return
+        print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
         u.s0.si5326_tune_phase = 1
+        
     return _tune_action
 
 
 def _tune_up_mt(args):
     thx = []
     for u in args.uuts:
-        if args.tune_si5326 == 2:
-            if int(u.cC.Si5326_TUNEPHASE_OK.split(" ")[1]) == 1:
-                print("{} TUNEPHASE_OK, skip".format(u.uut))
-                continue
-
-        print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
-        th = threading.Thread(target=tune_action(u))
-        th.start()
+        th = threading.Thread(target=tune_action(args, u))
         thx.append(th)
+        th.start()        
 
     for t in thx:
         t.join()
-
+        
+@timing
 def tune_up_mt(args):
     if args.tune_si5326 == 0:
         return
