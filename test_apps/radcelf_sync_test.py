@@ -19,9 +19,20 @@ file = 0
 def get_args():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--at', type=int, default=0,
-                        help="Analysis type. Default=0:"
-                        "print 4 samples before and after trg,"
-                        "1: Check clock times.")
+                        help="Analysis type. "
+                        "Default=0: print 4 samples before and after trg, "
+                        "1: Check clock times, "
+                        "2: Check transition events against embedded events.")
+
+    parser.add_argument('--nchan', type=int, default=36, help='How many total '
+                        'channels the system has (in longs). Default=36')
+
+    parser.add_argument('--spad', type=int, default=4, help='How many longwords'
+                        ' the system has. Default=4.')
+
+    parser.add_argument('--lt', type=int, default=1, help='File Loading Type '
+                        '1: Load files in order or '
+                        '2: Load second to last file (for live analysis)')
 
     parser.add_argument('dirs', nargs='+', help="uuts")
     args = parser.parse_args()
@@ -38,24 +49,27 @@ def get_file(directory):
     while True:
 
         latest_dir = [x[0] for x in os.walk(directory)][-1]
-        files = [ "{}/{}".format(latest_dir, file)
-                    for file in os.listdir(latest_dir) ]
+        files = ["{}/{}".format(latest_dir, file)
+                 for file in os.listdir(latest_dir)]
         files.sort(key=os.path.getmtime, reverse=False)
         if len(files) < 2:
             time.sleep(1)
             continue
         # return_file = files[-2]
         return_file = "{}/{:04}".format(latest_dir, file_counter)
+        if not os.path.isfile(return_file):
+            print("No more valid files found. Exiting now.")
+            sys.exit(0)
         print(return_file)
         file += 0.5
         return return_file
 
 
-def get_event_times(data):
+def get_event_times(args, data):
     times = []
     for uut_data in data:
         # print(spad)
-        spad = uut_data[:, 32:]
+        spad = uut_data[:, args.nchan-args.spad:]
         diff = np.abs(np.diff(spad, axis=0))
         event_locations = np.where(diff[:, 2] != 0)[0]+1
         event_times = spad[event_locations][:, -1]
@@ -82,17 +96,17 @@ def get_transition_times(data):
     return times
 
 
-def extract_data(file):
+def extract_data(args, file):
     """
     Returns a list:
     [[UUT1 event times, UUT1 event locations]
     ,[UUT2 event times, UUT2 event locations]...]
     """
     data = np.fromfile(file, dtype=np.int32)
-    dim = 36
+    dim = args.nchan
     max_index = (len(data)//dim)*dim
     data = data[0:max_index]
-    data = data.reshape(-1, 36)
+    data = data.reshape(-1, args.nchan)
     return data
 
 
@@ -107,7 +121,7 @@ def get_neighbours(index, data, n_neighbours):
     return neighbours
 
 
-def print_data(uut_data, transition_data):
+def print_data(args, uut_data, transition_data):
     print(uut_data[0].shape)
     FF = "{:>8}"*9 + "\n"
     rc = []
@@ -123,8 +137,8 @@ def print_data(uut_data, transition_data):
     return None
 
 
-def print_table(data, transition_data, event_data):
-    spad = [uut_data[:, 32:] for uut_data in data]
+def print_table(args, data, transition_data, event_data):
+    spad = [uut_data[:, args.nchan-args.spad:] for uut_data in data]
     FF = "{:>12}" * 3 + "{:>25}"*2 + "\n" + "{:>12}" * 3 + "{:>25}"*2 + "\n"
     # FF = "{:>25}"*5 + "\n" + "{:>25}"*5 + "\n"
     # print(np.array(event_data).shape)
@@ -135,19 +149,19 @@ def print_table(data, transition_data, event_data):
     max = np.amax(diffs)
     now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
-    print(FF.format("Min (us)","Max (us)","Mean (us)","Total events","Last update",
-                     min, max, mean, diffs.shape[-1],now))
+    print(FF.format("Min (us)", "Max (us)", "Mean (us)", "Total events", "Last update",
+                    min, max, mean, diffs.shape[-1], now))
 
     return None
 
 
-def print_transition_check(data, transition_data, event_data):
+def print_transition_check(args, data, transition_data, event_data):
     FF = "{:>10}" * 3
-    data[0] = data[0].reshape((-1,36))
+    data[0] = data[0].reshape((-1, args.nchan))
     # spad1 @ transitions
-    change_indices_detected = data[0][transition_data[0][1]][:, 32]
+    change_indices_detected = data[0][transition_data[0][1]][:, args.nchan-args.spad]
     # Spad3 when spad3 changes
-    change_indices_real = data[0][event_data[0][0]][:, 34]
+    change_indices_real = data[0][event_data[0][0]][:, args.nchan-2]
     diffs = []
     for item in change_indices_real:
         # find the difference between item and the closest transition point
@@ -171,14 +185,14 @@ def print_transition_check(data, transition_data, event_data):
 
 def analyse_data(args, data):
     transition_data = get_transition_times(data)
-    event_data = get_event_times(data)
+    event_data = get_event_times(args, data)
 
     if args.at == 1:
-        print_data(data, transition_data)
+        print_data(args, data, transition_data)
     if args.at == 2:
-        print_table(data, transition_data, event_data)
+        print_table(args, data, transition_data, event_data)
     if args.at == 3:
-        print_transition_check(data, transition_data, event_data)
+        print_transition_check(args, data, transition_data, event_data)
     return None
 
 
@@ -207,7 +221,7 @@ def main():
                     continue
 
             file_timer = 0
-            data.append(extract_data(new_data_file))
+            data.append(extract_data(args, new_data_file))
         if len(data) < 2:
             continue
         # print(len(data))
