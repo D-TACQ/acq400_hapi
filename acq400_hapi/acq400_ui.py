@@ -134,6 +134,7 @@ class Acq400UI:
         parser.add_argument('--sim', default=None, help='s1[,s2,s3..] list of sites to run in simulate mode')
         parser.add_argument('--trace', default=None, help='1 : enable command tracing')
         parser.add_argument('--auto_soft_trigger', default=0, type=int, help='force soft trigger generation')
+        parser.add_argument('--clear_counters', action='store_true', help='clear all counters SLOW')
 
 
 
@@ -142,6 +143,8 @@ class Acq400UI:
         """ and execute all the args
         """
 #        print("exec_args" )
+        if args.clear_counters:
+            uut.clear_counters()
         if args.clk:
             Acq400UI._exec_args_clk(uut, args.clk)
         if args.sim:
