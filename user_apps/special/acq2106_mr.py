@@ -219,10 +219,21 @@ def post_shot_checks(args):
     for u in args.uuts:
             report.append("{} {}".format(u.wrtt0_after, "OK" if u.wrtt0_after == u.wrtt0+1 else "FAIL"))
     print(" ".join(report))
-            
+       
 @timing
+def arm_shot(args, shot_controller):
+    shot_controller.prep_shot()
+    shot_controller.arm_shot()
+    
+@timing
+def run_capture(args, shot_controller):
+    args.rt()
+    shot_controller.wait_complete()
+     
+#@timing
 def run_shot(args, shot_controller):
-    shot_controller.run_shot(remote_trigger=args.rt)
+    arm_shot(args, shot_controller)
+    run_capture(args, shot_controller)
     
 @timing 
 def run_epics_offload(args):
