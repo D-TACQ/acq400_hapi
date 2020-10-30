@@ -208,6 +208,7 @@ def post_shot_check_action(u, args):
         u.wrtt0_after = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
     return _post_shot_check_action
 
+@timing
 def post_shot_checks(args):
     thx = [ threading.Thread(target=post_shot_check_action(u, args)) for u in args.uuts ]
     for t in thx:
@@ -237,15 +238,19 @@ def run_shot(args, shot_controller):
     
 @timing 
 def run_epics_offload(args):
-    shot_controller.run_shot(remote_trigger=args.rt)
+    run_postprocess_command(args.get_epics4, args.uutnames)
     
 @timing
 def run_mdsplus_offload(args):
-    run_postprocess_command(args.get_mdsplus, args.uut)
+    run_postprocess_command(args.get_mdsplus, args.uutnames)
+    
+@timing 
+def connect(args):
+    args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uutnames ]
     
 @timing    
 def run_mr(args):
-    args.uuts = [ acq400_hapi.Acq2106(u, has_comms=False, has_wr=True) for u in args.uut ]
+    connect(args)
     
     tune_up_mt(args)
     shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
@@ -281,7 +286,7 @@ def run_main():
     parser.add_argument('--get_epics4', default=None, type=str, help="run script [args] to store EPICS4 data")
     parser.add_argument('--get_mdsplus', default=None, type=str, help="run script [args] to store mdsplus data")
     parser.add_argument('--tee_up_mt', default=1, type=int, help="multi thread init for speed")
-    parser.add_argument('uut', nargs='+', help="uuts")
+    parser.add_argument('uutnames', nargs='+', help="uuts")
     run_mr(parser.parse_args())
 
 
