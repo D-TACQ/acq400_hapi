@@ -58,9 +58,9 @@ def get_file(args, directory):
             continue
 
         if args.lt == 1:
-            return_file = files[-2]
-        if args.lt == 2:
             return_file = "{}/{:04}".format(latest_dir, file_counter)
+        if args.lt == 2:
+            return_file = files[-2]
         if not os.path.isfile(return_file):
             print("No more valid files found. Exiting now.")
             sys.exit(0)
@@ -125,7 +125,6 @@ def get_neighbours(index, data, n_neighbours):
 
 
 def print_data(args, uut_data, transition_data):
-    print(uut_data[0].shape)
     FF = "{:>8}"*9 + "\n"
     rc = []
 
@@ -141,9 +140,18 @@ def print_data(args, uut_data, transition_data):
 
 
 def print_table(args, data, transition_data, event_data):
-    spad = [uut_data[:, args.nchan-args.spad:] for uut_data in data]
     FF = "{:>12}" * 3 + "{:>25}"*2 + "\n" + "{:>12}" * 3 + "{:>25}"*2 + "\n"
     event_data = np.array(event_data)
+
+    min = event_data[0][1].shape[0]
+    for uut_data in event_data:
+        shape = uut_data[1].shape[0]
+        min = shape if shape < min else min
+
+    for num, uut_data in enumerate(event_data):
+        event_data[num][0] = event_data[num][0][0:min]
+        event_data[num][1] = event_data[num][1][0:min]
+
     diffs = np.abs(np.diff(event_data, axis=0)[0][1])
     mean = np.around(np.mean(diffs), 3)
     min = np.amin(diffs)
@@ -203,7 +211,7 @@ def main():
 
     while True:
         for directory in args.dirs:
-            new_data_file = get_file(directory)
+            new_data_file = get_file(args, directory)
             while new_data_file == old_data_file:
                 file_timer += 1
                 if file_timer > 600:
