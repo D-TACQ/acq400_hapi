@@ -72,7 +72,6 @@ def get_file(args, directory):
 def get_event_times(args, data):
     times = []
     for uut_data in data:
-        # print(spad)
         spad = uut_data[:, args.nchan-args.spad:]
         diff = np.abs(np.diff(spad, axis=0))
         event_locations = np.where(diff[:, 2] != 0)[0]+1
@@ -94,7 +93,7 @@ def get_transition_times(data):
         channel = uut_data[:, 0]
         diffs = np.abs(np.diff(channel))
         transition_locations = np.where(diffs > threshold)[0]+1
-        transition_times = uut_data[:, -1]  # last column is the time
+        transition_times = uut_data[:, -1]
 
         times.append([transition_times, transition_locations])
     return times
@@ -130,7 +129,7 @@ def print_data(args, uut_data, transition_data):
     FF = "{:>8}"*9 + "\n"
     rc = []
 
-    for value in transition_data[0][1]:  # for entry in locations
+    for value in transition_data[0][1]:
         for num, uut in enumerate(uut_data):
             neighbours = get_neighbours(value, uut_data[num][:, 0], 4)
             print("UUT {}: ".format(num), FF.format(
@@ -144,8 +143,6 @@ def print_data(args, uut_data, transition_data):
 def print_table(args, data, transition_data, event_data):
     spad = [uut_data[:, args.nchan-args.spad:] for uut_data in data]
     FF = "{:>12}" * 3 + "{:>25}"*2 + "\n" + "{:>12}" * 3 + "{:>25}"*2 + "\n"
-    # FF = "{:>25}"*5 + "\n" + "{:>25}"*5 + "\n"
-    # print(np.array(event_data).shape)
     event_data = np.array(event_data)
     diffs = np.abs(np.diff(event_data, axis=0)[0][1])
     mean = np.around(np.mean(diffs), 3)
@@ -162,13 +159,10 @@ def print_table(args, data, transition_data, event_data):
 def print_transition_check(args, data, transition_data, event_data):
     FF = "{:>10}" * 3
     data[0] = data[0].reshape((-1, args.nchan))
-    # spad1 @ transitions
     change_indices_detected = data[0][transition_data[0][1]][:, args.nchan-args.spad]
-    # Spad3 when spad3 changes
     change_indices_real = data[0][event_data[0][0]][:, args.nchan-2]
     diffs = []
     for item in change_indices_real:
-        # find the difference between item and the closest transition point
         xx = change_indices_detected
         difference = np.abs(item-xx[np.abs(xx - item).argmin()])
         diffs.append(difference)
@@ -210,10 +204,7 @@ def main():
     while True:
         for directory in args.dirs:
             new_data_file = get_file(directory)
-            # print(new_data_file)
             while new_data_file == old_data_file:
-                # print("New = Old")
-                # print(old_data_file)
                 file_timer += 1
                 if file_timer > 600:
                     print("No new files detected. Exiting now.")
@@ -221,14 +212,12 @@ def main():
                 else:
                     time.sleep(1)
                     new_data_file = get_file(directory)
-                    # break
                     continue
 
             file_timer = 0
             data.append(extract_data(args, new_data_file))
         if len(data) < 2:
             continue
-        # print(len(data))
         analyse_data(args, data)
         data = []
         old_data_file = new_data_file
