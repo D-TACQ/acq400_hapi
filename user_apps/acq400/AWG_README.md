@@ -204,3 +204,29 @@ For the sake of not plotting 32 identical channels, the command line in the sect
 ![enter image description here](https://user-images.githubusercontent.com/36033499/91315252-618ac980-e7af-11ea-8dcb-edd7a43f9583.png)
 
 As can be seen from the image above, the AO module is outputting the wave plotted in the section on creating a sine wave on every channel. 
+
+
+
+# Example: site 5 AO424-16 loopback to site 1 AI16
+
+```
+import numpy as np
+x = np.linspace(0, 8*np.pi, int(1e5))
+y = 32767 * np.sin(x) # full scale in 16 bit DAC codes
+
+interleaved_waves = []
+nchan = 16
+
+for elem in y:
+     interleaved_waves.extend(nchan * [elem])
+
+interleaved_waves = np.array(interleaved_waves).astype(np.int16)
+interleaved_waves.tofile("sine16.dat")
+
+python3 ./user_apps/acq400/sync_role.py --toprole=master --fclk=2M acq2106_193
+python3 ./user_apps/acq400/acq400_configure_transient.py --pre=0 --post=100000 --trg=int,rising acq2106_193
+python3 ./user_apps/acq400/acq400_load_awg.py --file=./sin16.dat --aosite=5 --mode=1 --soft_trigger=0 \
+    --playtrg=int,rising acq2106_193
+python3 ./user_apps/acq400/acq400_upload.py --soft_trigger=1 --trg=int,rising --plot=1 --capture=1 --save_data="acq2106_193_{}" acq2106_193
+
+
