@@ -213,10 +213,10 @@ As can be seen from the image above, the AO module is outputting the wave plotte
 python 3 ./user_apps/utils/make_awg_data.py --nchan=16 --len=100000 --offset_by_channel=0.1 sin16op1.dat
 
 python3 ./user_apps/acq400/sync_role.py --toprole=master --fclk=2M acq2106_193
-python3 ./user_apps/acq400/acq400_load_awg.py --file=./sin16op1.dat --aosite=5 --mode=1 --soft_trigger=0 \
-    --playtrg=int,rising acq2106_193
+python3 ./user_apps/acq400/acq400_load_awg.py --file=./sin16op1.dat --mode=1 --soft_trigger=0 \
+    --playtrg=int,rising --playdiv=2 acq2106_193
 python3 ./user_apps/acq400/acq400_upload.py --pre=0 --post=100000 \
-	--soft_trigger=1 --trg=int,rising 
+	--soft_trigger=1 --trg=int,rising \
 	--plot=1 --capture=1 --save_data="acq2106_193_{}" acq2106_193
 
 
