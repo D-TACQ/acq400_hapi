@@ -51,9 +51,10 @@ def file_extender(fd, ext_count):
 
 @timing
 def load_awg(args, uut, rep):
+    acq400_hapi.Acq400UI.exec_args(uut, args)
     args.shot = uut.modules[args.aosite].shot
     if args.mode == 1 or (args.mode == 2 and rep == 0):
-        acq400_hapi.Acq400UI.exec_args_playtrg(uut, args)
+        
         loaded = 0
  
         while loaded != 1:
@@ -104,8 +105,7 @@ def get_args(argStr=None):
     parser.add_argument('--awg_extend', default=1, type=int, help='Number of times the AWG is repeated.')
     parser.add_argument('--soft_trigger', default=1, type=int, help='Emit soft trigger')
     parser.add_argument('--reps', default=1, type=int, help='Repetitions')
-    parser.add_argument('--aosite', default=1, type=int, help='Site of AO module')
-    acq400_hapi.Acq400UI.add_argument_playtrg(parser)
+    acq400_hapi.Acq400UI.add_args(parser, play=True)
     parser.add_argument('uuts', nargs=1, help="uut ")
     return parser.parse_args(argStr)
 

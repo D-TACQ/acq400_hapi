@@ -8,6 +8,7 @@ from .intSI import intSI_cvt
 from .intSI import intSIAction
 from . import acq400_uut_handler
 from .acq400_uut_handler import uut_handler
+from acq400_hapi.debug import Debugger
 
 
 class Acq400UI:
@@ -83,10 +84,20 @@ class Acq400UI:
     executors = []
 
     @staticmethod
-    def exec_args_playtrg(uut, args):
-        if args.playtrg == None:
-            return
-        else:
+    def _exec_args_playtrg(uut, args):
+        print("_exec_args_playtrg")
+        for ps in uut.s0.distributor.split(' '):            
+            if ps.startswith('sites='): 
+                val = ps.split('=')[1]                    
+                psite = int(val.split(',')[0])                
+                try:                
+                    if args.aosite is None:                       
+                        args.aosite = psite
+                except:
+                    args.aosite = psite
+                    pass                                   
+        
+        if args.playtrg is not None:
             ta = args.playtrg.split(',')
             if len(ta) == 2:
                 tt = ta[0]
@@ -94,30 +105,20 @@ class Acq400UI:
             else:
                 tt = ta[0]
                 edge = 'rising'
-
-        trg = '1,{},{}'.format(1 if tt == 'int' else 0, 1 if edge == 'rising' else 0)
-        for ps in uut.s0.distributor.split(' '):
-            if ps.startswith('sites='):
-                try:
-                    psite = 's' + (ps.split('=')[1].split(',')[0])
-                    uut.svc[psite].trg = trg
-                except:
-                    print("WARNING, failed to split distributore sites")
-
+            uut.modules[psite].trg = '1,{},{}'.format(1 if tt == 'int' else 0, 1 if edge == 'rising' else 0)
+        
+        if args.playdiv is not None:
+            uut.modules[psite].CLKDIV = args.playdiv
+    
     @staticmethod
-    def add_argument_playtrg(parser):
-        parser.add_argument('--playtrg', default=None, help='int|ext,rising|falling')
-
-
-
-    @staticmethod
-    def add_args(parser, transient=False, post=True, pre=True, uuts=False, demux=1):
+    def add_args(parser, transient=False, post=True, pre=True, uuts=False, demux=1, play=False):
         """ generate standard args list
 
         Args:
              post: set False to disable creating the arg, becomes client app resposibility
 
         """
+        
         if transient:
             if pre:
                 parser.add_argument('--pre', default=0, action=intSIAction, help='pre-trigger samples')
@@ -135,7 +136,11 @@ class Acq400UI:
         parser.add_argument('--trace', default=None, help='1 : enable command tracing')
         parser.add_argument('--auto_soft_trigger', default=0, type=int, help='force soft trigger generation')
         parser.add_argument('--clear_counters', action='store_true', help='clear all counters SLOW')
-
+        
+        if play:
+            parser.add_argument('--playtrg', default=None, help='int|ext,rising|falling')
+            parser.add_argument('--aosite', default=None, type=int, help='Site of AO module')
+            parser.add_argument('--playdiv', default=None, type=int, help="CLKDIV for play site")
 
 
     @staticmethod
@@ -151,8 +156,16 @@ class Acq400UI:
             Acq400UI._exec_args_sim(uut, args.sim)
         if args.trace:
             Acq400UI._exec_args_trace(uut, args.trace)
-        if args.post != None:
-            Acq400UI._exec_args_transient(uut, args)
+        try:
+            if args.pre is not None:
+                Acq400UI._exec_args_transient(uut, args)
+        except:
+            pass
         if args.trg:
             Acq400UI._exec_args_trg(uut, args, args.trg)
+        try:
+            if args.playtrg != None:
+                Acq400UI._exec_args_playtrg(uut, args)
+        except:
+            pass
         
