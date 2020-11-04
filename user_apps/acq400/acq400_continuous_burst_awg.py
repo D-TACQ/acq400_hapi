@@ -68,6 +68,7 @@ def load_multiple_bursts_in_one_wavelen(args, uut):
     uut.load_awg(awg.astype(np.int16), continuous=True)    
         
     input("hit return to stop")
+    site = uut.sites[0]
     uut.modules[site].AWG_MODE_ABO = '1'
     uut.modules[site].playloop_length = '0'
     
