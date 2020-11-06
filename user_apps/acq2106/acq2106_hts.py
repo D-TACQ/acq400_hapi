@@ -194,7 +194,7 @@ def run_shot(args):
 
 def run_main():    
     parser = argparse.ArgumentParser(description='configure acq2106 High Throughput Stream')    
-    acq400_hapi.Acq400UI.add_args(parser, post=False)
+    acq400_hapi.Acq400UI.add_args(parser, transient=False)
     parser.add_argument('--nowait', default=0, help='start the shot but do not wait for completion')
     parser.add_argument('--secs', default=999999, help="capture seconds [default:0 inifinity]")
     parser.add_argument('--spad', default=None, help="scratchpad, eg 1,16,0")
