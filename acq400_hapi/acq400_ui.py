@@ -86,11 +86,11 @@ class Acq400UI:
     @staticmethod
     def _exec_args_playtrg(uut, args):
         print("_exec_args_playtrg")
-        for ps in uut.s0.distributor.split(' '):            
-            if ps.startswith('sites='): 
-                val = ps.split('=')[1]                    
-                psite = int(val.split(',')[0])                
-                try:                
+        for ps in uut.s0.distributor.split(' '):
+            if ps.startswith('sites='):
+                val = ps.split('=')[1]
+                psite = int(val.split(',')[0])
+                try:
                     if args.aosite is None:                       
                         args.aosite = psite
                 except:
@@ -160,6 +160,7 @@ class Acq400UI:
             if args.pre is not None:
                 Acq400UI._exec_args_transient(uut, args)
         except:
+            args.pre = 0
             pass
         if args.trg:
             Acq400UI._exec_args_trg(uut, args, args.trg)
