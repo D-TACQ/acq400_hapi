@@ -116,7 +116,9 @@ def tune_action(args, u):
                     print("{} TUNEPHASE_OK, skip".format(u.uut))
                 return
         print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
+        u.cC.WR_WRTT0_RESET = 1
         u.s0.si5326_tune_phase = 1
+        u.cC.WR_WRTT0_RESET = 0
         
     return _tune_action
 
