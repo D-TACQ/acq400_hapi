@@ -1182,6 +1182,8 @@ class Acq2106(Acq400):
             self.s1.ACQ480_MR_EN = '1'
         else:
             self.s1.ACQ480_MR_EN = '0'
+    def wr_PPS_active(self):
+        return self.cC.WR_PPS_ACTIVE.split(' ')[1] == '1.0'
 
 
 
