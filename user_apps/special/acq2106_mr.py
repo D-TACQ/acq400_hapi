@@ -36,18 +36,18 @@ import threading
 import os
 import re
 import sys
+import time
 from libpasteurize.fixes import fix_kwargs
 
 
 from functools import wraps
-from time import time
 
 def timing(f):
     @wraps(f)
     def wrap(*args, **kw):
-        ts = time()
+        ts = time.time()
         result = f(*args, **kw)
-        te = time()
+        te = time.time()
         print('TIMING:func:%r took: %2.2f sec' % (f.__name__, te-ts))
         return result
     return wrap
@@ -111,10 +111,19 @@ def open_safe(fn, mode):
 def tune_action(args, u):
     def _tune_action():
         if args.tune_si5326 == 2:
-            if int(u.cC.Si5326_TUNEPHASE_OK.split(" ")[1]) == 1:
+            if u.wr_PPS_active() and int(u.cC.Si5326_TUNEPHASE_OK.split(" ")[1]) == 1:
                 if args.verbose:
                     print("{} TUNEPHASE_OK, skip".format(u.uut))
                 return
+        if not u.wr_PPS_active():
+            print("WARNING: {} no PPS. Resetting WR".format(u.uut))
+            reset = u.cC.wr_reset
+            print("{} reset WR {} take 5".format(u.uut, reset))
+            time.sleep(5)
+        while not u.wr_PPS_active():
+            print("{} WAITING for White Rabbit {}".format(u.uut, u.cC.WR_TAI_DATE))
+            time.sleep(2)
+            
         print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
         u.cC.WR_WRTT0_RESET = 1
         u.s0.si5326_tune_phase = 1
@@ -271,6 +280,8 @@ def run_mr(args):
     
     if args.get_mdsplus:
         run_mdsplus_offload(args)
+
+    print("FINISHED {} uuts".format(len(args.uuts)))
 
 
 def run_main():
