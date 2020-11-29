@@ -92,6 +92,9 @@ def selects_trg_src(uut, src):
 
 def allows_one_wrtd(uut):
     def allow_one_wrtd():
+        for ii in range(1):
+            print("{} wait..".format(uut.uut))
+            time.sleep(1)
         uut.s0.SIG_SRC_TRG_0 = 'WRTT0'
         uut.cC.WRTD_TX = 1
         uut.cC.wrtd_tx = 1
