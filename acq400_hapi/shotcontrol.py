@@ -72,13 +72,47 @@ class ShotController:
             t.start()
 
     def wait_armed(self):
+        wdt = threading.Thread(target=self.wdt, kwargs={'wait_list': self.ta})
+        wdt.start()
         for t in self.ta:
             t.join()
+        wdt.join()
 
     def wait_complete(self):
+        # @@TODO start a watcher task. If one or more has completed, kill the rest after a timeout.
+        wdt = threading.Thread(target=self.wdt, kwargs={'wait_list': self.tp}) 
+        wdt.start()
         for t in self.tp:
             t.join()
+        wdt.join()   
 
+    def wdt(self, wait_list):
+        loops_with_zombies = 0
+        
+        while True:
+            alive = 0
+            dead = 0
+            for t in wait_list:
+                if t.is_alive():
+                    alive += 1
+                else:
+                    dead += 1
+            if alive == 0:
+                return
+            elif dead == 0:
+                continue
+            else:
+                loops_with_zombies += 1
+                if loops_with_zombies > self.zombie_timeout*10:
+                    print("we have zombies")
+                    for ix, u in enumerate(self.uuts):
+                        if wait_list[ix].is_alive():
+                            print("{} zombie requested to leave".format(u.uut))
+                            u.statmon.break_requested = True
+            time.sleep(0.1)
+                             
+            
+            
     def arm_shot_action(u):
         def _arm_shot_action():
             print("%s set_arm" % (u.uut))
@@ -175,8 +209,9 @@ class ShotController:
         return (chx, len(self.uuts), len(chx[0]), len(chx[0][0]))
 
 
-    def __init__(self, _uuts, shot=None):
+    def __init__(self, _uuts, shot=None, zombie_timeout=30):
         self.uuts = _uuts
+        self.zombie_timeout = zombie_timeout
         if shot != None:
             for u in self.uuts:
                 u.s1.shot = shot
