@@ -274,7 +274,7 @@ class Statusmonitor:
 
     def wait_event(self, ev, descr):
     #       print("wait_%s 02 %d" % (descr, ev.is_set()))
-        while ev.wait(0.1) == False:
+        while ev.wait(0.1) == False and not self.break_requested:
             if self.quit_requested:
                 print("QUIT REQUEST call exit %s" % (descr))
                 sys.exit(1)
@@ -298,6 +298,7 @@ class Statusmonitor:
     trace = int(os.getenv("STATUSMONITOR_TRACE", "0"))
 
     def __init__(self, _uut, _status):
+        self.break_requested = False
         self.quit_requested = False
         self.trace = Statusmonitor.trace
         self.uut = _uut
@@ -1183,7 +1184,13 @@ class Acq2106(Acq400):
         else:
             self.s1.ACQ480_MR_EN = '0'
     def wr_PPS_active(self):
-        return self.cC.WR_PPS_ACTIVE.split(' ')[1] == '1.0'
+        if self.cC.WR_PPS_ACTIVE.split(' ')[1] == '1.0':
+            return True
+        else:
+            pps0 = self.cC.WR_PPS_COUNT.split(' ')[1]
+            time.sleep(2)
+            pps1 = self.cC.WR_PPS_COUNT.split(' ')[1]
+            return pps0 != pps1
 
 
 
