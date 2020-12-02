@@ -204,3 +204,19 @@ For the sake of not plotting 32 identical channels, the command line in the sect
 ![enter image description here](https://user-images.githubusercontent.com/36033499/91315252-618ac980-e7af-11ea-8dcb-edd7a43f9583.png)
 
 As can be seen from the image above, the AO module is outputting the wave plotted in the section on creating a sine wave on every channel. 
+
+
+
+# Example: site 5 AO424-16 loopback to site 1 AI16
+
+```
+python3 ./user_apps/utils/make_awg_data.py --nchan=16 --len=100000 --offset_by_channel=0.1 sin16op1.dat
+
+python3 ./user_apps/acq400/sync_role.py --toprole=master --fclk=2M acq2106_193
+python3 ./user_apps/acq400/acq400_load_awg.py --file=./sin16op1.dat --mode=1 --soft_trigger=0 \
+    --playtrg=int,rising --playdiv=2 acq2106_193
+python3 ./user_apps/acq400/acq400_upload.py --pre=0 --post=100000 \
+	--soft_trigger=1 --trg=int,rising \
+	--plot=1 --capture=1 --save_data="acq2106_193_{}" acq2106_193
+
+
