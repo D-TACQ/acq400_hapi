@@ -64,6 +64,19 @@ import time
 LOG = None
 
 
+def logprint(message):
+    """
+    logprint = 1: Print output only to stdout
+    logprint = 2: Print output to stdout, also save to config file.
+    """
+    if _logprint:
+        print(message)
+    if _logprint > 1:
+        with open("./mgt_{}.log".format(uut_name)) as fp:
+            fp.write(message)
+    return None
+
+
 def make_data_dir(directory, verbose):
     try:
         os.makedirs(directory)
@@ -136,7 +149,7 @@ def host_pull(args, uut):
         print("Pulled {} blocks.".format(cycle))
         exit(1)
 
-    print("Data offloaded {} blocks {}".format(
+    logprint("Data offloaded {} blocks {}".format(
         cycle, "" if args.validate == 'no' else "and all data validation passed."))
     return 1
 
@@ -204,6 +217,11 @@ def run_shot(uut, args):
 def run_shots(args):
 
     global LOG
+    global _logprint
+    _logprint = args.logprint
+    global uut_name
+    uut_name = args.uut[0]
+
     LOG = open("mgtdramshot-{}.log".format(args.uut[0]), "w")
     uut = acq400_hapi.Acq2106_Mgtdram8(args.uut[0])
     acq400_hapi.Acq400UI.exec_args(uut, args)
@@ -246,6 +264,10 @@ def run_main():
 
     parser.add_argument('--save_data', type=int, default=1,
                         help='Whether or not to save data to a file in 4MB chunks. Default: 0.')
+
+    parser.add_argument('--logprint', type=int, default=1,
+                              help='1: Print log messages. '
+                              '2: Save reduced log to log file.')
 
     parser.add_argument('uut', nargs=1, help="uut ")
     run_shots(parser.parse_args())
