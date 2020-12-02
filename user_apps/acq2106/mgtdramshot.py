@@ -99,7 +99,6 @@ def validate_streamed_data(good_data, test_data, cycle):
 def host_pull(args, uut):
     # Connect to port 53991 and pull all data.
     cycle = 0
-    total_buf = bytes()
     # set up a RawClient to pull data from the mgtdram host_pull port.
     rc = acq400_hapi.MgtDramPullClient(uut.s0.HN)
     first_run = True
