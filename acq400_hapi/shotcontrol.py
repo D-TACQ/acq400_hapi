@@ -103,7 +103,7 @@ class ShotController:
                 continue
             else:
                 loops_with_zombies += 1
-                if loops_with_zombies > self.zombie_timeout*10:
+                if loops_with_zombies/10 > self.zombie_timeout:
                     print("we have zombies")
                     for ix, u in enumerate(self.uuts):
                         if wait_list[ix].is_alive():
@@ -218,6 +218,7 @@ class ShotController:
 
 
 class ShotControllerWithDataHandler(ShotController):
+       
     def handle_data(self, args):
         if args.save_data:
             shotdir = args.save_data.format(self.increment_shot(args))

@@ -163,7 +163,12 @@ def tee_up_action(u, args):
     if args.set_shot is not None:
         u.s1.shot = args.set_shot
         u.cC.WR_WRTT0_RESET = 1
-        
+    
+    if args.clear_any_units_found_in_arm and u.state() == acq400_hapi.STATE.ARM:
+        print("WARNING {} found in ARM state, aborting it now".format(u.uut))
+        u.s0.set_abort = 1
+        u.statmon.wait_stopped()
+        print("NOTICE {} is now IDLE, proceed..".format(u.uut))
     u.s0.gpg_trg = '1,0,1'
     u.s0.gpg_clk = '1,1,1'
     u.s0.GPG_ENABLE = '0'
@@ -270,6 +275,8 @@ def run_mr(args):
     
     tune_up_mt(args)
     shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
+    if args.zombie_timeout != 0:
+        shot_controller.zombie_timeout = args.zombie_timeout
 
     if args.set_arm != 0:
         tee_up(args)
@@ -291,8 +298,12 @@ def run_main():
     parser = argparse.ArgumentParser(description='acq2106_mr')
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     acq400_hapi.ShotControllerUI.add_args(parser)
-    parser.add_argument('--stl', default='./STL/acq2106_mr00.stl', type=str, help='stl file')
-    parser.add_argument('--Fclk', default=40*intSI.DEC.M, action=intSIAction, help="base clock frequency")
+    parser.add_argument(
+        '--stl', default='./STL/acq2106_mr00.stl', type=str, 
+        help='stl file')
+    parser.add_argument(
+        '--Fclk', default=40*intSI.DEC.M, action=intSIAction, 
+        help="base clock frequency")
     parser.add_argument('--WRTD_DELTA_NS', default=50*intSI.DEC.M, action=intSIAction, help='WRTD trigger delay')
     parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0, WRTT0,RP")
     parser.add_argument('--tune_si5326', default=1, type=int, help="tune_si5326 (takes 60s), default:1")
@@ -304,6 +315,12 @@ def run_main():
     parser.add_argument('--get_epics4', default=None, type=str, help="run script [args] to store EPICS4 data")
     parser.add_argument('--get_mdsplus', default=None, type=str, help="run script [args] to store mdsplus data")
     parser.add_argument('--tee_up_mt', default=1, type=int, help="multi thread init for speed")
+    parser.add_argument(
+            '--zombie_timeout', default=0, type=int, 
+            help="0: no timeout, blocks on ALL uuts, else >0 block N seconds when waiting for zombies before continuing")
+    parser.add_argument(
+            '--clear_any_units_found_in_arm', default=0, type=int, 
+            help="set true to clear any locked units on new shot. default is to leave them for inspection")
     parser.add_argument('uutnames', nargs='+', help="uuts")
     run_mr(parser.parse_args())
 
