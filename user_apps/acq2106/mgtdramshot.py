@@ -106,9 +106,12 @@ def host_pull(args, uut):
     nchan = uut.nchan()
     data_size = 4
 
+    # Set ncols to the closest number to 4MB to maintain channel alignment.
+    _ncols = int((2**22 - (2**22 % (nchan)))) / nchan
+
     print("Starting host pull now.")
 
-    for buffer in rc.get_blocks(nchan, ncols=(2**22)/nchan/data_size, data_size=data_size):
+    for buffer in rc.get_blocks(nchan, ncols=_ncols, data_size=data_size):
 
         if first_run:
             good_data = buffer
