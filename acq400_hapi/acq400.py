@@ -27,6 +27,7 @@ import os
 import errno
 import signal
 import sys
+from numpy.distutils.command.egg_info import egg_info
 if __name__ == '__main__':
     import netclient
 else:
@@ -387,7 +388,7 @@ class Acq400:
 
     uuts = {}
     
-    def __init__(self, _uut, monitor=True):
+    def __init__(self, _uut, monitor=True, s0_client=None):
         try:
             self.__dict__ = Acq400.uuts[_uut]
             return
@@ -406,7 +407,7 @@ class Acq400:
         self.cal_eoff = [0, ]
         self.mb_clk_min = 4000000
 
-        s0 = self.svc["s0"] = netclient.Siteclient(self.uut, AcqPorts.SITE0)
+        s0 = self.svc["s0"] = s0_client if s0_client else netclient.Siteclient(self.uut, AcqPorts.SITE0)
         sl = s0.SITELIST.split(",")
         sl.pop(0)
         self.awg_site = 0
@@ -1249,5 +1250,19 @@ def sigsel(enable=1, dx=1, site=None, edge=1):
     else:
         return "{},{},{}".format(enable, dx, edge)
 
+
+def factory(_uut):
+    try:
+        return Acq400.uuts[_uut]
+    except KeyError:
+        pass
+    
+    s0 = netclient.Siteclient(self.uut, AcqPorts.SITE0)
+    
+    # now work out what it is from s0.special sites etc and instantiate the approprirate class
+    # eg .. this one doesn't quite work .. do any of the others?
+    if s0.has_mgt and s0.has_mgt_dram:
+        return Acq2106_Mgtdram8(uut, s0_client=s0)
+    
 if __name__ == '__main__':
     run_unit_test()
