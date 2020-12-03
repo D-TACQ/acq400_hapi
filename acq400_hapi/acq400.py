@@ -1259,7 +1259,7 @@ def factory(_uut):
     except KeyError:
         pass
     
-    s0 = netclient.Siteclient(self.uut, AcqPorts.SITE0)
+    s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
     
     # now work out what it is from s0.special sites etc and instantiate the approprirate class
     # eg .. this one doesn't quite work .. do any of the others?
