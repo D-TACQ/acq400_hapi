@@ -21,11 +21,7 @@ optional arguments:
   --mode MODE           mode
   --disable DISABLE     1: disable
   --stl STL             stl file
-  --waterfall WATERFALL
-                        d0,d1,d2,d3 waterfall [interval,hitime]
-  --trace TRACE         trace wire protocol
-  --hdmi_master HDMI_MASTER
-                        clk, trg and gpg drive HDMI outputs
+ 
 """
 
 import acq400_hapi
@@ -176,7 +172,8 @@ def tee_up_action(u, args):
     u.set_MR(True, evsel0=args.evsel0, evsel1=args.evsel0+1, MR10DEC=args.MR10DEC)
     u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0), 'GPG')
     u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
-    u.s0.GPG_ENABLE = '1'
+    u.s0.GPG_ENABLE = '1'    
+    u.s0.acq480_force_training = args.force_training
 
     u.wrtt0 = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
 
@@ -315,6 +312,7 @@ def run_main():
     parser.add_argument('--get_epics4', default=None, type=str, help="run script [args] to store EPICS4 data")
     parser.add_argument('--get_mdsplus', default=None, type=str, help="run script [args] to store mdsplus data")
     parser.add_argument('--tee_up_mt', default=1, type=int, help="multi thread init for speed")
+    parser.add_argument('--force_training', default=0, type=int, help="force acq480 training every shot")
     parser.add_argument(
             '--zombie_timeout', default=0, type=int, 
             help="0: no timeout, blocks on ALL uuts, else >0 block N seconds when waiting for zombies before continuing")
