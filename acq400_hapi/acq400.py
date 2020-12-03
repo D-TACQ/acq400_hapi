@@ -1252,6 +1252,8 @@ def sigsel(enable=1, dx=1, site=None, edge=1):
 
 
 def factory(_uut):
+    ''' instantiate s0. deduce what sort of ACQ400 this is and invoke the appropriate subclass
+    '''
     try:
         return Acq400.uuts[_uut]
     except KeyError:
@@ -1261,8 +1263,16 @@ def factory(_uut):
     
     # now work out what it is from s0.special sites etc and instantiate the approprirate class
     # eg .. this one doesn't quite work .. do any of the others?
+    # hoping the s0_client kwarg gets through without extra boilerplate
     if s0.has_mgt and s0.has_mgt_dram:
-        return Acq2106_Mgtdram8(uut, s0_client=s0)
+        return Acq2106_Mgtdram8(_uut, s0_client=s0)
+    if s0.has_wr:
+        return Acq2106(_uut, has_wr=True, s0_client=s0)
+    
+    ''' nothing special, make it a default class with existing s0
+    '''
+    return Acq400(_uut, s0_client=s0)
+    
     
 if __name__ == '__main__':
     run_unit_test()
