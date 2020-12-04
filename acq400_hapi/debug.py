@@ -19,8 +19,8 @@ class Debugger(object):
 
     def __call__(self, *args, **kwargs):
         if self.enabled:
-            logger.debug(f'{"Enter" if self.enabled > 2 else "Entering"} : {self.func.__name__}')
-            logger.debug(f'args, kwargs : {args, kwargs}')
+            logger.debug('{} : {}'.format("Enter" if self.enabled > 2 else "Entering", self.func.__name__))
+            logger.debug('args, kwargs : {}'.format(args, kwargs))
             
             if self.enabled > 2:
                 inp = input("q/C?")
@@ -30,9 +30,9 @@ class Debugger(object):
         rc = self.func(*args, **kwargs)
         
         if self.enabled:
-            logger.debug(f'{self.func.__name__} returned : {rc}')
+            logger.debug('{} returned : {}'.format(self.func.__name__, rc))
             if self.enabled > 1:
-                logger.debug(f'Exit : {self.func.__name__}')
+                logger.debug('Exit : {}'.format(self.func.__name__))
                 inp = input("q/C?")
                 if inp == 'q':
                     exit(1)
