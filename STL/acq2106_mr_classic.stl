@@ -1,0 +1,10 @@
+# MR control STL, normalised usec delays, MR00=0, MR01=1 MR10=2
+# MR00, 20MHz
+# MR10, 1.25MHz
+# MR01, 40MHz
+# 
+0,2           # JOG 30000 usec at 1.25M
+30000,0       # RUN 10000 at 20M
+40000,1       # SPR 200 at 40M
+40200,2       # JOG to end
+

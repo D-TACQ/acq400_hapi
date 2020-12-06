@@ -172,8 +172,9 @@ def tee_up_action(u, args):
     u.set_MR(True, evsel0=args.evsel0, evsel1=args.evsel0+1, MR10DEC=args.MR10DEC)
     u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0), 'GPG')
     u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
-    u.s0.GPG_ENABLE = '1'    
-    u.s0.acq480_force_training = args.force_training
+    u.s0.GPG_ENABLE = '1'
+    if args.force_training: 
+        u.s0.acq480_force_training = '1'
 
     u.wrtt0 = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
 
