@@ -143,8 +143,8 @@ class RawClient(netclient.Netclient):
         if nelems <= 0:
             nelems = 0x80000000             #2GB approximates infinity. what is infinity in python?
 
-        bytestogo = nelems * data_size * ncols
-        total_buf = ""
+        bytestogo = int(nelems * data_size * ncols)
+        total_buf = bytes()
 
         while bytestogo > 0:
             new_buf = self.sock.recv(bytestogo)
@@ -1183,6 +1183,31 @@ class Acq2106(Acq400):
         else:
             self.s1.ACQ480_MR_EN = '0'
 
+
+    def get_sys_info(self):
+        """
+        Returns a string of system information to
+        """
+        line = "{: <6}{: <16}{: <35}{: <16}\n"
+        from datetime import datetime
+        info = ""
+        info += "="*72 + "\n"
+        info += datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n\n"
+        info += "FPGA: {}\n".format(self.s0.fpga_version)
+        info += "FW:   {}\n\n".format(self.s0.software_version)
+        info += "MB Info:\n"
+        info += "{: <57}{: <16}\n".format("MODEL", "SERIAL")
+        info += "{: <57}{: <16}\n\n".format(self.s0.MODEL, self.s0.SERIAL)
+        info += "-" * 72 + "\n\n"
+        info += "Site Info:\n"
+        info += line.format("SITE", "MODEL", "PART_NUM", "SERIAL")
+        for site in self.sites:
+            info += line.format(site,
+                                self.svc["s{}".format(site)].MODEL,
+                                self.svc["s{}".format(site)].PART_NUM,
+                                self.svc["s{}".format(site)].SERIAL)
+        info += "="*72
+        return info
 
 
 class Acq2106_Mgtdram8(Acq2106):
