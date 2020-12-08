@@ -112,6 +112,9 @@ def tune_action(args, u):
         if args.force_wr_reset:
             print("{} reset WR at customer request take 5+5".format(u.uut))
             reset = u.cC.wr_reset
+            if args.force_wr_reset > 3:
+                print("{} turbo-sequential mode, skip tuning".format(u.uut))
+                return
         if args.tune_si5326 == 2:
             if u.wr_PPS_active() and int(u.cC.Si5326_TUNEPHASE_OK.split(" ")[1]) == 1:
                 if args.verbose:
@@ -139,7 +142,9 @@ def _tune_up_mt(args):
     for u in args.uuts:
         th = threading.Thread(target=tune_action(args, u))
         thx.append(th)
-        th.start()        
+        th.start()
+        if args.force_wr_reset > 2: 
+            th.join()     # force sequential
 
     for t in thx:
         t.join()
@@ -275,7 +280,7 @@ def run_mr(args):
     connect(args)
     
     tune_up_mt(args)
-    if args.force_wr_reset ==2:
+    if args.force_wr_reset >= 2:
         print("Tune up and Quit DONE")
         return
 
@@ -321,7 +326,9 @@ def run_main():
     parser.add_argument('--get_mdsplus', default=None, type=str, help="run script [args] to store mdsplus data")
     parser.add_argument('--tee_up_mt', default=1, type=int, help="multi thread init for speed")
     parser.add_argument('--force_training', default=0, type=int, help="force acq480 training every shot")
-    parser.add_argument('--force_wr_reset', default=0, type=int, help="1: force White Rabbit reset, run regular, 2: just tuneup and quit")
+    parser.add_argument('--force_wr_reset', default=0, type=int, 
+        help="1: force White Rabbit reset, run regular, 2: just tuneup and quit,\n" \
+             "3: do in sequence rather than in parallel (v.slow), 4 skip tuning (faster)")
 
     parser.add_argument(
             '--zombie_timeout', default=0, type=int, 
