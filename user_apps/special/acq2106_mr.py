@@ -109,6 +109,9 @@ def open_safe(fn, mode):
 
 def tune_action(args, u):
     def _tune_action():
+        if args.force_wr_reset:
+            print("{} reset WR at customer request take 5+5".format(u.uut))
+            reset = u.cC.wr_reset
         if args.tune_si5326 == 2:
             if u.wr_PPS_active() and int(u.cC.Si5326_TUNEPHASE_OK.split(" ")[1]) == 1:
                 if args.verbose:
@@ -272,6 +275,10 @@ def run_mr(args):
     connect(args)
     
     tune_up_mt(args)
+    if args.force_wr_reset ==2:
+        print("Tune up and Quit DONE")
+        return
+
     shot_controller = acq400_hapi.ShotControllerWithDataHandler(args.uuts, args)
     if args.zombie_timeout != 0:
         shot_controller.zombie_timeout = args.zombie_timeout
@@ -314,6 +321,8 @@ def run_main():
     parser.add_argument('--get_mdsplus', default=None, type=str, help="run script [args] to store mdsplus data")
     parser.add_argument('--tee_up_mt', default=1, type=int, help="multi thread init for speed")
     parser.add_argument('--force_training', default=0, type=int, help="force acq480 training every shot")
+    parser.add_argument('--force_wr_reset', default=0, type=int, help="1: force White Rabbit reset, run regular, 2: just tuneup and quit")
+
     parser.add_argument(
             '--zombie_timeout', default=0, type=int, 
             help="0: no timeout, blocks on ALL uuts, else >0 block N seconds when waiting for zombies before continuing")
