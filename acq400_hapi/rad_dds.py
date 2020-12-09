@@ -25,9 +25,9 @@ from builtins import staticmethod
 
 class AD9854:
     class CR:
-        regular_en = '00400061'
-        chirp_en   = '00408761'
-        low_power  ='00400041'
+        regular_en = '0061'
+        chirp_en   = '8761'
+        low_power  = '0041'
         
     @staticmethod
     # CR for clock * n
