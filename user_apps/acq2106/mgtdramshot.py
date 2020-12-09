@@ -58,7 +58,11 @@ if sys.version_info < (3, 0):
 import socket
 import os
 import numpy as np
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+    HAS_PLOT = True
+except:
+    HAS_PLOT = False
 import time
 
 LOG = None
@@ -95,15 +99,18 @@ def validate_streamed_data(good_data, test_data, cycle):
         print("Discrepency in data found in cycle: {}, quitting now.".format(cycle))
         print("Length good: {}, length test: {}".format(
             good_data.shape, test_data.shape))
-        f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharey=True)
-        ax1.plot(compare_data)
-        ax1.plot(test_data)
-        ax2.plot(compare_data)
-        ax3.plot(test_data)
-        ax1.grid(True)
-        ax2.grid(True)
-        ax3.grid(True)
-        plt.show()
+        if HAS_PLOT:
+            f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharey=True)
+            ax1.plot(compare_data)
+            ax1.plot(test_data)
+            ax2.plot(compare_data)
+            ax3.plot(test_data)
+            ax1.grid(True)
+            ax2.grid(True)
+            ax3.grid(True)
+            plt.show()
+        else:
+            print("plot not available")
         exit(1)
 
     return None
@@ -111,9 +118,9 @@ def validate_streamed_data(good_data, test_data, cycle):
 
 def host_pull(args, uut):
     # Connect to port 53991 and pull all data.
-    cycle = 0
+    bn = 0
     # set up a RawClient to pull data from the mgtdram host_pull port.
-    rc = acq400_hapi.MgtDramPullClient(uut.s0.HN)
+    rc = uut.create_mgtdram_pull_client()
     first_run = True
 
     nchan = uut.nchan()
@@ -131,26 +138,28 @@ def host_pull(args, uut):
             first_run = False
 
         if args.save_data == 1:
-            root = "./{}/{}".format(args.uut[0], cycle)
+            fn = "./{}/{:04d}.dat".format(args.uut[0], bn)
             make_data_dir(args.uut[0], 0)
-            buffer.tofile(root)
-            print("Saved file {} to disk.".format(cycle))
+            buffer.tofile(fn)
+            print("{}".format(fn))
         else:
             print("Block {} pulled, size (in samples): {}.".format(
-                cycle, buffer.size))
+                bn, buffer.size))
 
         if args.validate != 'no':
-            validate_streamed_data(good_data, buffer, cycle)
+            validate_streamed_data(good_data, buffer, bn)
 
-        cycle += 1
+        bn += 1
+        if bn > args.offloadblocks_count:
+            break
 
-    if cycle == 0:
+    if bn == 0:
         print("Data offload failed.")
-        print("Pulled {} blocks.".format(cycle))
+        print("Pulled {} blocks.".format(bn))
         exit(1)
 
     logprint("Data offloaded {} blocks {}".format(
-        cycle, "" if args.validate == 'no' else "and all data validation passed."))
+        bn, "" if args.validate == 'no' else "and all data validation passed."))
     return 1
 
 
@@ -190,7 +199,8 @@ def run_shot(uut, args):
     if args.captureblocks:
         uut.s14.mgt_run_shot = str(int(args.captureblocks) + 2)
         uut.run_mgt()
-
+     
+def run_offload(uut, args):        
     if args.host_pull == 1:
         # for loop in list(range(1, args.loop + 1)):
         host_pull(args, uut)
@@ -215,7 +225,6 @@ def run_shot(uut, args):
 
 
 def run_shots(args):
-
     global LOG
     global _logprint
     _logprint = args.logprint
@@ -225,6 +234,9 @@ def run_shots(args):
     LOG = open("mgtdramshot-{}.log".format(args.uut[0]), "w")
     uut = acq400_hapi.Acq2106_Mgtdram8(args.uut[0])
     acq400_hapi.Acq400UI.exec_args(uut, args)
+    
+    args.offloadblocks_count = int(args.offloadblocks if args.offloadblocks != 'capture' else args.captureblocks)
+    
     uut.s14.mgt_taskset = '1'
     if args.validate != 'no':
         for s in uut.modules:
@@ -233,7 +245,10 @@ def run_shots(args):
         for ii in range(0, args.loop):
             t1 = datetime.datetime.now()
             print("shot: {} {}".format(ii, t1.strftime("%Y%m%d %H:%M:%S")))
-            run_shot(uut, args)
+            if args.captureblocks != 0:
+                run_shot(uut, args)
+            if args.offloadblocks_count != 0:
+                run_offload(uut, args)
             t2 = datetime.datetime.now()
             print("shot: {} done in {} seconds\n\n".format(ii, (t2-t1).seconds))
 
