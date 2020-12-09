@@ -75,7 +75,7 @@ def init_remapper(uut):
     
     if ddsc_ratio < 0.073 or ddsc_ratio > 0.093:
         print('system was not tuned, set default 300/12')
-        uut.ddsC.CR = '004C0041'
+        uut.ddsC.CR = acq400_hapi.AD9854.CRX(12)    # '004C0061'
         uut.ddsC.FTW1 = AD9854.ratio2ftw(1.0/12.0)         
 
 
