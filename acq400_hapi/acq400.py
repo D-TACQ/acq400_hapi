@@ -138,19 +138,23 @@ class RawClient(netclient.Netclient):
             data_size : 2|4 short or int
 
             ncols : optional, to create a 2D array
+            ncols*data_size=0? just read nelems bytes
         """
         _dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
         if nelems <= 0:
-            nelems = 0x80000000             #2GB approximates infinity. what is infinity in python?
+            bytestogo = maxbuf              # and do not decrement
+        else:	
+            rowlen = data_size * ncols
+            bytestogo = nelems * rowlen if rowlen > 0 else nelems
 
-        bytestogo = int(nelems * data_size * ncols)
         total_buf = bytes()
 
         while bytestogo > 0:
-            new_buf = self.sock.recv(bytestogo)
+            new_buf = self.sock.recv(min(bytestogo, maxbuf))
             if not new_buf:
                 break               # end of file
-            bytestogo = bytestogo - len(new_buf)
+            if nelems > 0:
+                bytestogo = bytestogo - len(new_buf)
             total_buf += new_buf    # still dubious of append :-)
 
         return np.frombuffer(total_buf, _dtype)
@@ -536,6 +540,9 @@ class Acq400:
 
     def nchan(self):
         return int(self.s0.NCHAN)
+
+    def data_size(self):
+        return 4 if self.s0.data32 else 2
 
     def read_channels(self, channels=(), nsam=0):
         """read all channels post shot data.

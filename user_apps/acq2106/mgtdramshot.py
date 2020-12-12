@@ -122,16 +122,13 @@ def host_pull(args, uut):
     # set up a RawClient to pull data from the mgtdram host_pull port.
     rc = uut.create_mgtdram_pull_client()
     first_run = True
+    nbytes = args.offloadblocks_count*0x400000
+    nread = 0
+    _data_size = uut.data_size()
 
-    nchan = uut.nchan()
-    data_size = 4
+    print("Starting host pull {} bytes now.".format(nbytes))
 
-    # Set ncols to the closest number to 4MB to maintain channel alignment.
-    _ncols = int((2**22 - (2**22 % (nchan)))) / nchan
-
-    print("Starting host pull now.")
-
-    for buffer in rc.get_blocks(nchan, ncols=_ncols, data_size=data_size):
+    for buffer in rc.get_blocks(nbytes, ncols=0, data_size=_data_size):
 
         if first_run:
             good_data = buffer
@@ -143,24 +140,24 @@ def host_pull(args, uut):
             buffer.tofile(fn)
             print("{}".format(fn))
         else:
-            print("Block {} pulled, size (in samples): {}.".format(
-                bn, buffer.size))
+            print("Block {} pulled, size bytes : {}.".format(bn, buffer.size))
 
         if args.validate != 'no':
             validate_streamed_data(good_data, buffer, bn)
 
         bn += 1
+        nread += len(buffer)
         if bn > args.offloadblocks_count:
             break
 
-    if bn == 0:
+    if len(buffer) == 0:
         print("Data offload failed.")
         print("Pulled {} blocks.".format(bn))
         exit(1)
 
     logprint("Data offloaded {} blocks {}".format(
         bn, "" if args.validate == 'no' else "and all data validation passed."))
-    return 1
+    return nread*_data_size
 
 
 def write_console(message):
@@ -203,7 +200,7 @@ def run_shot(uut, args):
 def run_offload(uut, args):        
     if args.host_pull == 1:
         # for loop in list(range(1, args.loop + 1)):
-        host_pull(args, uut)
+        return host_pull(args, uut)
 
     else:
         uut.s14.mgt_offload = args.offloadblocks if args.offloadblocks != 'capture' \
@@ -211,9 +208,7 @@ def run_offload(uut, args):
         t1 = datetime.datetime.now()
         uut.run_mgt(UploadFilter())
         ttime = datetime.datetime.now()-t1
-        mb = args.captureblocks*4
-        print("upload {} MB done in {} seconds, {} MB/s\n".
-              format(mb, ttime, mb/ttime.seconds))
+
         if args.validate != 'no':
             cmd = "{} {}".format(args.validate, uut.uut)
             print("run \"{}\"".format(cmd))
@@ -222,7 +217,7 @@ def run_offload(uut, args):
                 print("ERROR called process {} returned {}".format(
                     args.validate, rc))
                 exit(1)
-
+        return args.captureblocks*0x400000
 
 def run_shots(args):
     global LOG
@@ -242,15 +237,29 @@ def run_shots(args):
         for s in uut.modules:
             uut.modules[s].simulate = 1
     try:
+        actions=""
+        if args.captureblocks != 0:
+            actions = "cap"
+        if args.offloadblocks_count != 0:
+            if len(actions):
+                 actions = "{}+{}".format(actions, "offload")
+            else:
+                 actions = "offload"
+
         for ii in range(0, args.loop):
             t1 = datetime.datetime.now()
             print("shot: {} {}".format(ii, t1.strftime("%Y%m%d %H:%M:%S")))
+	    mbps=""
             if args.captureblocks != 0:
                 run_shot(uut, args)
             if args.offloadblocks_count != 0:
-                run_offload(uut, args)
+                nbytes = run_offload(uut, args)
             t2 = datetime.datetime.now()
-            print("shot: {} done in {} seconds\n\n".format(ii, (t2-t1).seconds))
+            et = (t2-t1).seconds
+            if nbytes:
+                mb = nbytes/0x100000
+                mbps = "offload {} MB, {} MB/s".format(mb, mb/et)
+            print("shot: {} {} done in {} seconds {}\n\n".format(ii, actions, et, mbps))
 
             if args.wait_user:
                 input("hit return to continue")
@@ -274,8 +283,8 @@ def run_main():
     parser.add_argument('--wait_user', type=int, default=0,
                         help='1: force user input each shot')
 
-    parser.add_argument('--host_pull', type=int, default=0,
-                        help='Whether or not to use the HOST PULL method. Default: 0.')
+    parser.add_argument('--host_pull', type=int, default=1,
+                        help='Whether or not to use the HOST PULL method. Default: 1.')
 
     parser.add_argument('--save_data', type=int, default=1,
                         help='Whether or not to save data to a file in 4MB chunks. Default: 0.')
