@@ -333,10 +333,10 @@ class ProcessMonitor:
             if match:
                 self.quit_requested = True
 
-    def __init__(self, _uut, _filter):
+    def __init__(self, _uut, _monport,  _filter):
         self.quit_requested = False
         self.output_filter = _filter
-        self.logclient = netclient.Logclient(_uut, AcqPorts.MGTDRAM)
+        self.logclient = netclient.Logclient(_uut, _monport)
         self.logclient.termex = re.compile("(\n)")
         self.st_thread = threading.Thread(target=self.st_monitor)
         self.st_thread.setDaemon(True)
@@ -1235,7 +1235,7 @@ class Acq2106_Mgtdram8(Acq2106):
         Acq2106.__init__(self, uut, monitor, has_dsp=True)
 
     def run_mgt(self, _filter = null_filter):
-        pm = ProcessMonitor(self.uut, _filter)
+        pm = ProcessMonitor(self.uut, AcqPorts.MGTDRAM, _filter)
         while pm.quit_requested != True:
             time.sleep(1)
 
