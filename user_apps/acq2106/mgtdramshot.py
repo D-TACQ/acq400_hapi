@@ -122,7 +122,14 @@ def host_pull(args, uut):
     # set up a RawClient to pull data from the mgtdram host_pull port.
     rc = uut.create_mgtdram_pull_client()
     first_run = True
-    nbytes = args.offloadblocks_count*MGT_BLOCK_BYTES
+    nchan = int(uut.s0.NCHAN)
+    group = 12 if nchan%3 == 0 else 16
+    if args.offloadblocks_count%group != 0:
+        nblocks = (args.offloadblocks_count//group + 1)*group
+    else:
+        nblocks = args.offloadblocks_count
+
+    nbytes = nblocks*MGT_BLOCK_BYTES
     nread = 0
     _data_size = uut.data_size()
 
@@ -234,7 +241,7 @@ def run_shots(args):
     if args.offloadblocks != 'capture':
         args.offloadblocks_count = int(args.offloadblocks)
     elif args.captureblocks != 0:
-        args.offloadblocks_count = args.capture_blocks
+        args.offloadblocks_count = args.captureblocks
     else:
         args.offloadblocks_count = acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS)
         print("offload {} buffers from uut".format(args.offloadblocks_count))
