@@ -48,7 +48,6 @@ optional arguments:
 import sys
 import datetime
 import acq400_hapi
-from acq400_hapi import awg_data
 import argparse
 from subprocess import call
 import re
@@ -67,6 +66,7 @@ import time
 
 LOG = None
 
+MGT_BLOCK_BYTES = acq400_hapi.Acq2106_Mgtdram8.MGT_BLOCK_BYTES
 
 def logprint(message):
     """
@@ -122,7 +122,7 @@ def host_pull(args, uut):
     # set up a RawClient to pull data from the mgtdram host_pull port.
     rc = uut.create_mgtdram_pull_client()
     first_run = True
-    nbytes = args.offloadblocks_count*0x400000
+    nbytes = args.offloadblocks_count*MGT_BLOCK_BYTES
     nread = 0
     _data_size = uut.data_size()
 
@@ -217,7 +217,7 @@ def run_offload(uut, args):
                 print("ERROR called process {} returned {}".format(
                     args.validate, rc))
                 exit(1)
-        return args.captureblocks*0x400000
+        return args.captureblocks*MGT_BLOCK_BYTES
 
 def run_shots(args):
     global LOG
