@@ -126,7 +126,7 @@ def host_pull(args, uut):
     nread = 0
     _data_size = uut.data_size()
 
-    print("Starting host pull {} bytes now.".format(nbytes))
+    print("Starting host pull {} bytes now data size {}".format(nbytes, _data_size))
 
     for buffer in rc.get_blocks(nbytes, ncols=0, data_size=_data_size):
 
@@ -145,9 +145,9 @@ def host_pull(args, uut):
         if args.validate != 'no':
             validate_streamed_data(good_data, buffer, bn)
 
-        bn += 1
-        nread += len(buffer)
-        if bn > args.offloadblocks_count:
+	bn += 1
+        nread += len(buffer) * _data_size
+        if nread >= nbytes:
             break
 
     if len(buffer) == 0:
@@ -157,7 +157,7 @@ def host_pull(args, uut):
 
     logprint("Data offloaded {} blocks {}".format(
         bn, "" if args.validate == 'no' else "and all data validation passed."))
-    return nread*_data_size
+    return nread
 
 
 def write_console(message):
@@ -225,12 +225,19 @@ def run_shots(args):
     _logprint = args.logprint
     global uut_name
     uut_name = args.uut[0]
+    nbytes = 0
 
     LOG = open("mgtdramshot-{}.log".format(args.uut[0]), "w")
     uut = acq400_hapi.Acq2106_Mgtdram8(args.uut[0])
     acq400_hapi.Acq400UI.exec_args(uut, args)
-    
-    args.offloadblocks_count = int(args.offloadblocks if args.offloadblocks != 'capture' else args.captureblocks)
+
+    if args.offloadblocks != 'capture':
+        args.offloadblocks_count = int(args.offloadblocks)
+    elif args.captureblocks != 0:
+        args.offloadblocks_count = args.capture_blocks
+    else:
+        args.offloadblocks_count = acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS)
+        print("offload {} buffers from uut".format(args.offloadblocks_count))
     
     uut.s14.mgt_taskset = '1'
     if args.validate != 'no':

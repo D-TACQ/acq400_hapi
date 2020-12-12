@@ -542,7 +542,7 @@ class Acq400:
         return int(self.s0.NCHAN)
 
     def data_size(self):
-        return 4 if self.s0.data32 else 2
+	    return 4 if self.s0.data32 == '1' else 2
 
     def read_channels(self, channels=(), nsam=0):
         """read all channels post shot data.
@@ -1135,6 +1135,10 @@ class Acq400:
     @staticmethod
     def freq(sig):
         return float(sig.split(" ")[1])
+    
+    @staticmethod
+    def intpv(pv):
+        return int(pv.split(" ")[1])
 
 
 class Acq2106(Acq400):
