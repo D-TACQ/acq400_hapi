@@ -145,7 +145,7 @@ def host_pull(args, uut):
 
     print("Starting host pull {} bytes now data size {}".format(nbytes, _data_size))
 
-    for buffer in rc.get_blocks(nbytes, ncols=0, data_size=_data_size, filter=UploadStatus(group*MGT_BLOCK_BYTES)):
+    for buffer in rc.get_blocks(nbytes, data_size=_data_size):
 
         if first_run:
             good_data = buffer

@@ -129,7 +129,7 @@ class RawClient(netclient.Netclient):
     def __init__(self, addr, port):
         netclient.Netclient.__init__(self, addr, port)
 
-    def read(self, nelems, data_size=2, ncols=1, maxbuf=0x400000, filter=None):
+    def read(self, nelems, data_size=2):
         """read ndata from channel data server, return as np array.
         Args:
             nelems number of data elements, each data_size*ncols
@@ -141,30 +141,21 @@ class RawClient(netclient.Netclient):
             ncols*data_size=0? just read nelems bytes
         """
         _dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
-        if nelems <= 0:
-            bytestogo = maxbuf              # and do not decrement
-        else:	
-            rowlen = data_size * ncols
-            bytestogo = nelems * rowlen if rowlen > 0 else nelems
 
-        total_buf = bytes()
-
-        while bytestogo > 0:
-            new_buf = self.sock.recv(min(bytestogo, maxbuf))
-            if not new_buf:
+        buf = bytearray(nelems)
+        pos = 0
+        while pos < nelems:
+            cr = self.sock.recv_into(memoryview(buf)[pos:])
+            if cr == 0:
                 break               # end of file
-            if nelems > 0:
-                bytestogo = bytestogo - len(new_buf)
-            total_buf += new_buf    # still dubious of append :-)
-            if filter:
-                filter(new_buf)
+            pos += cr
 
-        return np.frombuffer(total_buf, _dtype)
+        return np.frombuffer(buf, _dtype)
 
-    def get_blocks(self, nelems, data_size=2, ncols=1, filter=None):
+    def get_blocks(self, nelems, data_size=2):
         block = np.array([1])
         while len(block) > 0:
-            block = self.read(nelems, data_size=data_size, ncols=ncols, filter=filter)
+            block = self.read(nelems, data_size=data_size)
             if len(block) > 0:
                 yield block
 
