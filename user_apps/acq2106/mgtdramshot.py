@@ -281,7 +281,7 @@ def run_shots(args):
             et = (t2-t1).seconds
             if nbytes:
                 mb = nbytes/0x100000
-                mbps = "offload {} MB, {} MB/s".format(mb, mb/et)
+                mbps = "offload {} MB, {:.2f} MB/s".format(mb, mb/et)
             print("shot: {} {} done in {} seconds {}\n\n".format(shot, actions, et, mbps))
 
             if args.wait_user:
