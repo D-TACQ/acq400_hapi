@@ -253,7 +253,7 @@ def run_shots(args):
     elif args.captureblocks != 0:
         args.offloadblocks_count = args.captureblocks
     else:
-        args.offloadblocks_count = acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS)
+        args.offloadblocks_count = acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS_M)
         print("offload {} buffers from uut".format(args.offloadblocks_count))
     
     uut.s14.mgt_taskset = '1'
