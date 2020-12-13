@@ -129,7 +129,7 @@ class RawClient(netclient.Netclient):
     def __init__(self, addr, port):
         netclient.Netclient.__init__(self, addr, port)
 
-    def read(self, nelems, data_size=2, ncols=1, maxbuf=0x400000):
+    def read(self, nelems, data_size=2, ncols=1, maxbuf=0x400000, filter=None):
         """read ndata from channel data server, return as np array.
         Args:
             nelems number of data elements, each data_size*ncols
@@ -156,13 +156,15 @@ class RawClient(netclient.Netclient):
             if nelems > 0:
                 bytestogo = bytestogo - len(new_buf)
             total_buf += new_buf    # still dubious of append :-)
+            if filter:
+                filter(new_buf)
 
         return np.frombuffer(total_buf, _dtype)
 
-    def get_blocks(self, nelems, data_size=2, ncols=1):
+    def get_blocks(self, nelems, data_size=2, ncols=1, filter=None):
         block = np.array([1])
         while len(block) > 0:
-            block = self.read(nelems, data_size=data_size, ncols=ncols)
+            block = self.read(nelems, data_size=data_size, ncols=ncols, filter=filter)
             if len(block) > 0:
                 yield block
 

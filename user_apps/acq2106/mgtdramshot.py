@@ -116,6 +116,16 @@ def validate_streamed_data(good_data, test_data, cycle):
     return None
 
 
+def UploadStatus(report_interval):
+    def filter(new_buf):
+        filter.currentbytes += len(new_buf)
+        if filter.currentbytes - filter.lastreport > report_interval:
+            print('.', end='', flush=True)
+            filter.lastreport = filter.currentbytes
+    filter.currentbytes = 0
+    filter.lastreport = 0
+    return filter
+
 def host_pull(args, uut):
     # Connect to port 53991 and pull all data.
     bn = 0
@@ -135,7 +145,7 @@ def host_pull(args, uut):
 
     print("Starting host pull {} bytes now data size {}".format(nbytes, _data_size))
 
-    for buffer in rc.get_blocks(nbytes, ncols=0, data_size=_data_size):
+    for buffer in rc.get_blocks(nbytes, ncols=0, data_size=_data_size, filter=UploadStatus(group*MGT_BLOCK_BYTES)):
 
         if first_run:
             good_data = buffer
@@ -152,7 +162,7 @@ def host_pull(args, uut):
         if args.validate != 'no':
             validate_streamed_data(good_data, buffer, bn)
 
-	bn += 1
+        bn += 1
         nread += len(buffer) * _data_size
         if nread >= nbytes:
             break
@@ -263,7 +273,7 @@ def run_shots(args):
         for ii in range(0, args.loop):
             t1 = datetime.datetime.now()
             print("shot: {} {}".format(ii, t1.strftime("%Y%m%d %H:%M:%S")))
-	    mbps=""
+            mbps=""
             if args.captureblocks != 0:
                 run_shot(uut, args)
             if args.offloadblocks_count != 0:
