@@ -126,9 +126,7 @@ def UploadStatus(report_interval):
     filter.lastreport = 0
     return filter
 
-def host_pull(args, uut):
-    # Connect to port 53991 and pull all data.
-    bn = 0
+def host_pull(args, uut, shot):
     # set up a RawClient to pull data from the mgtdram host_pull port.
     rc = uut.create_mgtdram_pull_client()
     first_run = True
@@ -142,6 +140,7 @@ def host_pull(args, uut):
     nbytes = nblocks*MGT_BLOCK_BYTES
     nread = 0
     _data_size = uut.data_size()
+    bn = 0                          # block number. redundant, there will be only one block.
 
     print("Starting host pull {} bytes now data size {}".format(nbytes, _data_size))
 
@@ -152,7 +151,7 @@ def host_pull(args, uut):
             first_run = False
 
         if args.save_data == 1:
-            fn = "./{}/{:04d}.dat".format(args.uut[0], bn)
+            fn = "./{}/{:04d}.dat".format(args.uut[0], shot)
             make_data_dir(args.uut[0], 0)
             buffer.tofile(fn)
             print("{}".format(fn))
@@ -214,10 +213,10 @@ def run_shot(uut, args):
         uut.s14.mgt_run_shot = str(int(args.captureblocks) + 2)
         uut.run_mgt()
      
-def run_offload(uut, args):        
+def run_offload(uut, args, shot):        
     if args.host_pull == 1:
         # for loop in list(range(1, args.loop + 1)):
-        return host_pull(args, uut)
+        return host_pull(args, uut, shot)
 
     else:
         uut.s14.mgt_offload = args.offloadblocks if args.offloadblocks != 'capture' \
@@ -270,20 +269,20 @@ def run_shots(args):
             else:
                  actions = "offload"
 
-        for ii in range(0, args.loop):
+        for shot in range(0, args.loop):
             t1 = datetime.datetime.now()
-            print("shot: {} {}".format(ii, t1.strftime("%Y%m%d %H:%M:%S")))
+            print("shot: {} {}".format(shot, t1.strftime("%Y%m%d %H:%M:%S")))
             mbps=""
             if args.captureblocks != 0:
                 run_shot(uut, args)
             if args.offloadblocks_count != 0:
-                nbytes = run_offload(uut, args)
+                nbytes = run_offload(uut, args, shot)
             t2 = datetime.datetime.now()
             et = (t2-t1).seconds
             if nbytes:
                 mb = nbytes/0x100000
                 mbps = "offload {} MB, {} MB/s".format(mb, mb/et)
-            print("shot: {} {} done in {} seconds {}\n\n".format(ii, actions, et, mbps))
+            print("shot: {} {} done in {} seconds {}\n\n".format(shot, actions, et, mbps))
 
             if args.wait_user:
                 input("hit return to continue")
