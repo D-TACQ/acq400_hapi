@@ -1145,9 +1145,9 @@ class Acq2106(Acq400):
     Defines features specific to ACQ2106
     """
 
-    def __init__(self, _uut, monitor=True, has_dsp=False, has_comms=True, has_wr=False):
+    def __init__(self, _uut, monitor=True, s0_client=None, has_dsp=False, has_comms=True, has_wr=False):
         print("acq400_hapi.Acq2106 %s" % (_uut))
-        Acq400.__init__(self, _uut, monitor)
+        Acq400.__init__(self, _uut, monitor=monitor, s0_client=s0_client)
         self.mb_clk_min = 100000
         sn_map = ()
         if has_comms:
@@ -1294,17 +1294,27 @@ def factory(_uut):
     
     s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
     
-    # now work out what it is from s0.special sites etc and instantiate the approprirate class
-    # eg .. this one doesn't quite work .. do any of the others?
-    # hoping the s0_client kwarg gets through without extra boilerplate
-    if s0.has_mgt and s0.has_mgt_dram:
-        return Acq2106_Mgtdram8(_uut, s0_client=s0)
-    if s0.has_wr:
-        return Acq2106(_uut, has_wr=True, s0_client=s0)
+    if not s0.MODEL.startswith("acq2106"):
+        return Acq400(_uut, s0)
     
-    ''' nothing special, make it a default class with existing s0
-    '''
-    return Acq400(_uut, s0_client=s0)
+    # here with acq2106
+    
+    try:
+        if s0.has_mgt != "none" and s0.has_mgt_dram = "1":
+            return Acq2106_Mgtdram8(_uut, s0_client=s0)
+    
+        has_dsp = s0.has_dsp != "none"
+        has_wr = s0.has_wr != "none"
+        print("has_mgt {}".format("s0.has_mgt"))
+        has_sfp = s0.has_mgt != "none"
+        
+       
+        return Acq2106(_uut, s0_client=s0,  has_dsp=has_dsp, has_comms=has_sfp, has_wr=has_wr)
+    except:
+        ''' nothing special, make it a default class with existing s0
+        '''
+        print("Hello Exception")
+        return Acq2106(_uut, s0_client=s0)
     
     
 if __name__ == '__main__':
