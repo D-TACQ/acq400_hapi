@@ -208,34 +208,27 @@ class UploadFilter:
             write_console(">{}\n".format(st))
             self.line = 0
 
+class AtFilter:
+    def __init__(self):
+        self.filter_regex_set = (re.compile(r"@@@"), re.compile(r"process"), re.compile(r"log file"))
+
+
+    def __call__(self, st):
+        st = st.rstrip()
+      
+        for f in self.filter_regex_set:
+            if f.search(st) != None:
+                return
+        write_console("{}\n".format(st))
 
 def run_shot(uut, args):
     # always capture over. The offload is zero based anyway, so add another one
     if args.captureblocks:
         uut.s14.mgt_run_shot = args.captureblocks
-        uut.run_mgt()
+        uut.run_mgt(AtFilter())
      
-def run_offload(uut, args, shot):        
-    if args.host_pull == 1:
-        # for loop in list(range(1, args.loop + 1)):
-        return host_pull(args, uut, shot)
-
-    else:
-        uut.s14.mgt_offload = args.offloadblocks if args.offloadblocks != 'capture' \
-            else '0-{}'.format(args.captureblocks)
-        t1 = datetime.datetime.now()
-        uut.run_mgt(UploadFilter())
-        ttime = datetime.datetime.now()-t1
-
-        if args.validate != 'no':
-            cmd = "{} {}".format(args.validate, uut.uut)
-            print("run \"{}\"".format(cmd))
-            rc = call(cmd, shell=True, stdin=0, stdout=1, stderr=2)
-            if rc != 0:
-                print("ERROR called process {} returned {}".format(
-                    args.validate, rc))
-                exit(1)
-        return args.captureblocks*MGT_BLOCK_BYTES
+def run_offload(uut, args, shot):
+    return host_pull(args, uut, shot)        
 
 def run_shots(args):
     global LOG
@@ -309,10 +302,6 @@ def run_main():
                         help='program to validate data')
     parser.add_argument('--wait_user', type=int, default=0,
                         help='1: force user input each shot')
-
-    parser.add_argument('--host_pull', type=int, default=1,
-                        help='Whether or not to use the HOST PULL method. Default: 1.')
-
     parser.add_argument('--save_data', type=int, default=1,
                         help='Whether or not to save data to a file in 4MB chunks. Default: 0.')
 

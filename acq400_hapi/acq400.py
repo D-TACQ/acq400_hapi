@@ -64,7 +64,7 @@ class AcqPorts:
     AWG_ONCE = 54201
     AWG_AUTOREARM = 54202
     AWG_CONTINUOUS = 54205
-    MGTDRAM = 53990
+    MGTDRAM = 53993
     MGTDRAM_PULL_DATA = 53991
 
 class AcqSites:
@@ -318,24 +318,26 @@ class NullFilter:
 null_filter = NullFilter()
 
 class ProcessMonitor:
-    st_re = re.compile(r"^END" )
+    st_rex = ( re.compile(r"^END" ), re.compile(r"^real"))
 
     def st_monitor(self):
         while self.quit_requested == False:
             st = self.logclient.poll()
             self.output_filter(st)
-            match = self.st_re.search(st)
-            if match:
-                self.quit_requested = True
+            for re in self.st_rex:
+            	if re.search(st):
+                    self.quit_requested = True
+                    break
 
     def __init__(self, _uut, _monport,  _filter):
         self.quit_requested = False
         self.output_filter = _filter
-        self.logclient = netclient.Logclient(_uut, _monport)
+        self.logclient = netclient.Logclient(_uut.uut, _monport)
         self.logclient.termex = re.compile("(\n)")
         self.st_thread = threading.Thread(target=self.st_monitor)
         self.st_thread.setDaemon(True)
         self.st_thread.start()
+        _uut.s0.BLT_SET_ARM = '1'
 
 class Acq400:
     """
@@ -1233,8 +1235,8 @@ class Acq2106_Mgtdram8(Acq2106):
         print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
         Acq2106.__init__(self, uut, monitor, has_dsp=True)
 
-    def run_mgt(self, _filter = null_filter):
-        pm = ProcessMonitor(self.uut, AcqPorts.MGTDRAM, _filter)
+    def run_mgt(self, filter = null_filter):
+        pm = ProcessMonitor(self, AcqPorts.MGTDRAM, filter)
         while pm.quit_requested != True:
             time.sleep(1)
 
