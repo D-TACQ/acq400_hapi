@@ -171,6 +171,8 @@ def host_pull(args, uut, shot):
         print("Pulled {} blocks.".format(bn))
         exit(1)
 
+
+    rc.sock.close()
     logprint("Data offloaded {} blocks {}".format(
         bn, "" if args.validate == 'no' else "and all data validation passed."))
     return nread
@@ -210,7 +212,7 @@ class UploadFilter:
 def run_shot(uut, args):
     # always capture over. The offload is zero based anyway, so add another one
     if args.captureblocks:
-        uut.s14.mgt_run_shot = str(int(args.captureblocks) + 2)
+        uut.s14.mgt_run_shot = args.captureblocks
         uut.run_mgt()
      
 def run_offload(uut, args, shot):        
@@ -247,10 +249,12 @@ def run_shots(args):
     uut = acq400_hapi.Acq2106_Mgtdram8(args.uut[0])
     acq400_hapi.Acq400UI.exec_args(uut, args)
 
+    if args.captureblocks != 0:
+        uut.s0.BLT_BUFFERS = args.captureblocks
+    args.captureblocks =acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS_M)
+
     if args.offloadblocks != 'capture':
         args.offloadblocks_count = int(args.offloadblocks)
-    elif args.captureblocks != 0:
-        args.offloadblocks_count = args.captureblocks
     else:
         args.offloadblocks_count = acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS_M)
         print("offload {} buffers from uut".format(args.offloadblocks_count))
