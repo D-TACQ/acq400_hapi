@@ -1232,9 +1232,9 @@ class Acq2106_Mgtdram8(Acq2106):
     MGT_BLOCK_BYTES = 0x400000
     MGT_BLOCK_MULTIPLE = 16
 
-    def __init__(self, uut, monitor=True):
+    def __init__(self, uut, monitor=True, s0_client=None):
         print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
-        Acq2106.__init__(self, uut, monitor, has_dsp=True)
+        Acq2106.__init__(self, uut, monitor=monitor, s0_client=s0_client, has_dsp=True)
 
     def run_mgt(self, filter = null_filter):
         pm = ProcessMonitor(self, AcqPorts.MGTDRAM, filter)
@@ -1247,9 +1247,9 @@ class Acq2106_Mgtdram8(Acq2106):
 
 class Acq2106_TIGA(Acq2106):
    
-    def __init__(self, uut, monitor=True):
+    def __init__(self, uut, monitor=True, s0_client=None):
         print("acq400_hapi.Acq2106_TIGA %s" % (uut))
-        Acq2106.__init__(self, uut, monitor, has_wr=True)
+        Acq2106.__init__(self, uut, monitor=monitor, s0_client=s0_client, has_wr=True)
         self.pg_sites = [ sx for sx in range(1,6+1) if sx in self.sites and self.svc["s{}".format(sx)].MTYPE == '7B' ]
             
     def load_dio482pg(self, site, stl, trace = False):
@@ -1300,9 +1300,11 @@ def factory(_uut):
     # here with acq2106
     
     try:
-        if s0.has_mgt != "none" and s0.has_mgt_dram = "1":
+        if s0.is_tiga != "none":
+            return Acq2106_TIGA(_uut, s0_client=s0)
+        if s0.has_mgt != "none" and s0.has_mgtdram != "none":
             return Acq2106_Mgtdram8(_uut, s0_client=s0)
-    
+           
         has_dsp = s0.has_dsp != "none"
         has_wr = s0.has_wr != "none"
         print("has_mgt {}".format("s0.has_mgt"))
