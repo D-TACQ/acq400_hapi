@@ -147,10 +147,13 @@ class RawClient(netclient.Netclient):
         while pos < nelems:
             cr = self.sock.recv_into(memoryview(buf)[pos:])
             if cr == 0:
+#                 continue
                 break               # end of file
             pos += cr
 
-        return np.frombuffer(buf, _dtype)
+        if pos < nelems:
+            print("WARNING: early termination at {}/{}".format(pos, nelems))
+        return np.frombuffer(buf[:pos], _dtype)
 
     def get_blocks(self, nelems, data_size=2):
         block = np.array([1])
