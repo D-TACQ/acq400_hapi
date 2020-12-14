@@ -244,7 +244,7 @@ def run_shots(args):
 
     if args.captureblocks != 0:
         uut.s0.BLT_BUFFERS = args.captureblocks
-    args.captureblocks =acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS_M)
+        args.captureblocks = acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS_M)
 
     if args.offloadblocks != 'capture':
         args.offloadblocks_count = int(args.offloadblocks)
