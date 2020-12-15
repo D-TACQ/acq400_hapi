@@ -223,9 +223,16 @@ class AtFilter:
 
 def run_shot(uut, args):
     # always capture over. The offload is zero based anyway, so add another one
-    if args.captureblocks:
-        uut.s14.mgt_run_shot = args.captureblocks
-        uut.run_mgt(AtFilter())
+    uut.s14.mgt_run_shot = args.captureblocks
+    uut.run_mgt(AtFilter())
+    return int(uut.s1.shot)
+
+def wait_shot(uut, args):    
+    if args.offloadblocks != 'capture': 
+        args.offloadblocks_count = acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS_M)
+    uut.run_mgt(AtFilter(), set_arm=False)
+    return int(uut.s1.shot)
+        
      
 def run_offload(uut, args, shot):
     return host_pull(args, uut, shot)        
@@ -267,19 +274,22 @@ def run_shots(args):
                  actions = "offload"
 
         for shot in range(0, args.loop):
+            shot_number = shot
             t1 = datetime.datetime.now()
             print("shot: {} {}".format(shot, t1.strftime("%Y%m%d %H:%M:%S")))
             mbps=""
             if args.captureblocks != 0:
-                run_shot(uut, args)
+                shot_number = run_shot(uut, args)
+            elif args.wait_shot:
+                shot_number = wait_shot(uut, args)
             if args.offloadblocks_count != 0:
-                nbytes = run_offload(uut, args, shot)
+                nbytes = run_offload(uut, args, shot_number)
             t2 = datetime.datetime.now()
             et = (t2-t1).seconds
             if nbytes:
                 mb = nbytes/0x100000
                 mbps = "offload {} MB, {:.2f} MB/s".format(mb, mb/et)
-            print("shot: {} {} done in {} seconds {}\n\n".format(shot, actions, et, mbps))
+            print("shot: {} {} done in {} seconds {}\n\n".format(shot_number, actions, et, mbps))
 
             if args.wait_user:
                 input("hit return to continue")
@@ -302,6 +312,8 @@ def run_main():
                         help='program to validate data')
     parser.add_argument('--wait_user', type=int, default=0,
                         help='1: force user input each shot')
+    parser.add_argument('--wait_shot', type=int, default=0,
+                        help="1: wait for some external agent to run the shot, then offload all")
     parser.add_argument('--save_data', type=int, default=1,
                         help='Whether or not to save data to a file in 4MB chunks. Default: 0.')
 
@@ -310,7 +322,11 @@ def run_main():
                               '2: Save reduced log to log file.')
 
     parser.add_argument('uut', nargs=1, help="uut ")
-    run_shots(parser.parse_args())
+    args = parser.parse_args()
+    if args.wait_shot > 0:
+        args.captureblocks = 0
+        
+    run_shots(args)
 
 # execution starts here
 

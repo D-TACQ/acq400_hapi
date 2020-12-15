@@ -330,7 +330,7 @@ class ProcessMonitor:
                     self.quit_requested = True
                     break
 
-    def __init__(self, _uut, _monport,  _filter):
+    def __init__(self, _uut, _monport,  _filter, set_arm):
         self.quit_requested = False
         self.output_filter = _filter
         self.logclient = netclient.Logclient(_uut.uut, _monport)
@@ -338,7 +338,8 @@ class ProcessMonitor:
         self.st_thread = threading.Thread(target=self.st_monitor)
         self.st_thread.setDaemon(True)
         self.st_thread.start()
-        _uut.s0.BLT_SET_ARM = '1'
+        if set_arm:
+            _uut.s0.BLT_SET_ARM = '1'
 
 class Acq400:
     """
@@ -1236,8 +1237,8 @@ class Acq2106_Mgtdram8(Acq2106):
         print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
         Acq2106.__init__(self, uut, monitor=monitor, s0_client=s0_client, has_dsp=True)
 
-    def run_mgt(self, filter = null_filter):
-        pm = ProcessMonitor(self, AcqPorts.MGTDRAM, filter)
+    def run_mgt(self, filter = null_filter, set_arm=True):
+        pm = ProcessMonitor(self, AcqPorts.MGTDRAM, filter, set_arm)
         while pm.quit_requested != True:
             time.sleep(1)
 
