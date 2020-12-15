@@ -1308,7 +1308,6 @@ def factory(_uut):
            
         has_dsp = s0.has_dsp != "none"
         has_wr = s0.has_wr != "none"
-        print("has_mgt {}".format("s0.has_mgt"))
         has_sfp = s0.has_mgt != "none"
         
        
@@ -1316,7 +1315,8 @@ def factory(_uut):
     except:
         ''' nothing special, make it a default class with existing s0
         '''
-        print("Hello Exception")
+        print("Factory method encountered a problem. Most likely target system"
+              "\nFW is older than necessary. Using default acq2106 settings.\n")
         return Acq2106(_uut, s0_client=s0)
     
     
