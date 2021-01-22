@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-
 import concurrent.futures
 import acq400_hapi
 import numpy as np
@@ -31,8 +30,8 @@ def get_args():
 
 
 def check_channel(channel, validation):
-    check_upper = validation[0] - channel
-    check_lower = channel - validation[1]
+    check_upper = validation[0][1:] - channel[1:]
+    check_lower = channel[1:] - validation[1][1:]
     if (check_upper < 0).any() or (check_lower < 0).any():
         return True
     return False
@@ -51,10 +50,11 @@ def generate_boundary(validation, nchan, bufferlen, threshold):
         return validation_data
 
     elif validation == 2:
-        raw_data = sys.stdin.read(bufferlen)
+        raw_data = sys.stdin.buffer.read(bufferlen)
         raw_data = np.fromstring(raw_data, dtype=np.int16)
         data = raw_data.reshape((-1, nchan)).T
         validation_data = [[ch + threshold, ch - threshold] for ch in data]
+
         return validation_data
 
 
