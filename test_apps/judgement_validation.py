@@ -24,6 +24,10 @@ def get_args():
                         help="validation type - 1: Use default 3 sine wave "
                         "burst, 2: Use first buffer as validator +- threshold")
 
+    parser.add_argument('--es_indices', type=str, default="0,1024",
+                        help="Locations of event samples in the data separated"
+                        " by commas. For example: --es_indices='0,1024'")
+
     parser.add_argument('uut', nargs=1, help="uut ")
     args = parser.parse_args()
     return args
@@ -37,14 +41,14 @@ def check_channel(channel, validation):
     return False
 
 
-def generate_boundary(validation, nchan, bufferlen, threshold):
+def generate_boundary(validation, nchan, bufferlen, threshold, es_indices):
     if validation == 1:
         x = np.linspace(0, 6*np.pi, 750)
         y = 3000 * np.sin(x)
         y2 = np.concatenate((y, np.zeros(274)))
         y3 = np.concatenate((y2, y2))
-        y3[0] = np.nan
-        y3[1024] = np.nan
+        y3[es_indices] = np.nan
+        # y3[1024] = np.nan
         data = [y3] * nchan
         validation_data = [[ch + threshold, ch - threshold] for ch in data]
         return validation_data
@@ -53,6 +57,10 @@ def generate_boundary(validation, nchan, bufferlen, threshold):
         raw_data = sys.stdin.buffer.read(bufferlen)
         raw_data = np.fromstring(raw_data, dtype=np.int16)
         data = raw_data.reshape((-1, nchan)).T
+        data = data.astype(np.float)
+        for num, channel in enumerate(data):
+            data[num][es_indices] = np.nan
+            # data[num][1024] = np.nan
         validation_data = [[ch + threshold, ch - threshold] for ch in data]
 
         return validation_data
@@ -92,11 +100,13 @@ def main():
     uut_object = acq400_hapi.Acq400(uut)
     nchan = uut_object.nchan()
     bufferlen = int(uut_object.s0.bufferlen)
+    es_indices = [int(num) for num in args.es_indices.split(",")]
 
     validation_data = generate_boundary(args.validation,
                                         nchan,
                                         bufferlen,
-                                        args.threshold)
+                                        args.threshold,
+                                        es_indices)
 
     while True:
 
@@ -116,14 +126,14 @@ def main():
                   datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
             if args.save_data == 1:
-                save_data(data, file_name + "_failed_judgement")
+                save_data(raw_data, file_name + "_failed_judgement")
 
         if not np.array_equal(pv_check, fail_list):
             print("PV does not agree with numpy.")
             print("True, or 1 means judgement fired (error detected)")
             print("PV: {}".format(pv_check))
-            print("NP: {}".format(fail_list))
-            print("Channels that disagree:")
+            print("PY: {}".format(fail_list))
+            print("Channels where PV == PY:")
             print(pv_check == fail_list)
 
         if args.save_data == 2:
