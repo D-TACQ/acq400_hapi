@@ -28,6 +28,10 @@ def get_args():
                         help="Locations of event samples in the data separated"
                         " by commas. For example: --es_indices='0,1024'")
 
+    parser.add_argument('--stdin', type=int, default=1,
+                        help='Whether to load data from STDIN or from '
+                        'acq400_hapi. Default is STDIN.')
+
     parser.add_argument('uut', nargs=1, help="uut ")
     args = parser.parse_args()
     return args
@@ -41,7 +45,7 @@ def check_channel(channel, validation):
     return False
 
 
-def generate_boundary(validation, nchan, bufferlen, threshold, es_indices):
+def generate_boundary(validation, nchan, bufferlen, threshold, es_indices, stdin, data=[]):
     if validation == 1:
         x = np.linspace(0, 6*np.pi, 750)
         y = 3000 * np.sin(x)
@@ -54,14 +58,22 @@ def generate_boundary(validation, nchan, bufferlen, threshold, es_indices):
         return validation_data
 
     elif validation == 2:
-        raw_data = sys.stdin.buffer.read(bufferlen)
-        raw_data = np.fromstring(raw_data, dtype=np.int16)
+        if stdin:
+            raw_data = sys.stdin.buffer.read(bufferlen)
+            raw_data = np.fromstring(raw_data, dtype=np.int16)
+
+        else:
+            raw_data = np.frombuffer(data, dtype=np.int16)
+            print("raw_data shape: {}".format(raw_data.shape))
         data = raw_data.reshape((-1, nchan)).T
         data = data.astype(np.float)
+
         for num, channel in enumerate(data):
             data[num][es_indices] = np.nan
             # data[num][1024] = np.nan
         validation_data = [[ch + threshold, ch - threshold] for ch in data]
+
+
 
         return validation_data
 
@@ -102,43 +114,67 @@ def main():
     bufferlen = int(uut_object.s0.bufferlen)
     es_indices = [int(num) for num in args.es_indices.split(",")]
 
-    validation_data = generate_boundary(args.validation,
-                                        nchan,
-                                        bufferlen,
-                                        args.threshold,
-                                        es_indices)
+    if args.stdin == 1:
 
-    while True:
+        validation_data = generate_boundary(args.validation, nchan, bufferlen,
+                                            args.threshold, es_indices,
+                                            args.stdin)
 
-        fail_list = []
-        buffer_num += 1
-        file_name = "./{}/{:05d}".format(uut, buffer_num)
+        while True:
 
-        raw_data = sys.stdin.buffer.read(bufferlen)
-        raw_data = np.fromstring(raw_data, dtype=np.int16)
-        data = raw_data.reshape((-1, nchan)).T
+            fail_list = []
+            buffer_num += 1
+            file_name = "./{}/{:05d}".format(uut, buffer_num)
 
-        fail_list = np.array(generate_fail_report(data, validation_data))
-        pv_check = np.array(epics.caget('{}:JDG:CHX:FAIL:ALL'.format(uut)))[1:]
+            if args.stdin == 1:
+                raw_data = sys.stdin.buffer.read(bufferlen)
+                raw_data = np.fromstring(raw_data, dtype=np.int16)
+                data = raw_data.reshape((-1, nchan)).T
 
-        if fail_list.any() or pv_check.any():
-            print("Judgement fail detected! {}".format(
-                  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            for data in uut_object.stream(recvlen=bufferlen):
 
-            if args.save_data == 1:
-                save_data(raw_data, file_name + "_failed_judgement")
+                print("Length of data: {}".format(len(data)))
+                compare_epics_python(args, data, validation_data, uut, file_name)
 
-        if not np.array_equal(pv_check, fail_list):
-            print("PV does not agree with numpy.")
-            print("True, or 1 means judgement fired (error detected)")
-            print("PV: {}".format(pv_check))
-            print("PY: {}".format(fail_list))
-            print("Channels where PV == PY:")
-            print(pv_check == fail_list)
+    else:
+        collect_validation = True
+        for bytedata in uut_object.stream(recvlen=bufferlen):
+            print("Length of data: {}".format(len(bytedata)))
+            if collect_validation:
+                validation_data = generate_boundary(args.validation, nchan, bufferlen,
+                                                    args.threshold, es_indices,
+                                                    args.stdin, data=bytedata)
+            raw_data = np.frombuffer(bytedata, dtype=np.int16)
+            data = raw_data.reshape((-1, nchan)).T
 
-        if args.save_data == 2:
-            save_data(data, file_name)
+            compare_epics_python(args, data, validation_data, uut, file_name)
+            collect_validation = False
+    return None
 
+
+def compare_epics_python(args, data, validation_data, uut, file_name):
+    # print(data.shape)
+    # print(validation_data.shape)
+    fail_list = np.array(generate_fail_report(data, validation_data))
+    pv_check = np.array(epics.caget('{}:JDG:CHX:FAIL:ALL'.format(uut)))[1:]
+
+    if fail_list.any() or pv_check.any():
+        print("Judgement fail detected! {}".format(
+              datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+
+        if args.save_data == 1:
+            save_data(raw_data, file_name + "_failed_judgement")
+
+    if not np.array_equal(pv_check, fail_list):
+        print("PV does not agree with numpy.")
+        print("True, or 1 means judgement fired (error detected)")
+        print("PV: {}".format(pv_check))
+        print("PY: {}".format(fail_list))
+        print("Channels where PV == PY:")
+        print(pv_check == fail_list)
+
+    if args.save_data == 2:
+        save_data(data, file_name)
     return None
 
 
