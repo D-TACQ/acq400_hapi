@@ -148,8 +148,9 @@ def compare_epics_python(args, raw_data, data, validation_data, uut, file_name):
     pv_check = np.array(epics.caget('{}:JDG:CHX:FAIL:ALL'.format(uut)))[1:]
 
     if fail_list.any() or pv_check.any():
-        print("Judgement fail detected! {}".format(
-              datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        if np.array_equal(pv_check, fail_list):
+            print("Judgment fail detected, python agrees with EPICS (successful test) {}".format(
+                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
         if args.save_data == 1:
             save_data(raw_data, file_name + "_failed_judgement")
