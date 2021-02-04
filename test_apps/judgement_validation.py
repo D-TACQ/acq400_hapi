@@ -32,7 +32,7 @@ def get_args():
                         help='Whether to load data from STDIN or from '
                         'acq400_hapi. Default is STDIN.')
 
-    parser.add_argument('uut', nargs=1, help="uut ")
+    parser.add_argument('uut', nargs=1, help="uut")
     args = parser.parse_args()
     return args
 
@@ -52,7 +52,6 @@ def generate_boundary(validation, nchan, bufferlen, threshold, es_indices, stdin
         y2 = np.concatenate((y, np.zeros(274)))
         y3 = np.concatenate((y2, y2))
         y3[es_indices] = np.nan
-        # y3[1024] = np.nan
         data = [y3] * nchan
         validation_data = [[ch + threshold, ch - threshold] for ch in data]
         return validation_data
@@ -70,10 +69,7 @@ def generate_boundary(validation, nchan, bufferlen, threshold, es_indices, stdin
 
         for num, channel in enumerate(data):
             data[num][es_indices] = np.nan
-            # data[num][1024] = np.nan
         validation_data = [[ch + threshold, ch - threshold] for ch in data]
-
-
 
         return validation_data
 
@@ -122,7 +118,6 @@ def main():
 
         while True:
 
-            fail_list = []
             buffer_num += 1
             file_name = "./{}/{:05d}".format(uut, buffer_num)
 
@@ -131,15 +126,11 @@ def main():
                 raw_data = np.fromstring(raw_data, dtype=np.int16)
                 data = raw_data.reshape((-1, nchan)).T
 
-            for data in uut_object.stream(recvlen=bufferlen):
-
-                print("Length of data: {}".format(len(data)))
-                compare_epics_python(args, data, validation_data, uut, file_name)
+            compare_epics_python(args, raw_data, data, validation_data, uut, file_name)
 
     else:
         collect_validation = True
         for bytedata in uut_object.stream(recvlen=bufferlen):
-            print("Length of data: {}".format(len(bytedata)))
             if collect_validation:
                 validation_data = generate_boundary(args.validation, nchan, bufferlen,
                                                     args.threshold, es_indices,
@@ -147,14 +138,12 @@ def main():
             raw_data = np.frombuffer(bytedata, dtype=np.int16)
             data = raw_data.reshape((-1, nchan)).T
 
-            compare_epics_python(args, data, validation_data, uut, file_name)
+            compare_epics_python(args, raw_data, data, validation_data, uut, file_name)
             collect_validation = False
     return None
 
 
-def compare_epics_python(args, data, validation_data, uut, file_name):
-    # print(data.shape)
-    # print(validation_data.shape)
+def compare_epics_python(args, raw_data, data, validation_data, uut, file_name):
     fail_list = np.array(generate_fail_report(data, validation_data))
     pv_check = np.array(epics.caget('{}:JDG:CHX:FAIL:ALL'.format(uut)))[1:]
 
