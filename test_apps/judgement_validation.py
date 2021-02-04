@@ -149,7 +149,7 @@ def compare_epics_python(args, raw_data, data, validation_data, uut, file_name):
 
     if fail_list.any() or pv_check.any():
         if np.array_equal(pv_check, fail_list):
-            print("Judgment fail detected, python agrees with EPICS (successful test) {}".format(
+            print("Judgment fail detected, HOST PC agrees with EPICS (successful test) {}".format(
                 datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
         if args.save_data == 1:
