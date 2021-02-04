@@ -1121,20 +1121,28 @@ class Acq400:
                 event_samples = es_string
 
         return [indices, event_samples]
-       
+
     def stream(self, recvlen=4096*32*2, port=AcqPorts.STREAM):
         nc = netclient.Netclient(self.uut, AcqPorts.STREAM)
+
+        bytes_to_go = recvlen
+        chunk = bytearray()
+
         while True:
-            chunk = nc.sock.recv(recvlen)
-            if chunk:
+            chunk += (nc.sock.recv(bytes_to_go))
+            bytes_to_go = recvlen - len(chunk)
+
+            if len(chunk) >= recvlen:
                 yield chunk
+                chunk = bytearray()
+                bytes_to_go = recvlen
             else:
-                break
-            
+                continue
+
     @staticmethod
     def freq(sig):
         return float(sig.split(" ")[1])
-    
+
     @staticmethod
     def intpv(pv):
         return int(pv.split(" ")[1])
