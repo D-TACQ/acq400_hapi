@@ -38,36 +38,38 @@ def main():
     pv = epics.PV(args.pv)
     pv.add_callback(cb_function)
 
-    print(args.post)
     epics.PV('{}:MODE:TRANSIENT:PRE'.format(uut)).put(0)
     epics.PV('{}:MODE:TRANSIENT:POST'.format(uut)).put(args.post)
     epics.PV('{}:MODE:TRANSIENT'.format(uut)).put(1)
     epics.PV('{}:1:TRG:DX'.format(uut)).put(trg)
 
     shot_counter = 0
+
     while shot_counter < args.shots:
         print("Shot: {} starting now.".format(shot_counter))
         epics.PV('{}:MODE:TRANSIENT:SET_ARM'.format(uut)).put(1)
 
         while cb_counter < 2:
             time.sleep(0.5)
+
         while epics.PV('{}:MODE:TRANS_ACT:STATE'.format(uut)).get() != 0:
             time.sleep(0.5)
-        offload_data(uut, shot_counter)
+
+        offload_data(uut, shot_counter, args.post)
         shot_counter += 1
         cb_counter = 1
-        time.sleep(2)
+        #time.sleep(2)
 
     return None
 
 
-def offload_data(uut, shot_number):
+def offload_data(uut, shot_number, post):
     directory = "{}/{:05d}".format(uut, shot_number)
     make_data_dir(directory, 0)
     for site in range(1, 4):
         for chan in range(1, 33):
             data = epics.caget("{}:1:AI:TW:{:02d}:V.VALA".format(uut, chan))
-            data.tofile("{}/S{}_CH{:03d}.dat".format(directory, site, chan))
+            data[0:post].tofile("{}/S{}_CH{:03d}.dat".format(directory, site, chan))
     return None
 
 
