@@ -16,7 +16,7 @@ def get_args():
     parser.add_argument('--shots', type=int, default=1, help="Number of shots to run. Default=1")
 
     parser.add_argument('--pv', type=str,
-                        default='acq2106_242:1:AI:TW:01:V.VALA', help="The EPICS PV to monitor to know when the shot has ended.")
+                        default='{}:1:AI:TW:01:V.VALA', help="The EPICS PV to monitor to know when the shot has ended.")
 
     parser.add_argument('uuts', nargs='+', help="uut")
     args = parser.parse_args()
@@ -25,9 +25,29 @@ def get_args():
 
 def cb_function(pvname=None, value=None, char_value=None, timestamp=None, **kw):
     global cb_counter
+    print("cb {} {}".format(pvname, value))
     cb_counter += 1
     return None
 
+
+
+def offload_data(uut, shot_number, post):
+    directory = "{}/{:05d}".format(uut, shot_number)
+    make_data_dir(directory, 0)
+    for site in range(1, 4):
+        for chan in range(1, 33):
+            data = epics.caget("{}:1:AI:TW:{:02d}:V.VALA".format(uut, chan))
+            data[0:post].tofile("{}/S{}_CH{:03d}.dat".format(directory, site, chan))
+    return None
+
+
+def make_data_dir(directory, verbose):
+    try:
+        os.makedirs(directory)
+    except Exception:
+        if verbose:
+            print("Tried to create dir but dir already exists")
+        pass
 
 def main():
     global cb_counter
@@ -35,7 +55,10 @@ def main():
     uut = args.uuts[0]
     trg = 'd1' if args.trg == 'int' else 'd0'
 
-    pv = epics.PV(args.pv)
+    monpv = args.pv.format(uut)
+    print("monpv {}".format(monpv))
+    pv = epics.PV(monpv)
+
     pv.add_callback(cb_function)
 
     epics.PV('{}:MODE:TRANSIENT:PRE'.format(uut)).put(0)
@@ -61,25 +84,6 @@ def main():
         #time.sleep(2)
 
     return None
-
-
-def offload_data(uut, shot_number, post):
-    directory = "{}/{:05d}".format(uut, shot_number)
-    make_data_dir(directory, 0)
-    for site in range(1, 4):
-        for chan in range(1, 33):
-            data = epics.caget("{}:1:AI:TW:{:02d}:V.VALA".format(uut, chan))
-            data[0:post].tofile("{}/S{}_CH{:03d}.dat".format(directory, site, chan))
-    return None
-
-
-def make_data_dir(directory, verbose):
-    try:
-        os.makedirs(directory)
-    except Exception:
-        if verbose:
-            print("Tried to create dir but dir already exists")
-        pass
 
 
 if __name__ == '__main__':
