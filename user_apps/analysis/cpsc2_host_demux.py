@@ -280,9 +280,6 @@ def plot_mpl(args, raw_channels):
             else:
                  plots[num].plot(raw_channels[sp][args.start:args.stop:args.step])
                  add_titlebox(plots[num], "Column {}".format(sp))
-            
-            
-
         except TypeError:
             print("TypeError")
             plots.plot(raw_channels[sp][args.start:args.stop:args.step])
@@ -444,7 +441,7 @@ def calc_stack_480(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
-    parser.add_argument('--nchan', type=int, default=32)
+    parser.add_argument('--nchan', type=int, default=80)
     parser.add_argument('--nblks', type=int, default=-1)
     parser.add_argument('--save', type=str, default=None, help='save channelized data to dir')
     parser.add_argument('--src', type=str, default='/data', help='data source root')
