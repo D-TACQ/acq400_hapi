@@ -9,7 +9,6 @@ import sys
 def get_args():
     parser = argparse.ArgumentParser(description='PyEPICS control example')
     parser.add_argument('--file', type=str, default="ansto_file.dat", help="File to load.")
-    parser.add_argument('uut', nargs=1, help="uut")
     args = parser.parse_args()
     return args
 
@@ -36,9 +35,6 @@ def compare_bursts(first_burst, burst_n):
         plt.plot(burst_n)
         plt.plot(np.abs(first_burst - burst_n))
         plt.show()
-
-        # plt.plot(first_burst[0::10])
-        # plt.plot(burst_n[0::10])
         return False
 
 
@@ -61,13 +57,6 @@ def main():
     # print(CH01[mask])
     test_plot = CH01[mask]
     # plt.plot(test_plot)
-    # plt.grid(1)
-    # plt.show()
-    print("DEBUG1")
-    # B = np.split(CH01, np.where(np.bitwise_and(timbus, 0x10000000))[0][1:])
-    print("DEBUG2")
-    # print(B)
-    # plt.plot(B[0])
     # plt.grid(1)
     # plt.show()
     data = data[15:]
