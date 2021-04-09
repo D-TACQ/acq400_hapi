@@ -132,34 +132,28 @@ def main():
         plt.show()
 
     data = data[args.skip:]
-    init = [0, 0]  # (had a zero before, had a 1 before)
-    burst_0 = []
-    burst_n = []
-    burst = 0
+    burst_0 = []                          # first (reference) burst
+    burst_n = []                          # current burst
+    burst = 0                             # burst number
+    in_burst = False
+    burst_x = burst_0                     # fill cursor
     for sample, row in enumerate(data):
         if np.bitwise_and(row[IDX_DI32], TRG_DI):
-            if init[0] == 0:
-                burst_0.append(row[IDX_CH01])
-                init[1] = 1
-            else:
-                burst_n.append(row[IDX_CH01])
-                init = [2, 1]
-
-            continue
+            in_burst = True
+            burst_x.append(row[IDX_CH01])
         else:
-
-            if init[1] == 1:
-                if init[0] == 0:
-                    init[0] = 1
-            if init == [2, 1]:
-                if not compare_bursts(args, burst_0, burst_n, burst):
-                    print("Problem detected in burst {}. Quitting now.".format(burst))
-                    sys.exit(1)
+            if in_burst:
+                in_burst = False
+                if burst_x == burst_0:
+                    burst_x = burst_n
                 else:
-                    print("Sample {} .. No issues found".format(sample))
-                burst_n = []
-                burst += 1
-                init = [2, 0]
+                    good = compare_bursts(args, burst_0, burst_n, burst)
+                    print("Sample {} Burst {} Status {}".format(sample, burst, "PASS" if good else "FAIL"))
+                    if good:
+                        burst_n = []
+                        burst += 1
+                    else:
+                        sys.exit(1)
 
     print("Processed {} samples and {} bursts".format(sample, burst))
     return None
