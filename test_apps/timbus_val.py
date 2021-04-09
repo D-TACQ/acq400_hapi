@@ -24,6 +24,7 @@ import sys
 
 NCHAN = (8+1+1)               # 8AI, DI32, COUNT in longwords
 TRG_DI = 0x10000000           # trigger input appears here in 32b mask
+TRG_DI_SCALE = 4              # convert bit mask to half scale (aka 5V)
 
 TOLERANCE = 0.005              # 0.5% error target
 
@@ -40,7 +41,7 @@ print(RAW_TOL)
 def get_args():
     parser = argparse.ArgumentParser(description='PyEPICS control example')
     parser.add_argument('--file', type=str, default="ansto_file.dat", help="File to load.")
-    parser.add_argument('--skip', type=int, default=15, help="")
+    parser.add_argument('--skip', type=int, default=0, help="")
     parser.add_argument('--plot', type=int, default=0, 
             help="0: no plot, OR of 1: plot raw, 2:plot gated, 4 plot first burst, 8 plot delta.")
     parser.add_argument('--verbose', type=int, default=0)
@@ -94,11 +95,9 @@ def compare_bursts(args, burst_0, burst_n, burst):
             plt.show()
         return True
     else:
-        print(burst_0)
-        print(burst_n)
-        plt.plot(burst_0)
-        plt.plot(burst_n)
         plt.plot(np.abs(burst_0 - burst_n))
+        plt.ylabel("Volts")
+        plt.suptitle("Single Burst {} error vs model ERROR OUT OF TOLERANCE".format(burst))
         plt.show()
         return False
 
@@ -109,38 +108,42 @@ def main():
 
     # data shape [NSAMPLES..HUGE][NCHAN=10]
     data = data.reshape((-1, NCHAN))
-    CH01 = data[:,IDX_CH01]
-    timbus = np.bitwise_and(data[:,IDX_DI32], TRG_DI)
+    ch01 = data[:,IDX_CH01]
+    dix = np.bitwise_and(data[:,IDX_DI32], TRG_DI)
+    mask = np.argwhere(dix)
 
     if args.plot& PLOT_RAW:
-        plt.plot(raw2volts(CH01))
-        plt.plot(raw2volts(timbus)*4)      # timbus is bit 28
+        plt.plot(raw2volts(ch01))
+        plt.plot(raw2volts(dix)*TRG_DI_SCALE)
         plt.suptitle("Raw Plot")
         plt.ylabel("Volts")
         plt.grid(1)
         plt.show()
-
-    mask = np.argwhere(np.bitwise_and(timbus, TRG_DI))
+    
     if args.plot&PLOT_GATED:
-        test_plot = CH01[mask]
-        plt.plot(raw2volts(test_plot))
+        plt.plot(raw2volts(ch01[mask]))
         plt.ylabel("Volts")
         plt.suptitle("Gated Plot")
         plt.grid(1)
         plt.show()
 
+
     data = data[args.skip:]
     burst_0 = []                          # first (reference) burst
     burst_n = []                          # current burst
     burst = 0                             # burst number
-    in_burst = False
+    has_been_low = False                  # must see a low BEFORE we start, initial high may be invalid
+    in_burst = False                      # set when we have a HI and previously we have seen a low
     good = False
     burst_x = burst_0                     # fill cursor
+
     for sample, row in enumerate(data):
         if np.bitwise_and(row[IDX_DI32], TRG_DI):
-            in_burst = True
-            burst_x.append(row[IDX_CH01])
+            if has_been_low:
+                in_burst = True
+                burst_x.append(row[IDX_CH01])
         else:
+            has_been_low = True
             if in_burst:
                 in_burst = False
                 if burst_x == burst_0:
@@ -153,7 +156,7 @@ def main():
                         burst_n.clear()
                         burst += 1
                     else:
-                        sys.exit(1)
+                        break
 
     print("Processed {} samples and {} bursts {}".format(sample, burst, "PASS" if good else "FAIL"))
     return None
