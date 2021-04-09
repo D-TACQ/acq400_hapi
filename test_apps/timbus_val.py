@@ -9,6 +9,7 @@ import sys
 def get_args():
     parser = argparse.ArgumentParser(description='PyEPICS control example')
     parser.add_argument('--file', type=str, default="ansto_file.dat", help="File to load.")
+    parser.add_argument('--skip', type=int, default=15, help="")
     args = parser.parse_args()
     return args
 
@@ -51,7 +52,7 @@ def main():
     # plt.plot(timbus)
     # plt.grid(1)
     # plt.show()
-    #test = np.where(data[8] ,a, 1)
+    # test = np.where(data[8] ,a, 1)
 
     mask = np.argwhere(np.bitwise_and(timbus, 0x10000000))
     # print(CH01[mask])
@@ -59,7 +60,7 @@ def main():
     # plt.plot(test_plot)
     # plt.grid(1)
     # plt.show()
-    data = data[15:]
+    data = data[args.skip:]
     init = [0, 0]  # (had a zero before, had a 1 before)
     first_burst = []
     burst_n = []
