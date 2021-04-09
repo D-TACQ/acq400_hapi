@@ -68,6 +68,7 @@ def compare_bursts(args, first_burst, burst_n):
             plt.plot(np.abs(first_burst - burst_n))
             plt.suptitle("Single Burst")
             plt.show()
+            args.plot = 0
         return True
     else:
         print(first_burst)
