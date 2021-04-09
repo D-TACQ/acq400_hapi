@@ -52,30 +52,30 @@ PLOT_FIRST = 4
 IDX_CH01 = 0
 IDX_DI32 = 8
 
-def compare_bursts(args, first_burst, burst_n):
-    first_burst = np.array(first_burst)
+def compare_bursts(args, burst_0, burst_n):
+    burst_0 = np.array(burst_0)
     burst_n = np.array(burst_n)
 
-    if len(first_burst) > len(burst_n):
-        first_burst = first_burst[0:len(burst_n)]
-    elif len(burst_n) > len(first_burst):
-        burst_n = burst_n[0:len(first_burst)]
+    if len(burst_0) > len(burst_n):
+        burst_0 = burst_0[0:len(burst_n)]
+    elif len(burst_n) > len(burst_0):
+        burst_n = burst_n[0:len(burst_0)]
 
-    if np.allclose(burst_n, first_burst, rtol=0, atol=RAW_TOL):
+    if np.allclose(burst_n, burst_0, rtol=0, atol=RAW_TOL):
         if args.plot&PLOT_FIRST:
-            plt.plot(first_burst)
+            plt.plot(burst_0)
             plt.plot(burst_n)
-            plt.plot(np.abs(first_burst - burst_n))
+            plt.plot(np.abs(burst_0 - burst_n))
             plt.suptitle("Single Burst")
             plt.show()
             args.plot = 0
         return True
     else:
-        print(first_burst)
+        print(burst_0)
         print(burst_n)
-        plt.plot(first_burst)
+        plt.plot(burst_0)
         plt.plot(burst_n)
-        plt.plot(np.abs(first_burst - burst_n))
+        plt.plot(np.abs(burst_0 - burst_n))
         plt.show()
         return False
 
@@ -84,10 +84,10 @@ def main():
     args = get_args()
     data = np.fromfile(args.file, dtype=np.int32)
 
-    # reshape
+    # data shape [NSAMPLES..HUGE][NCHAN=10]
     data = data.reshape((-1, NCHAN))
-    CH01 = data[0:,0]
-    timbus = data[0:,8]
+    CH01 = data[0:,IDX_CH01]
+    timbus = data[0:,IDX_DI32]
     if args.plot& PLOT_RAW:
         plt.plot(CH01)
         plt.plot(timbus)
@@ -96,7 +96,6 @@ def main():
         plt.show()
 
     mask = np.argwhere(np.bitwise_and(timbus, TRG_DI))
-    print(CH01[mask])
     if args.plot&PLOT_GATED:
         test_plot = CH01[mask]
         plt.plot(test_plot)
@@ -106,13 +105,13 @@ def main():
 
     data = data[args.skip:]
     init = [0, 0]  # (had a zero before, had a 1 before)
-    first_burst = []
+    burst_0 = []
     burst_n = []
-    burst_number = 0
+    burst = 0
     for sample, row in enumerate(data):
         if np.bitwise_and(row[IDX_DI32], TRG_DI):
             if init[0] == 0:
-                first_burst.append(row[IDX_CH01])
+                burst_0.append(row[IDX_CH01])
                 init[1] = 1
             else:
                 burst_n.append(row[IDX_CH01])
@@ -125,16 +124,16 @@ def main():
                 if init[0] == 0:
                     init[0] = 1
             if init == [2, 1]:
-                if not compare_bursts(args, first_burst, burst_n):
-                    print("Problem detected in burst {}. Quitting now.".format(burst_number))
+                if not compare_bursts(args, burst_0, burst_n):
+                    print("Problem detected in burst {}. Quitting now.".format(burst))
                     sys.exit(1)
                 else:
                     print("Sample {} .. No issues found".format(sample))
                 burst_n = []
-                burst_number += 1
+                burst += 1
                 init = [2, 0]
 
-    print("Processed {} samples and {} bursts".format(sample, burst_number))
+    print("Processed {} samples and {} bursts".format(sample, burst))
     return None
 
 
