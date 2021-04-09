@@ -42,7 +42,8 @@ def get_args():
     parser.add_argument('--file', type=str, default="ansto_file.dat", help="File to load.")
     parser.add_argument('--skip', type=int, default=15, help="")
     parser.add_argument('--plot', type=int, default=0, 
-            help="0: no plot, 1: plot raw, 2:plot gated, 4 plot first burst, 8 plot delta")
+            help="0: no plot, OR of 1: plot raw, 2:plot gated, 4 plot first burst, 8 plot delta.")
+    parser.add_argument('--verbose', type=int, default=0)
 
     args = parser.parse_args()
     return args
@@ -73,9 +74,6 @@ First 10 samples see the soft trigger ..
 '''
 
 def compare_bursts(args, burst_0, burst_n, burst):
-    burst_0 = np.array(burst_0)
-    burst_n = np.array(burst_n)
-
     if len(burst_0) > len(burst_n):
         burst_0 = burst_0[0:len(burst_n)]
     elif len(burst_n) > len(burst_0):
@@ -136,6 +134,7 @@ def main():
     burst_n = []                          # current burst
     burst = 0                             # burst number
     in_burst = False
+    good = False
     burst_x = burst_0                     # fill cursor
     for sample, row in enumerate(data):
         if np.bitwise_and(row[IDX_DI32], TRG_DI):
@@ -147,15 +146,16 @@ def main():
                 if burst_x == burst_0:
                     burst_x = burst_n
                 else:
-                    good = compare_bursts(args, burst_0, burst_n, burst)
-                    print("Sample {} Burst {} Status {}".format(sample, burst, "PASS" if good else "FAIL"))
+                    good = compare_bursts(args, np.array(burst_0), np.array(burst_n), burst)
+                    if (args.verbose):
+                        print("Sample {} Burst {} Status {}".format(sample, burst, "PASS" if good else "FAIL"))
                     if good:
-                        burst_n = []
+                        burst_n.clear()
                         burst += 1
                     else:
                         sys.exit(1)
 
-    print("Processed {} samples and {} bursts".format(sample, burst))
+    print("Processed {} samples and {} bursts {}".format(sample, burst, "PASS" if good else "FAIL"))
     return None
 
 
