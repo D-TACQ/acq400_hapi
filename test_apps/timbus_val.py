@@ -60,7 +60,11 @@ IDX_DI32 = 8
 
 '''
 First 10 samples see the soft trigger .. 
+First burst is short (happened to catch the signal on a high .. discarded)
 [pgm@hoy5 acq400_hapi]$ hexdump -e '10/4 "%08x," "\n"' /home/pgm/D-Tacq/Customer/ANSTO/ansto_file2.dat | head -n 12
+    AI01,    AI02,    AI03,    AI04,    AI05,    AI06,    AI07,    AI08,    DI32,   COUNT
+                                                                        22000000 :: TRG.d1 SOFT TRIGGER 
+                                                                        11000000 :: TRG.d0 FP TRIGGER
 0934dd20,00076121,0000c822,00051323,fffd4224,fffdb425,00012c26,00001d27,33000000,00000001,
 08958d20,00075421,00008722,00050623,fffd6b24,fffd7525,00012326,00006027,33000000,00000002,
 07f75620,00072b21,00009022,0004fc23,fffd9124,fffd9925,00012e26,00003b27,33000000,00000003,
@@ -72,6 +76,16 @@ First 10 samples see the soft trigger ..
 043ecf20,00076c21,0000f322,00055e23,fffd4a24,fffd9525,00013f26,00002527,11000000,00000009,
 03a05d20,00077421,0000ad22,00051e23,fffd7d24,fffd6125,00014a26,00004a27,11000000,0000000a,
 0301c720,00075821,0000bf22,00052623,fffdb524,fffda025,00014e26,00002827,11000000,0000000b,
+
+# transition to burst in-shot..
+....
+fd99cd20,00035921,fffeef22,00039e23,fffd4524,fffd8925,00015e26,00009f27,00000000,0000028c,
+fe381920,00031b21,fffed122,0003aa23,fffd2024,fffdb125,00010e26,0000a127,00000000,0000028d,
+fed7ba20,00032f21,fffec622,0003da23,fffd4c24,fffd4e25,00012426,0000e927,00000000,0000028e,
+ff775820,00033e21,fffeb422,0003e023,fffd5d24,fffdc325,00018a26,00007c27,11000000,0000028f,
+0015f220,00033d21,fffeba22,0003b223,fffd4a24,fffda225,00010626,00008127,11000000,00000290,
+00b4fa20,00033421,fffecc22,0003c223,fffd4e24,fffd9625,0000fd26,00009027,11000000,00000291,
+
 '''
 
 def compare_bursts(args, burst_0, burst_n, burst):
