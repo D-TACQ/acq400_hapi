@@ -271,6 +271,16 @@ class Statusmonitor:
 
     def get_state(self):
         return self.status[SF.STATE]
+    
+    def get_pre(self):
+        return self.status[SF.PRE]
+
+    def get_post(self):
+        return self.status[SF.POST]
+    
+    def get_total(self):
+        return self.get_pre() + self.get_post()
+    
 
     def wait_event(self, ev, descr):
     #       print("wait_%s 02 %d" % (descr, ev.is_set()))
@@ -296,6 +306,7 @@ class Statusmonitor:
         self.wait_event(self.stopped, "stopped")
 
     trace = int(os.getenv("STATUSMONITOR_TRACE", "0"))
+    
 
     def __init__(self, _uut, _status):
         self.break_requested = False
