@@ -759,8 +759,8 @@ class Acq400:
     def disable_trigger(self):
         #master.s0.SIG_SRC_TRG_0 = 'NONE'
         #master.s0.SIG_SRC_TRG_1 = 'NONE'
-        self.s0.SIG_SRC_TRG_0 = 'HOSTB'
-        self.s0.SIG_SRC_TRG_1 = 'HOSTA'
+        self.s0.SIG_SRC_TRG_0 = 'NONE'
+        self.s0.SIG_SRC_TRG_1 = 'NONE'
 
     def enable_trigger(self, trg_0='EXT', trg_1='STRIG'):
         if trg_0 is not None:
