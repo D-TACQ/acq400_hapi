@@ -398,12 +398,12 @@ class Acq400:
 
         return uuts
 
-
-    uuts = {}
+    uuts_methods = {}        # for cloning by new
+    uuts = {}                # for re-use by factory
     
     def __init__(self, _uut, monitor=True, s0_client=None):
         try:
-            self.__dict__ = Acq400.uuts[_uut]
+            self.__dict__ = Acq400.uuts_methods[_uut]
             return
         except KeyError:
             pass
@@ -443,7 +443,8 @@ class Acq400:
         _status = [int(x) for x in s0.state.split(" ")]
         if monitor:
             self.statmon = Statusmonitor(self.uut, _status)
-        Acq400.uuts[_uut] = self.__dict__
+        Acq400.uuts_methods[_uut] = self.__dict__   # store the dict for reuse by __init__
+        Acq400.uuts[_uut] = self                    # store the object for reuse by factory()
 
 
     def __getattr__(self, name):
@@ -1308,7 +1309,8 @@ def factory(_uut):
     ''' instantiate s0. deduce what sort of ACQ400 this is and invoke the appropriate subclass
     '''
     try:
-        return Acq400.uuts[_uut]
+        cached = Acq400.uuts[_uut]
+        return cached
     except KeyError:
         pass
     
