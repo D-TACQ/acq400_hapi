@@ -1309,12 +1309,9 @@ def factory(_uut):
     ''' instantiate s0. deduce what sort of ACQ400 this is and invoke the appropriate subclass
     '''
     try:
-        cached = Acq400.uuts[_uut]
-        return cached
+        s0 = Acq400.uuts[_uut]['svc']['s0']
     except KeyError:
-        pass
-    
-    s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
+        s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
     
     if not s0.MODEL.startswith("acq2106"):
         return Acq400(_uut, s0)
