@@ -47,7 +47,7 @@ def csv_name(args, binfile):
 def bin2csv_onesource_manychan(args):
     for src in args.binfiles:
         raw = np.fromfile(src, args.wtype)
-        nrows = len(raw)/args.nchan
+        nrows = len(raw)//args.nchan
         chx = np.reshape(raw, (nrows, args.nchan))
         
         with open(csv_name(args, src), 'w' ) as fout:
