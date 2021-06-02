@@ -100,52 +100,50 @@ def save_data(data, file_name):
 def main():
     args = get_args()
     uut = args.uut[0]
+    args.the_uut = acq400_hapi.Acq400(uut)
 
     file_name = "./{}/{}"
     make_data_dir(uut, 0)
 
     buffer_num = 0
-    uut_object = acq400_hapi.Acq400(uut)
-    nchan = uut_object.nchan()
-    bufferlen = int(uut_object.s0.bufferlen)
+   
+    args.nchan = args.the_uut.nchan()
+    bufferlen = int(args.the_uut.s0.bufferlen)
     es_indices = [int(num) for num in args.es_indices.split(",")]
 
     if args.stdin == 1:
 
-        validation_data = generate_boundary(args.validation, nchan, bufferlen,
+        validation_data = generate_boundary(args.validation, args.nchan, bufferlen,
                                             args.threshold, es_indices,
                                             args.stdin)
 
         while True:
-
             buffer_num += 1
             file_name = "./{}/{:05d}".format(uut, buffer_num)
 
             if args.stdin == 1:
                 raw_data = sys.stdin.buffer.read(bufferlen)
-                raw_data = np.fromstring(raw_data, dtype=np.int16)
-                data = raw_data.reshape((-1, nchan)).T
+                raw_data = np.fromstring(raw_data, dtype=np.int16)                
 
-            compare_epics_python(args, raw_data, data, validation_data, uut, file_name)
+            compare_epics_python(args, raw_data, validation_data, file_name)
 
     else:
         collect_validation = True
         for bytedata in uut_object.stream(recvlen=bufferlen):
             if collect_validation:
-                validation_data = generate_boundary(args.validation, nchan, bufferlen,
+                validation_data = generate_boundary(args.validation, args.nchan, bufferlen,
                                                     args.threshold, es_indices,
                                                     args.stdin, data=bytedata)
-            raw_data = np.frombuffer(bytedata, dtype=np.int16)
-            data = raw_data.reshape((-1, nchan)).T
-
-            compare_epics_python(args, raw_data, data, validation_data, uut, file_name)
+                
+            raw_data = np.frombuffer(bytedata, dtype=np.int16)           
+            compare_epics_python(args, raw_data, validation_data, file_name)
             collect_validation = False
     return None
 
 
-def compare_epics_python(args, raw_data, data, validation_data, uut, file_name):
-    fail_list = np.array(generate_fail_report(data, validation_data))
-    pv_check = np.array(epics.caget('{}:JDG:CHX:FAIL:ALL'.format(uut)))[1:]
+def compare_epics_python(args, raw_data, validation_data, file_name):    
+    fail_list = np.array(generate_fail_report(raw_data.reshape((-1, args.nchan)).T, validation_data))
+    pv_check = np.array(epics.caget('{}:JDG:CHX:FAIL:ALL'.format(args.uut[0])))[1:]
 
     if fail_list.any() or pv_check.any():
         if np.array_equal(pv_check, fail_list):
@@ -164,7 +162,7 @@ def compare_epics_python(args, raw_data, data, validation_data, uut, file_name):
         print(pv_check == fail_list)
 
     if args.save_data == 2:
-        save_data(data, file_name)
+        save_data(raw_data, file_name)
     return None
 
 
