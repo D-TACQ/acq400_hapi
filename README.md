@@ -154,8 +154,4 @@ nailed up, then control links are fast.
 => The use case is: make the connection at the beginning, then operate over
 long periods.
 
-## TODO:
-* add a 4210 socket for live stream?. 
-* instantiate the uut, site clients in parallel
-
 

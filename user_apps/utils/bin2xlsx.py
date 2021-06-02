@@ -2,7 +2,7 @@
 
 """
 bin2csv
-input raw binary, output csv
+input raw binary, output xlsx
 
 usage: bin2csv.py [-h] [--nchan NCHAN] [--word WORD] [--outroot OUTROOT]
                   [--out OUT] [--paste PASTE]
@@ -22,10 +22,11 @@ optional arguments:
   --paste PASTE      1: paste multiple files * 1 chan
 """
 
-import csv
+import xlsxwriter
 import argparse
 import numpy as np
 import os
+from slip._wrappers._glib import _self
 
 def get_word_type(wtype):
     if wtype == 'int16':
@@ -36,24 +37,28 @@ def get_word_type(wtype):
         print("ERROR, undefined word type {}".format(wtype))
         exit(1)
 
-def csv_name(args, binfile):
+def xlsx_name(args, binfile):
     if len(args.out) > 0:
         basename = args.out
     else:
         basename, extn = os.path.splitext(binfile)
 
-    return "{}{}{}.csv".format(args.outroot, os.sep if len(args.outroot)>0 else '', basename)
-
+    return "{}{}{}.xlsx".format(args.outroot, os.sep if len(args.outroot)>0 else '', basename)
+   
 def bin2csv_onesource_manychan(args):
     for src in args.binfiles:
         raw = np.fromfile(src, args.wtype)
         nrows = len(raw)//args.nchan
         chx = np.reshape(raw, (nrows, args.nchan))
         
-        with open(csv_name(args, src), 'w' ) as fout:
-           writer = csv.writer(fout)
-           for row in range(0, nrows):
-               writer.writerow(chx[row,:])
+        workbook = xlsxwriter.Workbook(xlsx_name(args, src))
+        worksheet = workbook.add_worksheet()
+              
+        for row in range(0, nrows):
+            for col in range(0, args.nchan):
+               worksheet.write(row, col, chx[row, col])
+               
+        workbook.close()
                 
                 
 def bin2csv_many_onechan_sources(args):
@@ -63,11 +68,14 @@ def bin2csv_many_onechan_sources(args):
     lens = [ len(u) for u in chx ]
     nrows = lens[0]
     chxx = np.vstack(chx)
-    csvf = csv_name(args, args.binfiles[0]) 
-    with open(csvf, 'w' ) as fout:
-        writer = csv.writer(fout)
-        for row in range(0, nrows):
-            writer.writerow(chxx[:,row])    
+    workbook = xlsxwriter.Workbook(xlsx_name(args, args.binfiles[0]))
+    worksheet = workbook.add_worksheet()
+    
+    for row in range(0, nrows):
+        for col in range(0, args.nchan):
+            worksheet.write(row, col, chx[row, col])
+               
+    workbook.close()
             
 def bin2csv(args):
     args.wtype = get_word_type(args.word)

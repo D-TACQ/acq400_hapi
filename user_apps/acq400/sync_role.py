@@ -40,7 +40,7 @@ def configure_slave(name, args, postfix):
 
 def run_shot(args):
     master = acq400_hapi.Acq400(args.uuts[0])
-    if args.enable_trigger:
+    if args.enable_trigger == 1:
         master.enable_trigger()
         return
 
@@ -53,7 +53,7 @@ def run_shot(args):
                                             args.fclk, args.fin, 
                                             " ".join(args.postfix), " ".join(postfix))
 
-    if args.external_trigger:
+    if args.external_trigger and len(args.uuts) > 1:
         master.disable_trigger()
     else:
         # print("WARNING: REMOVEME temporary fudge while we get the sync trigger right")
@@ -70,11 +70,14 @@ def run_shot(args):
 
     for t in threads:
         t.join()
+        
+    if args.enable_trigger == 99:
+        master.enable_trigger()
 
 def run_main():
     parser = argparse.ArgumentParser(description='set sync roles for a stack of modules')
     acq400_hapi.Acq400UI.add_args(parser, post=False)
-    parser.add_argument('--enable_trigger', default=None, help="set this to enable the trigger all other args ignored")
+    parser.add_argument('--enable_trigger', default=0, help="0:leave disabled, 1 enable and drop out, 99 to enable at end")
     parser.add_argument('--toprole', default='master', help="role of top in stack")
     parser.add_argument('--fclk', default='1000000', help="sample clock rate")
     parser.add_argument('--fin',  default='1000000', help="external clock rate")

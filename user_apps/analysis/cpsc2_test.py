@@ -10,9 +10,9 @@ python3.6 cpsc2_test.py --data /home/sean/PROJECTS/workspace/cpsc2_data/small/bi
 """
 
 import sys
-if sys.version_info < (3, 0):
-    from __future__ import print_function
-    from future import builtins
+#if sys.version_info < (3, 0):
+#    from __future__ import print_function
+#    from future import builtins
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt

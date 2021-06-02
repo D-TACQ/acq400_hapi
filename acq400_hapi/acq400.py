@@ -271,6 +271,16 @@ class Statusmonitor:
 
     def get_state(self):
         return self.status[SF.STATE]
+    
+    def get_pre(self):
+        return self.status[SF.PRE]
+
+    def get_post(self):
+        return self.status[SF.POST]
+    
+    def get_total(self):
+        return self.get_pre() + self.get_post()
+    
 
     def wait_event(self, ev, descr):
     #       print("wait_%s 02 %d" % (descr, ev.is_set()))
@@ -296,6 +306,7 @@ class Statusmonitor:
         self.wait_event(self.stopped, "stopped")
 
     trace = int(os.getenv("STATUSMONITOR_TRACE", "0"))
+    
 
     def __init__(self, _uut, _status):
         self.break_requested = False
@@ -387,12 +398,12 @@ class Acq400:
 
         return uuts
 
-
-    uuts = {}
+    uuts_methods = {}        # for cloning by new
+    uuts = {}                # for re-use by factory
     
     def __init__(self, _uut, monitor=True, s0_client=None):
         try:
-            self.__dict__ = Acq400.uuts[_uut]
+            self.__dict__ = Acq400.uuts_methods[_uut]
             return
         except KeyError:
             pass
@@ -432,7 +443,8 @@ class Acq400:
         _status = [int(x) for x in s0.state.split(" ")]
         if monitor:
             self.statmon = Statusmonitor(self.uut, _status)
-        Acq400.uuts[_uut] = self.__dict__
+        Acq400.uuts_methods[_uut] = self.__dict__   # store the dict for reuse by __init__
+        Acq400.uuts[_uut] = self                    # store the object for reuse by factory()
 
 
     def __getattr__(self, name):
@@ -748,8 +760,8 @@ class Acq400:
     def disable_trigger(self):
         #master.s0.SIG_SRC_TRG_0 = 'NONE'
         #master.s0.SIG_SRC_TRG_1 = 'NONE'
-        self.s0.SIG_SRC_TRG_0 = 'HOSTB'
-        self.s0.SIG_SRC_TRG_1 = 'HOSTA'
+        self.s0.SIG_SRC_TRG_0 = 'NONE'
+        self.s0.SIG_SRC_TRG_1 = 'NONE'
 
     def enable_trigger(self, trg_0='EXT', trg_1='STRIG'):
         if trg_0 is not None:
@@ -1297,7 +1309,8 @@ def factory(_uut):
     ''' instantiate s0. deduce what sort of ACQ400 this is and invoke the appropriate subclass
     '''
     try:
-        return Acq400.uuts[_uut]
+        cached = Acq400.uuts[_uut]
+        return cached
     except KeyError:
         pass
     

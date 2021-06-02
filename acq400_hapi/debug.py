@@ -6,8 +6,8 @@ Created on 29 Sep 2020
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class Debugger(object):
     """ Debug a method and return it back"""
