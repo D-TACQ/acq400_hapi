@@ -45,7 +45,7 @@ def check_channel(channel, validation):
     return False
 
 
-def generate_boundary(validation, nchan, bufferlen, threshold, es_indices, stdin, data=[]):
+def generate_boundary(validation, nchan, bufferlen, threshold, es_indices, data=[]):
     if validation == 1:
         x = np.linspace(0, 6*np.pi, 750)
         y = 3000 * np.sin(x)
@@ -57,13 +57,8 @@ def generate_boundary(validation, nchan, bufferlen, threshold, es_indices, stdin
         return validation_data
 
     elif validation == 2:
-        if stdin:
-            raw_data = sys.stdin.buffer.read(bufferlen)
-            raw_data = np.fromstring(raw_data, dtype=np.int16)
-
-        else:
-            raw_data = np.frombuffer(data, dtype=np.int16)
-            print("raw_data shape: {}".format(raw_data.shape))
+        raw_data = np.frombuffer(data, dtype=np.int16)
+        print("raw_data shape: {}".format(raw_data.shape))
         data = raw_data.reshape((-1, nchan)).T
         data = data.astype(np.float)
 
@@ -83,61 +78,8 @@ def generate_fail_report(data, validation_data):
     return fail_report
 
 
-def make_data_dir(directory, verbose):
-    try:
-        os.makedirs(directory)
-    except Exception:
-        if verbose:
-            print("Tried to create dir but dir already exists")
-        pass
-
-
 def save_data(data, file_name):
     data.tofile(file_name)
-    return None
-
-
-def main():
-    args = get_args()
-    uut = args.uut[0]
-    args.the_uut = acq400_hapi.Acq400(uut)
-
-    file_name = "./{}/{}"
-    make_data_dir(uut, 0)
-
-    buffer_num = 0
-   
-    args.nchan = args.the_uut.nchan()
-    bufferlen = int(args.the_uut.s0.bufferlen)
-    es_indices = [int(num) for num in args.es_indices.split(",")]
-
-    if args.stdin == 1:
-
-        validation_data = generate_boundary(args.validation, args.nchan, bufferlen,
-                                            args.threshold, es_indices,
-                                            args.stdin)
-
-        while True:
-            buffer_num += 1
-            file_name = "./{}/{:05d}".format(uut, buffer_num)
-
-            if args.stdin == 1:
-                raw_data = sys.stdin.buffer.read(bufferlen)
-                raw_data = np.fromstring(raw_data, dtype=np.int16)                
-
-            compare_epics_python(args, raw_data, validation_data, file_name)
-
-    else:
-        collect_validation = True
-        for bytedata in uut_object.stream(recvlen=bufferlen):
-            if collect_validation:
-                validation_data = generate_boundary(args.validation, args.nchan, bufferlen,
-                                                    args.threshold, es_indices,
-                                                    args.stdin, data=bytedata)
-                
-            raw_data = np.frombuffer(bytedata, dtype=np.int16)           
-            compare_epics_python(args, raw_data, validation_data, file_name)
-            collect_validation = False
     return None
 
 
@@ -164,6 +106,52 @@ def compare_epics_python(args, raw_data, validation_data, file_name):
     if args.save_data == 2:
         save_data(raw_data, file_name)
     return None
+
+
+def make_data_dir(directory, verbose):
+    try:
+        os.makedirs(directory)
+    except Exception:
+        if verbose:
+            print("Tried to create dir but dir already exists")
+        pass
+
+def reads_stream(uut_object):
+    def read_buffer(buffer_len):
+        return uut_object.stream(recvlen=buffer_len)
+    return read_buffer
+
+def reads_stdin():
+    def read_buffer(buffer_len):
+        return sys.stdin.buffer.read(buffer_len)
+    return read_buffer
+
+
+def main():
+    args = get_args()
+    uut_name = args.uut[0]
+    args.the_uut = acq400_hapi.Acq400(uut_name)
+    args.nchan = args.the_uut.nchan()
+    bufferlen = int(args.the_uut.s0.bufferlen)
+    es_indices = [int(num) for num in args.es_indices.split(",")]
+    
+    read_buffer = reads_stdin() if args.stdin == 0 else reads_stream(args.the_uut)
+    file_name = "./{}/{}"
+    make_data_dir(uut, 0)    
+    buffer_num = 0    
+    
+    for bytedata in read_buffer(bufferlen):               
+        if buffer_num == 0:
+            validation_data = generate_boundary(args.validation, args.nchan, bufferlen,
+                                                    args.threshold, es_indices, data=bytedata)
+        buffer_num += 1
+        file_name = "./{}/{:05d}".format(uut_name, buffer_num)
+                
+        raw_data = np.frombuffer(bytedata, dtype=np.int16)           
+        compare_epics_python(args, raw_data, validation_data, file_name)
+        
+    return None
+
 
 
 if __name__ == '__main__':
