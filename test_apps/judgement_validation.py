@@ -45,7 +45,7 @@ def check_channel(channel, validation):
     return False
 
 
-def generate_boundary(validation, nchan, bufferlen, threshold, es_indices, data=[]):
+def generate_mask(validation, nchan, bufferlen, threshold, es_indices, data=[]):
     if validation == 1:
         x = np.linspace(0, 6*np.pi, 750)
         y = 3000 * np.sin(x)
@@ -135,20 +135,20 @@ def main():
     bufferlen = int(args.the_uut.s0.bufferlen)
     es_indices = [int(num) for num in args.es_indices.split(",")]
     
-    read_buffer = reads_stdin() if args.stdin == 0 else reads_stream(args.the_uut)
+    read_buffer = reads_stdin() if args.stdin == 1 else reads_stream(args.the_uut)
     file_name = "./{}/{}"
     make_data_dir(uut, 0)    
     buffer_num = 0    
     
     for bytedata in read_buffer(bufferlen):               
         if buffer_num == 0:
-            validation_data = generate_boundary(args.validation, args.nchan, bufferlen,
+            mask = generate_mask(args.validation, args.nchan, bufferlen,
                                                     args.threshold, es_indices, data=bytedata)
         buffer_num += 1
         file_name = "./{}/{:05d}".format(uut_name, buffer_num)
                 
         raw_data = np.frombuffer(bytedata, dtype=np.int16)           
-        compare_epics_python(args, raw_data, validation_data, file_name)
+        compare_epics_python(args, raw_data, mask, file_name)
         
     return None
 
