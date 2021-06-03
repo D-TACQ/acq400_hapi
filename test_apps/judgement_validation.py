@@ -64,6 +64,9 @@ def get_args():
     args.dtype = np.int16 if args.data_size == 2 else np.int32
     args.es_indices = [int(num) for num in args.es_indices.split(",")]
     args.read_buffer = reads_stdin() if args.stdin == 1 else reads_stream(args.the_uut)
+    args.the_uut = acq400_hapi.Acq400(args.uut_name)
+    args.nchan = args.the_uut.nchan()
+    args.bufferlen = int(args.the_uut.s0.bufferlen)       
     return args
 
 
@@ -107,12 +110,6 @@ def generate_fail_report(data, validation_data):
             fail_report.append(result)
     return fail_report
 
-
-def save_data(data, file_name):
-    data.tofile(file_name)
-    return None
-
-
 def compare_epics_python(args, raw_data, validation_data):
     fail = False
     fail_list = np.array(generate_fail_report(raw_data.reshape((-1, args.nchan)).T, validation_data))
@@ -132,23 +129,15 @@ def compare_epics_python(args, raw_data, validation_data):
         print("Channels where PV == PY:")
         print(pv_check == fail_list)
 
-
     return fail
 
-
-
-
-def main():
-    args = get_args()
-    args.the_uut = acq400_hapi.Acq400(args.uut_name)
-    args.nchan = args.the_uut.nchan()
-    bufferlen = int(args.the_uut.s0.bufferlen)      
+def process_data(args):   
     buffer_num = 0    
     
-    for bytedata in args.read_buffer(bufferlen):                            
+    for bytedata in args.read_buffer(args.bufferlen):                            
         raw_data = np.frombuffer(bytedata, dtype=args.dtype)
         if buffer_num == 0:
-            mask = generate_mask(args.validation, args.nchan, bufferlen,
+            mask = generate_mask(args.validation, args.nchan, args.bufferlen,
                                                     args.threshold, args.es_indices, data=bytedata)
         buffer_num += 1
         file_name = "./{}/{:05d}".format(args.uut_name, buffer_num)
@@ -159,9 +148,11 @@ def main():
             file_name = file_name + "_failed_judgement"
             
         if fail and args.save_data == 1 or args.save_data == 2:
-            save_data(raw_data, file_name)            
-        
-    return None
+            raw_data.tofile(file_name)            
+
+    
+def main():
+    process_data(get_args())
 
 
 
