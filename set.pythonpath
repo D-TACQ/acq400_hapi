@@ -1,0 +1,2 @@
+echo PYTHONPATH=$PWD > /etc/profile.d/acq400_hapi.sh
+
