@@ -48,7 +48,8 @@ def hexdump2d(args, chx, nrows):
     try:
         for row in range(nrows):
             for col in range(args.nchan):
-                print(args.hexfmt % chx[row][col], end = '\n' if col == args.nchan-1 else '')
+                if col in args.pchanset:
+                    print(args.hexfmt % chx[row][col], end = '\n' if col == args.nchan-1 else '')
     except BrokenPipeError:
         pass
 
@@ -57,7 +58,7 @@ def hexdump_onesource_manychan(args):
     for src in args.binfiles:
         raw = np.fromfile(src, args.wtype)
         nrows = len(raw)//args.nchan
-        chx = np.reshape(raw, (nrows, args.nchan))
+        chx = np.reshape(raw[:nrows*args.nchan], (nrows, args.nchan))
         hexdump2d(args, chx, nrows)        
                 
 def hexdump_many_onechan_sources(args):
@@ -79,16 +80,27 @@ def hexdump(args):
     else:
         hexdump_onesource_manychan(args)
         
+def expand_pchan(args):
+    if args.pchan == '0':
+        pchan = [ ch for ch in range(1,args.nchan) ]
+    else:
+        pchan = [ int(ch) for ch in eval('[ ' + args.pchan + ' ]') ]
+    args.pchanset = set(pchan)
+#    print(args.pchanset)
+
 def run_main():
     parser = argparse.ArgumentParser(description='hexdump')
     parser.add_argument('--nchan', default=1, type=int, help="number of channels")
+    parser.add_argument('--pchan', default='0', type=str, help="list channels to print eg 1,2,3,4 default all")
     parser.add_argument('--delim', default=',')
     parser.add_argument('--word', default='int16', help="int16|int32,uint16,uint32")
     parser.add_argument('--outroot', default='', help="output root directory")
     parser.add_argument('--out', default='', help="explicit output name")
     parser.add_argument('--paste', default=0, type=int, help="1: paste multiple files * 1 chan")
     parser.add_argument('binfiles', nargs='+', help="file[s] to convert")
-    hexdump(parser.parse_args())
+    args = parser.parse_args()
+    expand_pchan(args)
+    hexdump(args)
      
     
     
