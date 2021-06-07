@@ -35,14 +35,15 @@ def get_word_type(args, wtype):
         args.hexfmt = '%12d'
         args.wtype = np.int32
     elif wtype == 'uint16':
-        args.hexfmt = '%04x,'
+        args.hexfmt = '%04x'
         args.wtype = np.uint16
     elif wtype == 'uint32':
-        args.hexfmt = '%08x,'
+        args.hexfmt = '%08x'
         args.wtype = np.uint32
     else:
         print("ERROR, undefined word type {}".format(wtype))
         exit(1)
+    args.hexfmt += args.delim
 
 def hexdump2d(args, chx, nrows):
     try:
@@ -82,6 +83,7 @@ def hexdump(args):
 def run_main():
     parser = argparse.ArgumentParser(description='bin2csv')
     parser.add_argument('--nchan', default=1, type=int, help="number of channels")
+    parser.add_argument('--delim', default=',')
     parser.add_argument('--word', default='int16', help="int16|int32,uint16,uint32")
     parser.add_argument('--outroot', default='', help="output root directory")
     parser.add_argument('--out', default='', help="explicit output name")
