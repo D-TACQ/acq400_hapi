@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 
 """
-bin2csv
-input raw binary, output csv
-
-usage: bin2csv.py [-h] [--nchan NCHAN] [--word WORD] [--outroot OUTROOT]
-                  [--out OUT] [--paste PASTE]
+./user_apps/utils/hexdump.py --help
+usage: hexdump.py [-h] [--nchan NCHAN] [--delim DELIM] [--word WORD] [--outroot OUTROOT] [--out OUT] [--paste PASTE]
                   binfiles [binfiles ...]
 
-bin2csv
+hexdump
 
 positional arguments:
   binfiles           file[s] to convert
@@ -16,10 +13,12 @@ positional arguments:
 optional arguments:
   -h, --help         show this help message and exit
   --nchan NCHAN      number of channels
-  --word WORD        int16|int32
+  --delim DELIM
+  --word WORD        int16|int32,uint16,uint32
   --outroot OUTROOT  output root directory
   --out OUT          explicit output name
   --paste PASTE      1: paste multiple files * 1 chan
+
 """
 
 import csv
@@ -81,7 +80,7 @@ def hexdump(args):
         hexdump_onesource_manychan(args)
         
 def run_main():
-    parser = argparse.ArgumentParser(description='bin2csv')
+    parser = argparse.ArgumentParser(description='hexdump')
     parser.add_argument('--nchan', default=1, type=int, help="number of channels")
     parser.add_argument('--delim', default=',')
     parser.add_argument('--word', default='int16', help="int16|int32,uint16,uint32")
