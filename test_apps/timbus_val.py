@@ -13,6 +13,26 @@ DI is current DI state aligned with AI data.
 TRG INPUT is connected to bit 28
 
 AI data is a 24 bit value left justified in a 32 bit field..
+
+[peter@andros NEC2.2]$ python3 ~/PROJECTS/acq400_hapi/test_apps/timbus_val.py --help
+usage: timbus_val.py [-h] [--aichan AICHAN] [--pchan PCHAN] [--nspad NSPAD]
+                     [--file FILE] [--skip SKIP] [--plot PLOT]
+                     [--verbose VERBOSE]
+
+analyse stored data with TIMBUS
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --aichan AICHAN
+  --pchan PCHAN      plot this channel
+  --nspad NSPAD
+  --file FILE        File to load.
+  --skip SKIP
+  --plot PLOT        0: no plot, OR of 1: plot raw, 2:plot gated, 4 plot first
+                     burst, 8 plot delta.
+
+NEC example
+ python3 ~/PROJECTS/acq400_hapi/test_apps/timbus_val.py --file big5 --verbose=1 --aichan=24 --nspad=4 --pchan=5 --plot=1
 '''
 
 
@@ -21,8 +41,10 @@ import numpy as np
 import argparse
 import sys
 
-
-NCHAN = (8+1+1)               # 8AI, DI32, COUNT in longwords
+AICHAN = 8                    # ANSTO
+#AICHAN=24                     # NEC	--aichan=24
+NCHAN = (AICHAN+1+1)               # 8AI, DI32, COUNT in longwords
+#NCHAN = (AICHAN+1+4)               # 8AI, DI32, COUNT in longwords
 TRG_DI = 0x10000000           # trigger input appears here in 32b mask
 TRG_DI_SCALE = 4              # convert bit mask to half scale (aka 5V)
 
@@ -36,27 +58,29 @@ def raw2volts(r):
     return 10.0*r/0x7fffff00
 
 RAW_TOL = volts2raw(TOLERANCE*10)
-print(RAW_TOL)
+#print(RAW_TOL)
 
 def get_args():
-    parser = argparse.ArgumentParser(description='PyEPICS control example')
+    global AICHAN, NCHAN
+    parser = argparse.ArgumentParser(description='analyse stored data with TIMBUS')
+    parser.add_argument('--aichan', type=int, default=8 )
+    parser.add_argument('--pchan', type=int, default=1, help="plot this channel")
+    parser.add_argument('--nspad',  type=int, default=1)
     parser.add_argument('--file', type=str, default="ansto_file.dat", help="File to load.")
     parser.add_argument('--skip', type=int, default=0, help="")
     parser.add_argument('--plot', type=int, default=0, 
             help="0: no plot, OR of 1: plot raw, 2:plot gated, 4 plot first burst, 8 plot delta.")
     parser.add_argument('--verbose', type=int, default=0)
-
     args = parser.parse_args()
+
+    AICHAN = args.aichan
+    NCHAN = args.aichan + 1 + args.nspad
     return args
 
 PLOT_RAW   = 1
 PLOT_GATED = 2
 PLOT_FIRST = 4
 PLOT_DELTA = 8
-
-# index to data
-IDX_CH01 = 0
-IDX_DI32 = 8
 
 '''
 First 10 samples see the soft trigger .. 
@@ -122,8 +146,8 @@ def main():
 
     # data shape [NSAMPLES..HUGE][NCHAN=10]
     data = data.reshape((-1, NCHAN))
-    ch01 = data[:,IDX_CH01]
-    dix = np.bitwise_and(data[:,IDX_DI32], TRG_DI)
+    ch01 = data[:,args.pchan-1]
+    dix = np.bitwise_and(data[:,args.aichan], TRG_DI)
     mask = np.argwhere(dix)
 
     if args.plot& PLOT_RAW:

@@ -26,7 +26,7 @@ import xlsxwriter
 import argparse
 import numpy as np
 import os
-from slip._wrappers._glib import _self
+#from slip._wrappers._glib import _self
 
 def get_word_type(wtype):
     if wtype == 'int16':
