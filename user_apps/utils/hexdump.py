@@ -27,11 +27,19 @@ import argparse
 import numpy as np
 import os
 
-def get_word_type(wtype):
+def get_word_type(args, wtype):
     if wtype == 'int16':
-        return np.int16
+        args.hexfmt = '%6d'
+        args.wtype = np.int16
     elif wtype == 'int32':
-        return np.uint32
+        args.hexfmt = '%12d'
+        args.wtype = np.int32
+    elif wtype == 'uint16':
+        args.hexfmt = '%04x,'
+        args.wtype = np.uint16
+    elif wtype == 'uint32':
+        args.hexfmt = '%08x,'
+        args.wtype = np.uint32
     else:
         print("ERROR, undefined word type {}".format(wtype))
         exit(1)
@@ -64,11 +72,8 @@ def hexdump_many_onechan_sources(args):
 
             
 def hexdump(args):
-    args.wtype = get_word_type(args.word)
-    if args.word == 'int32':
-        args.hexfmt = "%08x,"
-    else:
-        args.hexfmt = "%04x,"
+    get_word_type(args, args.word)
+
     if args.paste:
         hexdump_many_onechan_sources(args)
     else:
@@ -77,7 +82,7 @@ def hexdump(args):
 def run_main():
     parser = argparse.ArgumentParser(description='bin2csv')
     parser.add_argument('--nchan', default=1, type=int, help="number of channels")
-    parser.add_argument('--word', default='int16', help="int16|int32")
+    parser.add_argument('--word', default='int16', help="int16|int32,uint16,uint32")
     parser.add_argument('--outroot', default='', help="output root directory")
     parser.add_argument('--out', default='', help="explicit output name")
     parser.add_argument('--paste', default=0, type=int, help="1: paste multiple files * 1 chan")
