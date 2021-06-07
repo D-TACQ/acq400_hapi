@@ -175,6 +175,9 @@ def main():
     good = False
     burst_x = burst_0                     # fill cursor
 
+    IDX_DI32 = args.aichan                # index from 0
+    IDX_CH01 = args.pchan -1 
+
     for sample, row in enumerate(data):
         if np.bitwise_and(row[IDX_DI32], TRG_DI):
             if has_been_low:
