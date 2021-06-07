@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 """
-bin2csv
+bin2xlsx
 input raw binary, output xlsx
 
-usage: bin2csv.py [-h] [--nchan NCHAN] [--word WORD] [--outroot OUTROOT]
+usage: bin2xlsx.py [-h] [--nchan NCHAN] [--word WORD] [--outroot OUTROOT]
                   [--out OUT] [--paste PASTE]
                   binfiles [binfiles ...]
 
-bin2csv
+bin2xlsx
 
 positional arguments:
   binfiles           file[s] to convert
@@ -45,7 +45,7 @@ def xlsx_name(args, binfile):
 
     return "{}{}{}.xlsx".format(args.outroot, os.sep if len(args.outroot)>0 else '', basename)
    
-def bin2csv_onesource_manychan(args):
+def bin2xlsx_onesource_manychan(args):
     for src in args.binfiles:
         raw = np.fromfile(src, args.wtype)
         nrows = len(raw)//args.nchan
@@ -61,7 +61,7 @@ def bin2csv_onesource_manychan(args):
         workbook.close()
                 
                 
-def bin2csv_many_onechan_sources(args):
+def bin2xlsx_many_onechan_sources(args):
     chx = list()
     for binf in args.binfiles:
         chx.append(np.fromfile(binf, args.wtype))
@@ -77,22 +77,22 @@ def bin2csv_many_onechan_sources(args):
                
     workbook.close()
             
-def bin2csv(args):
+def bin2xlsx(args):
     args.wtype = get_word_type(args.word)
     if args.paste:
-        bin2csv_many_onechan_sources(args)
+        bin2xlsx_many_onechan_sources(args)
     else:
-        bin2csv_onesource_manychan(args)
+        bin2xlsx_onesource_manychan(args)
         
 def run_main():
-    parser = argparse.ArgumentParser(description='bin2csv')
+    parser = argparse.ArgumentParser(description='bin2xlsx')
     parser.add_argument('--nchan', default=1, type=int, help="number of channels")
     parser.add_argument('--word', default='int16', help="int16|int32")
     parser.add_argument('--outroot', default='', help="output root directory")
     parser.add_argument('--out', default='', help="explicit output name")
     parser.add_argument('--paste', default=0, type=int, help="1: paste multiple files * 1 chan")
     parser.add_argument('binfiles', nargs='+', help="file[s] to convert")
-    bin2csv(parser.parse_args())
+    bin2xlsx(parser.parse_args())
      
     
     

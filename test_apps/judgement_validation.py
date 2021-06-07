@@ -10,6 +10,25 @@ import sys
 import os
 
 
+def make_data_dir(directory, verbose):
+    try:
+        os.makedirs(directory)
+    except Exception:
+        if verbose:
+            print("Tried to create dir but dir already exists")
+        pass
+
+def reads_stream(uut_object):
+    def read_buffer(buffer_len):
+        return uut_object.stream(recvlen=buffer_len)
+    return read_buffer
+
+def reads_stdin():
+    def read_buffer(buffer_len):
+        return sys.stdin.buffer.read(buffer_len)
+    return read_buffer
+
+
 def get_args():
     parser = argparse.ArgumentParser(description='PyEPICS control example')
 
@@ -27,13 +46,27 @@ def get_args():
     parser.add_argument('--es_indices', type=str, default="0,1024",
                         help="Locations of event samples in the data separated"
                         " by commas. For example: --es_indices='0,1024'")
+    
+    parser.add_argument('--es_indices', type=str, default="0,1024",
+                        help="Locations of event samples in the data separated"
+                        " by commas. For example: --es_indices='0,1024'")    
 
     parser.add_argument('--stdin', type=int, default=1,
                         help='Whether to load data from STDIN or from '
                         'acq400_hapi. Default is STDIN.')
-
+    parser.add_argument('--data_size', type=int, default=2, 
+                        help='Data word size: 2=16bit, 4=32bit')
     parser.add_argument('uut', nargs=1, help="uut")
+    
     args = parser.parse_args()
+    args.uut_name = args.uut[0]
+    make_data_dir(args.uut_name, 0)
+    args.dtype = np.int16 if args.data_size == 2 else np.int32
+    args.es_indices = [int(num) for num in args.es_indices.split(",")]
+    args.read_buffer = reads_stdin() if args.stdin == 1 else reads_stream(args.the_uut)
+    args.the_uut = acq400_hapi.Acq400(args.uut_name)
+    args.nchan = args.the_uut.nchan()
+    args.bufferlen = int(args.the_uut.s0.bufferlen)       
     return args
 
 
@@ -45,7 +78,7 @@ def check_channel(channel, validation):
     return False
 
 
-def generate_boundary(validation, nchan, bufferlen, threshold, es_indices, stdin, data=[]):
+def generate_mask(validation, nchan, bufferlen, threshold, es_indices, data=[]):
     if validation == 1:
         x = np.linspace(0, 6*np.pi, 750)
         y = 3000 * np.sin(x)
@@ -57,13 +90,8 @@ def generate_boundary(validation, nchan, bufferlen, threshold, es_indices, stdin
         return validation_data
 
     elif validation == 2:
-        if stdin:
-            raw_data = sys.stdin.buffer.read(bufferlen)
-            raw_data = np.fromstring(raw_data, dtype=np.int16)
-
-        else:
-            raw_data = np.frombuffer(data, dtype=np.int16)
-            print("raw_data shape: {}".format(raw_data.shape))
+        raw_data = np.frombuffer(data, dtype=np.int16)
+        print("raw_data shape: {}".format(raw_data.shape))
         data = raw_data.reshape((-1, nchan)).T
         data = data.astype(np.float)
 
@@ -82,78 +110,16 @@ def generate_fail_report(data, validation_data):
             fail_report.append(result)
     return fail_report
 
-
-def make_data_dir(directory, verbose):
-    try:
-        os.makedirs(directory)
-    except Exception:
-        if verbose:
-            print("Tried to create dir but dir already exists")
-        pass
-
-
-def save_data(data, file_name):
-    data.tofile(file_name)
-    return None
-
-
-def main():
-    args = get_args()
-    uut = args.uut[0]
-
-    file_name = "./{}/{}"
-    make_data_dir(uut, 0)
-
-    buffer_num = 0
-    uut_object = acq400_hapi.Acq400(uut)
-    nchan = uut_object.nchan()
-    bufferlen = int(uut_object.s0.bufferlen)
-    es_indices = [int(num) for num in args.es_indices.split(",")]
-
-    if args.stdin == 1:
-
-        validation_data = generate_boundary(args.validation, nchan, bufferlen,
-                                            args.threshold, es_indices,
-                                            args.stdin)
-
-        while True:
-
-            buffer_num += 1
-            file_name = "./{}/{:05d}".format(uut, buffer_num)
-
-            if args.stdin == 1:
-                raw_data = sys.stdin.buffer.read(bufferlen)
-                raw_data = np.fromstring(raw_data, dtype=np.int16)
-                data = raw_data.reshape((-1, nchan)).T
-
-            compare_epics_python(args, raw_data, data, validation_data, uut, file_name)
-
-    else:
-        collect_validation = True
-        for bytedata in uut_object.stream(recvlen=bufferlen):
-            if collect_validation:
-                validation_data = generate_boundary(args.validation, nchan, bufferlen,
-                                                    args.threshold, es_indices,
-                                                    args.stdin, data=bytedata)
-            raw_data = np.frombuffer(bytedata, dtype=np.int16)
-            data = raw_data.reshape((-1, nchan)).T
-
-            compare_epics_python(args, raw_data, data, validation_data, uut, file_name)
-            collect_validation = False
-    return None
-
-
-def compare_epics_python(args, raw_data, data, validation_data, uut, file_name):
-    fail_list = np.array(generate_fail_report(data, validation_data))
-    pv_check = np.array(epics.caget('{}:JDG:CHX:FAIL:ALL'.format(uut)))[1:]
+def compare_epics_python(args, raw_data, validation_data):
+    fail = False
+    fail_list = np.array(generate_fail_report(raw_data.reshape((-1, args.nchan)).T, validation_data))
+    pv_check = np.array(epics.caget('{}:JDG:CHX:FAIL:ALL'.format(args.uut[0])))[1:]
 
     if fail_list.any() or pv_check.any():
         if np.array_equal(pv_check, fail_list):
             print("Judgment fail detected, HOST PC agrees with EPICS (successful test) {}".format(
                 datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-
-        if args.save_data == 1:
-            save_data(raw_data, file_name + "_failed_judgement")
+        fail = True
 
     if not np.array_equal(pv_check, fail_list):
         print("PV does not agree with numpy.")
@@ -163,9 +129,31 @@ def compare_epics_python(args, raw_data, data, validation_data, uut, file_name):
         print("Channels where PV == PY:")
         print(pv_check == fail_list)
 
-    if args.save_data == 2:
-        save_data(data, file_name)
-    return None
+    return fail
+
+def process_data(args):   
+    buffer_num = 0    
+    
+    for bytedata in args.read_buffer(args.bufferlen):                            
+        raw_data = np.frombuffer(bytedata, dtype=args.dtype)
+        if buffer_num == 0:
+            mask = generate_mask(args.validation, args.nchan, args.bufferlen,
+                                                    args.threshold, args.es_indices, data=bytedata)
+        buffer_num += 1
+        file_name = "./{}/{:05d}".format(args.uut_name, buffer_num)
+                   
+        fail = compare_epics_python(args, raw_data, mask)
+        
+        if fail:
+            file_name = file_name + "_failed_judgement"
+            
+        if fail and args.save_data == 1 or args.save_data == 2:
+            raw_data.tofile(file_name)            
+
+    
+def main():
+    process_data(get_args())
+
 
 
 if __name__ == '__main__':
