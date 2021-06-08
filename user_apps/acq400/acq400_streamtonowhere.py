@@ -64,7 +64,7 @@ def main(args):
     streamed_samples = 0
     while streamed_samples <= args.samples:
         print("Streamed {} of {} samples".format(streamed_samples, args.samples))
-        streamed_samples = acq400_hapi.Acq400.intpv(uuts[0].s1.SIG_sample_count_COUNT)
+        streamed_samples = int(uuts[0].s1.sample_count)
         time.sleep(1)
 
     print("\nStream finished.")
