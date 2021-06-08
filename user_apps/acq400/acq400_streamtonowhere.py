@@ -62,10 +62,14 @@ def main(args):
         continue
 
     streamed_samples = 0
-    while streamed_samples <= args.samples:
+    npoll = 0
+    time.sleep(1)
+    while streamed_samples <= args.samples or npoll < 2:
         print("Streamed {} of {} samples".format(streamed_samples, args.samples))
         streamed_samples = int(uuts[0].s1.sample_count)
         time.sleep(1)
+        npoll += 1
+        
 
     print("\nStream finished.")
     for uut in uuts:
