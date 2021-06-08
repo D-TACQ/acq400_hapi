@@ -50,7 +50,7 @@ def run_shot(args):
         args.postfix.append("CLKDIV={}".args.clkdiv)
 
     master.s0.sync_role = "{} {} {} {}".format(expand_role(args, args.toprole),
-                                            args.fclk, args.fin, 
+                                            args.fclk, args.fin if not args.toprole=="master" else "", 
                                             " ".join(args.postfix), " ".join(postfix))
 
     if args.external_trigger and len(args.uuts) > 1:
