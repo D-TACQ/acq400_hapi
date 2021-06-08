@@ -2,6 +2,7 @@
 # print apparent positions of aliases in spectrum. Assume F0 is sub-nyquist
 
 import sys
+from engineering_notation import EngNumber as en
 
 FS = 1e6 if len(sys.argv) < 2 else float(sys.argv[1])
 FN = FS/2
@@ -19,7 +20,7 @@ for h in range(0, 10):
         hbin = FN-residue
     else:
         hbin = residue
-    print("F{} {:.2e} appears at {:.2e} wraps {}".format(h, fh, hbin, wraps))
+    print("F{} {:>6s} appears at {:>6s} wraps {}".format(h, "{}".format(en(fh)), "{}".format(en(hbin)), wraps))
 
 
     
