@@ -13,6 +13,9 @@ import sys
 
 import matplotlib.pyplot as plt
 
+import acq400_hapi
+
+
 
 def ramp(args):    
     return np.linspace(-args.amp, args.amp, num=args.len)
@@ -20,7 +23,7 @@ def ramp(args):
 
 
 def np_type(args):   
-    np.int32 if args.res != 16 else np.int16
+    return np.int32 if args.res != 16 else np.int16
     
 def make_waves(args, iarg):
     print("make_waves")
@@ -42,11 +45,13 @@ def store_files(args, iarg):
 
 def scale_raw(args, iarg):
     scale = (1 << (args.res-1))/args.vmax
+    rawv = (args.chx * scale)
     args.raw = (args.chx * scale).astype(np_type(args))
+    print("scale_raw {} {} {}".format(args.raw.shape, args.raw.size, args.raw.dtype))
     
     
 def store_raw(args, iarg):    
-    print("store_raw")
+    print("store_raw {} {} {}".format(args.raw.shape, args.raw.size, args.raw.dtype))
     args.raw.tofile("{}/myfile.raw".format(args.root))
 
 def load_files(args, iarg):
@@ -68,8 +73,46 @@ class ExitException(BaseException):
 
 
 def load_uut(args, iarg):
+    uut = None
+    args.continuous = False
+    args.autorearm = False
+    
     print("load_uut {}".format(" ".join(args.ops[iarg:])))
-    print("exit")
+    for ix, pram in enumerate(args.ops[iarg+1:]):
+        print("hello {} {}".format(ix, pram))
+        if ix == 0:           
+            print("uut set {}".format(pram))
+            uut = acq400_hapi.factory(pram)
+            continue
+        if pram == "continuous":
+            args.continuous = True
+        if pram == "autorearm":        
+            args.autorearm = True
+    
+        
+    if uut:
+        args.rawx = args.raw
+        if args.expand_to:
+            wordsize = (4 if args.res != 16 else 2)
+            sizeof_raw = args.raw.size * wordsize
+            reps = args.expand_to // sizeof_raw
+            print("source {} X {} => {} (buffer {})".
+                   format(sizeof_raw, reps, reps*sizeof_raw, args.expand_to))
+            
+            dist_bufferlen = reps*sizeof_raw/4
+            print("dist_bufferlen set {}".format(dist_bufferlen))
+            uut.s0.dist_bufferlen_play = dist_bufferlen
+            
+            for exp in range(1, reps):
+                args.rawx = np.append(args.rawx, args.raw)
+            print("expand {} {} {} bytes {}".
+                  format(args.rawx.shape, args.rawx.size, args.rawx.dtype, args.rawx.size*wordsize))
+            
+        uut.load_awg(args.rawx, autorearm=args.autorearm, continuous=args.continuous)
+    else:
+        print("ERROR: uut not specified")
+        
+    print("exit")        
     raise ExitException
 
 
@@ -87,7 +130,7 @@ def ui():
     parser = argparse.ArgumentParser(description='make_awg_data')
     parser.add_argument('--nchan',  default=16,     type=int,   help="number of channels in set")
     parser.add_argument('--len',    default=100000, type=int,   help="number of samples in set")
-    parser.add_argument('--amp',    default=1.0,                help="amplitude in volts")
+    parser.add_argument('--amp',    default=1.0,    type=float, help="amplitude in volts")
     parser.add_argument('--ncycles', default=8,     type=int,   help="number of waveform cycles in set")
     parser.add_argument('--offset_per_channel', default=0.0, type=float,     help="offset in volts *ch")
     parser.add_argument('--res',   default=16, type=int,        help="word size in bits")
