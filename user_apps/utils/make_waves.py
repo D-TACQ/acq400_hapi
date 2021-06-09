@@ -8,7 +8,6 @@ Created on 8 Jun 2021
 
 import numpy as np
 import argparse
-from asyncio.protocols import DatagramProtocol
 import sys
 
 import matplotlib.pyplot as plt
@@ -17,17 +16,20 @@ import acq400_hapi
 
 
 
-def ramp(args):    
+def ramp_wave(args):    
     return np.linspace(-args.amp, args.amp, num=args.len)
 
-
+def sine_wave(args):
+    return np.sin(np.linspace(0, 2*np.pi, num=args.len))
 
 def np_type(args):   
     return np.int32 if args.res != 16 else np.int16
-    
+ 
+   
 def make_waves(args, iarg):
     print("make_waves")
-    ch0 = ramp(args)
+    args.fn = eval(args.fxn+"_wave")
+    ch0 = args.fn(args)
     print("shape ch0 {}".format(ch0.shape))
     args.chx = np.zeros([args.len, args.nchan])
     for ch in range(0, args.nchan):
@@ -135,17 +137,13 @@ def ui():
     parser.add_argument('--offset_per_channel', default=0.0, type=float,     help="offset in volts *ch")
     parser.add_argument('--res',   default=16, type=int,        help="word size in bits")
     parser.add_argument('--vmax',   default=10.0, type=float,   help="full scale voltage (always symmetrical twos comp")
-    parser.add_argument('--fxn', default="ramp",                help="function to execute")
+    parser.add_argument('--fxn', default='ramp',                help="function to execute ramp or sin")
     parser.add_argument('--root', default='DATA',               help="offset in volts *ch")
     parser.add_argument('--merge', default=1,                   help="merge data into single binary")
     parser.add_argument('--expand_to', default=4*0x400000,      help="expand to fit binary block size")
     parser.add_argument('ops', nargs='+', help="operations: one or more of "+" ".join(OPS)+" # for UUT, substitute UUT name")
     
     args = parser.parse_args()
-    if args.fxn == 'ramp':
-        args.fn = eval('ramp')
-    else:
-        print("ERROR: fxn {} not available".format(args.fxn))
     return args    
 
 def run_main():
@@ -158,6 +156,7 @@ def run_main():
             sys.exit(0)
         except Exception as e:
             print("rejected {} {}".format(op, e))
+            sys.exit(0)
         
 
 # execution starts here
