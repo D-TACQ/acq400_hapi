@@ -111,6 +111,8 @@ def load_uut(args, iarg):
                   format(args.rawx.shape, args.rawx.size, args.rawx.dtype, args.rawx.size*wordsize))
             
         uut.load_awg(args.rawx, autorearm=args.autorearm, continuous=args.continuous)
+        if args.soft_trigger:
+            uut.s0.soft_trigger = '1'
     else:
         print("ERROR: uut not specified")
         
@@ -141,6 +143,7 @@ def ui():
     parser.add_argument('--root', default='DATA',               help="offset in volts *ch")
     parser.add_argument('--merge', default=1,                   help="merge data into single binary")
     parser.add_argument('--expand_to', default=4*0x400000,      help="expand to fit binary block size")
+    parser.add_argument('--soft_trigger', default=1,            help="auto soft trigger on load")
     parser.add_argument('ops', nargs='+', help="operations: one or more of "+" ".join(OPS)+" # for UUT, substitute UUT name")
     
     args = parser.parse_args()
