@@ -4,6 +4,19 @@ import time
 import acq400_hapi
 import argparse
 import os
+import numpy as np
+
+from functools import wraps
+
+def timing(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        ts = time.time()
+        result = f(*args, **kw)
+        te = time.time()
+        print('TIMING:func:%r took: %2.2f sec' % (f.__name__, te-ts))
+        return result
+    return wrap
 
 def get_args():    
     parser = argparse.ArgumentParser(description='runs shots with one continuous AWG as Master and multiple UUTs using MGTDRAM')
@@ -24,9 +37,11 @@ def get_args():
 
     return args
 
-def run_shot(args, uut_names, shot, trigger):
-    procs = []
+procs = []
 
+@timing
+def run_shot(args, uut_names, shot, trigger):
+    procs.clear()
     print("run_shot {}".format(shot))
     for uut in uut_names:
         f = open("{}/{:04d}.log".format(uut, shot), 'w')
@@ -36,12 +51,14 @@ def run_shot(args, uut_names, shot, trigger):
         print("spawned {}".format(uut))
 
     trigger(args)
+    monitor(args)
 
     for uut, p, f in procs:
         p.wait()
         print("reaped {}".format(uut))
         f.close()
 
+@timing
 def trigger(args):
     for u in args.uuts:
         armed = False
@@ -61,8 +78,24 @@ def trigger(args):
         args.mu.s0.soft_trigger = '1'
     else:
         print("trigger")
+@timing
+def monitor(args):
+    idle = np.array([0] * len(args.uuts))
+    runs = 0
+    while True:
+        time.sleep(1)
+        runs += 1
+        print("{:3d}:".format(runs), end='')
+        for ix, uut in enumerate(args.uuts):
+            cs = uut.s0.cstate
+            cstate = cs.split(' ')[0]
+            idle[ix] = int(cstate)
+            print("{} {},".format(uut.uut, cs), end='')
+        print("")
+        if np.all(idle) == 0:
+            break
 
-
+    
 
 
 def main():
