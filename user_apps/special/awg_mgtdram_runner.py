@@ -12,15 +12,19 @@ def get_args():
     parser.add_argument('--plot', type=int, default=0, 
             help="0: no plot, OR of 1: plot raw, 2:plot gated, 4 plot first burst, 8 plot delta.")
     parser.add_argument('--verbose', type=int, default=0)
+    parser.add_argument('--mu', help="master uut, for trigger")
     parser.add_argument('uut_names', nargs='+', help="uut names")
     args = parser.parse_args()
 
     args.uuts = [ acq400_hapi.factory(name) for name in args.uut_names]
     for name in args.uut_names:
         os.makedirs("{}".format(name), exist_ok=True)
+    if args.mu:
+        args.mu = acq400_hapi.factory(args.mu)
+
     return args
 
-def run_shot(uut_names, shot, trigger):
+def run_shot(args, uut_names, shot, trigger):
     procs = []
 
     print("run_shot {}".format(shot))
@@ -31,16 +35,33 @@ def run_shot(uut_names, shot, trigger):
         procs.append((uut, p, f))
         print("spawned {}".format(uut))
 
-    trigger()
+    trigger(args)
 
     for uut, p, f in procs:
         p.wait()
         print("reaped {}".format(uut))
         f.close()
 
-def trigger():
-    time.sleep(2)
-    print("trigger")
+def trigger(args):
+    for u in args.uuts:
+        armed = False
+        while not armed:
+            cstate = u.s0.cstate.split(' ')[0]
+            if cstate == '1':
+                armed = True
+                print("{} ARMED".format(u.uut))
+            elif cstate == '0':
+                time.sleep(0.3)
+            else:
+                print("{} ERROR BAD STATE {}".format(u.uut, cstate))
+                sys.exit(1)
+                
+    if args.mu:
+        print("{} trigger".format(args.mu.uut))
+        args.mu.s0.soft_trigger = '1'
+    else:
+        print("trigger")
+
 
 
 
@@ -51,7 +72,7 @@ def main():
         u.s1.shot = 0    
 
     for shot in range(1, args.shots+1):
-        run_shot(args.uut_names, shot, trigger)
+        run_shot(args, args.uut_names, shot, trigger)
 
 if __name__ == '__main__':
     main()
