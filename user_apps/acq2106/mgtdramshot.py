@@ -140,7 +140,9 @@ def host_pull(args, uut, shot):
     nbytes = nblocks*MGT_BLOCK_BYTES
     nread = 0
     _data_size = uut.data_size()
-    bn = 0                          # block number. redundant, there will be only one block.
+    bn = 0 
+                             # block number. redundant, there will be only one block.
+    buffer = None
 
     print("Starting host pull {} bytes now data size {}".format(nbytes, _data_size))
 
@@ -166,7 +168,7 @@ def host_pull(args, uut, shot):
         if nread >= nbytes:
             break
 
-    if len(buffer) == 0:
+    if buffer == None or len(buffer) == 0:
         print("Data offload failed.")
         print("Pulled {} blocks.".format(bn))
         exit(1)
