@@ -1,9 +1,9 @@
 import sys
 import subprocess
-import tempfile
 import time
 import acq400_hapi
 import argparse
+import os
 
 def get_args():    
     parser = argparse.ArgumentParser(description='runs shots with one continuous AWG as Master and multiple UUTs using MGTDRAM')
@@ -12,17 +12,18 @@ def get_args():
     parser.add_argument('--plot', type=int, default=0, 
             help="0: no plot, OR of 1: plot raw, 2:plot gated, 4 plot first burst, 8 plot delta.")
     parser.add_argument('--verbose', type=int, default=0)
-    parser.add_argument('uut_names')
+    parser.add_argument('uut_names', nargs='+', help="uut names")
     args = parser.parse_args()
 
-    args.uuts = [ acq400_hapi.factory(name) for u in args.uut_names)
-    for uut_name in args.uut_names:
-        os.mkdir("{}".format(), exist_ok=True)
+    args.uuts = [ acq400_hapi.factory(name) for name in args.uut_names]
+    for name in args.uut_names:
+        os.makedirs("{}".format(name), exist_ok=True)
     return args
 
 def run_shot(uut_names, shot, trigger):
     procs = []
 
+    print("run_shot {}".format(shot))
     for uut in uut_names:
         f = open("{}/{:04d}.log".format(uut, shot), 'w')
         p = subprocess.Popen([ sys.executable, './user_apps/acq2106/mgtdramshot.py',
@@ -49,7 +50,7 @@ def main():
     for u in args.uuts:
         u.s1.shot = 0    
 
-    for shot in range(1, args.shots):
+    for shot in range(1, args.shots+1):
         run_shot(args.uut_names, shot, trigger)
 
 if __name__ == '__main__':
