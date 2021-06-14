@@ -75,7 +75,7 @@ Demuxed data will be written to D:\\demuxed\[UUT name]\
 To plot subsampled data on windows:
 
 python .\host_demux.py --src=Projects --nchan=8
---pchan 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 --stack_480="2x8" --plot_mpl=1:1000:1 acq2106_120
+--pchan 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16  --plot_mpl=1:1000:1 acq2106_120
 
 """
 
@@ -259,6 +259,41 @@ def save_data(args, raw_channels):
 def decode_dac_data(x):
     return np.left_shift(x, 12)
 
+def decode_pass(x):
+    return x
+
+class ColumnHandler:
+    def __init__(self, fmt, col):
+        self.fmt = fmt
+        self.col = col
+    def decode(self, x):
+        return x
+    def title(self, x):
+        return self.fmt.format(self.col)
+    def tostr(self):        
+        return self.fmt.format(self.col)
+        
+
+class PacketID_ColumnHandler(ColumnHandler):
+    def __init__(self, col):
+        super().__init__("Packet ID {}", col)
+
+class Payload_ColumnHandler(ColumnHandler):
+    def __init__(self, col, ch):
+        super().__init__("Packet Payload {} ch"+"{:02d}".format(ch)+" ID {}", col)
+    def decode(self, x):
+        return decode_dac_data(x)
+    def title(self, x):
+        return self.fmt.format(self.col,np.right_shift(x, 20))
+    def tostr(self):        
+        return self.fmt.format(self.col, 'id')
+
+    
+    
+
+columns = {}
+
+
 def add_titlebox(ax, text):
     ax.text(.85, .6, text,
         horizontalalignment='center',
@@ -267,22 +302,47 @@ def add_titlebox(ax, text):
         fontsize=12.5)
     return ax
 
+
+def make_columns():
+    global columns
+    for ch in range(0, 8):
+        columns[ch] = ColumnHandler("ADC I {}", ch+1)
+    for ch in range(8,16):
+        columns[ch] = ColumnHandler("ADC V {}", ch%8+1)
+    for ch in range(16,24):
+        columns[ch] = ColumnHandler("ADC T1 {}", ch%8+1)
+    for ch in range(24,32):
+        columns[ch] = ColumnHandler("ADC T2 {}", ch%8+1)
+    for ch in range(0,8):
+        columns[ch+32] = ColumnHandler("SUM {}", ch%8+1)
+    columns[40] = PacketID_ColumnHandler(1)
+    for ch in range(0,10):
+        columns[41+ch] = Payload_ColumnHandler(1, ch+1)
+    columns[51] = PacketID_ColumnHandler(2)
+    for ch in range(0,10):
+        columns[52+ch] = Payload_ColumnHandler(2, ch+1)
+    columns[62] = ColumnHandler("FLAGS {}", 1)
+    columns[63] = ColumnHandler("FLAGS {}", 2)
+    for col in range(64,80):
+        columns[col] = ColumnHandler("SPAD{} {}".format(col-64, "COUNT" if col-64 == 0 else ""), col)
+
+
+def show_columns():    
+    print("{:10} {:10} {}".format("ID1", "Offset", "Description"))
+    for k, v in sorted(columns.items()):
+        print("{:8}{:02d} {:8}{:02d} {}".format(' ', int(k)+1, ' ', int(k), v.tostr()))
+
 def plot_mpl(args, raw_channels):
+    global columns
+
     print("Plotting with MatPlotLib. Subrate = {}".format(args.step))
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
     num_of_ch = len(args.pc_list)
     f, plots = plt.subplots(num_of_ch, 1)
     for num, sp in enumerate(args.pc_list):
-        try:
-            if sp > 40 and sp < 51 or sp > 51 and sp < 63:
-                 plots[num].plot(decode_dac_data(raw_channels[sp][args.start:args.stop:args.step]))         
-                 add_titlebox(plots[num], "Column {} Ident {}".format(sp, np.right_shift(raw_channels[sp][args.start], 20)))
-            else:
-                 plots[num].plot(raw_channels[sp][args.start:args.stop:args.step])
-                 add_titlebox(plots[num], "Column {}".format(sp))
-        except TypeError:
-            print("TypeError")
-            plots.plot(raw_channels[sp][args.start:args.stop:args.step])
+        plots[num].plot(columns[sp].decode(raw_channels[sp][args.start:args.stop:args.step]))
+        add_titlebox(plots[num], "col {:2d} {}".format(sp, columns[sp].title(raw_channels[sp][args.start])))
+
     plt.show()
     return None
 
@@ -351,30 +411,6 @@ def plot_data(args, raw_channels):
     else:
         print("SORRY, kst automation via pykst not available. Please install pykst, or use kst DirFile importer")
 
-# double_up : data is presented as [ ch010, ch011, ch020, ch021 ] .. so zip them together..
-def double_up(args, d1):
-    d2 = []
-    for ch in range(args.nchan):
-        ch2 = ch * 2
-        ll = d1[ch2]
-        #print ll.shape
-        rr = d1[ch2+1]
-        #print rr.shape
-        mm = np.column_stack((ll, rr))
-	#print mm.shape
-        mm1 = np.reshape(mm, (len(ll)*2, 1))
-	#print mm1.shape
-        d2.append(mm1)
-
-    return d2
-
-
-def stack_480_shuffle(args, raw_data):
-    r2 = []
-    for i1 in args.stack_480_cmap:
-        r2.append(raw_data[i1])
-
-    return r2
 
 
 def process_data(args):
@@ -387,9 +423,6 @@ def process_data(args):
 
     if args.double_up:
 	       raw_data = double_up(args, raw_data)
-
-    if args.stack_480:
-        raw_data = stack_480_shuffle(args, raw_data)
 
     if args.save != None:
         save_data(args, raw_data)
@@ -410,34 +443,6 @@ def make_pc_list(args):
     else:
         return args.pchan.split(',')
 
-def calc_stack_480(args):
-    args.double_up = 0
-    if not args.stack_480:
-        return
-    if args.stack_480 == '2x4':
-        args.stack_480_cmap = ( 0, 1, 4, 5, 2, 3, 6, 7 )
-        args.double_up = 1
-        args.nchan = 8
-    elif args.stack_480 == '2x8':
-        args.nchan = 16
-        args.stack_480_cmap = (
-            0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15 )
-    elif args.stack_480 == '4x8':
-        args.nchan = 32
-        args.stack_480_cmap = (
-            0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15,
-           16, 17, 18, 19, 24, 25, 26, 27, 20, 21, 22, 23, 28, 29, 30, 31 )
-    elif args.stack_480 == '6x8':
-        args.nchan = 48
-        args.stack_480_cmap = (
-            0,  1,  2,  3,  8,  9, 10, 11,  4,  5,  6,  7, 12, 13, 14, 15,
-           16, 17, 18, 19, 24, 25, 26, 27, 20, 21, 22, 23, 28, 29, 30, 31,
-           32, 33, 34, 35, 40, 41, 42, 43, 36, 37, 38, 39, 44, 45, 46, 47 )
-    else:
-        print("bad option {}".format(args.stack_480))
-        quit()
-
-    print("args.stack_480_cmap: {}".format(args.stack_480_cmap))
 
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
@@ -447,16 +452,15 @@ def run_main():
     parser.add_argument('--src', type=str, default='/data', help='data source root')
     parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
-    parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
+    parser.add_argument('--egu', type=str, default=0, help='plot egu (V vs s) .. --egu UUT')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
     parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
     parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
-    parser.add_argument('--plot_mpl', type=str, default="1:1000:1", help='Use MatPlotLib to plot subrate data args: start:stop[:step]')
-    parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
+    parser.add_argument('--plot_mpl', type=str, default="1:1000:1", help='Use MatPlotLib to plot subrate data args: start:stop[:step]')    
     parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
-    parser.add_argument('uut', nargs=1, help='uut')
+    parser.add_argument('--show_columns', type=int, default=0)  
     args = parser.parse_args()
-    calc_stack_480(args)
+    
     args.WSIZE = 2
     args.NSAM = 0
     if args.data_type == 16:
@@ -483,9 +487,15 @@ def run_main():
     # ch 0.. (comp)
     args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
     print("args.pc_list {}".format(args.pc_list))
-    if args.egu and args.uut:
-        args.the_uut = acq400_hapi.Acq2106(args.uut[0])
-    process_data(args)
+    if args.egu:
+        print("get egu from UUT {}".format(args.egu))
+        args.the_uut = acq400_hapi.Acq2106(args.egu)
+
+    make_columns()
+    if args.show_columns:
+        show_columns()
+    else:
+        process_data(args)
 
 if __name__ == '__main__':
     run_main()
