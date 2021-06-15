@@ -27,6 +27,8 @@ def get_args():
     parser.add_argument('--verbose', type=int, default=0)
     parser.add_argument('--mu', help="master uut, for trigger")
     parser.add_argument('--nbufs', default=800, type=int, help="number of 4MB buffers to capture")
+    parser.add_argument('--shot_seconds', default=None, type=int, help="specify shot duration in seconds. Overwrites --nbufs")
+    parser.add_argument('--awg_restart', default=1, type=int, help="force awg restart for constant phase")
     parser.add_argument('uut_names', nargs='+', help="uut names")
     args = parser.parse_args()
 
@@ -36,14 +38,33 @@ def get_args():
     if args.mu:
         args.mu = acq400_hapi.factory(args.mu)
 
+    if args.shot_seconds:
+        set_shot_seconds(args)
     return args
 
 procs = []
 
+def set_shot_seconds(args):
+    ssb = int(args.uuts[0].s0.ssb)
+    fs = int(acq400_hapi.Acq400.freq(args.uuts[0].s0.SIG_CLK_S1_FREQ))
+    mbps = fs*ssb/1000000
+    nbufs = int(mbps*args.shot_seconds//4)
+    nbufs += 16
+    if nbufs >= 2000:
+        nbufs = 2000
+    print("fs:{} ssb:{} MBPS:{} nbufs:{}".format(ssb, fs, mbps, nbufs))
+    args.nbufs = nbufs
+    
+    
 @timing
 def run_shot(args, uut_names, shot, trigger):
-    procs.clear()
     print("\nrun_shot {}\n".format(shot))
+    
+    if args.awg_restart:
+        restart_awg(args)
+            
+    procs.clear()
+    
     for uut in uut_names:
         f = open("{}/{:04d}.log".format(uut, shot), 'w')
         p = subprocess.Popen([ sys.executable, './user_apps/acq2106/mgtdramshot.py',
@@ -59,6 +80,24 @@ def run_shot(args, uut_names, shot, trigger):
         p.wait()
         print("reaped {}".format(uut))
         f.close()
+
+@timing
+def restart_awg(args):
+    if not args.mu:
+        print("ERROR: master unit not defined")
+        sys.exit(1)
+    
+    playloop_length = int(args.mu.s1.playloop_length.split(' ')[0])
+    if playloop_length == 0:
+        print("WARNING: AWG not setup")
+    else:
+        args.mu.s1.AWG_MODE_ABO = '1'
+        time.sleep(1)
+        while acq400_hapi.Acq400.intpv(args.mu.s1.AWG_MODE_ABO) == 1:
+            time.sleep(0.2)            
+        args.mu.s1.playloop_length = '0'
+        time.sleep(0.1)        
+        args.mu.s1.playloop_length = '{} 0'.format(playloop_length)
 
 @timing
 def trigger(args):
@@ -123,7 +162,9 @@ def main():
     args = get_args() 
     
     for u in args.uuts:
-        u.s1.shot = 0    
+        u.s1.shot = 0
+    if args.mu:
+        args.mu.s1.shot = 0    
 
     for shot in range(1, args.shots+1):
         run_shot(args, args.uut_names, shot, trigger)
