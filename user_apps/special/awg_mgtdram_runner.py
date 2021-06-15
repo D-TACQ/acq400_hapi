@@ -26,6 +26,7 @@ def get_args():
             help="0: no plot, OR of 1: plot raw, 2:plot gated, 4 plot first burst, 8 plot delta.")
     parser.add_argument('--verbose', type=int, default=0)
     parser.add_argument('--mu', help="master uut, for trigger")
+    parser.add_argument('--nbufs', default=800, type=int, help="number of 4MB buffers to capture")
     parser.add_argument('uut_names', nargs='+', help="uut names")
     args = parser.parse_args()
 
@@ -42,16 +43,17 @@ procs = []
 @timing
 def run_shot(args, uut_names, shot, trigger):
     procs.clear()
-    print("run_shot {}".format(shot))
+    print("\nrun_shot {}\n".format(shot))
     for uut in uut_names:
         f = open("{}/{:04d}.log".format(uut, shot), 'w')
         p = subprocess.Popen([ sys.executable, './user_apps/acq2106/mgtdramshot.py',
-                          '--captureblocks', '800', '--offloadblocks', '800', uut ], stdout=f)
+                          '--captureblocks', str(args.nbufs), '--offloadblocks', str(args.nbufs), uut ], stdout=f)
         procs.append((uut, p, f))
         print("spawned {}".format(uut))
 
     trigger(args)
-    monitor(args)
+    capture_monitor(args)
+    offload_monitor(args)
 
     for uut, p, f in procs:
         p.wait()
@@ -79,22 +81,41 @@ def trigger(args):
     else:
         print("trigger")
 @timing
-def monitor(args):
+def offload_monitor(args):
     idle = np.array([0] * len(args.uuts))
     runs = 0
+
+    print("Offload Monitor")
+    print("{:>3} {:8} {}".format('s', 'uut', 'pull buffers'))
+
+    while True:
+        time.sleep(2)
+        runs += 2
+        print("{:3d}:".format(runs), end='')
+        for ix, uut in enumerate(args.uuts):
+            npull = acq400_hapi.Acq400.intpv(uut.cA.SIG_MGT_PULL_BUFS_COUNT)
+            idle[ix] = 1 if npull > (args.nbufs-64) else 0
+            print("{:11} {:3d}".format(uut.uut, npull), end=', ' if ix < len(args.uuts)-1 else '\n')
+        if np.all(idle) == 1:
+            break
+
+@timing
+def capture_monitor(args):
+    idle = np.array([0] * len(args.uuts))
+    runs = 0
+    print("Capture Monitor")
+    print("{:>3}:{:11} {} {:8}".format('s', 'uut', 'S', 'samples s:seconds, S:state'))
+
     while True:
         time.sleep(1)
         runs += 1
         print("{:3d}:".format(runs), end='')
         for ix, uut in enumerate(args.uuts):
-            cs = uut.s0.cstate
-            cstate = cs.split(' ')[0]
-            idle[ix] = int(cstate)
-            print("{} {},".format(uut.uut, cs), end='')
-        print("")
+            cs = uut.s0.cstate.split(' ')
+            idle[ix] = int(cs[0])
+            print("{:11} {:1} {:8d}".format(uut.uut, cs[0], int(cs[3])), end=', ' if ix < len(args.uuts)-1 else '\n')
         if np.all(idle) == 0:
             break
-
     
 
 
