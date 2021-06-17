@@ -407,7 +407,8 @@ class Acq400:
             return
         except KeyError:
             pass
-        
+    
+        self.verbose = int(os.getenv("ACQ400_VERBOSE", "0"))    
         self.NL = re.compile(r"(\n)")
         self.uut = _uut
         self.trace = 0
@@ -506,6 +507,9 @@ class Acq400:
 
         eslo = float(self.cal_eslo[chan])
         eoff = float(self.cal_eoff[chan])
+        if self.verbose > 1 or (self.verbose and chan < 4):
+            print("chan {} v = {}*{} + {}".format(chan, raw[0], eslo, eoff))
+        
         return np.add(np.multiply(raw, eslo), eoff)
 
 

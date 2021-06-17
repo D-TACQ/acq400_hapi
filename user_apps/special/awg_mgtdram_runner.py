@@ -9,6 +9,14 @@ import acq400_hapi
 import argparse
 import os
 import numpy as np
+import re
+
+save_mat_ok = True
+try:
+    import scipy.io
+except:
+    print("sorry, save_mat option not supported")
+    save_mat_ok = False
 
 from functools import wraps
 
@@ -34,6 +42,7 @@ def get_args():
     parser.add_argument('--shot_seconds', default=None, type=int, help="specify shot duration in seconds. Overwrites --nbufs")
     parser.add_argument('--awg_restart', default=1, type=int, help="force awg restart for constant phase")
     parser.add_argument('--save_egu', default=0, type=int, help="save data in engineering units")
+    parser.add_argument('--save_mat', default=0, type=int, help="save data in engineering units as .mat file [libraries permitting]")
     parser.add_argument('uut_names', nargs='+', help="uut names")
     args = parser.parse_args()
 
@@ -45,6 +54,8 @@ def get_args():
 
     if args.shot_seconds:
         set_shot_seconds(args)
+    if args.save_mat > 0 and args.save_egu == 0:
+        args.save_egu = 1
     return args
 
 procs = []
@@ -166,23 +177,32 @@ def capture_monitor(args):
             break
     
 
-def save_egu1(uut, shot, rawfile):
+def save_egu1(uut, shot, rawfile, save_mat):
     nchan = int(uut.s0.NCHAN)
     raw = np.fromfile(rawfile, np.int16).reshape(-1, nchan)
     volts = np.zeros(len(raw)*nchan).reshape(-1, nchan)
-    for ch in range(1, nchan+1):
-        volts[:,ch-1] = uut.chan2volts(ch, raw)
     
-    npfile = re.sub(r'\.dat', r'\.volts', rawfile)
+    for ch in range(1, nchan+1):
+        volts[:,ch-1] = uut.chan2volts(ch, raw[:,ch-1])
+
+    npfile = re.sub(r'\.dat', r'.volts', rawfile)
     with open(npfile, "wb") as vp:
-        volts.tofile(vp) 
+        volts.astype(np.dtype('f4')).tofile(vp)
+
+    if save_mat and save_mat_ok:
+        f_root = re.sub(r'\.dat', r'', rawfile)
+        print("Saving matfile in blocks of 16ch")
+        for block in range(0,nchan,16):
+            matfile = "{}_{:03d}-{:03d}.mat".format(f_root, block+1, block+16)
+            scipy.io.savemat(matfile, { '{}_{:03d}v'.format(uut.uut, block): volts[:,block:block+16] })
+
     
         
 @timing 
 def save_egu(args):
     for uut in args.uuts:
         shot = int(uut.s1.shot)
-        save_egu1(uut, shot, "{}/{:04d}.dat".format(uut.uut, shot))
+        save_egu1(uut, shot, "{}/{:04d}.dat".format(uut.uut, shot), args.save_mat)
 
 def main():
     args = get_args() 
