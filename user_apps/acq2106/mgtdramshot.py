@@ -168,7 +168,7 @@ def host_pull(args, uut, shot):
         if nread >= nbytes:
             break
 
-    if buffer == None or len(buffer) == 0:
+    if buffer is None or len(buffer) == 0:
         print("Data offload failed.")
         print("Pulled {} blocks.".format(bn))
         exit(1)
