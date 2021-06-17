@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+'''
+assuming a system with 1 x AWG, 2+ x AI, run shots and offload the data
+'''
 import sys
 import subprocess
 import time
@@ -29,6 +33,7 @@ def get_args():
     parser.add_argument('--nbufs', default=800, type=int, help="number of 4MB buffers to capture")
     parser.add_argument('--shot_seconds', default=None, type=int, help="specify shot duration in seconds. Overwrites --nbufs")
     parser.add_argument('--awg_restart', default=1, type=int, help="force awg restart for constant phase")
+    parser.add_argument('--save_egu', default=0, type=int, help="save data in engineering units")
     parser.add_argument('uut_names', nargs='+', help="uut names")
     args = parser.parse_args()
 
@@ -80,6 +85,10 @@ def run_shot(args, uut_names, shot, trigger):
         p.wait()
         print("reaped {}".format(uut))
         f.close()
+        
+    if args.save_egu:
+        save_egu(args)
+
 
 @timing
 def restart_awg(args):
@@ -157,6 +166,23 @@ def capture_monitor(args):
             break
     
 
+def save_egu1(uut, shot, rawfile):
+    nchan = int(uut.s0.NCHAN)
+    raw = np.fromfile(rawfile, np.int16).reshape(-1, nchan)
+    volts = np.zeros(len(raw)*nchan).reshape(-1, nchan)
+    for ch in range(1, nchan+1):
+        volts[:,ch-1] = uut.chan2volts(ch, raw)
+    
+    npfile = re.sub(r'\.dat', r'\.volts', rawfile)
+    with open(npfile, "wb") as vp:
+        volts.tofile(vp) 
+    
+        
+@timing 
+def save_egu(args):
+    for uut in args.uuts:
+        shot = int(uut.s1.shot)
+        save_egu1(uut, shot, "{}/{:04d}.dat".format(uut.uut, shot))
 
 def main():
     args = get_args() 
