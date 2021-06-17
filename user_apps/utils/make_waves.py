@@ -9,6 +9,7 @@ Created on 8 Jun 2021
 import numpy as np
 import argparse
 import sys
+import time
 
 import matplotlib.pyplot as plt
 
@@ -93,6 +94,13 @@ def load_uut(args, iarg):
     
         
     if uut:
+        if (acq400_hapi.Acq400.intpv(uut.s1.AWG_ACTIVE)) == 1:
+            print("AWG already running: call a halt")
+            uut.s1.AWG_MODE_ABO = '1'
+            time.sleep(1)
+            while acq400_hapi.Acq400.intpv(uut.s1.AWG_MODE_ABO) == 1:
+                time.sleep(0.2)
+
         args.rawx = args.raw
         if args.expand_to:
             wordsize = (4 if args.res != 16 else 2)
