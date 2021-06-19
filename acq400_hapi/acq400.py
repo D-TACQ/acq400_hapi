@@ -1171,7 +1171,7 @@ class Acq2106(Acq400):
     """
 
     def __init__(self, _uut, monitor=True, s0_client=None, has_dsp=False, has_comms=True, has_wr=False):
-        print("acq400_hapi.Acq2106 %s" % (_uut))
+#        print("acq400_hapi.Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor=monitor, s0_client=s0_client)
         self.mb_clk_min = 100000
         sn_map = ()
@@ -1258,7 +1258,7 @@ class Acq2106_Mgtdram8(Acq2106):
     MGT_BLOCK_MULTIPLE = 16
 
     def __init__(self, uut, monitor=True, s0_client=None):
-        print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
+#        print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
         Acq2106.__init__(self, uut, monitor=monitor, s0_client=s0_client, has_dsp=True)
 
     def run_mgt(self, filter = null_filter, set_arm=True):
