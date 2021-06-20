@@ -1,0 +1,1 @@
+set PYTHONPATH=%HOME%\PROJECTS\acq400_hapi
