@@ -12,14 +12,11 @@ import sys
 def ui():
     parser = argparse.ArgumentParser(description='acq400_remote_script') 
     parser.add_argument('-v','--verbose', default=0, help="show more info")
-    parser.add_argument('--user', default=None, help="user name to change")
-    parser.add_argument('--uuts', default=None, help="uuts to change [uut[1][,uut2[,uut3...]]]]")
+    parser.add_argument('--olduser', default=None, help="user name to change")
+    parser.add_argument('--newuser', default=None, help="user name to change")
+#    parser.add_argument('--uuts', default=None, help="uuts to change [uut[1][,uut2[,uut3...]]]]")
     parser.add_argument('ws', nargs='+', help="workspace[s] to change")
     args = parser.parse_args()
-    if args.user and args.user.find('\\') != -1:
-        args.user_windows = True
-    else:
-        args.user_windows = False
     return args
    
 
@@ -60,28 +57,7 @@ def fixup(args, ws):
                     wmode = 'w'
                     
                 if file_changed:
-                    text = text.replace('/home/pgm', args.user)
-
-                    if args.user_windows:
-                        tl = list(text)
-                        cursor = 0
-                        while True:
-                            cursor = text[cursor:].find(args.user)
-                            if cursor == -1:
-                                break
-                            for ii, cc in enumerate(tl[cursor:]):
-#                                print("ii {} cc {}".format(ii, cc))
-                                if tl[cursor+ii] == '"' and ii > 0:
-                                    break
-                                if tl[cursor+ii] == '/':
-                                    #print("replacing ..")
-                                    tl[cursor+ii] = '\\'
-                            
-                            cursor += ii
-                            print("set cursor {}".format(cursor))
-                            
-                    text = ''.join(tl)
-
+                    text = text.replace(args.olduser, args.newuser)
                 
             except UnicodeDecodeError:
                 with open(path, 'rb') as fp:
@@ -99,28 +75,8 @@ def fixup(args, ws):
                     while text[headroom_end] == 0:
                         headroom_end += 1
                     print("trailer {}, headroom {}".format(text[trailer_start:trailer_end], headroom_end - trailer_end))
-
-                    # binary URI must be pure Unix with single '/'
-                    sub_bytes = args.user.encode()
-                    sub2 = bytearray(len(sub_bytes)+1)
-                    dst = 0
-                    sub2[dst] = FS   # file:/
-                    dst += 1
-                    for src in range(0, len(sub_bytes)):
-#                        print("{:02x}".format(sub_bytes[src]), end="")
-                        if sub_bytes[src] != BS:
-                            sub2[dst] = sub_bytes[src]
-                            dst += 1
-                        else:                            
-                            if dst > 0 and sub2[dst-1] == FS:
-                                continue
-                            else:
-                                sub2[dst] = FS
-                                dst += 1
-#                    print("")
-                    print("before: {}".format(sub_bytes))                    
-                    sub_bytes = sub2[0:dst]
-                    print("after: {}  ... cleaned for URI".format(sub_bytes))
+                    
+                    sub_bytes = args.newuser.encode()
                     if len(sub_bytes) > (match.end() - match.start()) + (headroom_end - trailer_end):
                         print("ERROR: unable to fit new name {} in binary file".format(args.user))
                         sys.exit(1)
@@ -148,8 +104,8 @@ def fixup(args, ws):
 def run_main():
     args = ui()
     #args.pat = re.compile(r'/home/pgm/')
-    args.pat = re.compile('(/home/pgm)')
-    args.bpat = re.compile(b'(/home/pgm)')
+    args.pat = re.compile('({})'.format(args.olduser))
+    args.bpat = re.compile(('(' + args.olduser + ')' ).encode())
     for ws in args.ws:
         fixup(args, ws)
     
