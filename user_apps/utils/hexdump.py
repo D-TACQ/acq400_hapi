@@ -45,11 +45,12 @@ def get_word_type(args, wtype):
     args.hexfmt += args.delim
 
 def hexdump2d(args, chx, nrows):
+    lastprint = max(args.pchanset)
     try:
         for row in range(nrows):
             for col in range(args.nchan):
                 if col in args.pchanset:
-                    print(args.hexfmt % chx[row][col], end = '\n' if col == args.nchan-1 else '')
+                    print(args.hexfmt % chx[row][col], end = '\n' if col==lastprint else '')
     except BrokenPipeError:
         pass
 
@@ -82,7 +83,7 @@ def hexdump(args):
         
 def expand_pchan(args):
     if args.pchan == '0':
-        pchan = [ ch for ch in range(1,args.nchan) ]
+        pchan = [ ch for ch in range(0,args.nchan) ]
     else:
         pchan = [ int(ch) for ch in eval('[ ' + args.pchan + ' ]') ]
     args.pchanset = set(pchan)
