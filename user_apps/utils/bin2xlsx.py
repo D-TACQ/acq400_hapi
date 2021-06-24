@@ -49,7 +49,7 @@ def bin2xlsx_onesource_manychan(args):
     for src in args.binfiles:
         raw = np.fromfile(src, args.wtype)
         nrows = len(raw)//args.nchan
-        chx = np.reshape(raw, (nrows, args.nchan))
+        chx = np.reshape(raw[:nrows*args.nchan], (nrows, args.nchan))
         
         workbook = xlsxwriter.Workbook(xlsx_name(args, src))
         worksheet = workbook.add_worksheet()
