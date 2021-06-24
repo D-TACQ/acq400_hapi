@@ -85,7 +85,7 @@ def expand_pchan(args):
     if args.pchan == '0':
         pchan = [ ch for ch in range(0,args.nchan) ]
     else:
-        pchan = [ int(ch) for ch in eval('[ ' + args.pchan + ' ]') ]
+        pchan = [ int(ch)-1 for ch in eval('[ ' + args.pchan + ' ]') ]
     args.pchanset = set(pchan)
 #    print(args.pchanset)
 
