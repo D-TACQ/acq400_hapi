@@ -1347,6 +1347,16 @@ def factory(_uut):
               "\nFW is older than necessary. Using default acq2106 settings.\n")
         return Acq2106(_uut, s0_client=s0)
     
-    
+
+
+def freq(sig):
+    return float(sig.split(" ")[1])
+
+def intpv(pv):
+    return int(pv.split(" ")[1])
+
+def pv(pv):
+    return pv.split(" ")[1]
+       
 if __name__ == '__main__':
     run_unit_test()

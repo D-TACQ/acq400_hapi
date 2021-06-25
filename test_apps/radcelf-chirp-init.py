@@ -188,7 +188,7 @@ def verify_chirp(uut, test):
 
 def wait_arm(uut):
     counter = 0
-    while acq400.Acq400.pv(uut.s0.CONTINUOUS_STATE) != "ARM":
+    while acq400_hapi.pv(uut.s0.CONTINUOUS_STATE) != "ARM":
         counter += 1
         if counter > 4:
             print("uut {} slow to ARM".format(uut.uut))
