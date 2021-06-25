@@ -186,7 +186,14 @@ def verify_chirp(uut, test):
 
     return False
 
-
+def wait_arm(uut):
+    counter = 0
+    while acq400.Acq400.pv(uut.s0.CONTINUOUS_STATE) != "ARM":
+        counter += 1
+        if counter > 4:
+            print("uut {} slow to ARM".format(uut.uut))
+        time.sleep(0.5)
+                
 def init_dual_chirp(args, uut):
     chirp_off(uut)    
     gps_sync(uut, ddsX=args.ddsX, gps_sync_chirp_en=False)
@@ -206,12 +213,18 @@ def init_dual_chirp(args, uut):
 
         
 def run_test(args):
-    uuts = [acq400_hapi.RAD3DDS(u) for u in args.uuts]
+    m_names = args.uuts[:1] if args.use_dds_on_first_uut_only else args.uuts
+    m_uuts = [acq400_hapi.RAD3DDS(u) for u in m_names]
+    s_names = args.uuts[1:] if args.use_dds_on_first_uut_only else []
+    s_uuts = [acq400_hapi.Acq400(u) for u in s_names]
+    uuts = m_uuts + s_uuts    
 
     for test in range(0, args.test):
-              
+         
         for uut in uuts:
-            uut.s0.CONTINUOUS = '0'
+            uut.s0.CONTINUOUS = '0'     
+                        
+        for uut in m_uuts:            
             init_trigger(uut, dx=args.trigger_adc_dx)
             chirp_off(uut)
             
@@ -222,17 +235,21 @@ def run_test(args):
             arm_uut(uut)
             
         for uut in uuts:
+            wait_arm(uut)
+
+            
+        for uut in m_uuts:
             init_dual_chirp(args, uut)            
           
         if args.gps_sync > 1:
             ttime = time.time() + args.gps_sync
-            for uut in uuts:
+            for uut in m_uuts:
                 # d5: PPS trigger is free running, select at on_trigger (aka during the second before
                 uut.s2.trigger_at = "{} {}".format('--trg=1,d5,rising' if args.trigger_adc_dx=='d5' else '', ttime)
             time.sleep(args.gps_sync+1)
         
         if not args.noverify:
-            for uut in uuts:
+            for uut in m_uuts:
                 verify_chirp(uut, test)
                 
 
@@ -248,7 +265,8 @@ def run_main():
     parser.add_argument('--chirps_per_sec', default=5, type=int, help="chirps per second")
     parser.add_argument('--stop', action="store_true", help="--stop uuts : stop chirp and quit [no value]")
     parser.add_argument('--trigger_adc_dx', default='ddsA', help="trigger ACQ on ddsA or ddsB or dX [X=0,1,2,3,4,5,6]")    
-    parser.add_argument('--init_trigger', action="store_true", help="--init_trigger : configure trigger only")    
+    parser.add_argument('--init_trigger', action="store_true", help="--init_trigger : configure trigger only")
+    parser.add_argument('--use_dds_on_first_uut_only', default=0, type=int, help="default: all uuts configure their own DDS, 1: set first uut only .. second could be, for example, an hdmi slave.")    
     parser.add_argument('uuts', nargs='*', default=["localhost"], help="uut")
     args = parser.parse_args()
     if args.debug: 

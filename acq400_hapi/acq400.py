@@ -1162,6 +1162,9 @@ class Acq400:
     @staticmethod
     def intpv(pv):
         return int(pv.split(" ")[1])
+    @staticmethod
+    def pv(pv):
+        return pv.split(" ")[1]
 
 
 class Acq2106(Acq400):
