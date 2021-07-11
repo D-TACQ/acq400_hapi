@@ -28,6 +28,7 @@ import errno
 import signal
 import sys
 from numpy.distutils.command.egg_info import egg_info
+
 if __name__ == '__main__':
     import netclient
 else:
@@ -554,16 +555,46 @@ class Acq400:
 
 
     def nchan(self):
-        return int(self.s0.NCHAN)
+        try:
+            return self._nchan
+        except:        
+            self._nchan = int(self.s0.NCHAN)        
+            return self._nchan
+
 
     def data_size(self):
 	    return 4 if self.s0.data32 == '1' else 2
+    
+    def uut_demux_enabled(self):
+        ts = self.s0.transient
+        rc = bool(int(self.s0.transient.split("DEMUX=",1)[1][0]))
+#        print ("uut_demux_enabled(): transient {} decoded DEMUX={} rc={}".format(ts, ts.split("DEMUX=",1)[1][0], rc))
+        return rc
 
-    def read_channels(self, channels=(), nsam=0):
+    def read_channels(self, channels=(), nsam=0, localdemux=False):
         """read all channels post shot data.
 
         Returns:
             chx (list) of np arrays.
+            
+        uut_demux_enabled() == False: UUT did NOT demux the data, data order [sample][channel] 
+        uut_demux_enabled() == True:  UUT did demux the data, data order [channel][sample]
+        
+        DEMUX is a synonym for uut_demux_enabled()..
+        
+        channels=(0) : return all (bulk) data, likely in raw[sample][channel] format.
+        channels=(0) localdemux=True: return all (bulk) in demux[channel][sample] format. 
+        
+        channels=N or channels=(N,N1,N2 ..)   # N >= 1 && N <= NCHAN
+        
+        There are 4 cases:
+        channels=(1,2...nchan) and (remote) DEMUX=1: SIMPLE, pull each channel at a time from the UUT.
+        
+        channels=(0) and DEMUX=0 : SIMPLE: return the raw data.
+        
+        channels=(1,2..) and DEMUX=1 : demux locally.
+        
+        channels=(0) and DEMUX=0 and localdemux : demux locally
         """
 
 
@@ -571,13 +602,20 @@ class Acq400:
             channels = list(range(1, self.nchan()+1))
         elif type(channels) == int:
             channels = (channels,)
-
-    #      print("channels {}".format(channels))
+            
+        bulk_channels = channels == (0,)
 
         chx = []
         data_size = 4 if self.s0.data32 == '1' else 2
-        demux_state = int(self.s0.transient.split("DEMUX=",1)[1][0])
-        if demux_state:
+        if self.uut_demux_enabled():
+           localdemux = False
+        else:
+            if not bulk_channels:
+                localdemux = True 
+        
+        if not localdemux:
+#            print("read_channels() NOT localdemux")
+            # likely: either pull channelized demux data or pull a full set of raw data.
             for ch in channels:
                 if self.trace:
                     print("%s CH%02d start.." % (self.uut, ch))
@@ -590,9 +628,17 @@ class Acq400:
                     print("%s CH%02d complete.. %.3f s %.2f MB/s" %
                         (self.uut, ch, tt, len(chx[-1])*2/1000000/tt))
         else:
+            # only do local demux if client wants it and the data needs it..
             data = np.array(self.read_chan(0, nsam, data_size=data_size))
-            data = data.reshape((-1, int(self.s0.NCHAN)))
-            data = data[:,np.array(channels)-1].transpose()
+            data = data.reshape((-1, self.nchan()))
+            if bulk_channels:
+ #               print("read_channels() local demux, bulk data")
+                channels = np.arange(0, self.nchan())
+            else:
+ #               print("read_channels() local demux, selected channels")
+                channels = np.array(channels)-1
+                
+            data = data[:,channels].transpose()
             chx = [ item for item in data ]
 
         return chx

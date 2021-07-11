@@ -32,21 +32,11 @@ import threading
 import os
 import re
 import sys
-import time
+
 from libpasteurize.fixes import fix_kwargs
 
 
-from functools import wraps
 
-def timing(f):
-    @wraps(f)
-    def wrap(*args, **kw):
-        ts = time.time()
-        result = f(*args, **kw)
-        te = time.time()
-        print('TIMING:func:%r took: %2.2f sec' % (f.__name__, te-ts))
-        return result
-    return wrap
 
 """
 denormalise_stl(args): convert from usec to clock ticks. round to modulo decval

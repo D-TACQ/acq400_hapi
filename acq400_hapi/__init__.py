@@ -16,3 +16,4 @@ from .acq400_ui import Acq400UI
 from . import awg_data
 from .intSI import *
 from .debug import Debugger
+from .utils import timing

@@ -199,7 +199,8 @@ def run_global_wrtt_allsites(uut):
     
 
 def xmas_tree(args, uut):
-    for test in [ set_clkout, run_pg_cascade_trgin, run_local_wrtt, run_local_wrtt_allsites, run_global_wrtt_allsites]:
+#    for test in [ set_clkout, run_pg_cascade_trgin, run_local_wrtt, run_local_wrtt_allsites, run_global_wrtt_allsites]:
+    for test in [ run_global_wrtt_allsites]:
         test(uut)
     
     
