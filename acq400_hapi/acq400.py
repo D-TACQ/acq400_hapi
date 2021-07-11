@@ -588,13 +588,12 @@ class Acq400:
         channels=N or channels=(N,N1,N2 ..)   # N >= 1 && N <= NCHAN
         
         There are 4 cases:
-        channels=(1,2...nchan) and (remote) DEMUX=1: SIMPLE, pull each channel at a time from the UUT.
-        
+        channels=(1,2...nchan) and (remote) DEMUX=1: SIMPLE, pull each channel at a time from the UUT.        
         channels=(0) and DEMUX=0 : SIMPLE: return the raw data.
         
         channels=(1,2..) and DEMUX=1 : demux locally.
         
-        channels=(0) and DEMUX=0 and localdemux : demux locally
+        channels=(0) and DEMUX=0 and localdemux : demux locally, return bulk data [channels][samnples]
         """
 
 
