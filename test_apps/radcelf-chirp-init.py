@@ -32,7 +32,7 @@ optional arguments:
   --debug DEBUG         1: trace 2: step
   --noverify NOVERIFY   do not verify (could be waiting gps)
   --ddsX DDSX           ddsA=1, ddsB=2, ddsA+ddsB=3
-  --gps_sync GPS_SYNC   syncronize with GPSPPS >1: autotrigger at + gps_sync s
+  --gps_sync GPS_SYNC   >0: synchronize with GPSPPS >1: autotrigger at + gps_sync s
   --chirps_per_sec CHIRPS_PER_SEC
                         chirps per second
   --trigger_adc_dx TRIGGER_ADC_DX
@@ -81,24 +81,21 @@ def init_remapper(uut):
 
 @Debugger        
 def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
-    # SETTING KAKA'AKOS CHIRP
-    #
     dds = uut.ddsA if ddsX == GPS_SYNC_DDSA else uut.ddsB
-
-# Program the chirp using Kaka'ako parameters
-    set_upd_clk_fpga(uut, ddsX, '1')   # Values are strobed in with normal FPGA IOUPDATE
-    dds.CR = acq400_hapi.AD9854.CRX(12)   # '004C0061'
+    set_upd_clk_fpga(uut, ddsX, '1')                    # Values are strobed in with normal FPGA IOUPDATE
+    dds.CR = acq400_hapi.AD9854.CRX(12)                 # '004C0061'
     dds.FTW1 = '172B020C49BA'
     dds.DFR = '0000000021D1'
-#    dds.UCR = '01F01FD0'                               # KAKA'AKOS original, deprecated
-#    dds.UCR = acq400_hapi.AD9854.UCR(5)                # '01C9C37F'    # 5Hz
-    dds.UCR =  acq400_hapi.AD9854.UCR(chirps_per_sec)   # '002DC6BF'    # 50Hz is easier to see on a scope    
+    dds.UCR =  acq400_hapi.AD9854.UCR(chirps_per_sec) 
     dds.RRCR = '000001'
     dds.IPDMR = '0FFF'
     dds.QPDMR = '0FFF'
+    
     if gps_sync:                                        # new synchronized start
         set_upd_clk_fpga(uut, ddsX, '0')                    # Final value strobed in by PPS linked IOUPDATE
+        
     dds.CR = acq400_hapi.AD9854.CRX(12, chirp=True)     # '004C8761'
+    
     if not gps_sync:                                    # legacy free-starting chirp
         set_upd_clk_fpga(uut, ddsX, '0')                    # IOUPDATE is now an INPUT 
    
@@ -203,10 +200,10 @@ def init_dual_chirp(args, uut):
     gps_sync(uut, gps_sync_chirp_en=args.gps_sync, hold_en=True)
     
     if args.ddsX&GPS_SYNC_DDSA:
-        init_chirp(uut, GPS_SYNC_DDSA, chirps_per_sec=args.chirps_per_sec, gps_sync=args.gps_sync!=0)
+        init_chirp(uut, GPS_SYNC_DDSA, chirps_per_sec=args.cps[0], gps_sync=args.gps_sync!=0)
         
     if args.ddsX&GPS_SYNC_DDSB:
-        init_chirp(uut, GPS_SYNC_DDSB, chirps_per_sec=args.chirps_per_sec, gps_sync=args.gps_sync!=0)
+        init_chirp(uut, GPS_SYNC_DDSB, chirps_per_sec=args.cps[1], gps_sync=args.gps_sync!=0)
     
     gps_sync(uut, ddsX=args.ddsX, gps_sync_chirp_en=args.gps_sync)
     
@@ -228,7 +225,7 @@ def run_test(args):
             init_trigger(uut, dx=args.trigger_adc_dx)
             chirp_off(uut)
             
-        if args.stop or args.chirps_per_sec == 0:
+        if args.stop or (args.cps[0] and args.cps[1] == 0):
             break
         
         for uut in uuts:
@@ -261,14 +258,20 @@ def run_main():
     parser.add_argument('--debug', default=0, type=int, help="1: trace 2: step")
     parser.add_argument('--noverify', default=0, type=int, help="do not verify (could be waiting gps)")
     parser.add_argument('--ddsX', default=0x3, type=int, help="ddsA=1, ddsB=2, ddsA+ddsB=3")
-    parser.add_argument('--gps_sync', default=0, type=int, help="syncronize with GPSPPS >1: autotrigger at + gps_sync s")
-    parser.add_argument('--chirps_per_sec', default=5, type=int, help="chirps per second")
+    parser.add_argument('--gps_sync', default=0, type=int, help=">0: synchronize with GPSPPS >1: autotrigger at + gps_sync s")
+    parser.add_argument('--chirps_per_sec', default='5', help="chirps per second A[,B]")
     parser.add_argument('--stop', action="store_true", help="--stop uuts : stop chirp and quit [no value]")
     parser.add_argument('--trigger_adc_dx', default='ddsA', help="trigger ACQ on ddsA or ddsB or dX [X=0,1,2,3,4,5,6]")    
     parser.add_argument('--init_trigger', action="store_true", help="--init_trigger : configure trigger only")
     parser.add_argument('--use_dds_on_first_uut_only', default=0, type=int, help="default: all uuts configure their own DDS, 1: set first uut only .. second could be, for example, an hdmi slave.")    
     parser.add_argument('uuts', nargs='*', default=["localhost"], help="uut")
     args = parser.parse_args()
+    cps = [ int(x) for x in args.chirps_per_sec.split(',')]
+    if len(cps) == 2:
+        args.cps = cps
+    else:
+        args.cps = (cps[0], cps[0])
+        
     if args.debug: 
         Debugger.enabled = args.debug
     run_test(args)
