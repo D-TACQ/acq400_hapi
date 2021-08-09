@@ -1392,7 +1392,9 @@ def factory(_uut):
               "\nFW is older than necessary. Using default acq2106 settings.\n")
         return Acq2106(_uut, s0_client=s0)
     
-
+def get_hapi():
+    ''' find instance of hapi '''
+    return os.path.dirname(os.path.dirname(__file__))
 
 def freq(sig):
     return float(sig.split(" ")[1])
