@@ -57,13 +57,23 @@ GPS_SYNC_DDSB = 0x2
 GPS_SYNC_DDSX = 0x3
 
     
-    
+@Debugger
 def set_upd_clk_fpga(uut, ddsX, value):
     if ddsX == GPS_SYNC_DDSA:
         uut.s2.ddsA_upd_clk_fpga = value
     else:
         uut.s2.ddsB_upd_clk_fpga = value
 
+@Debugger
+def set_arm_pps(uut, ddsX):    
+    if ddsX&GPS_SYNC_DDSA:
+        uut.s2.ddsA_gps_arm_pps = 1        
+    if ddsX&GPS_SYNC_DDSB:
+        uut.s2.ddsB_gps_arm_pps = 1        
+    if ddsX&GPS_SYNC_DDSA:        
+        uut.s2.ddsA_gps_arm_pps = 0
+    if ddsX&GPS_SYNC_DDSB:
+        uut.s2.ddsB_gps_arm_pps = 0        
 
 @Debugger
 def init_remapper(uut):
@@ -82,11 +92,18 @@ def init_remapper(uut):
 @Debugger        
 def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
     dds = uut.ddsA if ddsX == GPS_SYNC_DDSA else uut.ddsB
+    
+    crx = 12
+    intclk = 300e6
+    if uut.s2.MTYPE == '70':
+        crx = 18
+        intclk = 180e6
+
     set_upd_clk_fpga(uut, ddsX, '1')                    # Values are strobed in with normal FPGA IOUPDATE
-    dds.CR = acq400_hapi.AD9854.CRX(12)                 # '004C0061'
+    dds.CR = acq400_hapi.AD9854.CRX(crx)
     dds.FTW1 = '172B020C49BA'
     dds.DFR = '0000000021D1'
-    dds.UCR =  acq400_hapi.AD9854.UCR(chirps_per_sec) 
+    dds.UCR =  acq400_hapi.AD9854.UCR(chirps_per_sec intclk=intclk-1) 
     dds.RRCR = '000001'
     dds.IPDMR = '0FFF'
     dds.QPDMR = '0FFF'
@@ -94,7 +111,7 @@ def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
     if gps_sync:                                        # new synchronized start
         set_upd_clk_fpga(uut, ddsX, '0')                    # Final value strobed in by PPS linked IOUPDATE
         
-    dds.CR = acq400_hapi.AD9854.CRX(12, chirp=True)     # '004C8761'
+    dds.CR = acq400_hapi.AD9854.CRX(crx, chirp=True)     # '004C8761'
     
     if not gps_sync:                                    # legacy free-starting chirp
         set_upd_clk_fpga(uut, ddsX, '0')                    # IOUPDATE is now an INPUT 
@@ -236,7 +253,7 @@ def run_test(args):
 
             
         for uut in m_uuts:
-            init_dual_chirp(args, uut)            
+            init_dual_chirp(args, m_uuts)            
           
         if args.gps_sync > 1:
             ttime = time.time() + args.gps_sync
@@ -244,6 +261,10 @@ def run_test(args):
                 # d5: PPS trigger is free running, select at on_trigger (aka during the second before
                 uut.s2.trigger_at = "{} {}".format('--trg=1,d5,rising' if args.trigger_adc_dx=='d5' else '', ttime)
             time.sleep(args.gps_sync+1)
+        elif args.gps_sync == 1:
+            for uut in m_uuts:
+                if uut.s2.MTYPE == '70':
+                    set_arm_pps(uut, args.ddsX)
         
         if not args.noverify:
             for uut in m_uuts:
