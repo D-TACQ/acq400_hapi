@@ -36,8 +36,9 @@ class AD9854:
         
     @staticmethod
     # UCR for chirps_per_sec
-    def UCR(chirps_per_sec, intclk=299999999):
-        return '{:08x}'.format(int(intclk/2/chirps_per_sec))
+    def UCR(chirps_per_sec, intclk=300e6):
+        intclk32 = int(intclk) - 1        
+        return '{:08x}'.format(int(intclk32/2/chirps_per_sec))
         
     
     @staticmethod
