@@ -83,6 +83,7 @@ def init_remapper(uut):
 
     ddsc_ratio = AD9854.ftw2ratio(uut.ddsC.FTW1)
     
+    
     if ddsc_ratio < 0.073 or ddsc_ratio > 0.093:
         print('system was not tuned, set default 300/12')
         uut.ddsC.CR = acq400_hapi.AD9854.CRX(12)    # '004C0061'
@@ -98,6 +99,7 @@ def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
     if uut.s2.MTYPE == '70':
         crx = 18
         intclk = 180e6
+        print("MTYPE 70 detected, setting crx {} intclk {}".format(crx, intclk))
 
     set_upd_clk_fpga(uut, ddsX, '1')                    # Values are strobed in with normal FPGA IOUPDATE
     dds.CR = acq400_hapi.AD9854.CRX(crx)
@@ -212,7 +214,9 @@ def init_dual_chirp(args, uut):
     gps_sync(uut, ddsX=args.ddsX, gps_sync_chirp_en=False)
     gps_sync(uut, ddsX=args.ddsX, gps_sync_chirp_en=args.gps_sync)
     
-    init_remapper(uut)    
+    if uut.s2.MTYPE != '70':
+        init_remapper(uut)
+ 
     gps_sync(uut, gps_sync_chirp_en=args.gps_sync, hold_en=True)
     
     if args.ddsX&GPS_SYNC_DDSA:
