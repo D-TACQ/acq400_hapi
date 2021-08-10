@@ -16,28 +16,30 @@ class Debugger(object):
     """ Debug a method and return it back"""
 
     enabled = 0
+    stack_level = 0
 
     def __init__(self, func):
         self.func = func
 
     def __call__(self, *args, **kwargs):
-        if self.enabled:
-            logger.debug('{} : {}'.format("Enter" if self.enabled > 2 else "Entering", self.func.__name__))
-            logger.debug('args, kwargs : {}'.format(args, kwargs))
+        if Debugger.enabled:
+            Debugger.stack_level += 1            
+            logger.debug('{} {} {} {}'.format("===>" * self.stack_level, "Enter" if Debugger.enabled > 2 else "Entering", self.func.__name__, args, kwargs))
             
-            if self.enabled > 2:
+            if Debugger.enabled > 2:
                 inp = input("q/C?")
                 if inp == 'q':
                     exit(1)
                     
         rc = self.func(*args, **kwargs)
         
-        if self.enabled:
+        if Debugger.enabled:
             logger.debug('{} returned : {}'.format(self.func.__name__, rc))
             if self.enabled > 1:
                 logger.debug('Exit : {}'.format(self.func.__name__))
                 inp = input("q/C?")
                 if inp == 'q':
                     exit(1)
+            Debugger.stack_level = Debugger.stack_level - 1
             
         return rc
