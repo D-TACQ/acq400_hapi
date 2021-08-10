@@ -209,7 +209,6 @@ def wait_arm(uut):
         time.sleep(0.5)
                 
 def init_dual_chirp(args, uut):
-    chirp_off(uut)    
     gps_sync(uut, ddsX=args.ddsX, gps_sync_chirp_en=False)
     gps_sync(uut, ddsX=args.ddsX, gps_sync_chirp_en=args.gps_sync)
     
@@ -253,7 +252,7 @@ def run_test(args):
 
             
         for uut in m_uuts:
-            init_dual_chirp(args, m_uuts)            
+            init_dual_chirp(args, uut)            
           
         if args.gps_sync > 1:
             ttime = time.time() + args.gps_sync
