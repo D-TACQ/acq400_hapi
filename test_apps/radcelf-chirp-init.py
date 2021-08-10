@@ -103,7 +103,7 @@ def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
     dds.CR = acq400_hapi.AD9854.CRX(crx)
     dds.FTW1 = '172B020C49BA'
     dds.DFR = '0000000021D1'
-    dds.UCR =  acq400_hapi.AD9854.UCR(chirps_per_sec intclk=intclk-1) 
+    dds.UCR =  acq400_hapi.AD9854.UCR(chirps_per_sec, intclk=intclk-1) 
     dds.RRCR = '000001'
     dds.IPDMR = '0FFF'
     dds.QPDMR = '0FFF'
