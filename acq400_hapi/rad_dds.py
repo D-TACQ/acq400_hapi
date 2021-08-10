@@ -31,8 +31,8 @@ class AD9854:
         
     @staticmethod
     # CR for clock * n
-    def CRX(n = 4, chirp=False):            
-        return '{:08x}'.format(int(n << 16) | int(AD9854.CR.chirp_en if chirp else AD9854.CR.regular_en, 16))
+    def CRX(n = 4, mode=CR.low_power):            
+        return '{:08x}'.format(int(n << 16) | int(mode, 16))
         
     @staticmethod
     # UCR for chirps_per_sec

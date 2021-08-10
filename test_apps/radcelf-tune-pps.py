@@ -32,10 +32,11 @@ def init(args):
     uut.clkdB.UPDATE = '01'
 
 
-    print("Initialise DDS C to a ratio of 1.0 for nominal 25 MHz")
+    print("Initialise DDS C to a ratio for nominal {} MHz".format(args.fclk))
     uut.s2.ddsC_upd_clk_fpga = '1'
-    uut.ddsC.CR   = '004C0041'
-    uut.ddsC.FTW1 = AD9854.ratio2ftw(1.0/12.0)
+    crx =   18 if uut.s2.MTYPE == '70' else 12 
+    uut.ddsC.CR   = acq400_hapi.AD9854.CRX(crx)   # default '004C0041'
+    uut.ddsC.FTW1 = AD9854.ratio2ftw(1.0/crx)
     time.sleep(30)
    
     

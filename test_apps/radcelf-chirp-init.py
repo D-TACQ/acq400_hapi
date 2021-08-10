@@ -113,7 +113,7 @@ def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
     if gps_sync:                                        # new synchronized start
         set_upd_clk_fpga(uut, ddsX, '0')                    # Final value strobed in by PPS linked IOUPDATE
         
-    dds.CR = acq400_hapi.AD9854.CRX(crx, chirp=True)     # '004C8761'
+    dds.CR = acq400_hapi.AD9854.CRX(crx, mode=AD9854.CR.chirp_en)     # '004C8761'
     
     if not gps_sync:                                    # legacy free-starting chirp
         set_upd_clk_fpga(uut, ddsX, '0')                    # IOUPDATE is now an INPUT 
