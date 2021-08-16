@@ -27,21 +27,35 @@ optional arguments:
 import acq400_hapi
 from acq400_hapi import intSIAction
 from acq400_hapi import intSI
+from acq400_hapi import Debugger
 import argparse
 import threading
 import os
 import re
 import sys
-
+import time
 from libpasteurize.fixes import fix_kwargs
 
 
+from functools import wraps
 
+def timing(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        ts = time.time()
+        result = f(*args, **kw)
+        te = time.time()
+        print('TIMING:func:%r took: %2.2f sec' % (f.__name__, te-ts))
+        return result
+    return wrap
 
 """
 denormalise_stl(args): convert from usec to clock ticks. round to modulo decval
 """
 def denormalise_stl(args):
+    with open_safe(args.stl, 'r') as fp:
+        args.stl = fp.read()
+
     lines = args.stl.splitlines()
     args.literal_stl = ""
     args.stl_literal_lines = []
@@ -67,7 +81,7 @@ def denormalise_stl(args):
             if args.verbose:
                 print(line)
 
-    return "\n".join(args.stl_literal_lines)
+    args.literal_stl = "\n".join(args.stl_literal_lines)
 
 NONE = 'NONE'
 
@@ -85,6 +99,13 @@ def allows_one_wrtd(uut):
         uut.cC.WRTD_TX = 1
         uut.cC.wrtd_tx = 1
     return allow_one_wrtd
+
+def do_immediate_trigger(uut):
+    def immediate_trigger():
+        print("TXI lets go")
+        uut.s0.SIG_SRC_TRG_0 = 'WRTT0'
+        uut.s0.wrtd_txi = 1
+    return immediate_trigger
 
 def run_postprocess_command(cmd, uut_names):
     syscmd = "{} {}".format(cmd, " ".join(uut_names))
@@ -157,24 +178,26 @@ def tee_up_action(u, args):
     if args.set_shot is not None:
         u.s1.shot = args.set_shot
         u.cC.WR_WRTT0_RESET = 1
+        u.wrtt0 = 0
+    else:
+        u.wrtt0 = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
     
     if args.clear_any_units_found_in_arm and u.state() == acq400_hapi.STATE.ARM:
         print("WARNING {} found in ARM state, aborting it now".format(u.uut))
         u.s0.set_abort = 1
         u.statmon.wait_stopped()
         print("NOTICE {} is now IDLE, proceed..".format(u.uut))
-    u.s0.gpg_trg = '1,0,1'
-    u.s0.gpg_clk = '1,1,1'
-    u.s0.GPG_ENABLE = '0'
-    u.load_gpg(args.lit_stl, args.verbose > 1)
-    u.set_MR(True, evsel0=args.evsel0, evsel1=args.evsel0+1, MR10DEC=args.MR10DEC)
-    u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0), 'GPG')
-    u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
-    u.s0.GPG_ENABLE = '1'
+    if args.MR:
+         u.s0.gpg_trg = '1,0,1'
+         u.s0.gpg_clk = '1,1,1'
+         u.s0.GPG_ENABLE = '0'
+         u.load_gpg(args.lit_stl, args.verbose > 1)
+         u.set_MR(True, evsel0=args.evsel0, evsel1=args.evsel0+1, MR10DEC=args.MR10DEC)
+         u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0), 'GPG')
+         u.s0.set_knob('SIG_EVENT_SRC_{}'.format(args.evsel0+1), 'GPG')
+         u.s0.GPG_ENABLE = '1'
     if args.force_training: 
         u.s0.acq480_force_training = '1'
-
-    u.wrtt0 = int(u.cC.WR_WRTT0_COUNT.split(" ")[1])
 
 def tee_up_mt_action(u, args):
     def _tee_up_mt_action():
@@ -192,14 +215,13 @@ def tee_up_mt(args):
         t.join()
         
 
-        
+@Debugger        
 @timing
 def tee_up(args):
     master = args.uuts[0]
-    with open_safe(args.stl, 'r') as fp:
-        args.stl = fp.read()
 
-    args.lit_stl = denormalise_stl(args)
+    if args.MR:
+        denormalise_stl(args)
 
     master.s0.SIG_SRC_TRG_0 = NONE
 
@@ -210,6 +232,9 @@ def tee_up(args):
         master.cC.WRTD_DELTA_NS = args.WRTD_DELTA_NS
         master.cC.wrtd_commit_tx = 1
         args.rt = allows_one_wrtd(master)
+    elif trg0_src[0] == "TXI":
+        master.s0.SIG_SRC_TRG_0 = "WRTT0"
+        args.rt = do_immediate_trigger(master);
     else:
         master.s0.SIG_SRC_TRG_0 = 'EXT'
         args.rt = selects_trg_src(master, args.trg0_src)
@@ -235,14 +260,15 @@ def post_shot_checks(args):
     
     report = [ "wrtt0 count:" ]
     for u in args.uuts:
-            report.append("{} {}".format(u.wrtt0_after, "OK" if u.wrtt0_after == u.wrtt0+1 else "FAIL"))
+            report.append("{}->{} {}".format(u.wrtt0, u.wrtt0_after, "OK" if u.wrtt0_after == u.wrtt0+1 else "FAIL"))
     print(" ".join(report))
        
 @timing
 def arm_shot(args, shot_controller):
     shot_controller.prep_shot()
     shot_controller.arm_shot()
-    
+   
+@Debugger 
 @timing
 def run_capture(args, shot_controller):
     args.rt()
@@ -299,11 +325,14 @@ def run_main():
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     acq400_hapi.ShotControllerUI.add_args(parser)
     parser.add_argument(
+        '--MR', default=1, type=int, help="0: do not enable MR, normal trigger applies")
+    parser.add_argument(
         '--stl', default='./STL/acq2106_mr00.stl', type=str, 
         help='stl file')
     parser.add_argument(
         '--Fclk', default=40*intSI.DEC.M, action=intSIAction, 
         help="base clock frequency")
+    parser.add_argument('--debug', default=0, type=int, help="1: trace 2: step")
     parser.add_argument('--WRTD_DELTA_NS', default=50*intSI.DEC.M, action=intSIAction, help='WRTD trigger delay')
     parser.add_argument('--trg0_src', default="EXT", help="trigger source, def:EXT opt: WRTT0, WRTT0,RP")
     parser.add_argument('--tune_si5326', default=1, type=int, help="tune_si5326 (takes 60s), default:1")
@@ -327,7 +356,10 @@ def run_main():
             '--clear_any_units_found_in_arm', default=0, type=int, 
             help="set true to clear any locked units on new shot. default is to leave them for inspection")
     parser.add_argument('uutnames', nargs='+', help="uuts")
-    run_mr(parser.parse_args())
+    args = parser.parse_args()
+    if args.debug:
+        Debugger.enabled = args.debug
+    run_mr(args)
 
 
 # execution starts here
