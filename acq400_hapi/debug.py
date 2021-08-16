@@ -27,7 +27,7 @@ class Debugger(object):
             logger.debug('{} {} {} {}'.format("===>" * self.stack_level, "Enter" if Debugger.enabled > 2 else "Entering", self.func.__name__, args, kwargs))
             
             if Debugger.enabled > 2:
-                inp = input("q/C?")
+                inp = input("Enter {}() q/C?".format(self.func.__name__))
                 if inp == 'q':
                     exit(1)
                     
@@ -37,7 +37,7 @@ class Debugger(object):
             logger.debug('{} returned : {}'.format(self.func.__name__, rc))
             if self.enabled > 1:
                 logger.debug('Exit : {}'.format(self.func.__name__))
-                inp = input("q/C?")
+                inp = input("Exit {}() q/C?".format(self.func.__name__))
                 if inp == 'q':
                     exit(1)
             Debugger.stack_level = Debugger.stack_level - 1
