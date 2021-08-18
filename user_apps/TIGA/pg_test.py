@@ -109,7 +109,7 @@ def pg_test1(args, uut, site):
     site_svc = uut.svc['s{}'.format(site)]
     site_svc.GPG_ENABLE = 0
     if args.trg != 'NOTOUCH':
-        site_svc.trg = '1,0,1'
+        site_svc.trg = args.trg
     if args.tscale:
         site_svc.gpg_timescaler = int(args.tscale)
     uut.load_dio482pg(site, args.STL[site], trace=args.stl_trace)
