@@ -78,6 +78,7 @@ def get_args():
     parser.add_argument('--tscale', default=None, help='set gpg_timescaler')
     parser.add_argument('--stl', default=1, help='canned stl 1,2 or @file, possible entry per site')
     parser.add_argument('--stl_trace', default=0, help='trace stl load')
+    parser.add_argument('--trg', default='1,0,1', help='set trigger, default WRTT0, NOTOUCH to leave it')
     parser.add_argument('uut', nargs='+', help="uuts")
     args = parser.parse_args()
     args.sites = args.site.split(',')
@@ -107,6 +108,8 @@ def get_args():
 def pg_test1(args, uut, site):
     site_svc = uut.svc['s{}'.format(site)]
     site_svc.GPG_ENABLE = 0
+    if args.trg != 'NOTOUCH':
+        site_svc.trg = '1,0,1'
     if args.tscale:
         site_svc.gpg_timescaler = int(args.tscale)
     uut.load_dio482pg(site, args.STL[site], trace=args.stl_trace)
