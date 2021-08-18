@@ -748,6 +748,12 @@ class Acq400:
 
     def load_wrpg(self, stl, trace = False):
         self.load_stl(stl, AcqPorts.WRPG, trace)
+        
+    def load_dio482pg(self, site, stl, trace = False):
+        self.load_stl(stl, AcqPorts.DIO482_PG_STL+int(site)*10, trace)
+        
+    def set_DO(self, site, dox, value = 'P'):
+        self.svc["s{}".format(site)].set_knob("DO_{}".format(dox), value)        
 
     class AwgBusyError(Exception):
         def __init__(self, value):
