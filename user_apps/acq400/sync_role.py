@@ -17,8 +17,6 @@ def expand_role(args, urole):
     # fpmaster,strg     # fpclk, strg
     # master            # mbclk, strg
     # master,fptrg      # mbclk, fptrg
-
-
        
     if urole == "fpmaster" or urole == "master,fptrg":
         args.external_trigger = True
@@ -26,19 +24,18 @@ def expand_role(args, urole):
         args.external_trigger = False
 
     if urole == "fpmaster,strg":
-        args.postfix.append("TRG:DX=d1")
-        return "fpmaster"
-    if urole == "master,fptrg":
+        args.postfix.append("TRG:DX=d1")        
+    elif urole == "master,fptrg":
         args.postfix.append("TRG:DX=d0")
-        return "master"
+        
     args.postfix.append("TRG:SENSE={}".format(args.trgsense))
-    return urole
+    return urole.split(",")[0]
 
 def configure_slave(name, args, postfix):
     slave = acq400_hapi.Acq400(name)
     slave.s0.sync_role = "{} {} {} {}".format('slave', args.fclk, args.fin, " ".join(postfix))
 
-def run_shot(args):
+def set_sync_role(args):
     master = acq400_hapi.Acq400(args.uuts[0])
     if args.enable_trigger == 1:
         master.enable_trigger()
@@ -84,7 +81,7 @@ def run_main():
     parser.add_argument('--clkdiv', default=None, help="optional clockdiv")
     parser.add_argument('--trgsense', default='rising', help="trigger sense rising unless falling specified")
     parser.add_argument('uuts', nargs='+', help="uut ")
-    run_shot(parser.parse_args())
+    set_sync_role(parser.parse_args())
 
 
 
