@@ -262,7 +262,7 @@ def run_shots(args):
         print("offload {} buffers from uut".format(args.offloadblocks_count))
     
     uut.s14.mgt_taskset = '1'
-    if args.validate != 'no':
+    if args.validate == 'yes' or args.validate == '1':
         for s in uut.modules:
             uut.modules[s].simulate = 1
     try:
