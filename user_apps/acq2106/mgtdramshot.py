@@ -49,7 +49,6 @@ import sys
 import datetime
 import acq400_hapi
 import argparse
-from subprocess import call
 import re
 if sys.version_info < (3, 0):
     from future import builtins
@@ -63,6 +62,8 @@ try:
 except:
     HAS_PLOT = False
 import time
+
+import multiprocessing as mp
 
 LOG = None
 
@@ -242,13 +243,15 @@ def run_offload(uut, args, shot):
 def run_shots(args):
     global LOG
     global _logprint
+    print("run_shots {}".format(args))
     _logprint = args.logprint
     global uut_name
-    uut_name = args.uut[0]
+    uut_name = args.uut
     nbytes = 0
 
-    LOG = open("mgtdramshot-{}.log".format(args.uut[0]), "w")
-    uut = acq400_hapi.Acq2106_Mgtdram8(args.uut[0])
+    print("run_shots {}".format(args.uut))
+    LOG = open("mgtdramshot-{}.log".format(args.uut), "w")
+    uut = acq400_hapi.Acq2106_Mgtdram8(args.uut)
     acq400_hapi.Acq400UI.exec_args(uut, args)
 
     if args.captureblocks != 0:
@@ -301,6 +304,64 @@ def run_shots(args):
 
     os._exit(0)
 
+def run_shots1(targs):
+    sys.stdout = open("mgtdram_{}.log".format(targs.uut), "a")
+    return run_shots(targs)
+
+import copy
+
+def trigger_when_armed(args):
+    uuts = [ acq400_hapi.factory(u) for u in args.uuts]
+    top = uuts[0]
+        
+    all_armed = False
+    time.sleep(5)
+    while not all_armed:
+        print("checking")
+        #armed = [ acq400_hapi.Acq400.pv(u.s0.BLT_ACT_STATE) for u in uuts ]
+        armed = [ u.s0.BLT_ACT_STATE for u in uuts ]        
+        print("hello {}".format(armed))
+        arm_count = 0
+        for s in armed:
+            if s.find("ARM") != -1:
+                arm_count += 1
+                  
+        if arm_count == len(args.uuts):
+            all_armed = True
+        else:
+            time.sleep(0.5)
+     
+    top.s0.SIG_SRC_TRG_0 = 'EXT'    
+
+def prep_many(args):
+    uuts = [ acq400_hapi.factory(u) for u in args.uuts]
+    top = uuts[0]
+    
+    if args.shot is not None:
+        for u in uuts:
+            u.s1.shot = args.shot
+    top.s0.SIG_SRC_TRG_0 = 'NONE'
+    top.s0.SIG_SYNC_OUT_TRG_DX = 'd0'
+        
+def control_many(args):
+    prep_many(args)
+    ps = []
+#    ps = [mp.Process(target=trigger_when_armed, args=(args,))]
+    u_args = [ copy.copy(args) for u in args.uuts ]
+    for ix, u in enumerate(args.uuts):
+        u_args[ix].uut = u
+        print("ps.append {} {}".format(ix, u))
+        ps.append(mp.Process(target=run_shots1, args=(u_args[ix],)))
+         
+    print("start me up")
+    
+    for p in ps:
+        p.start()
+
+    print("all started")
+   
+    for p in ps:
+        p.join()
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq2106 mgtdram test')
@@ -318,17 +379,26 @@ def run_main():
                         help="1: wait for some external agent to run the shot, then offload all")
     parser.add_argument('--save_data', type=int, default=1,
                         help='Whether or not to save data to a file in 4MB chunks. Default: 0.')
+    parser.add_argument('--shot', type=int, default=None, help="set a shot number")
+    parser.add_argument('--twa', type=int, default=None, help="trigger_when_armed")
 
     parser.add_argument('--logprint', type=int, default=1,
                               help='1: Print log messages. '
                               '2: Save reduced log to log file.')
 
-    parser.add_argument('uut', nargs=1, help="uut ")
+    parser.add_argument('uuts', nargs='+', help="uut ")
     args = parser.parse_args()
+    
     if args.wait_shot > 0:
         args.captureblocks = 0
-        
-    run_shots(args)
+       
+    if args.twa:
+        trigger_when_armed(args)
+    elif len(args.uuts) > 1:
+        control_many(args)
+    else:
+        args.uut = args.uuts[0]
+        run_shots(args)
 
 # execution starts here
 
