@@ -34,9 +34,12 @@ def expand_role(args, urole):
 def configure_slave(name, args, postfix):
     slave = acq400_hapi.Acq400(name)
     slave.s0.sync_role = "{} {} {} {}".format('slave', args.fclk, args.fin, " ".join(postfix))
+    if args.downstream_bypass:
+        slave.s0.SYS_CLK_BYPASS = 1
 
 def set_sync_role(args):
     master = acq400_hapi.Acq400(args.uuts[0])
+    
     if args.enable_trigger == 1:
         master.enable_trigger()
         return
@@ -49,6 +52,9 @@ def set_sync_role(args):
     master.s0.sync_role = "{} {} {} {}".format(expand_role(args, args.toprole),
                                             args.fclk, args.fin if not args.toprole=="master" else "", 
                                             " ".join(args.postfix), " ".join(postfix))
+    
+    if args.downstream_bypass:
+        master.s0.SIG_SYNC_OUT_CLK_DX = 'd1'
 
     if args.external_trigger and len(args.uuts) > 1:
         master.disable_trigger()
@@ -79,6 +85,7 @@ def run_main():
     parser.add_argument('--fclk', default='1000000', help="sample clock rate")
     parser.add_argument('--fin',  default='1000000', help="external clock rate")
     parser.add_argument('--clkdiv', default=None, help="optional clockdiv")
+    parser.add_argument('--downstream_bypass', default=0, type=int, help="provide full rate clock downstream")
     parser.add_argument('--trgsense', default='rising', help="trigger sense rising unless falling specified")
     parser.add_argument('uuts', nargs='+', help="uut ")
     set_sync_role(parser.parse_args())
