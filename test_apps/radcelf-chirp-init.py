@@ -99,7 +99,7 @@ def last_write(dds, crx):
     return do_last_write
 
 @Debugger        
-def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
+def init_chirp(uut, ddsX, chirps_per_sec=5.0, gps_sync=True):
     dds = uut.ddsA if ddsX == GPS_SYNC_DDSA else uut.ddsB
     
     crx = 12
@@ -298,7 +298,7 @@ def run_main():
     parser.add_argument('--use_dds_on_first_uut_only', default=0, type=int, help="default: all uuts configure their own DDS, 1: set first uut only .. second could be, for example, an hdmi slave.")    
     parser.add_argument('uuts', nargs='*', default=["localhost"], help="uut")
     args = parser.parse_args()
-    cps = [ int(x) for x in args.chirps_per_sec.split(',')]
+    cps = [ float(x) for x in args.chirps_per_sec.split(',')]
     if len(cps) == 2:
         args.cps = cps
     else:
