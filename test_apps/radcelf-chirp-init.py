@@ -59,9 +59,9 @@ GPS_SYNC_DDSX = 0x3
     
 @Debugger
 def set_upd_clk_fpga(uut, ddsX, value):
-    if ddsX == GPS_SYNC_DDSA:
+    if ddsX&GPS_SYNC_DDSA:
         uut.s2.ddsA_upd_clk_fpga = value
-    else:
+    if ddsX&GPS_SYNC_DDSB:    
         uut.s2.ddsB_upd_clk_fpga = value
 
 @Debugger
@@ -90,6 +90,14 @@ def init_remapper(uut):
         uut.ddsC.FTW1 = AD9854.ratio2ftw(1.0/12.0)         
 
 
+LASTWRITES = []
+
+def last_write(dds, crx):
+    @Debugger
+    def do_last_write():
+        dds.CR = acq400_hapi.AD9854.CRX(crx, mode=AD9854.CR.chirp_en)    # '004C8761'
+    return do_last_write
+
 @Debugger        
 def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
     dds = uut.ddsA if ddsX == GPS_SYNC_DDSA else uut.ddsB
@@ -110,16 +118,7 @@ def init_chirp(uut, ddsX, chirps_per_sec=5, gps_sync=True):
     dds.IPDMR = '0FFF'
     dds.QPDMR = '0FFF'
     
-    if gps_sync:                                        # new synchronized start
-        set_upd_clk_fpga(uut, ddsX, '0')                    # Final value strobed in by PPS linked IOUPDATE
-        
-    dds.CR = acq400_hapi.AD9854.CRX(crx, mode=AD9854.CR.chirp_en)     # '004C8761'
-    
-    if not gps_sync:                                    # legacy free-starting chirp
-        set_upd_clk_fpga(uut, ddsX, '0')                    # IOUPDATE is now an INPUT 
-   
-
-
+    LASTWRITES.append(last_write(dds, crx))             # Final value set in appropriate update mode.
 
 @Debugger
 def init_trigger(uut, dx='ddsA'):
@@ -225,6 +224,15 @@ def init_dual_chirp(args, uut):
     if args.ddsX&GPS_SYNC_DDSB:
         init_chirp(uut, GPS_SYNC_DDSB, chirps_per_sec=args.cps[1], gps_sync=args.gps_sync!=0)
     
+    if gps_sync:                                        # new synchronized start
+        set_upd_clk_fpga(uut, args.ddsX, '0')                    # Final value strobed in by PPS linked IOUPDATE
+        
+    for lw in LASTWRITES:
+        lw()
+    
+    if not gps_sync:
+        set_upd_clk_fpga(uut, args.ddsX, '0')                    # IOUPDATE is now an INPUT  
+        
     gps_sync(uut, ddsX=args.ddsX, gps_sync_chirp_en=args.gps_sync)
     
 
