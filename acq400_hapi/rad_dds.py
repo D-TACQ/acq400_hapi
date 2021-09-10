@@ -28,6 +28,8 @@ class AD9854:
         regular_en = '0061'
         chirp_en   = '8761'
         low_power  = '0041'
+        power_down = '1F000001'
+        zero_hz = '00044041'
         
     @staticmethod
     # CR for clock * n
@@ -51,6 +53,14 @@ class AD9854:
     @staticmethod
     def CRX_chirp_off(n = 4):
         return '{:08x}'.format(int(n << 16) | int(AD9854.CR.low_power, 16))
+    
+    @staticmethod
+    def CRX_zero_hz():
+        return AD9854.CR.zero_hz
+    
+    @staticmethod
+    def CRX_power_down():
+        return AD9854.CR.power_down
   
 class AD9512:
     class DIVX:

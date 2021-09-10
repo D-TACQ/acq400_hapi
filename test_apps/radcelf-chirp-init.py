@@ -151,22 +151,42 @@ def gps_sync(uut, ddsX=GPS_SYNC_DDSX, gps_sync_chirp_en=False, hold_en=False):
         _gps_sync(uut.ddsA, gps_sync_chirp_en, hold_en)
     if ddsX&GPS_SYNC_DDSB:
         _gps_sync(uut.ddsB, gps_sync_chirp_en, hold_en)
-
+  
 
 @Debugger
-def reset_counters(uut):  
-    uut.s0.SIG_TRG_S2_RESET = 1
-    uut.s0.SIG_TRG_S3_RESET = 1    
-    
-@Debugger
-def chirp_off(uut): 
-    uut.ddsA.CR = AD9854.CRX_chirp_off()      
-    uut.ddsB.CR = AD9854.CRX_chirp_off()
-    
-    while uut.chirp_freq(0) != 0 and uut.chirp_freq(1) != 0:
-        print("waiting for chirp to stop {} {}".format(uut.chirp_freq(0), uut.chirp_freq(1)))
+def power_down(uut, ddsX):
+    if ddsX&GPS_SYNC_DDSA:    
+        uut.ddsA.CR = AD9854.CRX_power_down()
+    if ddsX&GPS_SYNC_DDSB:      
+        uut.ddsB.CR = AD9854.CRX_power_down()
         
-    reset_counters(uut)           
+@Debugger
+def chirp_off(uut, ddsX): 
+    # if chirping, then the DDS self-ioupdates the register writes
+    if ddsX&GPS_SYNC_DDSA:
+        uut.ddsA.CR = AD9854.CRX_chirp_off()                    
+    if ddsX&GPS_SYNC_DDSB:
+        uut.ddsB.CR = AD9854.CRX_chirp_off()
+
+    if ddsX&GPS_SYNC_DDSA:        
+        while uut.chirp_freq(0) != 0:
+            print("waiting for chirp {} to stop {}".format('A', uut.chirp_freq(0)))
+        uut.s0.SIG_TRG_S2_RESET = 1
+         
+        
+               
+    if ddsX&GPS_SYNC_DDSB:
+        while uut.chirp_freq(1) != 0:
+            print("waiting for chirp {} to stop {}".format('B', uut.chirp_freq(1)))
+        uut.s0.SIG_TRG_S3_RESET = 1   
+    
+    # no longer chirping, assert FPGA control of IOUPDATE    
+    set_upd_clk_fpga(uut, ddsX, 1)
+    # and now disable the clock.
+    if ddsX&GPS_SYNC_DDSA:
+        uut.ddsA.CR = AD9854.CRX_zero_hz()                    
+    if ddsX&GPS_SYNC_DDSB:
+        uut.ddsB.CR = AD9854.CRX_zero_hz()   
        
 @Debugger
 def radcelf_init(uut, legacy):
@@ -251,9 +271,12 @@ def run_test(args):
                         
         for uut in m_uuts:            
             init_trigger(uut, dx=args.trigger_adc_dx)
-            chirp_off(uut)
+            chirp_off(uut, args.ddsX)
             
         if args.stop or (args.cps[0] and args.cps[1] == 0):
+            if args.power_down:
+                for uut in m_uuts:
+                    power_down(uut, args.ddsX)
             break
         
         for uut in uuts:
@@ -293,6 +316,7 @@ def run_main():
     parser.add_argument('--gps_sync', default=0, type=int, help=">0: synchronize with GPSPPS >1: autotrigger at + gps_sync s")
     parser.add_argument('--chirps_per_sec', default='5', help="chirps per second A[,B]")
     parser.add_argument('--stop', action="store_true", help="--stop uuts : stop chirp and quit [no value]")
+    parser.add_argument('--power_down', action="store_true", help="--power_down uuts : turn DDS off")
     parser.add_argument('--trigger_adc_dx', default='ddsA', help="trigger ACQ on ddsA or ddsB or dX [X=0,1,2,3,4,5,6]")    
     parser.add_argument('--init_trigger', action="store_true", help="--init_trigger : configure trigger only")
     parser.add_argument('--use_dds_on_first_uut_only', default=0, type=int, help="default: all uuts configure their own DDS, 1: set first uut only .. second could be, for example, an hdmi slave.")    
