@@ -30,11 +30,14 @@ class AD9854:
         low_power  = '0041'
         power_down = '1F000001'
         zero_hz = '00044041'
+
+        CLR_ACC2 = 1<<14
         
     @staticmethod
     # CR for clock * n
-    def CRX(n = 4, mode=CR.low_power):            
-        return '{:08x}'.format(int(n << 16) | int(mode, 16))
+    def CRX(n = 4, mode=CR.low_power, clr_acc2=False): 
+        ca2 = AD9854.CR.CLR_ACC2 if clr_acc2 else 0           
+        return '{:08x}'.format(int(n << 16) | int(mode, 16) | ca2)
         
     @staticmethod
     # UCR for chirps_per_sec
@@ -55,11 +58,11 @@ class AD9854:
         return '{:08x}'.format(int(n << 16) | int(AD9854.CR.low_power, 16))
     
     @staticmethod
-    def CRX_zero_hz():
+    def CRX_zero_hz(clr_acc2=True):
         return AD9854.CR.zero_hz
     
     @staticmethod
-    def CRX_power_down():
+    def CRX_power_down(clr_acc2=True):
         return AD9854.CR.power_down
   
 class AD9512:
@@ -103,7 +106,14 @@ class RAD3DDS(acq400.Acq400):
         knob = 0
     
     def chirp_freq(self, idds):
-        return acq400.Acq400.freq(self.s0.get_knob('SIG_TRG_S2_FREQ' if idds==0 else 'SIG_TRG_S3_FREQ'))
+        # idds 0: A, 1: B
+        assert idds >= 0 and idds <= 1
+        return acq400.Acq400.freq(self.s0.get_knob('SIG_TRG_S{}_FREQ'.format(2+idds)))
+                                  
+    def dds_freq(self, idds):
+        # idds 0: A, 1: B, 2: C
+        assert idds >= 0 and idds <= 2 
+        return acq400.Acq400.freq(self.s0.get_knob('SIG_CLK_S{}_FREQ'.format(3+idds)))
     
     def radcelf_init(self):
         # port of original RADCELF_init shell script

@@ -58,11 +58,18 @@ GPS_SYNC_DDSX = 0x3
 
     
 @Debugger
-def set_upd_clk_fpga(uut, ddsX, value):
-    if ddsX&GPS_SYNC_DDSA:
-        uut.s2.ddsA_upd_clk_fpga = value
+def set_upd_clk_fpga(uut, ddsX, fpga_control):
+    if ddsX&GPS_SYNC_DDSA and ddsX&GPS_SYNC_DDSB:
+        uut.s2.ddsA_upd_clk_fpga = fpga_control
+        uut.s2.ddsB_upd_clk_fpga = fpga_control
+    elif ddsX&GPS_SYNC_DDSA:
+        uut.s2.ddsA_upd_clk_fpga = fpga_control
+        if not fpga_control:
+            uut.s2.ddsB_upd_clk_fpga = 0
     if ddsX&GPS_SYNC_DDSB:    
-        uut.s2.ddsB_upd_clk_fpga = value
+        uut.s2.ddsB_upd_clk_fpga = fpga_control
+        if not fpga_control:
+            uut.s2.ddsA_upd_clk_fpga = 0        
 
 @Debugger
 def set_arm_pps(uut, ddsX):    
@@ -99,7 +106,7 @@ def last_write(dds, crx):
     return do_last_write
 
 @Debugger        
-def init_chirp(uut, ddsX, chirps_per_sec=5.0, gps_sync=True):
+def init_chirp(uut, ddsX, chirps_per_sec=5.0, gps_sync=True, noidletone=False):
     dds = uut.ddsA if ddsX == GPS_SYNC_DDSA else uut.ddsB
     
     crx = 12
@@ -109,8 +116,8 @@ def init_chirp(uut, ddsX, chirps_per_sec=5.0, gps_sync=True):
         intclk = 180e6
         print("MTYPE 70 detected, setting crx {} intclk {}".format(crx, intclk))
 
-    set_upd_clk_fpga(uut, ddsX, '1')                    # Values are strobed in with normal FPGA IOUPDATE
-    dds.CR = acq400_hapi.AD9854.CRX(crx)
+    set_upd_clk_fpga(uut, ddsX, 1)                    # Values are strobed in with normal FPGA IOUPDATE
+    dds.CR = acq400_hapi.AD9854.CRX(crx, clr_acc2=noidletone)
     dds.FTW1 = '172B020C49BA'
     dds.DFR = '0000000021D1'
     dds.UCR =  acq400_hapi.AD9854.UCR(chirps_per_sec, intclk=intclk-1) 
@@ -172,9 +179,7 @@ def chirp_off(uut, ddsX):
         while uut.chirp_freq(0) != 0:
             print("waiting for chirp {} to stop {}".format('A', uut.chirp_freq(0)))
         uut.s0.SIG_TRG_S2_RESET = 1
-         
-        
-               
+      
     if ddsX&GPS_SYNC_DDSB:
         while uut.chirp_freq(1) != 0:
             print("waiting for chirp {} to stop {}".format('B', uut.chirp_freq(1)))
@@ -182,11 +187,14 @@ def chirp_off(uut, ddsX):
     
     # no longer chirping, assert FPGA control of IOUPDATE    
     set_upd_clk_fpga(uut, ddsX, 1)
-    # and now disable the clock.
+    # and now disable the clock. run in a loop to cover the case of "zero initial chirps"
     if ddsX&GPS_SYNC_DDSA:
-        uut.ddsA.CR = AD9854.CRX_zero_hz()                    
+        while uut.dds_freq(0) > 0:
+            uut.ddsA.CR = AD9854.CRX_zero_hz()                    
     if ddsX&GPS_SYNC_DDSB:
-        uut.ddsB.CR = AD9854.CRX_zero_hz()   
+        while uut.dds_freq(1) > 0:
+            uut.ddsB.CR = AD9854.CRX_zero_hz() 
+      
        
 @Debugger
 def radcelf_init(uut, legacy):
@@ -239,19 +247,19 @@ def init_dual_chirp(args, uut):
     gps_sync(uut, gps_sync_chirp_en=args.gps_sync, hold_en=True)
     
     if args.ddsX&GPS_SYNC_DDSA:
-        init_chirp(uut, GPS_SYNC_DDSA, chirps_per_sec=args.cps[0], gps_sync=args.gps_sync!=0)
+        init_chirp(uut, GPS_SYNC_DDSA, chirps_per_sec=args.cps[0], gps_sync=args.gps_sync!=0, noidletone=args.noidletone)
         
     if args.ddsX&GPS_SYNC_DDSB:
-        init_chirp(uut, GPS_SYNC_DDSB, chirps_per_sec=args.cps[1], gps_sync=args.gps_sync!=0)
+        init_chirp(uut, GPS_SYNC_DDSB, chirps_per_sec=args.cps[1], gps_sync=args.gps_sync!=0,noidletone=args.noidletone)
     
-    if gps_sync:                                        # new synchronized start
-        set_upd_clk_fpga(uut, args.ddsX, '0')                    # Final value strobed in by PPS linked IOUPDATE
+    if args.gps_sync:                                        # new synchronized start
+        set_upd_clk_fpga(uut, args.ddsX, 0)                    # Final value strobed in by PPS linked IOUPDATE
         
     for lw in LASTWRITES:
         lw()
     
-    if not gps_sync:
-        set_upd_clk_fpga(uut, args.ddsX, '0')                    # IOUPDATE is now an INPUT  
+    if not args.gps_sync:
+        set_upd_clk_fpga(uut, args.ddsX, 0)                    # IOUPDATE is now an INPUT  
         
     gps_sync(uut, ddsX=args.ddsX, gps_sync_chirp_en=args.gps_sync)
     
@@ -314,6 +322,7 @@ def run_main():
     parser.add_argument('--noverify', default=0, type=int, help="do not verify (could be waiting gps)")
     parser.add_argument('--ddsX', default=0x3, type=int, help="ddsA=1, ddsB=2, ddsA+ddsB=3")
     parser.add_argument('--gps_sync', default=0, type=int, help=">0: synchronize with GPSPPS >1: autotrigger at + gps_sync s")
+    parser.add_argument('--noidletone', action="store_true", help="suppress tone output until trigger")
     parser.add_argument('--chirps_per_sec', default='5', help="chirps per second A[,B]")
     parser.add_argument('--stop', action="store_true", help="--stop uuts : stop chirp and quit [no value]")
     parser.add_argument('--power_down', action="store_true", help="--power_down uuts : turn DDS off")
