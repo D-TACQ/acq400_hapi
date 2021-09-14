@@ -35,9 +35,11 @@ def run_faultmon(args):
         print("shot {}".format(shot))
         pv_trg0_src.put("NONE")
         pv_arm.put(1)
-        time.sleep(20)
+        time.sleep(10)
+        print("Set FG to BURST")
+        time.sleep(10)
         pv_trg0_src.put("EXT")
-        while pv_state.get() != "IDLE":
+        while pv_state.get() != 0:
             print("wait IDLE")
             time.sleep(1)
 
