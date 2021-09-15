@@ -17,6 +17,7 @@ from acq400_hapi import AD9854
 import argparse
 import time
 from builtins import int
+from datetime import datetime
 
 def web_message(message):
     print("web_message {} {}".format(type(message), message))
@@ -63,40 +64,50 @@ def process_last(args, line):
 # NB: MUST not be too quick for the counter, which is itself quite slow..
     #print(line)
     mfdata = {}
+    errs = []
     for pair in line.split():
         #print(pair)
         (key, value) = pair.split("=")
         mfdata[key] = float(value)
         
     err = mfdata['m1'] - args.fclk
-    print("M1 error {}".format(err))
+    errs.append(('m1', err))
+    
     if abs(err) > 1:
-        print("control m1")
+        print("M1 error {}".format(err))
         control(args, err/args.fclk, KP)
         return 2
 
     err = mfdata['m10'] - args.fclk
-    print("M10 error {}".format(err))
+    errs.append(('m10', err))
+   
     if abs(err) > 0.2:
-        print("control m10")
+        print("M10 error {}".format(err))
         control(args, err/args.fclk, KP*0.6)
         return 10
 
     err = mfdata['m30'] - args.fclk
-    print("M30 error {}".format(err))
+    errs.append(('m30', err))
+    
     if  abs(err) > 0.031:
-        print("control m30")
+        print("M30 error {}".format(err))
         control(args, err/args.fclk, KP*0.4)
         return 30        
 
     err = mfdata['m100'] - args.fclk
-    print("M100 error {}".format(err))
+    errs.append(('m100', err))
+    
     if  abs(err) > 0.011:
-        print("control m100")
+        print("M100 error {}".format(err))
         control(args, err/args.fclk, KP*0.25)
         return 100
     
     if args.fine:
+        now = datetime.now()
+        print("{}: errs:".format(now.strftime("%y%m%d:%H:%M.%S")), end="")
+        for label, err in errs:
+            print("{:4} {:5.2f}, ".format(label, err), end="")
+        print("")
         return 100
     
     print("TARGET Achieved, quitting...")
