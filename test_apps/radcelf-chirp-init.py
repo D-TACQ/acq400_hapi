@@ -229,6 +229,19 @@ def verify_chirp(uut, test):
 
     return False
 
+def pv(s):
+    return int(float(acq400_hapi.Acq400.pv(s)))
+
+def monitor_dds(uut, D):
+    if D == 'A':
+        return "dds{} f1:{} chirp:{}".format(D, pv(uut.s0.SIG_CLK_S3_FREQ), pv(uut.s0.SIG_TRG_S2_FREQ))
+    if D == 'B':
+        return "dds{} f1:{} chirp:{}".format(D, pv(uut.s0.SIG_CLK_S4_FREQ), pv(uut.s0.SIG_TRG_S3_FREQ))
+    else:
+        return Null 
+def monitor(uut):
+    print("uut:{}  {} {}".format(uut.uut, monitor_dds(uut, 'A'), monitor_dds(uut, 'B')))
+          
 def wait_arm(uut):
     counter = 0
     while acq400_hapi.pv(uut.s0.CONTINUOUS_STATE) != "ARM":
@@ -312,6 +325,11 @@ def run_test(args):
             for uut in m_uuts:
                 verify_chirp(uut, test)
                 
+    while args.monitor:  
+        for uut in uuts:
+            monitor(uut)
+            time.sleep(1)
+                
 
 
 def run_main():
@@ -328,7 +346,8 @@ def run_main():
     parser.add_argument('--power_down', action="store_true", help="--power_down uuts : turn DDS off")
     parser.add_argument('--trigger_adc_dx', default='ddsA', help="trigger ACQ on ddsA or ddsB or dX [X=0,1,2,3,4,5,6]")    
     parser.add_argument('--init_trigger', action="store_true", help="--init_trigger : configure trigger only")
-    parser.add_argument('--use_dds_on_first_uut_only', default=0, type=int, help="default: all uuts configure their own DDS, 1: set first uut only .. second could be, for example, an hdmi slave.")    
+    parser.add_argument('--use_dds_on_first_uut_only', default=0, type=int, help="default: all uuts configure their own DDS, 1: set first uut only .. second could be, for example, an hdmi slave.")
+    parser.add_argument('--monitor', default=0, type=int, help="monitor COUNT : monitors ddsA, ddsB COUNT times")    
     parser.add_argument('uuts', nargs='*', default=["localhost"], help="uut")
     args = parser.parse_args()
     cps = [ float(x) for x in args.chirps_per_sec.split(',')]
