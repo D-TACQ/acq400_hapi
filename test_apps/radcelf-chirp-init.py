@@ -287,8 +287,9 @@ def run_test(args):
 
     for test in range(0, args.test):
          
-        for uut in uuts:
-            uut.s0.CONTINUOUS = '0'     
+        if not args.ignore_adc:
+            for uut in uuts:
+                uut.s0.CONTINUOUS = '0'     
                         
         for uut in m_uuts:            
             init_trigger(uut, dx=args.trigger_adc_dx)
@@ -300,12 +301,11 @@ def run_test(args):
                     power_down(uut, args.ddsX)
             break
         
-        for uut in uuts:
-            arm_uut(uut)
-            
-        for uut in uuts:
-            wait_arm(uut)
-
+        if not args.ignore_adc: 
+            for uut in uuts:
+                arm_uut(uut)            
+            for uut in uuts:
+                wait_arm(uut)
             
         for uut in m_uuts:
             init_dual_chirp(args, uut)            
@@ -343,7 +343,8 @@ def run_main():
     parser.add_argument('--noidletone', action="store_true", help="suppress tone output until trigger")
     parser.add_argument('--chirps_per_sec', default='5', help="chirps per second A[,B]")
     parser.add_argument('--stop', action="store_true", help="--stop uuts : stop chirp and quit [no value]")
-    parser.add_argument('--power_down', action="store_true", help="--power_down uuts : turn DDS off")
+    parser.add_argument('--power_down', action="store_true", help="--power_down uuts : turn DDS off, use after --stop")
+    parser.add_argument('--ignore_adc', action="store_true", help="start the chirp but do not stop or start a capture")
     parser.add_argument('--trigger_adc_dx', default='ddsA', help="trigger ACQ on ddsA or ddsB or dX [X=0,1,2,3,4,5,6]")    
     parser.add_argument('--init_trigger', action="store_true", help="--init_trigger : configure trigger only")
     parser.add_argument('--use_dds_on_first_uut_only', default=0, type=int, help="default: all uuts configure their own DDS, 1: set first uut only .. second could be, for example, an hdmi slave.")
