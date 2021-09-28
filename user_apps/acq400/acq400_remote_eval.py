@@ -57,8 +57,8 @@ def remote_eval(args):
 	    cmd = 'u.svc[sx].set_knob(key, value)'
 	else:
             cmd = 'u.svc[sx].get_knob(key)'
-        print(cmd)
-	eval(cmd)
+	rx = eval(cmd)
+	print("{} {} => {}".format(u.uut, cmd, rx))
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400_remote_script')
