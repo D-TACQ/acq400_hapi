@@ -250,6 +250,7 @@ class ShotControllerWithDataHandler(ShotController):
                                 plt.subplot(nchan, ncol, fignum)
                         else:
                             plt.subplot(nchan, ncol, fignum)
+                        plt.suptitle('{} shot {}'.format(args.uuts[0] if len(args.uuts) == 1 else args.uuts, self.uuts[0].s1.shot))
                         plt.plot(chx[col][chn])
                 plt.show()
 
