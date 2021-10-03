@@ -21,10 +21,16 @@ optional arguments:
 import sys
 import acq400_hapi
 import argparse
+import re
 
+back_compat = re.compile('[sg]et.site ([0-9]+) ')
 
 def remote_eval(uuts, expr):
     for u in uuts:
+        m = back_compat.match(expr)
+        if m:
+            expr = re.sub(back_compat, 's{}.'.format(m.group(1)), expr)
+       
         sx, kvp = expr.split('.')
         kvp2 = kvp.split('=')
         key = kvp2[0]
