@@ -16,9 +16,10 @@ class PV_logger(epics.PV):
         print("{}.put({})".format(self.pvname, value))
         super().put(value)
 
-    def get(self):
+    def get(self, verbose=True):
         value = super().get()
-        print("{}.get() => {}".format(self.pvname, value))
+        if verbose:
+            print("{}.get() => {}".format(self.pvname, value))
         return value
 
 def pv_factory(uut):
@@ -60,11 +61,16 @@ def run_faultmon(args):
         print("shot {}".format(shot))
         pv_arm.put(1)
 
-        while pv_state.get() == 0:
+        while True:
+            print("wait BUSY: ", end="")
+            if pv_state.get() != 0:
+                break
             time.sleep(0.5)        
 
-        while pv_state.get() != 0:
-            print("wait IDLE")
+        while True:
+            print("wait IDLE: ", end="")
+            if pv_state.get() == 0:
+                break            
             time.sleep(1)
 
         if args.channels:
@@ -75,9 +81,8 @@ def run_faultmon(args):
 
 def get_args(argStr=None):
     parser = argparse.ArgumentParser(description='PyEPICS faultmon example')
-    acq400_hapi.ShotControllerUI.add_args(parser)
-    parser.add_argument('--pre', default=50000, type=int, help='pre samples')
-    parser.add_argument('--post', default=50000, type=int, help='post samples')
+    acq400_hapi.Acq400UI.add_args(parser, transient=True)
+    acq400_hapi.ShotControllerUI.add_args(parser)    
     parser.add_argument('--shots', default=1, type=int, help='number of shots to run')    
     parser.add_argument('uuts', nargs=1, help="uut")
 

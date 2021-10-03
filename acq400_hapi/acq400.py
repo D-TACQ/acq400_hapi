@@ -642,6 +642,16 @@ class Acq400:
 
         return chx
 
+    def read_transient_timebase(self, nsamples, pre=0):
+        try:
+            fs = freq(self.s1.ACQ480_OSR)
+        except:
+            fs = freq(self.SIG_CLK_S1)
+        if fs > 1e6:
+            isi = 1 / np.round(fs / 1e6, 2) * 1e-6  # interval in seconds
+        else:
+            isi = 1 / np.round(fs / 1e3, 2) * 1e-3  # interval in seconds
+        return np.linspace(-pre*isi, (nsamples-pre)*isi, nsamples)
     # DEPRECATED
     def load_segments(self, segs):
         with netclient.Netclient(self.uut, AcqPorts.SEGSW) as nc:
