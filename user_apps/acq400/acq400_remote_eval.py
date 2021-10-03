@@ -23,53 +23,57 @@ import acq400_hapi
 import argparse
 
 
-def handle_line(uuts, line):
-    if len(line) <= 1 or line.startswith('#'):
-        return
-    for uut in uuts:
-        uut.s0.sr(line)
-
-def remote_script(args):
-    print("WORKTODO DO NOT USE")
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
-
-    if args.trace:
-        for uut in uuts:
-            uut.s0.trace = args.trace
-
-    if args.script == '-':
-        for line in sys.stdin:            
-            handle_line(uuts, line)
-    else:
-        with open(args.script) as f:
-            for line in f:                
-                handle_line(uuts, line)
-
-def remote_eval(args):
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
-
+def remote_eval(uuts, expr):
     for u in uuts:
-        sx, kvp = args.eval.split('.')
+        sx, kvp = expr.split('.')
         kvp2 = kvp.split('=')
         key = kvp2[0]
         if len(kvp2) > 1:
             value = kvp2[1]
             cmd = 'u.svc[sx].set_knob(key, value)'
+            txt = '{}.{}={} st:'.format(sx, key, value)
         else:
             cmd = 'u.svc[sx].get_knob(key)'
+            txt = '{}.{}'.format(sx, key)
         rx = eval(cmd)
-        print("{} {} => {}".format(u.uut, cmd, rx))
+        print("{}:{} => {}".format(u.uut, txt, rx))
+   
+def handle_line(uuts, line):
+    if len(line) <= 1 or line.startswith('#'):
+        return
+    remote_eval(uuts, line)
+                
+def remote_script(uuts, script):
+    if script == '-':
+        print("remote_script from stdin")
+        for line in sys.stdin:            
+            handle_line(uuts, line.strip())
+    else:
+        with open(script) as f:
+            for line in f:                
+                handle_line(uuts, line.strip()) 
+ 
+def remote_script_by_uut(uuts, script):
+    for u in uuts:
+         with open(script) as f:
+            for line in f:                
+                handle_line((u,), line.strip())                 
+                    
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400_remote_script')
     parser.add_argument('-e','--eval', default=None, help="script file [default stdin]") 
-    parser.add_argument('-s','--script', default='-', help="script file [default stdin]")     
+    parser.add_argument('-s','--script', default='-', help="script file [default stdin]")
+    parser.add_argument('--script_by_uut', default=None, help="script file [default stdin]")        
     parser.add_argument('uuts', nargs='+', help="uut[s]")
     args = parser.parse_args()
+    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     if args.eval:
-        remote_eval(args)
+        remote_eval(uuts, args.eval)
+    elif args.script_by_uut:
+        remote_script_by_uut(uuts, args.script_by_uut)
     else:
-        remote_script(parser.parse_args())
+        remote_script(uuts, args.script)
 
 
 # execution starts here
