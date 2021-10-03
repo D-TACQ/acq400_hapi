@@ -28,7 +28,7 @@ def pv_factory(uut):
 
 
 def config_faultmon(args, PVF):
-    uut = args.uut[0]
+    uut = args.uuts[0]
     pv_pre = PVF("MODE:TRANSIENT:PRE")
     pv_pre.put(args.pre)
 
@@ -41,26 +41,28 @@ def config_faultmon(args, PVF):
     pass
 
 def offload_channels(args):
-   print("WORKDODO")
+    try:
+        sc = args.sc
+    except:
+        uuts = [ acq400_hapi.factory(u) for u in args.uuts ]
+        sc = acq400_hapi.ShotControllerWithDataHandler(uuts, args)
+        args.sc = sc
+    sc.handle_data(args)
 
 def run_faultmon(args):
-    uut = args.uut[0]
+    uut = args.uuts[0]
     PVF = pv_factory(uut)
     config_faultmon(args, PVF)
     pv_state = PVF("MODE:TRANS_ACT:STATE")
     pv_arm = PVF("MODE:TRANSIENT:SET_ARM")
-#    pv_trg0_src = PVF("0:SIG:SRC:TRG:0")
+
     for shot in range(0, args.shots):
         print("shot {}".format(shot))
-#        pv_trg0_src.put("NONE")
         pv_arm.put(1)
 
         while pv_state.get() == 0:
             time.sleep(0.5)        
-#        time.sleep(10)
-#        print("Set FG to BURST")
-#        time.sleep(10)
-#        pv_trg0_src.put("EXT")
+
         while pv_state.get() != 0:
             print("wait IDLE")
             time.sleep(1)
@@ -68,24 +70,16 @@ def run_faultmon(args):
         if args.channels:
             offload_channels(args)
 
-
-
-
     return 0
-#    uut = args.uuts[0]
-
-
-    return None
 
 
 def get_args(argStr=None):
     parser = argparse.ArgumentParser(description='PyEPICS faultmon example')
-
+    acq400_hapi.ShotControllerUI.add_args(parser)
     parser.add_argument('--pre', default=50000, type=int, help='pre samples')
     parser.add_argument('--post', default=50000, type=int, help='post samples')
-    parser.add_argument('--shots', default=1, type=int, help='number of shots to run')
-    parser.add_argument('--channels', default=None, type=str, help='use HAPI to offload channels data, full length')
-    parser.add_argument('uut', nargs=1, help="uut")
+    parser.add_argument('--shots', default=1, type=int, help='number of shots to run')    
+    parser.add_argument('uuts', nargs=1, help="uut")
 
     return parser.parse_args(argStr)
 
