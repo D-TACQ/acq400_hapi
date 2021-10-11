@@ -81,16 +81,16 @@ def get_args():
     parser.add_argument('--trg', default='1,0,1', help='set trigger, default WRTT0, NOTOUCH to leave it')
     parser.add_argument('uut', nargs='+', help="uuts")
     args = parser.parse_args()
-    args.sites = args.site.split(',')
+    args.sites = [ int(x) for x in args.site.split(',') ]
     args.stl = args.stl.split(',')
     args.STL = {}
     for ix, stl in enumerate(args.stl):
-        if stl.isnumeric():            
-            stl = int(stl)
-        if stl >= 1 and stl < len(STL):
-            args.STL[args.sites[ix]] = STL[stl]
-        elif stl.startswith('@'):
+        if stl.startswith('@'):
             args.STL[args.sites[ix]] = get_stl(stl[1:])
+        elif stl.isnumeric():            
+            stl = int(stl)
+            if stl >= 1 and stl < len(STL):
+                args.STL[args.sites[ix]] = STL[stl]        
         else:
             print("WORKTODO for stl {}".format(stl))
     
