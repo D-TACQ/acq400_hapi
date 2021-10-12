@@ -20,6 +20,7 @@ def get_args():
     parser.add_argument('--site', default='6', help="list of sites eg 5,6 to load")
     parser.add_argument('--interval', default=3, type=int, help="trigger interval in s" )
     parser.add_argument('--shots', default=10, type=int, help="number of shots")
+    parser.add_argument('--pulse_count', default=0, type=int, help="count output pulses on AUX2/TRG.d0")
     parser.add_argument('uut', nargs='+', help="uuts")
     args = parser.parse_args()
     args.sites = [ int(x) for x in args.site.split(',') ]
@@ -49,6 +50,8 @@ def pg_trigger_test_init(args, uuts):
         for site in args.sites:
             u.s0.set_knob("SIG_TRG_S{}_RESET".format(site), '1')
             u.modules[site].bypass_trg_debounce = 1
+        if args.pulse_count:
+            u.s0.SIG_EVT_EXT_RESET = '1'
             
     
 def get_counts(args, u):
@@ -61,7 +64,12 @@ def pg_trigger_test1(args, uuts):
     time.sleep(args.interval)
     counts = []
     for u in uuts:
-        print("{} {}".format(u.uut, get_counts(args, u)))
+        if args.pulse_count:
+            npc = acq400_hapi.Acq400.intpv(u.s0.SIG_EVT_EXT_COUNT)
+            pc = "pulse count: {} pc/wrtt {}".format(npc, npc/acq400_hapi.Acq400.intpv(u.cC.WR_WRTT0_COUNT))
+        else:
+            pc = ""
+        print("{} wrtt, pgidx {} {}".format(u.uut, get_counts(args, u), pc))
         
         
 def pg_trigger_test(args):

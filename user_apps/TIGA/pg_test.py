@@ -65,7 +65,11 @@ STL = (
 60,0
 """,
 )
-
+'''
+acq2106_345> ls -l /etc/acq400/0/SIG:FP:GPIO
+lrwxrwxrwx    1 root     root            34 Oct 11 17:33 /etc/acq400/0/SIG:FP:GPIO -> /usr/local/bin/caput_acq2106_345:0
+acq2106_345> ls -l /etc/acq400/0/SIG:EVENT_SRC:0
+'''
 def get_stl(fname):
     with open (fname, "r") as stl_file:
         stl = stl_file.read()
@@ -79,6 +83,9 @@ def get_args():
     parser.add_argument('--stl', default=1, help='canned stl 1,2 or @file, possible entry per site')
     parser.add_argument('--stl_trace', default=0, help='trace stl load')
     parser.add_argument('--trg', default='1,0,1', help='set trigger, default WRTT0, NOTOUCH to leave it')
+    parser.add_argument('--pgidx', default=0, type=int, help="0: output TRGIN to CLK.dX 1: output PGIDX to to CLK.dX, 2: append PGIDX pulse to STL")
+    parser.add_argument('--pulse_count', default=0, type=int, help="1: loopback a PGx to AUX2, count it")
+    
     parser.add_argument('uut', nargs='+', help="uuts")
     args = parser.parse_args()
     args.sites = [ int(x) for x in args.site.split(',') ]
@@ -94,6 +101,13 @@ def get_args():
         else:
             print("WORKTODO for stl {}".format(stl))
     
+    if args.pgidx > 1:
+        for ix, site in enumerate(args.STL):
+            args.STL[site] += "+1,80\n"
+            args.STL[site] += "+{},0\n".format(args.pgidx)
+            print("s:{} stl:{}".format(site, args.STL[site]))
+    
+        
     # ensure there is an STL for every site, either default STL[1] or previous site STL
     s0 = 0
     for s1 in args.sites:
@@ -103,11 +117,20 @@ def get_args():
             else:
                  args.STL[s1] = args.STL[s0]
         s0 = s1
+        
+    
+        
     return args
 
 def pg_test1(args, uut, site):
     site_svc = uut.svc['s{}'.format(site)]
     site_svc.GPG_ENABLE = 0
+    site_svc.TRGOUT = 'PGIDX' if args.pgidx > 0 else 'TRGIN'
+    
+    if args.pulse_count:
+        uut.s0.SIG_FP_GPIO = 'INPUT'
+        uut.s0.SIG_EVENT_SRC_0 = 'FP_GPIO'
+        
     if args.trg != 'NOTOUCH':
         site_svc.trg = args.trg
     if args.tscale:
