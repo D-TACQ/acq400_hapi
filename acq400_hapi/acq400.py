@@ -646,7 +646,7 @@ class Acq400:
         try:
             fs = freq(self.s1.ACQ480_OSR)
         except:
-            fs = freq(self.SIG_CLK_S1)
+            fs = freq(self.s0.SIG_CLK_S1_FREQ)
         if fs > 1e6:
             isi = 1 / np.round(fs / 1e6, 2) * 1e-6  # interval in seconds
         else:
