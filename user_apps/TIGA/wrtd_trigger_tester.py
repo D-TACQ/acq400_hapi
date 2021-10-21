@@ -19,6 +19,7 @@ def get_args():
     parser = argparse.ArgumentParser(description='wrtd_trigger_tester')    
     parser.add_argument('--interval', default=0.1, type=float, help="trigger interval in s" )
     parser.add_argument('--shots', default=10, type=int, help="number of shots") 
+    parser.add_argument('--trgtype', default='wrtd_txi', help="trigger type [wrtd_txi] or wrtd_txq")
     parser.add_argument('--doubletap', default=None, help="double tap id")
     parser.add_argument('uut', nargs='+', help="uuts")    
     return parser.parse_args()
@@ -36,13 +37,14 @@ def pg_trigger_test_init(args, uuts):
  
 def pg_trigger_test1(args, uuts):
     print("trigger!")
-    uuts[0].cC.wrtd_txq = "--tx_mask=1 1"
+    uuts[0].cC.set_knob(args.trgtype, "--tx_mask=1 1")
     time.sleep(args.interval)
-    uuts[0].cC.wrtd_txq = "--tx_mask=2 1"   
+    uuts[0].cC.set_knob(args.trgtype, "--tx_mask=2 1")   
     
 def pg_trigger_test_double_tap(args, uuts):
     print("doubletap!")
-    uuts[0].cC.wrtd_txq = args.doubletap
+#    uuts[0].cC.wrtd_txq = args.doubletap
+    uuts[0].cC.set_knob(args.trgtype, args.doubletap)
     time.sleep(args.interval)   
  
         
@@ -50,7 +52,7 @@ def pg_trigger_test_double_tap(args, uuts):
 def pg_trigger_test(args):
     uuts = [ acq400_hapi.factory(u) for u in args.uut ]
 
-    the_test = pg_trigger_test1
+    the_test = pg_trigger_test1 
     
     if args.doubletap:
         the_test = pg_trigger_test_double_tap
