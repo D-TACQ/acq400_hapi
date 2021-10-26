@@ -145,12 +145,14 @@ class RawClient(netclient.Netclient):
         _dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
 
         buf = bytearray(nelems)
+        view = memoryview(buf).cast('B')
         pos = 0
-        while pos < nelems:
-            cr = self.sock.recv_into(memoryview(buf)[pos:])
-            if cr == 0:
+        while len(view):
+            nrx = self.sock.recv_into(view)
+            if nrx == 0:
                 break               # end of file
-            pos += cr
+            view = view[nrx:]
+            pos += nrx
 
         if pos > 0 and pos < nelems:
             print("WARNING: early termination at {}/{}".format(pos, nelems))
@@ -1199,22 +1201,24 @@ class Acq400:
 
         return [indices, event_samples]
 
-    def stream(self, recvlen=4096*32*2, port=AcqPorts.STREAM):
+    def stream(self, recvlen=4096*32, port=AcqPorts.STREAM, data_size=2):
+        dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
         nc = netclient.Netclient(self.uut, AcqPorts.STREAM)
 
-        bytes_to_go = recvlen
-        chunk = bytearray()
+        buf = bytearray(recvlen*data_size)
+        while True:       
+            view = memoryview(buf).cast('B')        
+            pos = 0
+            
+            while len(view):
+                nrx = nc.sock.recv_into(view)
+                if nrx == 0:
+                    yield buf[:pos]
+                else:
+                    view = view[nrx:]
+                    pos += nrx
+            yield np.frombuffer(buf[:pos], dtype)
 
-        while True:
-            chunk += (nc.sock.recv(bytes_to_go))
-            bytes_to_go = recvlen - len(chunk)
-
-            if len(chunk) >= recvlen:
-                yield chunk
-                chunk = bytearray()
-                bytes_to_go = recvlen
-            else:
-                continue
 
     @staticmethod
     def freq(sig):
