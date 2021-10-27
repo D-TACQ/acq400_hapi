@@ -5,6 +5,7 @@ import argparse
 import epics
 import time
 import acq400_hapi
+import sys
 
 
 class PV_logger(epics.PV):
@@ -53,6 +54,12 @@ def offload_channels(args):
 def run_faultmon(args):
     uut = args.uuts[0]
     PVF = pv_factory(uut)
+    ca_test = PVF("0:SERIAL").get()
+    if not ca_test:
+        print("ERROR: ca is not working. Maybe need to set EPICS_CA_ADDR_LIST?, eg, assuming you have DNS")
+        print("export EPICS_CA_ADDR_LIST={}".format(args.uuts[0]))
+        sys.exit(1)
+    print("Testing CA: SERIAL:{}".format(ca_test))
     config_faultmon(args, PVF)
     pv_state = PVF("MODE:TRANS_ACT:STATE")
     pv_arm = PVF("MODE:TRANSIENT:SET_ARM")
