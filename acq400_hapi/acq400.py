@@ -66,6 +66,7 @@ class AcqPorts:
     AWG_ONCE = 54201
     AWG_AUTOREARM = 54202
     AWG_CONTINUOUS = 54205
+    AWG_STREAM = 54207
     MGTDRAM = 53993
     MGTDRAM_PULL_DATA = 53991
 
@@ -791,7 +792,7 @@ class Acq400:
                 if not rx or rx.startswith(b"DONE"):
                     break
             nc.sock.close()
-
+    
     def run_service(self, port, eof="EOF", prompt='>'):
         txt = ""
         with netclient.Netclient(self.uut, port) as nc:
