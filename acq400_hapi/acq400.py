@@ -1221,6 +1221,29 @@ class Acq400:
             yield np.frombuffer(buf[:pos], dtype)
 
 
+    def _keepalive_action(self):
+           self.poller_result = self.s0.SIG_CLK_MB_COUNT
+            
+    def _keepalive(self, seconds):        
+        def poller():
+            while True:                
+                time.sleep(seconds)
+                action_thread = threading.Thread(target=self._keepalive_action())
+                action_thread.start()
+                print("call join({})".format(seconds))
+                action_thread.join(timeout=seconds)
+                print("back from join {} ".format(action_thread.is_alive()))
+                if action_thread.is_alive():                    
+                    raise Exception("{} keepalive fail .. going down".format(uut.uut))
+                print("poller complete")
+                
+        return poller
+    
+    def keepalive(self, seconds=5):
+        self.ka_thread = threading.Thread(target=self._keepalive(seconds))
+        self.ka_thread.setDaemon(True)
+        self.ka_thread.start()        
+        
     @staticmethod
     def freq(sig):
         return float(sig.split(" ")[1])
