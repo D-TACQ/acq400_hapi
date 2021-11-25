@@ -146,7 +146,11 @@ class RawClient(netclient.Netclient):
         _dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
 
         buf = bytearray(nelems)
-        view = memoryview(buf).cast('B')
+        try:
+            view = memoryview(buf).cast('B')
+        except:
+            # python 2.7 hack
+            view = memoryview(buf)
         pos = 0
         while len(view):
             nrx = self.sock.recv_into(view)
