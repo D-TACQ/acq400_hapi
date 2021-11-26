@@ -24,7 +24,16 @@ def sine_wave(args):
     return np.sin(np.linspace(0, 2*np.pi, num=args.pattern_len))
 
 def sinc_wave(args):
-    return np.sinc(np.linspace(-np.pi, np.pi, num=args.pattern_len))
+    raw = np.sinc(np.linspace(-np.pi, np.pi, num=args.pattern_len))
+    left = 0
+    while raw[left] < 0:
+        raw[left] = 0
+        left+=1
+    right = len(raw)-1
+    while raw[right] < 0:
+        raw[right] = 0
+        right -= 1
+    return raw
 
 def np_type(args):   
     return np.int32 if args.res != 16 else np.int16
