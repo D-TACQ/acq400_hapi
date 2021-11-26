@@ -18,10 +18,13 @@ import acq400_hapi
 
 
 def ramp_wave(args):    
-    return np.linspace(-args.amp, args.amp, num=args.len)
+    return np.linspace(-args.amp, args.amp, num=args.pattern_len)
 
 def sine_wave(args):
-    return np.sin(np.linspace(0, 2*np.pi, num=args.len))
+    return np.sin(np.linspace(0, 2*np.pi, num=args.pattern_len))
+
+def sinc_wave(args):
+    return np.sinc(np.linspace(-np.pi, np.pi, num=args.pattern_len))
 
 def np_type(args):   
     return np.int32 if args.res != 16 else np.int16
@@ -35,7 +38,8 @@ def make_waves(args, iarg):
     args.chx = np.zeros([args.len, args.nchan])
     for ch in range(0, args.nchan):
         offset = (ch - args.nchan/2)*args.offset_per_channel
-        args.chx[:,ch] = ch0 + offset
+        prefix = np.zeros(args.stagger*ch)
+        args.chx[:,ch] = np.append(np.append(prefix, ch0), np.zeros(args.len-len(prefix)-args.pattern_len)) + offset
         
         
 def store_files(args, iarg):
@@ -142,6 +146,8 @@ def ui():
     parser = argparse.ArgumentParser(description='make_awg_data')
     parser.add_argument('--nchan',  default=16,     type=int,   help="number of channels in set")
     parser.add_argument('--len',    default=100000, type=int,   help="number of samples in set")
+    parser.add_argument('--pulse',  default=0,      type=int,   help="length of pulse inside set")
+    parser.add_argument('--stagger',  default=0,      type=int,   help="length of pulse inside set")
     parser.add_argument('--amp',    default=1.0,    type=float, help="amplitude in volts")
     parser.add_argument('--ncycles', default=8,     type=int,   help="number of waveform cycles in set")
     parser.add_argument('--offset_per_channel', default=0.0, type=float,     help="offset in volts *ch")
@@ -155,6 +161,10 @@ def ui():
     parser.add_argument('ops', nargs='+', help="operations: one or more of "+" ".join(OPS)+" # for UUT, substitute UUT name")
     
     args = parser.parse_args()
+    if args.pulse:
+        args.pattern_len = args.pulse
+    else:
+        args.pattern_len = args.len
     return args    
 
 def run_main():
