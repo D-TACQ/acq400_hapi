@@ -107,6 +107,8 @@ def load_uut(args, iarg):
     
         
     if uut:
+        if args.continuous:
+            uut.s0.awg = 'SOFT_TRIGGER=0'
         if (acq400_hapi.Acq400.intpv(uut.s1.AWG_ACTIVE)) == 1:
             print("AWG already running: call a halt")
             uut.s1.AWG_MODE_ABO = '1'
@@ -166,7 +168,7 @@ def ui():
     parser.add_argument('--root', default='DATA',               help="offset in volts *ch")
     parser.add_argument('--merge', default=1,                   help="merge data into single binary")
     parser.add_argument('--expand_to', default=4*0x400000,      help="expand to fit binary block size")
-    parser.add_argument('--soft_trigger', default=1,            help="auto soft trigger on load")
+    parser.add_argument('--soft_trigger', default=1, type=int,  help="auto soft trigger on load")
     parser.add_argument('ops', nargs='+', help="operations: one or more of "+" ".join(OPS)+" # for UUT, substitute UUT name")
     
     args = parser.parse_args()
