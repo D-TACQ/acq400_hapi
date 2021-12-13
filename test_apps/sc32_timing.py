@@ -109,15 +109,16 @@ def set_all_gains(args, uut):
             
 @timing
 def set_all_gains_epics(args):
-    G1_GAINS = (1, 10, 100, 1000)
+    G1_GAINS = ('1', '10', '100', '1000')
     print("set_all_gains_epics {}".format(args.sites))
     for site in args.sites:
         for ch in range(1,33):
             pvname = "{}:{}:SC32:G1:{:02d}".format(args.uut[0], site, ch)
             #print(pvname)          
             pv = epics.PV(pvname)
-            value = G1_GAINS[ch%4]
-            pv.put(value)
+            #value = (ch-1)%4
+            value = G1_GAINS[(ch-1)%4]
+            pv.put(value, wait=True)
 
 @timing
 def get_all_gains(args, uut):
