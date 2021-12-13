@@ -21,11 +21,12 @@ def get_args():
 
 @timing
 def set_all_gains(args, uut):
+    G1_GAINS = (1, 10, 100, 1000)
     print("set_all_gains {}".format(args.sites))
     for site in args.sites:
         for ch in range(1,33):
-            value = ch%4
-            uut.svc["s{}".format(site)].set_knob("SC32_G12_{:02d}".format(ch), value)
+            value = G1_GAINS[ch%4]
+            uut.svc["s{}".format(site)].set_knob("SC32_G1_{:02d}".format(ch), value)
 
 @timing
 def get_all_gains(args, uut):
@@ -35,7 +36,7 @@ def get_all_gains(args, uut):
         for ch in range(1,33):
             if len(value):
                 value += ","
-            value += uut.svc["s{}".format(site)].get_knob("SC32_G12_{:02d}".format(ch))
+            value += acq400_hapi.pv(uut.svc["s{}".format(site)].get_knob("SC32_G1_{:02d}".format(ch)))
 
     print(value)
 
