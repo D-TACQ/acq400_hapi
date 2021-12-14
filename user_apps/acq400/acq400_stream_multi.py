@@ -80,6 +80,12 @@ class StreamsOne:
     def __init__ (self, args, uut_name):
         self.args = args
         self.uut_name = uut_name
+
+    def logtime(self, t0, t1):
+        print(int((t1-t0)*1000), file=self.log_file)
+        return t1
+
+
     def run(self):        
         uut = acq400_hapi.Acq400(self.uut_name)
         cycle = -1
@@ -100,24 +106,29 @@ class StreamsOne:
             data_size = 2
             
         start_time = time.time()
+        t0 = start_time
+        self.log_file = open("{}_times.log".format(self.uut_name), "w")
             
         for buf in uut.stream(recvlen=self.args.filesize, data_size=data_size):
+            t0 = self.logtime(t0, time.time())
             data_length += len(buf)
-            if num > 99:
-                num = 0
-                cycle += 1
-                root = os.path.join(self.args.root, self.uut_name, "{:06d}".format(cycle))
-                make_data_dir(root, self.args.verbose)
 
-            data_file = open(os.path.join(root, "{:04d}.dat".format(num)), "wb")
-            buf.tofile(data_file, '')
+            if not self.args.nowrite:
+                if num > 99:
+                    num = 0
+                    cycle += 1
+                    root = os.path.join(self.args.root, self.uut_name, "{:06d}".format(cycle))
+                    make_data_dir(root, self.args.verbose)
 
-            if self.args.verbose == 1:
-                print("New data file written.")
-                print("Data Transferred: ", data_length, "KB")
-                print("Streaming time remaining: ", -1*(time.time() - (start_time + self.args.runtime)))
-                print("")
-                print("")
+                data_file = open(os.path.join(root, "{:04d}.dat".format(num)), "wb")
+                buf.tofile(data_file, '')
+
+                if self.args.verbose == 1:
+                    print("New data file written.")
+                    print("Data Transferred: ", data_length, "KB")
+                    print("Streaming time remaining: ", -1*(time.time() - (start_time + self.args.runtime)))
+                    print("")
+                    print("")
 
             num += 1
                 
@@ -146,6 +157,7 @@ def run_main():
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
     parser.add_argument('--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
+    parser.add_argument('--nowrite', default=0, help="do not write file")
     parser.add_argument('--totaldata', default=10000000000, action=acq400_hapi.intSIAction, decimal = False)
     #parser.add_argument('--totaldata', default=4194304, type=int, help="Total amount of data to store in KB")
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
