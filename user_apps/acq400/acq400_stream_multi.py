@@ -106,11 +106,14 @@ class StreamsOne:
             data_size = 2
             
         start_time = time.time()
-        t0 = start_time
         self.log_file = open("{}_times.log".format(self.uut_name), "w")
             
         for buf in uut.stream(recvlen=self.args.filesize, data_size=data_size):
-            t0 = self.logtime(t0, time.time())
+            if data_length > 0:
+                t0 = self.logtime(t0, time.time())
+            else:
+                t0 = time.time()
+
             data_length += len(buf)
 
             if not self.args.nowrite:
