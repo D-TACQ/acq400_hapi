@@ -62,6 +62,7 @@ import time
 import argparse
 import socket
 import sys
+import shutil
 
 import multiprocessing
 
@@ -75,6 +76,19 @@ def make_data_dir(directory, verbose):
             print("Directory already exists")
         pass
 
+def remove_stale_data(args):
+    for uut in args.uuts:
+        path = args.root + uut
+        if os.path.exists(path):
+            if args.force_delete:
+                pass
+            else:
+                answer = input("Stale data detected. Delete all contents in " + args.root + str(args.uuts[0]) + "? y/n ")
+                if answer != 'y':
+                    continue
+            if args.verbose:
+                print("removing {}".format(path))          
+            shutil.rmtree(path)
 
 class StreamsOne:
     def __init__ (self, args, uut_name):
@@ -117,7 +131,7 @@ class StreamsOne:
             data_length += len(buf)
 
             if not self.args.nowrite:
-                if num > 99:
+                if num >= self.args.files_per_cycle:
                     num = 0
                     cycle += 1
                     root = os.path.join(self.args.root, self.uut_name, "{:06d}".format(cycle))
@@ -125,8 +139,11 @@ class StreamsOne:
 
                 data_file = open(os.path.join(root, "{:04d}.dat".format(num)), "wb")
                 buf.tofile(data_file, '')
-
+                
                 if self.args.verbose == 1:
+                    print(".", end='')
+
+                if self.args.verbose > 2:
                     print("New data file written.")
                     print("Data Transferred: ", data_length, "KB")
                     print("Streaming time remaining: ", -1*(time.time() - (start_time + self.args.runtime)))
@@ -160,6 +177,8 @@ def run_main():
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
     parser.add_argument('--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
+    parser.add_argument('--files_per_cycle', default=100, type=int, help="files per cycle (directory)")
+    parser.add_argument('--force_delete', default=0, type=int, help="silently delete any existing data files")
     parser.add_argument('--nowrite', default=0, help="do not write file")
     parser.add_argument('--totaldata', default=10000000000, action=acq400_hapi.intSIAction, decimal = False)
     #parser.add_argument('--totaldata', default=4194304, type=int, help="Total amount of data to store in KB")
@@ -167,8 +186,9 @@ def run_main():
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uuts', nargs='+', help="uuts")
-
-    run_stream(parser.parse_args())
+    args = parser.parse_args()
+    remove_stale_data(args)
+    run_stream(args)
 
 
 if __name__ == '__main__':
