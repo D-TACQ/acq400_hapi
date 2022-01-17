@@ -1217,8 +1217,9 @@ class Acq400:
             
             while len(view):
                 nrx = nc.sock.recv_into(view)
-                if nrx == 0:
-                    yield buf[:pos]
+                if nrx == 0:                    
+                    yield np.frombuffer(buf[:pos], dtype)
+                    pos = 0
                 else:
                     view = view[nrx:]
                     pos += nrx
