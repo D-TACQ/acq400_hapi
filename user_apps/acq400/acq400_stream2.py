@@ -132,7 +132,7 @@ def run_stream(args):
 
         data_length += len(data)
         data_len_so_far += len(data)
-        if file_num > 99:
+        if file_num >= args.files_per_cycle:
             file_num = 0
             cycle += 1
             root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
@@ -167,6 +167,7 @@ def run_stream(args):
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 stream')
     parser.add_argument('-filesize', '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
+    parser.add_argument('--files_per_cycle', type=int, default=100, help="set files per cycle directory")
     parser.add_argument('-totaldata', '--totaldata', default=sys.maxsize, action=acq400_hapi.intSIAction, decimal = False)
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=sys.maxsize, type=int, help="How long to stream data for")

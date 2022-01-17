@@ -129,6 +129,10 @@ class StreamsOne:
                 t0 = time.time()
 
             data_length += len(buf)
+            
+            if len(buf) == 0:
+                print("Zero length buffer, quit")
+                return
 
             if not self.args.nowrite:
                 if num >= self.args.files_per_cycle:
