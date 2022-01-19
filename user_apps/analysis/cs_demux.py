@@ -21,36 +21,57 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 
+# Sample in u32
+# <ACQ420    ><QEN         ><AGG        >
+# <AI12><AI34><FACET><INDEX><AGSAM><USEC>
+
+LPS = 6       # longs per sample
+ESS = 4       # EVENT signature length in samples
+ESL = LPS*ESS # ES length in LW
+
+IX_AI0102 = 0
+IX_AI0304 = 1
+IX_FACET  = 2
+IX_INDEX  = 3
+IX_AGSAM  = 4
+IX_USEC   = 5
+
+PREV_INDEX = LPS-IX_INDEX   # look back to INDEX in previous sample
+NEXT_INDEX = ESL+IX_INDEX   # look forward to next INDEX from beginning of ES
+
+def isES(d):
+    return d[0] == 0xaa55f154 and d[1] == 0xaa55f154 and d[2] == 0xaa55f15f and d[3] == 0xaa55f15f
 
 def find_zero_index(args):
     # This function finds the first 0xaa55f154 short value in the data and then
-    # uses it's position to check the index before this event sample and the
+    # uses its position to check the index before this event sample and the
     # index after this event sample and checks the latter is one greater
     # than the former. If the values do not increment then go to the next
     # event sample and repeat.
 
     data = np.fromfile(args.data_file, dtype=np.uint32)
-    for long_pos, long_val in enumerate(data):
-        long = format(long_val, '08x')
-        if long_val == 0xaa55f154:
+    for pos, lvnu in enumerate(data):
+        if isES(data[pos:pos+ESL]):
             # Check current index
-            first_es_position = long_pos
+            first_es_position = pos
             break
 
+    print("DEBUG: first_es_position {}".format(first_es_position))
     # loop over all the event samples. Look at the "index" value before and
     # after and check they have incremented.
-    counter = 0
-    for pos, f_long_in_es in enumerate(data):
-        if pos < first_es_position:
-            continue
-        if counter % (args.transient_length*6 + 24) == 0:
-            counter += 1
-            if data[pos - 3] + 1 == data[pos + 27]:
-                zero_index_long_pos = pos
-                return zero_index_long_pos
-        else:
-            counter += 1
-            continue
+    next_es = args.transient_length*LPS + ESL
+    
+    for pos, lvnu in enumerate(data[first_es_position:]):
+        if pos > 0 and pos % next_es == 0:
+            if not isES(data[pos:pos+ESL]):
+                print("ERROR: expected ES at {}".format(pos))
+                exit(1)
+            print("DEBUG: counter {} samples {}".format(pos, pos//LPS))            
+            if data[pos - PREV_INDEX] + 1 == data[pos + NEXT_INDEX]:
+                return pos
+
+    print("ERROR: we do not want to be here")
+    exit(1)
 
 
 def demux_data(args, zero_index):
@@ -61,6 +82,7 @@ def demux_data(args, zero_index):
 
     with open(args.data_file, "rb") as f:
         # throw away all data before the "zeroth" index (the first es)
+        print("DEBUG: zero_index {} {}".format(zero_index, type(zero_index)))
         chunk = np.fromfile(f, dtype=np.int32, count=int(zero_index))
         while len(chunk) != 0: # if chunk size is zero we have run out of data
 
@@ -106,7 +128,7 @@ def plot_data(args, data):
                 # Plot ((number of facets) * (rtm len)) - 1 from each channel
                 plots[sp].plot(data[sp:args.plot_facets * args.transient_length * 8 - 1:8])
             except:
-                print "Data exception met. Plotting all data instead."
+                print("Data exception met. Plotting all data instead.")
                 plots[sp].plot(data[sp:-1:8])
         else:
             plots[sp].plot(data[sp:-1:8])
