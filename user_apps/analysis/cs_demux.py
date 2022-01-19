@@ -26,17 +26,34 @@ import argparse
 # <ACQ420    ><QEN         ><AGG        >
 # <AI12><AI34><FACET><INDEX><AGSAM><USEC>
 
-SPS = 12      # shorts per sample
+# msb_direct: msb of FACET, INDEX is an embedded digital value
+
+
 LPS = 6       # longs per sample
 ESS = 4       # EVENT signature length in samples
 ESL = LPS*ESS # ES length in LW
+SPS = LPS*2   # shorts per sample
 
-IX_AI0102 = 0
+# function offsets in longs
+IX_AI0102 = 0 
 IX_AI0304 = 1
 IX_FACET  = 2
 IX_INDEX  = 3
 IX_AGSAM  = 4
 IX_USEC   = 5
+
+# logical channel offsets
+
+CH_AI01 = 0
+CH_AI02 = 1
+CH_AI03 = 2
+CH_AI04 = 3
+CH_FACET = 4
+CH_INDEX = 5
+CH_AGSAM = 6
+CH_USEC = 7
+CH_DI2  = 8
+CH_DI4  = 9
 
 PREV_INDEX = LPS-IX_INDEX   # look back to INDEX in previous sample
 NEXT_INDEX = ESL+IX_INDEX   # look forward to next INDEX from beginning of ES
@@ -51,7 +68,6 @@ def find_zero_index(args):
     # than the former. If the values do not increment then go to the next
     # event sample and repeat.
 
-    
     for pos, lvnu in enumerate(args.data32):
         if isES(args.data32[pos:pos+ESL]):
             # Check current index
@@ -85,8 +101,8 @@ def extract_bursts(args, zero_index):
     print("extract_bursts() {}, {}, {}".format(zero_index+ESL, len(args.data32), burst_es))
     first_time = True
     for bxx in range(zero_index+ESL, len(args.data32), burst_es):        
-        b32 = bxx + 2
-        b16 = bxx * 2
+        b32 = bxx + 2       # skip AI
+        b16 = bxx * 2       # scale to data16
         if first_time:
             for ic in range(0, 4):
                 data.append(args.data16[b16:b16+burst16:SPS])
@@ -105,13 +121,13 @@ def extract_bursts(args, zero_index):
                 b32 +=1
     
     if args.msb_direct:
-        tmp = np.bitwise_and(data[4], 0x80000000)
+        tmp = np.bitwise_and(data[CH_FACET], 0x80000000)
         data.append(np.logical_and(tmp, tmp))
-        tmp = np.bitwise_and(data[5], 0x80000000)
+        tmp = np.bitwise_and(data[CH_INDEX], 0x80000000)
         data.append(np.logical_and(tmp, tmp))
         
-        data[4] = np.bitwise_and(data[4], 0x7fffffff)        
-        data[5] = np.bitwise_and(data[5], 0x7fffffff)
+        data[4] = np.bitwise_and(data[CH_FACET], 0x7fffffff)        
+        data[5] = np.bitwise_and(data[CH_INDEX], 0x7fffffff)
          
     for ic, ch in enumerate(data):
         print("{} {}".format(ic, ch.shape))
@@ -157,42 +173,6 @@ def plot_data(args, data):
             plots[sp].plot(data[sp])
 
         plots[sp].set(ylabel=axes[sp+1], xlabel="Samples")
-    plt.show()
-    return None
-
-def plot_data_msb_direct(args, data):
-    # plot all the data in order (not stacked)
-
-    axes = ["Demuxed channels from acq1001",
-    "CH01 \n (Sampled \n FACET)",
-    "CH02 \n (Sampled \n INDEX)",
-    "CH03 \n (Sampled \n Sine Wave)",
-    "CH04 \n (Sampled \n Sine Wave)",
-
-    "FACET",
-    "INDEX",
-    "Sample Count",
-    "usec Count",
-    "DI2\n",
-    "DI4\n",
-    ]
-
-    f, plots = plt.subplots(8, 1)
-    plots[0].set_title(axes[0])
-
-    for sp in range(0,8):
-        if args.plot_facets != -1:
-            try:
-                slice = data[sp:args.plot_facets * args.transient_length * 8 - 1:8]
-                # Plot ((number of facets) * (rtm len)) - 1 from each channel
-                plots[sp].plot()
-            except:
-                print("Data exception met. Plotting all data instead.")
-                plots[sp].plot(data[sp:-1:8])
-        else:
-            plots[sp].plot(data[sp:-1:8])
-
-        plots[sp].set(ylabel=axes[sp+1], xlabel=axes[-1])
     plt.show()
     return None
 
