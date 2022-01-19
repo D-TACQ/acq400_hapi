@@ -21,10 +21,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 
+
 # Sample in u32
 # <ACQ420    ><QEN         ><AGG        >
 # <AI12><AI34><FACET><INDEX><AGSAM><USEC>
 
+SPS = 12      # shorts per sample
 LPS = 6       # longs per sample
 ESS = 4       # EVENT signature length in samples
 ESL = LPS*ESS # ES length in LW
@@ -49,9 +51,9 @@ def find_zero_index(args):
     # than the former. If the values do not increment then go to the next
     # event sample and repeat.
 
-    data = np.fromfile(args.data_file, dtype=np.uint32)
-    for pos, lvnu in enumerate(data):
-        if isES(data[pos:pos+ESL]):
+    
+    for pos, lvnu in enumerate(args.data32):
+        if isES(args.data32[pos:pos+ESL]):
             # Check current index
             first_es_position = pos
             break
@@ -61,45 +63,60 @@ def find_zero_index(args):
     # after and check they have incremented.
     next_es = args.transient_length*LPS + ESL
     
-    for pos, lvnu in enumerate(data[first_es_position:]):
+    for pos, lvnu in enumerate(args.data32[first_es_position:]):
         if pos > 0 and pos % next_es == 0:
-            if not isES(data[pos:pos+ESL]):
+            if not isES(args.data32[pos:pos+ESL]):
                 print("ERROR: expected ES at {}".format(pos))
                 exit(1)
             print("DEBUG: counter {} samples {}".format(pos, pos//LPS))            
-            if data[pos - PREV_INDEX] + 1 == data[pos + NEXT_INDEX]:
+            if args.isNewIndex(args.data32[pos - PREV_INDEX], args.data32[pos + NEXT_INDEX]):
                 return pos
 
     print("ERROR: we do not want to be here")
     exit(1)
 
 
-def demux_data(args, zero_index):
-    # Demuxes the data into a single dimension list that contains the data in
-    # sequence.
+def extract_bursts(args, zero_index):
+    burst32 = args.transient_length*LPS
+    burst16 = args.transient_length*SPS
+    burst_es = args.transient_length*LPS + ESL
     data = []
-    count = 0
 
-    with open(args.data_file, "rb") as f:
-        # throw away all data before the "zeroth" index (the first es)
-        print("DEBUG: zero_index {} {}".format(zero_index, type(zero_index)))
-        chunk = np.fromfile(f, dtype=np.int32, count=int(zero_index))
-        while len(chunk) != 0: # if chunk size is zero we have run out of data
-
-            #throw away es
-            if count % args.transient_length == 0:
-                chunk = np.fromfile(f, dtype=np.int32, count=24) # strip es
-
-            # collect data into a new list
-            chunk = np.fromfile(f, dtype=np.int16, count=4)
-            data.extend(chunk)
-            chunk = np.fromfile(f, dtype=np.int32, count=4)
-            data.extend(chunk)
-            count += 1
-        f.close() # close file when all the data has been loaded.
+    print("extract_bursts() {}, {}, {}".format(zero_index+ESL, len(args.data32), burst_es))
+    first_time = True
+    for bxx in range(zero_index+ESL, len(args.data32), burst_es):        
+        b32 = bxx + 2
+        b16 = bxx * 2
+        if first_time:
+            for ic in range(0, 4):
+                data.append(args.data16[b16:b16+burst16:SPS])
+                b16 += 1
+            for ic in range(0, 4):
+                data.append(args.data32[b32:b32+burst32:LPS])
+                b32 +=1
+            #print(data)
+            first_time = False
+        else:
+            for ic in range(0, 4):
+                data[ic] = np.concatenate((data[ic], args.data16[b16:b16+burst16:SPS]))
+                b16 += 1
+            for ic in range(0, 4):
+                data[ic+4] = np.concatenate((data[ic+4], args.data32[b32:b32+burst32:LPS]))
+                b32 +=1
+    
+    if args.msb_direct:
+        tmp = np.bitwise_and(data[4], 0x80000000)
+        data.append(np.logical_and(tmp, tmp))
+        tmp = np.bitwise_and(data[5], 0x80000000)
+        data.append(np.logical_and(tmp, tmp))
+        
+        data[4] = np.bitwise_and(data[4], 0x7fffffff)        
+        data[5] = np.bitwise_and(data[5], 0x7fffffff)
+         
+    for ic, ch in enumerate(data):
+        print("{} {}".format(ic, ch.shape))
     return data
-
-
+        
 def save_data(args, data):
     np.tofile("test_file", data)
     return None
@@ -108,16 +125,57 @@ def save_data(args, data):
 def plot_data(args, data):
     # plot all the data in order (not stacked)
 
+    axes = [
+        "Demuxed channels from acq1001" + " rev2 with embedded DI2,DI4" if args.msb_direct else "",
+        "CH01 \n (Sampled \n FACET)",
+        "CH02 \n (Sampled \n INDEX)",
+        "CH03 \n (Sampled \n Sine Wave)",
+        "CH04 \n (Sampled \n DI2)",
+        "FACET \n (u32)",
+        "INDEX \n (u32)",
+        "Sample Count\n (u32)",
+        "usec Count\n (u32)",
+        "DI2\n (bool)",
+        "DI4\n (bool)"    
+    ]
+
+    nsp = 8 if not args.msb_direct else 10
+    f, plots = plt.subplots(nsp, 1)
+    plots[0].set_title(axes[0])
+
+    for sp in range(0,nsp):
+        if args.plot_facets != -1:
+            plen = args.transient_length*args.plot_facets
+            try:
+                # Plot ((number of facets) * (rtm len)) - 1 from each channel
+                #plots[sp].plot(data[sp:args.plot_facets * args.transient_length * 8 - 1:8])
+                plots[sp].plot(data[sp][:plen])
+            except:
+                print("Not enough facets to plot")
+                plots[sp].plot(data[sp])
+        else:
+            plots[sp].plot(data[sp])
+
+        plots[sp].set(ylabel=axes[sp+1], xlabel="Samples")
+    plt.show()
+    return None
+
+def plot_data_msb_direct(args, data):
+    # plot all the data in order (not stacked)
+
     axes = ["Demuxed channels from acq1001",
     "CH01 \n (Sampled \n FACET)",
     "CH02 \n (Sampled \n INDEX)",
     "CH03 \n (Sampled \n Sine Wave)",
     "CH04 \n (Sampled \n Sine Wave)",
+
     "FACET",
     "INDEX",
     "Sample Count",
     "usec Count",
-    "Samples"]
+    "DI2\n",
+    "DI4\n",
+    ]
 
     f, plots = plt.subplots(8, 1)
     plots[0].set_title(axes[0])
@@ -125,8 +183,9 @@ def plot_data(args, data):
     for sp in range(0,8):
         if args.plot_facets != -1:
             try:
+                slice = data[sp:args.plot_facets * args.transient_length * 8 - 1:8]
                 # Plot ((number of facets) * (rtm len)) - 1 from each channel
-                plots[sp].plot(data[sp:args.plot_facets * args.transient_length * 8 - 1:8])
+                plots[sp].plot()
             except:
                 print("Data exception met. Plotting all data instead.")
                 plots[sp].plot(data[sp:-1:8])
@@ -137,6 +196,11 @@ def plot_data(args, data):
     plt.show()
     return None
 
+def isNewIndex_default(w1, w2):
+    return w1+1 == w2
+
+def isNewIndex_msb_direct(w1, w2):
+    return (w1&0x7fffffff)+1 == (w2&0x7fffffff)
 
 def run_main():
     parser = argparse.ArgumentParser(description='cs demux')
@@ -147,15 +211,16 @@ def run_main():
     parser.add_argument('--transient_length', default=8192, type=int, help='transient length')
     parser.add_argument("--data_file", default="./shot_data", type=str, help="Name of"
                                                                     "data file")
+    parser.add_argument("--msb_direct", default=0, type=int, help="new msb_direct feature, d2/d4 embedded in count d31")
     args = parser.parse_args()
-    # zero_index should be the index of the first event sample where the
-    # system value index increments over the event sample.
-    zero_index = find_zero_index(args)
+    args.isNewIndex = isNewIndex_msb_direct if args.msb_direct else isNewIndex_default
+    
+    args.data32 = np.fromfile(args.data_file, dtype=np.uint32)
+    args.data16 = np.fromfile(args.data_file, dtype=np.int16)
 
-    # data = long list of CH01, CH02, CH03, CH04, INDEX, FACET, USEC
-    data = demux_data(args, zero_index)
+    data = extract_bursts(args, find_zero_index(args))
     if args.plot == 1:
-        plot_data(args, data)
+            plot_data(args, data)
     if args.save == 1:
         save_data(args, data)
 
