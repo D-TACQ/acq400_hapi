@@ -142,7 +142,7 @@ def plot_data(args, data):
     # plot all the data in order (not stacked)
 
     axes = [
-        "Demuxed channels from acq1001" + " rev2 with embedded DI2,DI4" if args.msb_direct else "",
+        "Demuxed channels from acq1001" + (" rev2 with embedded DI2,DI4" if args.msb_direct else "") + "\nfile:{}".format(args.data_file),
         "CH01 \n (Sampled \n FACET)",
         "CH02 \n (Sampled \n INDEX)",
         "CH03 \n (Sampled \n Sine Wave)",
