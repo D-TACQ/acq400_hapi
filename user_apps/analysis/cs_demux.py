@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import argparse
 
 
+
 # Sample in u32
 # <ACQ420    ><QEN         ><AGG        >
 # <AI12><AI34><FACET><INDEX><AGSAM><USEC>
@@ -138,9 +139,19 @@ def save_data(args, data):
     return None
 
 
+def get_plot_timebase(args, data):
+    maxlen = min([len(d) for d in data])
+ 
+    if args.plot_facets != -1:
+        plen = args.transient_length*args.plot_facets
+        if plen > maxlen:
+            plen = maxlen
+    else:
+        plen = maxlen
+    tt = range(0, plen)
+    return plen, tt 
+   
 def plot_data(args, data):
-    # plot all the data in order (not stacked)
-
     axes = [
         "Demuxed channels from acq1001" + (" rev2 with embedded DI2,DI4" if args.msb_direct else "") + "\nfile:{}".format(args.data_file),
         "CH01 \n (Sampled \n FACET)",
@@ -155,24 +166,24 @@ def plot_data(args, data):
         "DI4\n (bool)"    
     ]
 
-    nsp = 8 if not args.msb_direct else 10
-    f, plots = plt.subplots(nsp, 1)
-    plots[0].set_title(axes[0])
-
-    for sp in range(0,nsp):
-        if args.plot_facets != -1:
-            plen = args.transient_length*args.plot_facets
-            try:
-                # Plot ((number of facets) * (rtm len)) - 1 from each channel
-                #plots[sp].plot(data[sp:args.plot_facets * args.transient_length * 8 - 1:8])
-                plots[sp].plot(data[sp][:plen])
-            except:
-                print("Not enough facets to plot")
-                plots[sp].plot(data[sp])
+    nsp = 8 if not args.msb_direct else 10    
+    plen, tt = get_plot_timebase(args, data)
+          
+    for sp in range(0,nsp):        
+        if sp == 0:
+            ax0 = plt.subplot(nsp,1,sp+1)
+            ax0.set_title(axes[0])
+            ax = ax0
         else:
-            plots[sp].plot(data[sp])
+            ax = plt.subplot(nsp,1,sp+1, sharex=ax0)
+        lastplot = sp == nsp-1
+            
+        ax.set_ylabel(axes[sp+1])                  
+        plt.plot(tt, data[sp][:plen])
+        plt.tick_params('x', labelbottom=lastplot)
+ 
 
-        plots[sp].set(ylabel=axes[sp+1], xlabel="Samples")
+    ax.set_xlabel("Samples")
     plt.show()
     return None
 
