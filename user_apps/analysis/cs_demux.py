@@ -153,17 +153,17 @@ def get_plot_timebase(args, data):
    
 def plot_data(args, data):
     axes = [
-        "Demuxed channels from acq1001" + (" rev2 with embedded DI2,DI4" if args.msb_direct else "") + "\nfile:{}".format(args.data_file),
+        "Demuxed channels from acq1001" + (" rev2 with embedded D1,D2" if args.msb_direct else "") + "\nfile:{}".format(args.data_file),
         "CH01 \n (Sampled \n FACET)",
         "CH02 \n (Sampled \n INDEX)",
         "CH03 \n (Sampled \n Sine Wave)",
-        "CH04 \n (Sampled \n DI2)",
+        "CH04 \n (Sampled \n D2)",
         "FACET \n (u32)",
         "INDEX \n (u32)",
         "Sample Count\n (u32)",
         "usec Count\n (u32)",
-        "DI2\n (bool)",
-        "DI4\n (bool)"    
+        "D1\n (bool)",
+        "D2\n (bool)"    
     ]
 
     nsp = 8 if not args.msb_direct else 10    
