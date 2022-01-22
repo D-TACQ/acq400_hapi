@@ -14,6 +14,9 @@ import argparse
 import socket
 import sys
 import shutil
+import re
+
+HYSTAT = 61002
 
 def make_data_dir(directory, verbose):
     if verbose:
@@ -29,10 +32,26 @@ class StreamsOne:
     def __init__ (self, args, uut_name):
         self.args = args
         self.uut_name = uut_name
+        self.uut = acq400_hapi.Acq400(self.uut_name)
         self.root = os.path.join(self.args.root, self.uut_name)
         make_data_dir(self.root, self.args.verbose)
         self.filename = "nothing"
         self.newname = "default"        
+        
+        self.filename_source = acq400_hapi.Netclient(self.uut.uut, HYSTAT)
+        self.filename_source.termex = re.compile(r"(HY\-stat>)")
+        self.filename_re = re.compile(r"NEW (\w+)")
+        
+        print("filename_source {} termex {}".format(self.filename_source, self.filename_source.termex))
+        self.filename_source.send("\r\n")
+        
+        signon = self.filename_source.receive_message(self.filename_source.termex)
+        print("signon {}".format(signon))
+        m = self.filename_re.search(signon)
+        if not m:
+            print("ERROR match failed {}".format(signon))
+            sys.exit()
+        self.newname = m.group(0)
         self.open_data_file()
 
 
@@ -49,12 +68,11 @@ class StreamsOne:
                 print("open_data_file() {}".format(fullpath))
 
     def run(self):        
-        uut = acq400_hapi.Acq400(self.uut_name)
         data_length = 0
         if self.args.burstlen > self.args.totaldata:
             self.args.burstlen = self.args.totaldata
         try:
-            if int(uut.s0.data32):
+            if int(self.uut.s0.data32):
                 data_size = 4
                 wordsizetype = "<i4"  # 32 bit little endian
             else:
@@ -68,7 +86,7 @@ class StreamsOne:
         start_time = time.time()
         self.log_file = open("{}_times.log".format(self.uut_name), "w")
             
-        for buf in uut.stream(recvlen=self.args.burstlen, data_size=data_size):
+        for buf in self.uut.stream(recvlen=self.args.burstlen, data_size=data_size):
             if data_length > 0:
                 t0 = self.logtime(t0, time.time())
             else:
