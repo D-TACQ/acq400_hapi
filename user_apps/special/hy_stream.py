@@ -54,7 +54,7 @@ class StreamsOne:
         
         self.filename_source = acq400_hapi.Netclient(self.uut.uut, HYSTAT)
         self.filename_source.termex = re.compile(r"(HY\-stat>)")
-        self.filename_re = re.compile(r"NEW (\w+)")
+        self.filename_re = re.compile(r"(NEW|OLD) (\w+)")
         self.filename_source.send("\r\n")        
 
 
@@ -69,7 +69,7 @@ class StreamsOne:
             if not m:
                 print("ERROR match failed {}".format(message))
                 sys.exit()
-            self.newname = m.group(1)
+            self.newname = m.group(2)
                  
         if self.filename != self.newname:
             fullpath = os.path.join(self.root, self.newname)
@@ -117,7 +117,7 @@ class StreamsOne:
                 if self.args.verbose == 1:
                     print(".", end='')
                     
-                # mayeb the filename must change?. Now is a good time                    
+                # maybe the filename must change?. Now is a good time                    
                 self.open_data_file()
                 
             if time.time() >= (start_time + self.args.runtime) or data_length > self.args.totaldata:                
