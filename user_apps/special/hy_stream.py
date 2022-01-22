@@ -29,19 +29,30 @@ class StreamsOne:
     def __init__ (self, args, uut_name):
         self.args = args
         self.uut_name = uut_name
+        self.root = os.path.join(self.args.root, self.uut_name)
+        make_data_dir(self.root, self.args.verbose)
+        self.filename = "nothing"
+        self.newname = "default"        
+        self.open_data_file()
+
 
     def logtime(self, t0, t1):
         print(int((t1-t0)*1000), file=self.log_file)
         return t1
 
+    def open_data_file(self):
+        if self.filename != self.newname:
+            fullpath = os.path.join(self.root, self.newname)
+            self.data_file = open(fullpath, "wb")
+            self.filename = self.newname
+            if self.args.verbose > 1:
+                print("open_data_file() {}".format(fullpath))
 
     def run(self):        
         uut = acq400_hapi.Acq400(self.uut_name)
-        cycle = -1
-        num = 999       # force initial directory create
         data_length = 0
-        if self.args.filesize > self.args.totaldata:
-            self.args.filesize = self.args.totaldata
+        if self.args.burstlen > self.args.totaldata:
+            self.args.burstlen = self.args.totaldata
         try:
             if int(uut.s0.data32):
                 data_size = 4
@@ -57,7 +68,7 @@ class StreamsOne:
         start_time = time.time()
         self.log_file = open("{}_times.log".format(self.uut_name), "w")
             
-        for buf in uut.stream(recvlen=self.args.filesize, data_size=data_size):
+        for buf in uut.stream(recvlen=self.args.burstlen, data_size=data_size):
             if data_length > 0:
                 t0 = self.logtime(t0, time.time())
             else:
@@ -69,49 +80,27 @@ class StreamsOne:
                 print("Zero length buffer, quit")
                 return
 
-            if not self.args.nowrite:
-                if num >= self.args.files_per_cycle:
-                    num = 0
-                    cycle += 1
-                    root = os.path.join(self.args.root, self.uut_name, "{:06d}".format(cycle))
-                    make_data_dir(root, self.args.verbose)
-
-                data_file = open(os.path.join(root, "{:04d}.dat".format(num)), "wb")
-                buf.tofile(data_file, '')
+            if not self.args.nowrite: 
+                buf.tofile(self.data_file, '')
                 
                 if self.args.verbose == 1:
                     print(".", end='')
-
-                if self.args.verbose > 2:
-                    print("New data file written.")
-                    print("Data Transferred: ", data_length, "KB")
-                    print("Streaming time remaining: ", -1*(time.time() - (start_time + self.args.runtime)))
-                    print("")
-                    print("")
-
-            num += 1
+                    
+                self.open_data_file()
                 
             if time.time() >= (start_time + self.args.runtime) or data_length > self.args.totaldata:                
                 return
             
-               
-    
+
 def run_stream(args):
-    RXBUF_LEN = 4096
-    cycle = 1
-    root = args.root + args.uut[0] + "/" + "{:06d}".format(cycle)
-    data = bytes()
-    num = 0
-        
     streamer = StreamsOne(args, args.uut[0])
     streamer.run()
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 stream')
-    #parser.add_argument('--filesize', default=1048576, type=int,
-    #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
-    parser.add_argument('--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
-    parser.add_argument('--files_per_cycle', default=100, type=int, help="files per cycle (directory)")
+    #parser.add_argument('--burstlen', default=1048576, type=int,
+    #                    help="Size of file to store in KB. If burstlen > total data then no data will be stored.")
+    parser.add_argument('--burstlen', default=0x100000, action=acq400_hapi.intSIAction, decimal=False, help="burst length in samples")    
     parser.add_argument('--force_delete', default=0, type=int, help="silently delete any existing data files")
     parser.add_argument('--nowrite', default=0, help="do not write file")
     parser.add_argument('--totaldata', default=10000000000, action=acq400_hapi.intSIAction, decimal = False)
