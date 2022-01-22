@@ -28,12 +28,25 @@ def make_data_dir(directory, verbose):
             print("Directory already exists")
         pass
 
+def remove_stale_data(args, path):
+    if os.path.exists(path):
+        if args.force_delete:
+            pass
+        else:
+            answer = input("Stale data detected. Delete all contents in " + args.root + uut + "? y/n ")
+            if answer != 'y':
+                return
+        if args.verbose:
+            print("removing {}".format(path))          
+        shutil.rmtree(path)
+            
 class StreamsOne:
     def __init__ (self, args, uut_name):
         self.args = args
         self.uut_name = uut_name
         self.uut = acq400_hapi.Acq400(self.uut_name)
         self.root = os.path.join(self.args.root, self.uut_name)
+        remove_stale_data(args, self.root) 
         make_data_dir(self.root, self.args.verbose)
         self.filename = "nothing"
         self.newname = "default" 
@@ -128,7 +141,8 @@ def run_main():
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uut', nargs=1, help="uut")
-    args = parser.parse_args()    
+    args = parser.parse_args()
+      
     run_stream(args)
 
 
