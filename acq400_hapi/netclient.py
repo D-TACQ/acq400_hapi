@@ -32,6 +32,9 @@ class Netclient:
         port (int) : server port number.
         
     """
+    
+    trace = int(os.getenv("NETCLIENT_TRACE", "0"))   
+    
     def receive_message(self, termex, maxlen=4096):
         """Read the information from the socket line at a time.
     
@@ -46,14 +49,21 @@ class Netclient:
         match = termex.search(self.buffer)
         while match == None:
             self.buffer += self.sock.recv(maxlen).decode("latin-1")
+            if Netclient.trace > 1:
+                print("self.buffer {}".format(self.buffer))
             match = termex.search(self.buffer)
 
         rc = self.buffer[:match.start(1)]
         self.buffer = self.buffer[match.end(1):]
         return rc
     
-    trace = int(os.getenv("NETCLIENT_TRACE", "0"))   
-                
+    
+      
+    def send(self, message):
+        if Netclient.trace > 1:
+            print("send({})".format(message)) 
+        self.sock.send(message.encode())
+                     
     def __init__(self, addr, port) :
         if Netclient.trace:
             print("Netclient.init {} {}".format(addr, port))
