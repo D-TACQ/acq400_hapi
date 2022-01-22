@@ -56,7 +56,7 @@ class StreamsOne:
             if not m:
                 print("ERROR match failed {}".format(message))
                 sys.exit()
-            self.newname = m.group(0)
+            self.newname = m.group(1)
                  
         if self.filename != self.newname:
             fullpath = os.path.join(self.root, self.newname)
