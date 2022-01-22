@@ -59,8 +59,15 @@ CH_DI4  = 9
 PREV_INDEX = LPS-IX_INDEX   # look back to INDEX in previous sample
 NEXT_INDEX = ESL+IX_INDEX   # look forward to next INDEX from beginning of ES
 
-def isES(d):
+
+
+def _isES(d):
     return d[0] == 0xaa55f154 and d[1] == 0xaa55f154 and d[2] == 0xaa55f15f and d[3] == 0xaa55f15f
+
+# ES spans two samples, check the lot.
+
+def isES(d):
+    return _isES(d[0:]) and _isES(d[6:])
 
 def find_zero_index(args):
     # This function finds the first 0xaa55f154 short value in the data and then
@@ -68,30 +75,53 @@ def find_zero_index(args):
     # index after this event sample and checks the latter is one greater
     # than the former. If the values do not increment then go to the next
     # event sample and repeat.
+    
+    hits = 0
 
     for pos, lvnu in enumerate(args.data32):
         if isES(args.data32[pos:pos+ESL]):
+            print("DEBUG ES found at {}".format(pos))
+            hits += 1
+            
             # Check current index
-            first_es_position = pos
-            break
+            if hits == 1:
+                if pos == 0:
+                    first_es_position = pos
+                    break            # ES at zero good.
+                else:
+                    pass             # first hit not zero .. bad
+            else:            # ES comes in pairs, skip #2 as well
+                first_es_position = pos
+                break
 
-    print("DEBUG: first_es_position {}".format(first_es_position))
+    print("DEBUG: hits: {} first_es_position {}".format(hits, first_es_position))
     # loop over all the event samples. Look at the "index" value before and
     # after and check they have incremented.
     next_es = args.transient_length*LPS + ESL
     
-    for pos, lvnu in enumerate(args.data32[first_es_position:]):
+    # normalise to first_es_pos
+    normal32 = args.data32[first_es_position:]
+    for pos, lvnu in enumerate(normal32):        
         if pos > 0 and pos % next_es == 0:
-            if not isES(args.data32[pos:pos+ESL]):
+            if not isES(normal32[pos:pos+ESL]):
                 print("ERROR: expected ES at {}".format(pos))
                 exit(1)
             print("DEBUG: counter {} samples {}".format(pos, pos//LPS))            
-            if args.isNewIndex(args.data32[pos - PREV_INDEX], args.data32[pos + NEXT_INDEX]):
-                return pos
+            if args.isNewIndex(normal32[pos - PREV_INDEX], normal32[pos + NEXT_INDEX]):
+                return pos+first_es_position    # relative to original data..
 
     print("ERROR: we do not want to be here")
     exit(1)
 
+def find_all_es(args):
+    hits = 0
+    pos0 = 0
+
+    for pos, lvnu in enumerate(args.data32):
+        if isES(args.data32[pos:pos+ESL]):
+            hits += 1
+            print("ES#{:4d}: {:6d} {:8.1f}  len:{:6.1f}".format(hits, pos, pos/LPS, (pos-pos0)/LPS))
+            pos0 = pos 
 
 def extract_bursts(args, zero_index):
     burst32 = args.transient_length*LPS
@@ -203,11 +233,16 @@ def run_main():
     parser.add_argument("--data_file", default="./shot_data", type=str, help="Name of"
                                                                     "data file")
     parser.add_argument("--msb_direct", default=0, type=int, help="new msb_direct feature, d2/d4 embedded in count d31")
+    parser.add_argument("--find_all_es", default=0, type=int, help="find all ES markers")
+    
     args = parser.parse_args()
     args.isNewIndex = isNewIndex_msb_direct if args.msb_direct else isNewIndex_default
     
     args.data32 = np.fromfile(args.data_file, dtype=np.uint32)
     args.data16 = np.fromfile(args.data_file, dtype=np.int16)
+    
+    if args.find_all_es:
+        find_all_es(args)
 
     data = extract_bursts(args, find_zero_index(args))
     if args.plot == 1:
