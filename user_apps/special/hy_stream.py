@@ -36,23 +36,13 @@ class StreamsOne:
         self.root = os.path.join(self.args.root, self.uut_name)
         make_data_dir(self.root, self.args.verbose)
         self.filename = "nothing"
-        self.newname = "default"        
+        self.newname = "default" 
+        self.data_file = None       
         
         self.filename_source = acq400_hapi.Netclient(self.uut.uut, HYSTAT)
         self.filename_source.termex = re.compile(r"(HY\-stat>)")
         self.filename_re = re.compile(r"NEW (\w+)")
-        
-        print("filename_source {} termex {}".format(self.filename_source, self.filename_source.termex))
-        self.filename_source.send("\r\n")
-        
-        signon = self.filename_source.receive_message(self.filename_source.termex)
-        print("signon {}".format(signon))
-        m = self.filename_re.search(signon)
-        if not m:
-            print("ERROR match failed {}".format(signon))
-            sys.exit()
-        self.newname = m.group(0)
-        self.open_data_file()
+        self.filename_source.send("\r\n")        
 
 
     def logtime(self, t0, t1):
@@ -60,6 +50,14 @@ class StreamsOne:
         return t1
 
     def open_data_file(self):
+        if self.filename_source.has_data():
+            message = self.filename_source.receive_message(self.filename_source.termex)
+            m = self.filename_re.search(message)
+            if not m:
+                print("ERROR match failed {}".format(message))
+                sys.exit()
+            self.newname = m.group(0)
+                 
         if self.filename != self.newname:
             fullpath = os.path.join(self.root, self.newname)
             self.data_file = open(fullpath, "wb")
@@ -99,11 +97,14 @@ class StreamsOne:
                 return
 
             if not self.args.nowrite: 
+                if not self.data_file:
+                    self.open_data_file()
                 buf.tofile(self.data_file, '')
                 
                 if self.args.verbose == 1:
                     print(".", end='')
                     
+                # mayeb the filename must change?. Now is a good time                    
                 self.open_data_file()
                 
             if time.time() >= (start_time + self.args.runtime) or data_length > self.args.totaldata:                
