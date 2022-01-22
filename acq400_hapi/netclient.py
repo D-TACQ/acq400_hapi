@@ -14,6 +14,7 @@ import re
 import sys
 import os
 from threading import Lock
+import select
 
 
 if sys.version_info < (3, 0):
@@ -63,6 +64,11 @@ class Netclient:
         if Netclient.trace > 1:
             print("send({})".format(message)) 
         self.sock.send(message.encode())
+        
+    def has_data(self):
+        socket_list = [self.sock]
+        rs, wr, es = select.select(socket_list, [], [], 0)
+        return self.sock in rs
                      
     def __init__(self, addr, port) :
         if Netclient.trace:
