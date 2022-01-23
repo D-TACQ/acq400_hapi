@@ -157,15 +157,17 @@ def extract_bursts(args):
         tmp = np.bitwise_and(data[CH_INDEX], 0x80000000)
         data.append(np.logical_and(tmp, tmp))
         
-        data[4] = np.bitwise_and(data[CH_FACET], 0x7fffffff)        
-        data[5] = np.bitwise_and(data[CH_INDEX], 0x7fffffff)
+        data[CH_FACET] = np.bitwise_and(data[CH_FACET], 0x7fffffff)        
+        data[CH_INDEX] = np.bitwise_and(data[CH_INDEX], 0x7fffffff)
          
     for ic, ch in enumerate(data):
         print("{} {}".format(ic, ch.shape))
     return data
         
 def save_data(args, data):
-    np.tofile("test_file", data)
+    for ch in range(len(data)):
+        np.save("{}_{}_cooked".format(args.data_file, ch), data[ch])
+    
     return None
 
 
@@ -262,7 +264,7 @@ def run_main():
     args.zero_index = find_zero_index(args)
     data = extract_bursts(args)
     if args.plot == 1:
-            plot_data(args, data)
+        plot_data(args, data)
     if args.save == 1:
         save_data(args, data)
         
