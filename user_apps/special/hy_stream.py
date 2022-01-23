@@ -70,6 +70,9 @@ class StreamsOne:
                 print("ERROR match failed {}".format(message))
                 sys.exit()
             self.newname = m.group(2)
+            if self.newname == "QUIT":
+                print("Quitting on remote request")
+                sys.exit(0)
                  
         if self.filename != self.newname:
             fullpath = os.path.join(self.root, self.newname)
