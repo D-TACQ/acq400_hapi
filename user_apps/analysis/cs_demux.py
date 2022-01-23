@@ -242,7 +242,7 @@ def isNewIndex_msb_direct(w1, w2):
 def run_main():
     parser = argparse.ArgumentParser(description='cs demux')
     parser.add_argument('--plot', default=1, type=int, help="Plot data")
-    parser.add_argument('--plot_facets', default=-1, type=int, help="No of facets"
+    parser.add_argument('--plot_facets', default=20, type=int, help="No of facets"
                                                                     "to plot")
     parser.add_argument('--save', default=0, type=int, help="Save data")
     parser.add_argument('--transient_length', default=8192, type=int, help='transient length')
