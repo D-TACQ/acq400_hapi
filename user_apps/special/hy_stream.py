@@ -55,7 +55,9 @@ class StreamsOne:
         self.filename_source = acq400_hapi.Netclient(self.uut.uut, HYSTAT)
         self.filename_source.termex = re.compile(r"(HY\-stat>)")
         self.filename_re = re.compile(r"(NEW|OLD) (\w+)")
-        self.filename_source.send("\r\n")        
+        self.filename_source.send("\r\n")
+        time.sleep(1)
+        self.open_data_file()    # might be QUIT, or might be sensible starting point        
 
 
     def logtime(self, t0, t1):
@@ -83,7 +85,7 @@ class StreamsOne:
 
     def run(self):        
         data_length = 0
-        self.open_data_file()    # might be QUIT
+        
         if self.args.burstlen > self.args.totaldata:
             self.args.burstlen = self.args.totaldata
         try:
