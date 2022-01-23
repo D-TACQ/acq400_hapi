@@ -83,6 +83,7 @@ class StreamsOne:
 
     def run(self):        
         data_length = 0
+        self.open_data_file()    # might be QUIT
         if self.args.burstlen > self.args.totaldata:
             self.args.burstlen = self.args.totaldata
         try:
