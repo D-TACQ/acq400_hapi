@@ -123,15 +123,15 @@ def find_all_es(args):
             print("ES#{:4d}: {:6d} {:8.1f}  len:{:6.1f}".format(hits, pos, pos/LPS, (pos-pos0)/LPS))
             pos0 = pos 
 
-def extract_bursts(args, zero_index):
+def extract_bursts(args):
     burst32 = args.transient_length*LPS
     burst16 = args.transient_length*SPS
     burst_es = args.transient_length*LPS + ESL
     data = []
 
-    print("extract_bursts() {}, {}, {}".format(zero_index+ESL, len(args.data32), burst_es))
+    print("extract_bursts() {}, {}, {}".format(args.zero_index+ESL, len(args.data32), burst_es))
     first_time = True
-    for bxx in range(zero_index+ESL, len(args.data32), burst_es):        
+    for bxx in range(args.zero_index+ESL, len(args.data32), burst_es):        
         b32 = bxx + 2       # skip AI
         b16 = bxx * 2       # scale to data16
         if first_time:
@@ -217,6 +217,20 @@ def plot_data(args, data):
     plt.show()
     return None
 
+def print_stats(args, data):
+    nb = len(data[CH_INDEX])//args.transient_length
+    
+    if args.print_stats == 1:
+        bursts = [0, nb-1]
+    else:
+        bursts = range(nb)
+    
+    print("{}, {}, {}, {}, {}, {}".format("FILE", "BURST", "INDEX", "FACET", "SAMPLE", "USEC"))
+    for bb in bursts:
+        for ii in [bb*args.transient_length, (bb+1)*args.transient_length-1]:
+            print("{}, {}, {}, {}, {}, {}".format(args.data_file, bb, data[CH_INDEX][ii], data[CH_FACET][ii], data[CH_AGSAM][ii], data[CH_USEC][ii]))
+        
+
 def isNewIndex_default(w1, w2):
     return w1+1 == w2
 
@@ -234,6 +248,7 @@ def run_main():
                                                                     "data file")
     parser.add_argument("--msb_direct", default=0, type=int, help="new msb_direct feature, d2/d4 embedded in count d31")
     parser.add_argument("--find_all_es", default=0, type=int, help="find all ES markers")
+    parser.add_argument("--print_stats", default=0, type=int, help="print burst statistics, 1:top/tail 2:all bursts")
     
     args = parser.parse_args()
     args.isNewIndex = isNewIndex_msb_direct if args.msb_direct else isNewIndex_default
@@ -244,11 +259,15 @@ def run_main():
     if args.find_all_es:
         find_all_es(args)
 
-    data = extract_bursts(args, find_zero_index(args))
+    args.zero_index = find_zero_index(args)
+    data = extract_bursts(args)
     if args.plot == 1:
             plot_data(args, data)
     if args.save == 1:
         save_data(args, data)
+        
+    if args.print_stats:
+        print_stats(args, data)
 
 if __name__ == '__main__':
     run_main()
