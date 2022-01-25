@@ -257,7 +257,7 @@ def run_offload(uut, args, shot):
 def run_shots(args):
     global LOG
     global _logprint
-    print("run_shots {}".format(args))
+#    print("run_shots {}".format(args))
     _logprint = args.logprint
     global uut_name
     uut_name = args.uut
