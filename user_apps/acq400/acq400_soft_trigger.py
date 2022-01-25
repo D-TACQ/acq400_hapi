@@ -16,7 +16,7 @@ import acq400_hapi
 import os
 import argparse
 
-parser = argparse.ArgumentParser(description='configure acq400_arm')
+parser = argparse.ArgumentParser(description='fire soft_trigger')
 parser.add_argument('uut', nargs='+', help="uut")
 
 args = parser.parse_args()
