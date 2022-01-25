@@ -12,28 +12,31 @@ example usage::
            --captureblocks=2000 --offloadblocks=0-1999 acq2106_007
 
 
-usage::
 
-    mgtdramshot.py [-h] [--pre PRE] [--post POST] [--clk CLK] [--trg TRG]
-                      [--sim SIM] [--trace TRACE] [--loop LOOP]
+usage: mgtdramshot.py [-h] [--clk CLK] [--trg TRG] [--sim SIM] [--trace TRACE]
+                      [--auto_soft_trigger AUTO_SOFT_TRIGGER]
+                      [--clear_counters] [--loop LOOP]
                       [--captureblocks CAPTUREBLOCKS]
                       [--offloadblocks OFFLOADBLOCKS] [--validate VALIDATE]
-                      [--wait_user WAIT_USER]
-                      uut
+                      [--wait_user WAIT_USER] [--wait_shot WAIT_SHOT]
+                      [--save_data SAVE_DATA] [--shot SHOT] [--twa TWA]
+                      [--logprint LOGPRINT]
+                      uuts [uuts ...]
 
 acq2106 mgtdram test
 
 positional arguments:
-  uut                   uut
+  uuts                  uut
 
 optional arguments:
   -h, --help            show this help message and exit
-  --pre PRE             pre-trigger samples
-  --post POST           post-trigger samples
   --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
   --trg TRG             int|ext,rising|falling
   --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
   --trace TRACE         1 : enable command tracing
+  --auto_soft_trigger AUTO_SOFT_TRIGGER
+                        force soft trigger generation
+  --clear_counters      clear all counters SLOW
   --loop LOOP           loop count
   --captureblocks CAPTUREBLOCKS
                         number of 4MB blocks to capture
@@ -42,6 +45,16 @@ optional arguments:
   --validate VALIDATE   program to validate data
   --wait_user WAIT_USER
                         1: force user input each shot
+  --wait_shot WAIT_SHOT
+                        1: wait for some external agent to run the shot, then
+                        offload all
+  --save_data SAVE_DATA
+                        Whether or not to save data to a file in 4MB chunks.
+                        Default: 1
+  --shot SHOT           set a shot number
+  --twa TWA             trigger_when_armed
+  --logprint LOGPRINT   1: Print log messages. 2: Save reduced log to log
+                        file.
 
 """
 
@@ -130,6 +143,7 @@ def UploadStatus(report_interval):
 def host_pull(args, uut, shot):
     # set up a RawClient to pull data from the mgtdram host_pull port.
     rc = uut.create_mgtdram_pull_client()
+    uut_name = uut.uut
     first_run = True
     nchan = int(uut.s0.NCHAN)
     group = 12 if nchan%3 == 0 else 16
@@ -154,8 +168,8 @@ def host_pull(args, uut, shot):
             first_run = False
 
         if args.save_data == 1:
-            fn = "./{}/{:04d}.dat".format(args.uut[0], shot)
-            make_data_dir(args.uut[0], 0)
+            fn = "./{}/{:04d}.dat".format(uut_name, shot)
+            make_data_dir(uut_name, 0)
             buffer.tofile(fn)
             print("{}".format(fn))
         else:
@@ -249,8 +263,8 @@ def run_shots(args):
     uut_name = args.uut
     nbytes = 0
 
-    print("run_shots {}".format(args.uut))
-    LOG = open("mgtdramshot-{}.log".format(args.uut), "w")
+    print("run_shots {}".format(uut_name))
+    LOG = open("mgtdramshot-{}.log".format(uut_name), "w")
     uut = acq400_hapi.Acq2106_Mgtdram8(args.uut)
     acq400_hapi.Acq400UI.exec_args(uut, args)
 
@@ -378,7 +392,7 @@ def run_main():
     parser.add_argument('--wait_shot', type=int, default=0,
                         help="1: wait for some external agent to run the shot, then offload all")
     parser.add_argument('--save_data', type=int, default=1,
-                        help='Whether or not to save data to a file in 4MB chunks. Default: 0.')
+                        help='Whether or not to save data to a file in 4MB chunks. Default: 1')
     parser.add_argument('--shot', type=int, default=None, help="set a shot number")
     parser.add_argument('--twa', type=int, default=None, help="trigger_when_armed")
 
