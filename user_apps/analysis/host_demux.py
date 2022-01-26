@@ -265,9 +265,11 @@ def plot_mpl(args, raw_channels):
     f.suptitle("{} src {}".format(args.uut[0], args.src))
     for num, sp in enumerate(args.pc_list):
         try:
+            plots[num].set_ylabel("CH{}".format(sp))
             plots[num].plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrate])
         except TypeError:
             plots.plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrate])
+    plots[num].set_xlabel("Samples")
     plt.show()
     return None
 
