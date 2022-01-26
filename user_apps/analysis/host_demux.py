@@ -261,7 +261,8 @@ def plot_mpl(args, raw_channels):
     print("Plotting with MatPlotLib. Subrate = {}".format(args.mpl_subrate))
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
     num_of_ch = len(args.pc_list)
-    f, plots = plt.subplots(num_of_ch, 1)
+    f, plots = plt.subplots(num_of_ch, 1, sharex=True)
+    f.suptitle("{} src {}".format(args.uut[0], args.src))
     for num, sp in enumerate(args.pc_list):
         try:
             plots[num].plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrate])
