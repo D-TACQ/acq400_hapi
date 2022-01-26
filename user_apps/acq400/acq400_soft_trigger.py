@@ -26,14 +26,13 @@ parser.add_argument('uut', nargs='+', help="uut")
 args = parser.parse_args()
 uuts = [ acq400_hapi.Acq400(u) for u in args.uut ]
 
-it = 0
-
 if len(uuts) == 1:
     u = uuts[0]
     if args.instrument:
         u.s0.SIG_TRG_MB_RESET = 1
         time.sleep(1)
-        
+
+    it = 0        
     while it < args.count:        
         u.s0.soft_trigger = 1
         if args.interval > 0:
