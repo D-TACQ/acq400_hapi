@@ -32,11 +32,34 @@ def load_data(args):
     print(counts)
     states = [ 1 if ii%2==1 else 0 for ii in range(0, entry_count)]
     times = [ c * args.tns for c in counts]
+    
+    ctimes = [ x*args.tpi*args.tns/2 for x in range(0, len(states))]
+    cstates = [ 1 if ii%2==1 else 0 for ii in range(0, len(states))]
+    
+    lpa = np.arange(0,5, step=(5/len(states)))
+    
                             
     for ii in range(0, entry_count):
         print("{:5d},{}".format(counts[ii], states[ii]))
-        
+    
+    nsp = 3
+    
+    
+    ax0 = plt.subplot(nsp, 1, 1) 
+    ax0.set_title("LP Delay Example")
+    ax0.set_ylabel("{}".format("LPD"))   
     plt.step(times, states)
+    plt.yticks(np.arange(0, 2, step=1))
+    ax1 = plt.subplot(nsp, 1, 2, sharex=ax0)
+    ax1.set_ylabel("{}".format("ADC CLK"))
+    plt.step(ctimes, cstates)
+    plt.yticks(np.arange(0, 2, step=1))
+    
+    ax2 = plt.subplot(nsp, 1, 3, sharex=ax0)
+    ax2.set_ylabel("{}".format("DAC3 LPA"))
+    plt.step(ctimes, lpa)
+    
+    ax2.set_xlabel("Samples")
     plt.show()
     #counts = np
     return data
