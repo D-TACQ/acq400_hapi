@@ -15,14 +15,38 @@ optional arguments:
 import acq400_hapi
 import os
 import argparse
+import time
 
 parser = argparse.ArgumentParser(description='fire soft_trigger')
+parser.add_argument('--count', type=int, default=1, help="send many triggers, perhaps to test max rate")
+parser.add_argument('--interval', type=float, default=0, help="send periodic trigger (s) default: 0 aka max")
+parser.add_argument('--instrument', type=int, default=0, help="count before and after")
 parser.add_argument('uut', nargs='+', help="uut")
 
 args = parser.parse_args()
 uuts = [ acq400_hapi.Acq400(u) for u in args.uut ]
 
+it = 0
 
-for u in uuts:
-    u.s0.soft_trigger = 1
+if len(uuts) == 1:
+    u = uuts[0]
+    if args.instrument:
+        u.s0.SIG_TRG_MB_RESET = 1
+        time.sleep(1)
+        
+    while it < args.count:        
+        u.s0.soft_trigger = 1
+        if args.interval > 0:
+            time.sleep(args.interval)
+        it += 1
+        
+    if args.instrument:
+        tcount = u.s0.SIG_TRG_MB_COUNT
+        print("{}: sent {} triggers, actual {} triggers ".format("PASS" if tcount == args.count else "FAIL", args.count, tcount))
+    
+else:
+    print("multiple uuts, send one trigger to each")
+    for u in uuts:
+        u.s0.soft_trigger = 1
+    
 
