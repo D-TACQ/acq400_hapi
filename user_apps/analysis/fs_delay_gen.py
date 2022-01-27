@@ -59,9 +59,8 @@ def load_data(args):
     ax2.set_ylabel("{}".format("DAC3 LPA"))
     plt.step(ctimes, lpa)
     
-    ax2.set_xlabel("Samples")
+    ax2.set_xlabel("Nano Seconds")
     plt.show()
-    #counts = np
     return data
 
 def run_main():
