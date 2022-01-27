@@ -12,11 +12,7 @@ from lxml.html.builder import DD
 from PIL.TiffImagePlugin import STRIPBYTECOUNTS
 from lightdm_gtk_greeter_settings.OptionEntry import AccessibilityStatesEntry
    
-def plot_data(args, data):
-    plt.show()
-    return None
-
-def load_data(args):
+def calc_lpd(args):
     data = []
     delay_ticks = [ x for x in range(args.d1, args.d2, args.ds)]
     print("delay_ticks: {}".format(delay_ticks))
@@ -61,7 +57,7 @@ def load_data(args):
     
     ax2.set_xlabel("Nano Seconds")
     plt.show()
-    return data
+    return len(states)/2    # return dwell in us
 
 def run_main():
     parser = argparse.ArgumentParser(description='multiplot')
@@ -73,7 +69,7 @@ def run_main():
     
     
     args = parser.parse_args()
-    plot_data(args, load_data(args))
+    dwell = calc_lpd(args)
 
 if __name__ == '__main__':
     run_main()
