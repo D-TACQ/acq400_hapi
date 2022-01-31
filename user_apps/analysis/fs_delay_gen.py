@@ -8,25 +8,45 @@ generate a series of variable delays for GPG and plot
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-from lxml.html.builder import DD
-from PIL.TiffImagePlugin import STRIPBYTECOUNTS
-from lightdm_gtk_greeter_settings.OptionEntry import AccessibilityStatesEntry
-   
+
+def make_raw_binary(args, counts, states):    
+    b_out = np.zeros(len(counts), dtype=np.int32)
+    ii_out = 0
+    for ii, st in enumerate(states):
+        print("mrb {} {} {}".format(ii, counts[ii], st))
+
+        until_count = counts[ii]-1
+        if until_count < 4:
+            until_count = 4
+        
+        if ii == 0:
+            st |= 2                              # sync output for scope trigger
+        if ii+1 == len(states) and args.kludge_flyback:
+            until_count += 1                    # gpg flyback drops one clock, claw it back
+        b_out[ii_out] = until_count << 8 | st
+        ii_out += 1
+    
+    b_out = b_out[:ii_out]
+    with open("gpg_x{}.raw".format(args.rawscale), "wb") as fd:
+        b_out.tofile(fd)
+
+
 def calc_lpd(args):
     data = []
     delay_ticks = [ x for x in range(args.d1, args.d2, args.ds)]
     print("delay_ticks: {}".format(delay_ticks))
-    entry_count = 1+len(delay_ticks)*2
+    entry_count = len(delay_ticks)*2
     counts = np.zeros((entry_count,), dtype=int)
     total = 0
     for ii, dd in enumerate(delay_ticks):
         total += dd
-        counts[1+ii*2] = total        
+        counts[ii*2] = total        
         total += args.tpi - dd
-        counts[1+ii*2+1] = total
+        counts[ii*2+1] = total
         
-    print(counts)
-    states = [ 1 if ii%2==1 else 0 for ii in range(0, entry_count)]
+    print("counts {}\n{}".format(len(counts), counts))
+    
+    states = [ 1 if ii%2==0 else 0 for ii in range(0, entry_count)]
     times = [ c * args.tns for c in counts]
     
     ctimes = [ x*args.tpi*args.tns/2 for x in range(0, len(states))]
@@ -34,9 +54,7 @@ def calc_lpd(args):
     
     lpa = np.arange(0,5, step=(5/len(states)))
     
-                            
-    for ii in range(0, entry_count):
-        print("{:5d},{}".format(counts[ii], states[ii]))
+    make_raw_binary(args, counts, states)                
     
     nsp = 3
     
@@ -83,13 +101,15 @@ def calc_frame(args, dwell):
 
 def run_main():
     parser = argparse.ArgumentParser(description='multiplot')
-    parser.add_argument('--d1', type=int, default=1, help="first delay (ticks)")
-    parser.add_argument('--d2', type=int, default=25, help="last_delay+1 (ticks)")
+    parser.add_argument('--d1', type=int, default=4, help="first delay (ticks)")
+    parser.add_argument('--d2', type=int, default=16+4+1, help="last_delay+1 (ticks)")
     parser.add_argument('--ds', type=int, default=1, help="delay step (ticks)")
     parser.add_argument('--tpi', type=int, default=30, help="ticks per interval")
     parser.add_argument('--tns', type=float, default=16.6666, help="tick nsec")
     parser.add_argument('--frame', type=int, default=100, help="frame line count")
-    parser.add_argument('--line', type=int, default=100, help="line pixel count")    
+    parser.add_argument('--line', type=int, default=100, help="line pixel count")
+    parser.add_argument('--kludge_flyback', type=int, default=0, help="fixup for GPG logic")
+    parser.add_argument('--rawscale', type=int, default=1, help="scale raw gpg output for slower output easier to see DO NOT USE!")   
     
     
     args = parser.parse_args()
