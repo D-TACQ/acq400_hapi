@@ -12,10 +12,11 @@ python module to connect to remote hosts
 **Recommended** 
 ... and use PYTHONPATH to reference the library when used from anywhere
 ```bash
-mkdir PROJECTS
+mkdir PROJECTS; cd PROJECTS
 git clone https://github.com/D-TACQ/acq400_hapi
+cd acq400_hapi
 
-export PYTHONPATH=~/PROJECTS/acq400_hapi
+#export PYTHONPATH=~/PROJECTS/acq400_hapi
 
 on Linux,   run: source ./setpath
 on Windows, run: SETPYTHONPATH.BAT
