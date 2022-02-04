@@ -21,7 +21,7 @@ on Linux,   run: source ./setpath
 on Windows, run: SETPYTHONPATH.BAT
 ```
 
-### Standard method use PIP i
+### Standard method use PIP
 **[Currently Deprecated : please use Github above]**
 
 PIP has the advantage of installing a system library, however it's not updated as frequently as the Github source, so some feature may be lacking.
