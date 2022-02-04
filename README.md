@@ -10,8 +10,7 @@ python module to connect to remote hosts
 
 ### Use Latest Github
 **Recommended** 
-
-... and use PYTHONPATH to reference the library when used from anyway.
+... and use PYTHONPATH to reference the library when used from anywhere
 ```bash
 mkdir PROJECTS
 git clone https://github.com/D-TACQ/acq400_hapi
@@ -22,7 +21,8 @@ on Linux,   run: source ./setpath
 on Windows, run: SETPYTHONPATH.BAT
 ```
 
-### Standard method use PIP [Currently Deprecated : please use Github above]
+### Standard method use PIP i
+**[Currently Deprecated : please use Github above]**
 
 PIP has the advantage of installing a system library, however it's not updated as frequently as the Github source, so some feature may be lacking.
 
