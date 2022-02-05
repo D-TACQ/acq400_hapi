@@ -87,13 +87,23 @@ class Netclient:
 
     def __enter__(self):
         return self
-    
-    def __exit__(self, exc_type, exc_value, traceback):
+   
+    def close(self):
+#        print("close() {} {}".format(self.__addr, self.__port))
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
         except socket.error:
             pass
         self.sock.close()
+
+#    def __exit__(self, exc_type, exc_value, traceback):
+#        print("__exit__ {} {}".format(self.__addr, self.__port))
+#        self.close()
+
+#    def __del__(self):
+#        print("__del__ {} {}".format(self.__addr, self.__port))
+#        self.close()
+
             
     #@property
     def addr(self):

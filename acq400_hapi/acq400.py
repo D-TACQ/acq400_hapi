@@ -415,7 +415,7 @@ class Acq400:
             return
         except KeyError:
             pass
-    
+   
         self.verbose = int(os.getenv("ACQ400_VERBOSE", "0"))    
         self.NL = re.compile(r"(\n)")
         self.uut = _uut
@@ -455,6 +455,18 @@ class Acq400:
         Acq400.uuts_methods[_uut] = self.__dict__   # store the dict for reuse by __init__
         Acq400.uuts[_uut] = self                    # store the object for reuse by factory()
 
+    def close(self):
+        self.statmon.quit_reqested = True
+        for k, s in self.svc.items():
+            s.close()
+        try:
+            del Acq400.uuts[self.uut]
+            del Acq400.uuts_methods[self.uut]
+        except KeyError:
+            print("ERROR {} instance not in cache".format(self.uut))
+
+    def __del__(self):
+        print("__del__ {}".format(self.uut))
 
     def __getattr__(self, name):
         if self.svc.get(name) != None:
@@ -1395,7 +1407,7 @@ def factory(_uut):
     s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
     
     if not s0.MODEL.startswith("acq2106"):
-        return Acq400(_uut, s0)
+        return Acq400(_uut, s0_client=s0)
     
     # here with acq2106
     
