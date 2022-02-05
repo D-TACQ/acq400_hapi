@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Loop test from single program instance: connect, reboot, connect reboot.
+This is a apparently a requirement for IEC60601
+NB: D-TACQ does NOT claim compliance with IEC60601, but this code is presented as a aid to customers wishing to achieve the standard.
+@author: af
+"""
+
 import acq400_hapi
 import socket
 import time
@@ -46,8 +55,5 @@ while True:
     uut.close()
 
     print('Ended')
-
-
-    time.sleep(3)
 
 
