@@ -246,7 +246,14 @@ class Statusmonitor:
         return repr(self.logclient)
     def st_monitor(self):
         while self.quit_requested == False:
-            st = self.logclient.poll()
+            try:
+                st = self.logclient.poll()
+            except OSError as err:
+                if self.quit_reqested:
+                    return
+                else:
+                    raise err
+                
             match = self.st_re.search(st)
             # status is a match. need to look at group(0). It's NOT a LIST!
             if match:
@@ -457,6 +464,7 @@ class Acq400:
 
     def close(self):
         self.statmon.quit_reqested = True
+        self.statmon.logclient.close()
         for k, s in self.svc.items():
             s.close()
         try:

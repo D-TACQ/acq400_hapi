@@ -69,7 +69,9 @@ class Netclient:
         socket_list = [self.sock]
         rs, wr, es = select.select(socket_list, [], [], 0)
         return self.sock in rs
-                     
+
+    instances = []
+
     def __init__(self, addr, port) :
         if Netclient.trace:
             print("Netclient.init {} {}".format(addr, port))
@@ -84,6 +86,8 @@ class Netclient:
         except socket.error as e:
             print("Netclient {}.{} connect fail {}".format(addr, port, e))
             raise e
+        Netclient.instances.append(self)
+
 
     def __enter__(self):
         return self
@@ -95,6 +99,7 @@ class Netclient:
         except socket.error:
             pass
         self.sock.close()
+        Netclient.instances.remove(self)
 
 #    def __exit__(self, exc_type, exc_value, traceback):
 #        print("__exit__ {} {}".format(self.__addr, self.__port))
