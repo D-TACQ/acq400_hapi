@@ -19,9 +19,11 @@ else:
     print("USAGE EC60601_reboot.py host")
     sys.exit(1)
 
+ii = 0
 while True:
     uut = None
-    print("From the top")
+    ii += 1
+    print("From the top {}".format(ii))
 
     while not uut:
         contents = None
@@ -54,6 +56,9 @@ while True:
     print('Shutting down sockets...')
     uut.close()
 
-    print('Ended')
+    print('Ended sleep 3 to make sure the reboot has started')
+    time.sleep(3)
+
+
 
 
