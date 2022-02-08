@@ -27,7 +27,6 @@ import os
 import errno
 import signal
 import sys
-from numpy.distutils.command.egg_info import egg_info
 
 if __name__ == '__main__':
     import netclient
