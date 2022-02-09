@@ -152,7 +152,7 @@ class Siteclient(Netclient):
     """
     knobs = {}
     prevent_autocreate = False
-    pat = re.compile(r":")
+    pat = re.compile(r"[:.]")
     
     @synchronized
     def sr(self, message):        
