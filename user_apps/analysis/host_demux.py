@@ -265,7 +265,7 @@ def plot_mpl(args, raw_channels):
     f.suptitle("{} src {}".format(args.uut[0], args.src))
     for num, sp in enumerate(args.pc_list):
         try:
-            plots[num].set_ylabel("CH{}".format(sp))
+            plots[num].set_ylabel("CH{}".format(sp+1))
             plots[num].plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]])
         except TypeError:
             plots.plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]])
@@ -426,7 +426,7 @@ def make_plot_lists(args):
     
     subrates = args.mpl_subrate.split(",")
     if len(subrates) == 1:
-        args.mpl_subrates = [ int(subrates) for i in args.pc_list ]
+        args.mpl_subrates = [ int(subrates[0]) for i in args.pc_list ]
     elif len(subrates) == len(args.pc_list):
         args.mpl_subrates = [ int(i) for i in subrates ]
     else:
@@ -447,7 +447,7 @@ def run_main():
     parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
     parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
     parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data.')
-    parser.add_argument('--mpl_subrate', type=str, default=1, help='Control subrate for mpl plotting. (accepts a list matching mpl)')
+    parser.add_argument('--mpl_subrate', type=str, default='1', help='Control subrate for mpl plotting. (accepts a list matching mpl)')
     parser.add_argument('--mpl_start', type=int, default=0, help='Control number of samples to plot with mpl.')
     parser.add_argument('--mpl_end', type=int, default=-1, help='Control number of samples to plot with mpl.')
     parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
