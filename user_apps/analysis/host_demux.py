@@ -265,13 +265,17 @@ def save_data(args, raw_channels):
     return raw_channels
 
 def plot_plotext(args, raw_channels):
+    plotext.clf()
+    plotext.clt()
+    #plotext.cls()
     nc = len(args.pc_list)
     plotext.subplots(nc, 1)
         
     for num, sp in enumerate(args.pc_list):
         plotext.subplot(num+1, 1)
+        #plotext.clc()
         data = raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]]
-        plotext.plot(data.tolist())
+        plotext.plot(data.tolist(), marker = "fhd")
         plotext.xaxis(0, "upper")
         #plotext.yaxis(0, "right")
         if num != nc - 1:
