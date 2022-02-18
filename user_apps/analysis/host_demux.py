@@ -265,12 +265,14 @@ def save_data(args, raw_channels):
     return raw_channels
 
 def plot_plotext(args, raw_channels):
+    plotext.clf()
     nc = len(args.pc_list)
     plotext.subplots(nc, 1)
         
     for num, sp in enumerate(args.pc_list):
         plotext.subplot(num+1, 1)
-        plotext.plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]])
+        data = raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]]
+        plotext.scatter(data.tolist())
         
     plotext.show()
     
