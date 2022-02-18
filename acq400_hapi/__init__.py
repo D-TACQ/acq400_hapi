@@ -17,3 +17,4 @@ from . import awg_data
 from .intSI import *
 from .debug import Debugger
 from .utils import timing
+from .afhba404 import *
