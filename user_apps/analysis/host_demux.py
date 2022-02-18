@@ -88,6 +88,7 @@ import subprocess
 import acq400_hapi
 import time
 import matplotlib.pyplot as plt
+import plotext
 
 has_pykst = False
 if os.name != "nt":
@@ -96,6 +97,13 @@ if os.name != "nt":
         has_pykst = True
     except ImportError:
         print("WARNING: failed to import pykst, no kst plots")
+        
+has_plotext = False
+try:
+    import plotext
+    has_plotext = True
+except ImportError:
+    print("WARNING: failed to import plotext, no text plots")
 
 
 def channel_required(args, ch):
@@ -256,17 +264,44 @@ def save_data(args, raw_channels):
 
     return raw_channels
 
-
+def plot_plotext(args, raw_channels):
+    nc = len(args.pc_list)
+    plotext.subplots(nc, 1)
+        
+    for num, sp in enumerate(args.pc_list):
+        plotext.subplot(num+1, 1)
+        data = raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]]
+        plotext.plot(data.tolist())
+        plotext.xaxis(0, "upper")
+        #plotext.yaxis(0, "right")
+        if num != nc - 1:
+           plotext.xfrequency(0) 
+           #plotext.xaxis(0, "lower")
+        if num == nc - 1:
+           plotext.xlabel("samples")
+        if num == 0:
+           plotext.title("{} src {}".format(args.uut[0], args.src))
+        
+    plotext.show()
+    
 def plot_mpl(args, raw_channels):
     print("Plotting with MatPlotLib. Subrate = {}".format(args.mpl_subrate))
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
     num_of_ch = len(args.pc_list)
-    f, plots = plt.subplots(num_of_ch, 1)
+    f, plots = plt.subplots(num_of_ch, 1, sharex=True)
+    f.suptitle("{} src {}".format(args.uut[0], args.src))
     for num, sp in enumerate(args.pc_list):
         try:
-            plots[num].plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrate])
+            plots[num].set_ylabel("CH{}".format(sp+1))
+            plots[num].plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]])
         except TypeError:
-            plots.plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrate])
+            plots.plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]])
+    
+    print("plot_mpl num {}".format(num))
+    try:
+        plots[num].set_xlabel("Samples")
+    except:
+        print("set_xlabel failed for single channel (sorry)")
     plt.show()
     return None
 
@@ -319,6 +354,8 @@ def plot_data(args, raw_channels):
         # if arg set then plot with matplotlib instead.
         plot_mpl(args, raw_channels)
         return None
+    elif args.plot_mpl == 0:
+        plot_plotext(args, raw_channels)
 
     if has_pykst:
         plot_data_kst(args, raw_channels)
@@ -413,6 +450,19 @@ def calc_stack_480(args):
 
     print("args.stack_480_cmap: {}".format(args.stack_480_cmap))
 
+def make_plot_lists(args):
+    args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
+    
+    subrates = args.mpl_subrate.split(",")
+    if len(subrates) == 1:
+        args.mpl_subrates = [ int(subrates[0]) for i in args.pc_list ]
+    elif len(subrates) == len(args.pc_list):
+        args.mpl_subrates = [ int(i) for i in subrates ]
+    else:
+        print("ERROR: mpl_subrates : accepts one entry or NPLOTS ({}) entries".format(len(args.pc_list)))
+        args.mpl_subrates = [ int(subrates[0]) for i in args.pc_list ]
+        
+    
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
     parser.add_argument('--nchan', type=int, default=32)
@@ -426,7 +476,7 @@ def run_main():
     parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
     parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
     parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data.')
-    parser.add_argument('--mpl_subrate', type=int, default=1000, help='Control subrate for mpl plotting.')
+    parser.add_argument('--mpl_subrate', type=str, default='1', help='Control subrate for mpl plotting. (accepts a list matching mpl)')
     parser.add_argument('--mpl_start', type=int, default=0, help='Control number of samples to plot with mpl.')
     parser.add_argument('--mpl_end', type=int, default=-1, help='Control number of samples to plot with mpl.')
     parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
@@ -439,10 +489,11 @@ def run_main():
     if args.data_type == 16:
         args.np_data_type = np.int16
         args.WSIZE = 2
-    else:
+    else:       
         args.np_data_type = np.int32
         args.WSIZE = 4
 
+    print("data_type {} np {}".format(args.data_type, args.np_data_type))
     if os.name == "nt":  # do this if windows system.
         args.uutroot = r"{}:\{}\{}".format(args.drive_letter, args.src, args.uut[0])
     elif os.path.isdir(args.src):
@@ -458,7 +509,9 @@ def run_main():
                 args.saveroot = r"{}/{}".format(args.uutroot, args.save)
 
     # ch 0.. (comp)
-    args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
+    make_plot_lists(args)
+    
+   
     print("args.pc_list {}".format(args.pc_list))
     if args.egu:
         args.the_uut = acq400_hapi.Acq2106(args.uut[0])
@@ -466,4 +519,3 @@ def run_main():
 
 if __name__ == '__main__':
     run_main()
-
