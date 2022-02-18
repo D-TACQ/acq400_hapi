@@ -88,6 +88,7 @@ import subprocess
 import acq400_hapi
 import time
 import matplotlib.pyplot as plt
+import plotext
 
 has_pykst = False
 if os.name != "nt":
@@ -96,6 +97,13 @@ if os.name != "nt":
         has_pykst = True
     except ImportError:
         print("WARNING: failed to import pykst, no kst plots")
+        
+has_plotext = False
+try:
+    import plotext
+    has_plotext = True
+except ImportError:
+    print("WARNING: failed to import plotext, no text plots")
 
 
 def channel_required(args, ch):
@@ -256,7 +264,16 @@ def save_data(args, raw_channels):
 
     return raw_channels
 
-
+def plot_plotext(args, raw_channels):
+    nc = len(args.pc_list)
+    plotext.subplots(nc, 1)
+        
+    for num, sp in enumerate(args.pc_list):
+        plotext.subplot(num+1, 1)
+        plotext.plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]])
+        
+    plotext.show()
+    
 def plot_mpl(args, raw_channels):
     print("Plotting with MatPlotLib. Subrate = {}".format(args.mpl_subrate))
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
@@ -327,6 +344,8 @@ def plot_data(args, raw_channels):
         # if arg set then plot with matplotlib instead.
         plot_mpl(args, raw_channels)
         return None
+    elif args.plot_mpl == -1:
+        plot_plotext(args, raw_channels)
 
     if has_pykst:
         plot_data_kst(args, raw_channels)
