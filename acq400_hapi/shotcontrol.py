@@ -179,30 +179,30 @@ class ShotController:
         cmap = {}
         #print("map_channels {}".format(channels))
         ii = 0
-        for u in self.uuts:
+        for iu, u in enumerate(self.uuts):
             if channels == ():
-                cmap[u] = list(range(1, u.nchan()+1))  # default : ALL
+                cmap[iu] = list(range(1, u.nchan()+1))  # default : ALL
             elif type(channels) == int:
-                cmap[u] = channels                  # single value
+                cmap[iu] = channels                  # single value
             elif type(channels[0]) != tuple:
-                cmap[u] = channels                  # same tuple all UUTS
+                cmap[iu] = channels                  # same tuple all UUTS
             else:
                 try:
-                    cmap[u] = channels[ii]          # dedicated tuple
+                    cmap[iu] = channels[ii]          # dedicated tuple
                 except:
-                    cmap[u] = 1                     # fallback, ch1
+                    cmap[iu] = 1                     # fallback, ch1
 
             ii = ii + 1
         return cmap
 
     def read_channels(self, channels=()):
-        cmap = self.map_channels(channels)
-        chx = [u.read_channels(cmap[u]) for u in self.uuts]
+        self.cmap = self.map_channels(channels)
+        chx = [u.read_channels(self.cmap[iu]) for iu, u in enumerate(self.uuts)]
 
         if self.uuts[0].save_data:
             with open("%s/format" % (self.uuts[0].save_data), 'w') as fid:
-                for u in self.uuts:
-                    for ch in cmap[u]:
+                for iu, u in enumerate(self.uuts):
+                    for ch in self.cmap[iu]:
                         fid.write("%s_CH%02d RAW %s 1\n" % (u.uut, ch, 's'))
 
 
@@ -241,7 +241,8 @@ class ShotControllerWithDataHandler(ShotController):
         if args.plot_data:
             if isinstance(plt, Exception):
                 print("Sorry, plotting not available")
-            else:
+            else:                
+                                
                 for col in range(ncol):
                     for chn in range(0,nchan):
                         fignum = 1 + col + chn*ncol
@@ -250,7 +251,19 @@ class ShotControllerWithDataHandler(ShotController):
                                 plt.subplot(nchan, ncol, fignum)
                         else:
                             plt.subplot(nchan, ncol, fignum)
-                        plt.plot(chx[col][chn])
+                        plt.suptitle('{} shot {}'.format(args.uuts[0] if len(args.uuts) == 1 else args.uuts, self.uuts[0].s1.shot))
+                        if args.plot_data == 2:
+                            tb = self.uuts[0].read_transient_timebase(args.post+args.pre, args.pre)
+                            plt.xlabel("time [S]")
+                            plt.ylabel("Volts")                        
+                            line, = plt.plot(tb, self.uuts[col].chan2volts(self.cmap[col][chn], chx[col][chn]))
+                            print("legend {}.{:03d}".format(args.uuts[col], self.cmap[col][chn]+1))
+                            line.set_label("{}.{:03d}".format(args.uuts[col], self.cmap[col][chn]+1))
+                            plt.legend()
+                        else:
+                            plt.xlabel("sample")
+                            plt.ylabel("counts")                           
+                            plt.plot(chx[col][chn])
                 plt.show()
 
 
@@ -309,5 +322,6 @@ class ShotControllerUI:
         def add_args(parser):
             parser.add_argument('--save_data', default=SAVEDATA, type=str, help="store data to specified directory, suffix {} for shot #")
             parser.add_argument('--plot_data', default=PLOTDATA, type=int, help="1: plot data")
+            parser.add_argument('--one_plot', default=None, type=int, help="1: plot data")
             parser.add_argument('--trace_upload', default=TRACE_UPLOAD, type=int, help="1: verbose upload")
             parser.add_argument('--channels', default=CHANNELS, type=str, help="comma separated channel list")

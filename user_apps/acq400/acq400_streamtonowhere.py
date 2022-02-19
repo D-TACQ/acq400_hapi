@@ -39,10 +39,17 @@ def main(args):
     for uut in reversed(uuts):
         uut.s0.streamtonowhered = 'start'
 
+    wait_trigger = True
     while not all(elem == 'CONTINUOUS:STATE ARM' for elem in states):
         states = update_states(uuts, states)
+        if all(elem == 'CONTINUOUS:STATE RUN' for elem in states):
+            wait_trigger = False
+            break
 
-    print("All UUTs are armed and ready for trigger.")
+    if wait_trigger:
+        print("All UUTs are armed and ready for trigger.")
+    else:
+        print("Didn't see wait for trigger, maybe not start at zero")
 
     # Included as a comment below is an example of how this
     # script was tested. If the user wishes to automate
@@ -55,10 +62,14 @@ def main(args):
         continue
 
     streamed_samples = 0
-    while streamed_samples <= args.samples:
+    npoll = 0
+    time.sleep(1)
+    while streamed_samples <= args.samples or npoll < 2:
         print("Streamed {} of {} samples".format(streamed_samples, args.samples))
         streamed_samples = int(uuts[0].s1.sample_count)
         time.sleep(1)
+        npoll += 1
+        
 
     print("\nStream finished.")
     for uut in uuts:

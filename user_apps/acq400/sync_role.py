@@ -17,8 +17,6 @@ def expand_role(args, urole):
     # fpmaster,strg     # fpclk, strg
     # master            # mbclk, strg
     # master,fptrg      # mbclk, fptrg
-
-
        
     if urole == "fpmaster" or urole == "master,fptrg":
         args.external_trigger = True
@@ -26,21 +24,23 @@ def expand_role(args, urole):
         args.external_trigger = False
 
     if urole == "fpmaster,strg":
-        args.postfix.append("TRG:DX=d1")
-        return "fpmaster"
-    if urole == "master,fptrg":
+        args.postfix.append("TRG:DX=d1")        
+    elif urole == "master,fptrg":
         args.postfix.append("TRG:DX=d0")
-        return "master"
+        
     args.postfix.append("TRG:SENSE={}".format(args.trgsense))
-    return urole
+    return urole.split(",")[0]
 
 def configure_slave(name, args, postfix):
     slave = acq400_hapi.Acq400(name)
     slave.s0.sync_role = "{} {} {} {}".format('slave', args.fclk, args.fin, " ".join(postfix))
+    if args.downstream_bypass:
+        slave.s0.SYS_CLK_BYPASS = 1
 
-def run_shot(args):
+def set_sync_role(args):
     master = acq400_hapi.Acq400(args.uuts[0])
-    if args.enable_trigger:
+    
+    if args.enable_trigger == 1:
         master.enable_trigger()
         return
 
@@ -50,10 +50,13 @@ def run_shot(args):
         args.postfix.append("CLKDIV={}".args.clkdiv)
 
     master.s0.sync_role = "{} {} {} {}".format(expand_role(args, args.toprole),
-                                            args.fclk, args.fin, 
+                                            args.fclk, args.fin if not args.toprole=="master" else "", 
                                             " ".join(args.postfix), " ".join(postfix))
+    
+    if args.downstream_bypass:
+        master.s0.SIG_SYNC_OUT_CLK_DX = 'd1'
 
-    if args.external_trigger:
+    if args.external_trigger and len(args.uuts) > 1:
         master.disable_trigger()
     else:
         # print("WARNING: REMOVEME temporary fudge while we get the sync trigger right")
@@ -70,18 +73,22 @@ def run_shot(args):
 
     for t in threads:
         t.join()
+        
+    if args.enable_trigger == 99:
+        master.enable_trigger()
 
 def run_main():
     parser = argparse.ArgumentParser(description='set sync roles for a stack of modules')
     acq400_hapi.Acq400UI.add_args(parser, post=False)
-    parser.add_argument('--enable_trigger', default=None, help="set this to enable the trigger all other args ignored")
+    parser.add_argument('--enable_trigger', default=0, help="0:leave disabled, 1 enable and drop out, 99 to enable at end")
     parser.add_argument('--toprole', default='master', help="role of top in stack")
     parser.add_argument('--fclk', default='1000000', help="sample clock rate")
     parser.add_argument('--fin',  default='1000000', help="external clock rate")
     parser.add_argument('--clkdiv', default=None, help="optional clockdiv")
+    parser.add_argument('--downstream_bypass', default=0, type=int, help="provide full rate clock downstream")
     parser.add_argument('--trgsense', default='rising', help="trigger sense rising unless falling specified")
     parser.add_argument('uuts', nargs='+', help="uut ")
-    run_shot(parser.parse_args())
+    set_sync_role(parser.parse_args())
 
 
 

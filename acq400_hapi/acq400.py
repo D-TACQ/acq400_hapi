@@ -27,7 +27,7 @@ import os
 import errno
 import signal
 import sys
-from numpy.distutils.command.egg_info import egg_info
+
 if __name__ == '__main__':
     import netclient
 else:
@@ -65,7 +65,8 @@ class AcqPorts:
     AWG_ONCE = 54201
     AWG_AUTOREARM = 54202
     AWG_CONTINUOUS = 54205
-    MGTDRAM = 53990
+    AWG_STREAM = 54207
+    MGTDRAM = 53993
     MGTDRAM_PULL_DATA = 53991
 
 class AcqSites:
@@ -130,7 +131,7 @@ class RawClient(netclient.Netclient):
     def __init__(self, addr, port):
         netclient.Netclient.__init__(self, addr, port)
 
-    def read(self, nelems, data_size=2, ncols=1, maxbuf=0x400000):
+    def read(self, nelems, data_size=2):
         """read ndata from channel data server, return as np array.
         Args:
             nelems number of data elements, each data_size*ncols
@@ -139,27 +140,32 @@ class RawClient(netclient.Netclient):
             data_size : 2|4 short or int
 
             ncols : optional, to create a 2D array
+            ncols*data_size=0? just read nelems bytes
         """
         _dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
-        if nelems <= 0:
-            nelems = 0x80000000             #2GB approximates infinity. what is infinity in python?
 
-        bytestogo = nelems * data_size * ncols
-        total_buf = ""
-
-        while bytestogo > 0:
-            new_buf = self.sock.recv(bytestogo)
-            if not new_buf:
+        buf = bytearray(nelems)
+        try:
+            view = memoryview(buf).cast('B')
+        except:
+            # python 2.7 hack
+            view = memoryview(buf)
+        pos = 0
+        while len(view):
+            nrx = self.sock.recv_into(view)
+            if nrx == 0:
                 break               # end of file
-            bytestogo = bytestogo - len(new_buf)
-            total_buf += new_buf    # still dubious of append :-)
+            view = view[nrx:]
+            pos += nrx
 
-        return np.frombuffer(total_buf, _dtype)
+        if pos > 0 and pos < nelems:
+            print("WARNING: early termination at {}/{}".format(pos, nelems))
+        return np.frombuffer(buf[:pos], _dtype)
 
-    def get_blocks(self, nelems, data_size=2, ncols=1):
+    def get_blocks(self, nelems, data_size=2):
         block = np.array([1])
         while len(block) > 0:
-            block = self.read(nelems, data_size=data_size, ncols=ncols)
+            block = self.read(nelems, data_size=data_size)
             if len(block) > 0:
                 yield block
 
@@ -239,7 +245,14 @@ class Statusmonitor:
         return repr(self.logclient)
     def st_monitor(self):
         while self.quit_requested == False:
-            st = self.logclient.poll()
+            try:
+                st = self.logclient.poll()
+            except OSError as err:
+                if self.quit_reqested:
+                    return
+                else:
+                    raise err
+                
             match = self.st_re.search(st)
             # status is a match. need to look at group(0). It's NOT a LIST!
             if match:
@@ -272,6 +285,16 @@ class Statusmonitor:
 
     def get_state(self):
         return self.status[SF.STATE]
+    
+    def get_pre(self):
+        return self.status[SF.PRE]
+
+    def get_post(self):
+        return self.status[SF.POST]
+    
+    def get_total(self):
+        return self.get_pre() + self.get_post()
+    
 
     def wait_event(self, ev, descr):
     #       print("wait_%s 02 %d" % (descr, ev.is_set()))
@@ -297,6 +320,7 @@ class Statusmonitor:
         self.wait_event(self.stopped, "stopped")
 
     trace = int(os.getenv("STATUSMONITOR_TRACE", "0"))
+    
 
     def __init__(self, _uut, _status):
         self.break_requested = False
@@ -320,24 +344,27 @@ class NullFilter:
 null_filter = NullFilter()
 
 class ProcessMonitor:
-    st_re = re.compile(r"^END" )
+    st_rex = ( re.compile(r"^END" ), re.compile(r"^real"))
 
     def st_monitor(self):
         while self.quit_requested == False:
             st = self.logclient.poll()
             self.output_filter(st)
-            match = self.st_re.search(st)
-            if match:
-                self.quit_requested = True
+            for re in self.st_rex:
+            	if re.search(st):
+                    self.quit_requested = True
+                    break
 
-    def __init__(self, _uut, _filter):
+    def __init__(self, _uut, _monport,  _filter, set_arm):
         self.quit_requested = False
         self.output_filter = _filter
-        self.logclient = netclient.Logclient(_uut, AcqPorts.MGTDRAM)
+        self.logclient = netclient.Logclient(_uut.uut, _monport)
         self.logclient.termex = re.compile("(\n)")
         self.st_thread = threading.Thread(target=self.st_monitor)
         self.st_thread.setDaemon(True)
         self.st_thread.start()
+        if set_arm:
+            _uut.s0.BLT_SET_ARM = '1'
 
 class Acq400:
     """
@@ -385,16 +412,17 @@ class Acq400:
 
         return uuts
 
-
-    uuts = {}
+    uuts_methods = {}        # for cloning by new
+    uuts = {}                # for re-use by factory
     
     def __init__(self, _uut, monitor=True, s0_client=None):
         try:
-            self.__dict__ = Acq400.uuts[_uut]
+            self.__dict__ = Acq400.uuts_methods[_uut]
             return
         except KeyError:
             pass
-        
+   
+        self.verbose = int(os.getenv("ACQ400_VERBOSE", "0"))    
         self.NL = re.compile(r"(\n)")
         self.uut = _uut
         self.trace = 0
@@ -430,8 +458,22 @@ class Acq400:
         _status = [int(x) for x in s0.state.split(" ")]
         if monitor:
             self.statmon = Statusmonitor(self.uut, _status)
-        Acq400.uuts[_uut] = self.__dict__
+        Acq400.uuts_methods[_uut] = self.__dict__   # store the dict for reuse by __init__
+        Acq400.uuts[_uut] = self                    # store the object for reuse by factory()
 
+    def close(self):
+        self.statmon.quit_reqested = True
+        self.statmon.logclient.close()
+        for k, s in self.svc.items():
+            s.close()
+        try:
+            del Acq400.uuts[self.uut]
+            del Acq400.uuts_methods[self.uut]
+        except KeyError:
+            print("ERROR {} instance not in cache".format(self.uut))
+
+    def __del__(self):
+        print("__del__ {}".format(self.uut))
 
     def __getattr__(self, name):
         if self.svc.get(name) != None:
@@ -457,7 +499,7 @@ class Acq400:
         return self.s0.aggregator.split(' ')[1].split('=')[1].split(',')
 
     def fetch_all_calibration(self):
-        print("Fetching calibration data")
+#        print("Fetching calibration data")
         for m in (self.modules[int(c)] for c in self.get_aggregator_sites()):
             self.cal_eslo.extend(m.AI_CAL_ESLO.split(' ')[3:])
             self.cal_eoff.extend(m.AI_CAL_EOFF.split(' ')[3:])
@@ -492,6 +534,9 @@ class Acq400:
 
         eslo = float(self.cal_eslo[chan])
         eoff = float(self.cal_eoff[chan])
+        if self.verbose > 1 or (self.verbose and chan < 4):
+            print("chan {} v = {}*{} + {}".format(chan, raw[0], eslo, eoff))
+        
         return np.add(np.multiply(raw, eslo), eoff)
 
 
@@ -536,13 +581,45 @@ class Acq400:
 
 
     def nchan(self):
-        return int(self.s0.NCHAN)
+        try:
+            return self._nchan
+        except:        
+            self._nchan = int(self.s0.NCHAN)        
+            return self._nchan
 
-    def read_channels(self, channels=(), nsam=0):
+
+    def data_size(self):
+	    return 4 if self.s0.data32 == '1' else 2
+    
+    def uut_demux_enabled(self):
+        ts = self.s0.transient
+        rc = bool(int(self.s0.transient.split("DEMUX=",1)[1][0]))
+#        print ("uut_demux_enabled(): transient {} decoded DEMUX={} rc={}".format(ts, ts.split("DEMUX=",1)[1][0], rc))
+        return rc
+
+    def read_channels(self, channels=(), nsam=0, localdemux=False):
         """read all channels post shot data.
 
         Returns:
             chx (list) of np arrays.
+            
+        uut_demux_enabled() == False: UUT did NOT demux the data, data order [sample][channel] 
+        uut_demux_enabled() == True:  UUT did demux the data, data order [channel][sample]
+        
+        DEMUX is a synonym for uut_demux_enabled()..
+        
+        channels=(0) : return all (bulk) data, likely in raw[sample][channel] format.
+        channels=(0) localdemux=True: return all (bulk) in demux[channel][sample] format. 
+        
+        channels=N or channels=(N,N1,N2 ..)   # N >= 1 && N <= NCHAN
+        
+        There are 4 cases:
+        channels=(1,2...nchan) and (remote) DEMUX=1: SIMPLE, pull each channel at a time from the UUT.        
+        channels=(0) and DEMUX=0 : SIMPLE: return the raw data.
+        
+        channels=(1,2..) and DEMUX=1 : demux locally.
+        
+        channels=(0) and DEMUX=0 and localdemux : demux locally, return bulk data [channels][samnples]
         """
 
 
@@ -550,13 +627,20 @@ class Acq400:
             channels = list(range(1, self.nchan()+1))
         elif type(channels) == int:
             channels = (channels,)
-
-    #      print("channels {}".format(channels))
+            
+        bulk_channels = channels == (0,)
 
         chx = []
         data_size = 4 if self.s0.data32 == '1' else 2
-        demux_state = int(self.s0.transient.split("DEMUX=",1)[1][0])
-        if demux_state:
+        if self.uut_demux_enabled():
+           localdemux = False
+        else:
+            if not bulk_channels:
+                localdemux = True 
+        
+        if not localdemux:
+#            print("read_channels() NOT localdemux")
+            # likely: either pull channelized demux data or pull a full set of raw data.
             for ch in channels:
                 if self.trace:
                     print("%s CH%02d start.." % (self.uut, ch))
@@ -569,13 +653,31 @@ class Acq400:
                     print("%s CH%02d complete.. %.3f s %.2f MB/s" %
                         (self.uut, ch, tt, len(chx[-1])*2/1000000/tt))
         else:
+            # only do local demux if client wants it and the data needs it..
             data = np.array(self.read_chan(0, nsam, data_size=data_size))
-            data = data.reshape((-1, int(self.s0.NCHAN)))
-            data = data[:,np.array(channels)-1].transpose()
+            data = data.reshape((-1, self.nchan()))
+            if bulk_channels:
+ #               print("read_channels() local demux, bulk data")
+                channels = np.arange(0, self.nchan())
+            else:
+ #               print("read_channels() local demux, selected channels")
+                channels = np.array(channels)-1
+                
+            data = data[:,channels].transpose()
             chx = [ item for item in data ]
 
         return chx
 
+    def read_transient_timebase(self, nsamples, pre=0):
+        try:
+            fs = freq(self.s1.ACQ480_OSR)
+        except:
+            fs = freq(self.s0.SIG_CLK_S1_FREQ)
+        if fs > 1e6:
+            isi = 1 / np.round(fs / 1e6, 2) * 1e-6  # interval in seconds
+        else:
+            isi = 1 / np.round(fs / 1e3, 2) * 1e-3  # interval in seconds
+        return np.linspace(-pre*isi, (nsamples-pre)*isi, nsamples)
     # DEPRECATED
     def load_segments(self, segs):
         with netclient.Netclient(self.uut, AcqPorts.SEGSW) as nc:
@@ -682,6 +784,12 @@ class Acq400:
 
     def load_wrpg(self, stl, trace = False):
         self.load_stl(stl, AcqPorts.WRPG, trace)
+        
+    def load_dio482pg(self, site, stl, trace = False):
+        self.load_stl(stl, AcqPorts.DIO482_PG_STL+int(site)*10, trace)
+        
+    def set_DO(self, site, dox, value = 'P'):
+        self.svc["s{}".format(site)].set_knob("DO_{}".format(dox), value)        
 
     class AwgBusyError(Exception):
         def __init__(self, value):
@@ -707,7 +815,7 @@ class Acq400:
                 if not rx or rx.startswith(b"DONE"):
                     break
             nc.sock.close()
-
+    
     def run_service(self, port, eof="EOF", prompt='>'):
         txt = ""
         with netclient.Netclient(self.uut, port) as nc:
@@ -743,8 +851,8 @@ class Acq400:
     def disable_trigger(self):
         #master.s0.SIG_SRC_TRG_0 = 'NONE'
         #master.s0.SIG_SRC_TRG_1 = 'NONE'
-        self.s0.SIG_SRC_TRG_0 = 'HOSTB'
-        self.s0.SIG_SRC_TRG_1 = 'HOSTA'
+        self.s0.SIG_SRC_TRG_0 = 'NONE'
+        self.s0.SIG_SRC_TRG_1 = 'NONE'
 
     def enable_trigger(self, trg_0='EXT', trg_1='STRIG'):
         if trg_0 is not None:
@@ -1116,19 +1224,37 @@ class Acq400:
                 event_samples = es_string
 
         return [indices, event_samples]
-       
-    def stream(self, recvlen=4096*32*2, port=AcqPorts.STREAM):
+
+    def stream(self, recvlen=4096*32, port=AcqPorts.STREAM, data_size=2):
+        dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
         nc = netclient.Netclient(self.uut, AcqPorts.STREAM)
-        while True:
-            chunk = nc.sock.recv(recvlen)
-            if chunk:
-                yield chunk
-            else:
-                break
+
+        buf = bytearray(recvlen*data_size)
+        while True:       
+            view = memoryview(buf).cast('B')        
+            pos = 0
             
+            while len(view):
+                nrx = nc.sock.recv_into(view)
+                if nrx == 0:                    
+                    yield np.frombuffer(buf[:pos], dtype)
+                    pos = 0
+                else:
+                    view = view[nrx:]
+                    pos += nrx
+            yield np.frombuffer(buf[:pos], dtype)
+
+
     @staticmethod
     def freq(sig):
         return float(sig.split(" ")[1])
+
+    @staticmethod
+    def intpv(pv):
+        return int(pv.split(" ")[1])
+    @staticmethod
+    def pv(pv):
+        return pv.split(" ")[1]
 
 
 class Acq2106(Acq400):
@@ -1137,9 +1263,9 @@ class Acq2106(Acq400):
     Defines features specific to ACQ2106
     """
 
-    def __init__(self, _uut, monitor=True, has_dsp=False, has_comms=True, has_wr=False):
-        print("acq400_hapi.Acq2106 %s" % (_uut))
-        Acq400.__init__(self, _uut, monitor)
+    def __init__(self, _uut, monitor=True, s0_client=None, has_dsp=False, has_comms=True, has_wr=False):
+#        print("acq400_hapi.Acq2106 %s" % (_uut))
+        Acq400.__init__(self, _uut, monitor=monitor, s0_client=s0_client)
         self.mb_clk_min = 100000
         sn_map = ()
         if has_comms:
@@ -1194,17 +1320,42 @@ class Acq2106(Acq400):
             return pps0 != pps1
 
 
+    def get_sys_info(self):
+        """
+        Returns a string of system information to
+        """
+        line = "{: <6}{: <16}{: <35}{: <16}\n"
+        from datetime import datetime
+        info = ""
+        info += "="*72 + "\n"
+        info += datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n\n"
+        info += "FPGA: {}\n".format(self.s0.fpga_version)
+        info += "FW:   {}\n\n".format(self.s0.software_version)
+        info += "MB Info:\n"
+        info += "{: <57}{: <16}\n".format("MODEL", "SERIAL")
+        info += "{: <57}{: <16}\n\n".format(self.s0.MODEL, self.s0.SERIAL)
+        info += "-" * 72 + "\n\n"
+        info += "Site Info:\n"
+        info += line.format("SITE", "MODEL", "PART_NUM", "SERIAL")
+        for site in self.sites:
+            info += line.format(site,
+                                self.svc["s{}".format(site)].MODEL,
+                                self.svc["s{}".format(site)].PART_NUM,
+                                self.svc["s{}".format(site)].SERIAL)
+        info += "="*72
+        return info
+
 
 class Acq2106_Mgtdram8(Acq2106):
     MGT_BLOCK_BYTES = 0x400000
     MGT_BLOCK_MULTIPLE = 16
 
-    def __init__(self, uut, monitor=True):
-        print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
-        Acq2106.__init__(self, uut, monitor, has_dsp=True)
+    def __init__(self, uut, monitor=True, s0_client=None):
+#        print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
+        Acq2106.__init__(self, uut, monitor=monitor, s0_client=s0_client, has_dsp=True)
 
-    def run_mgt(self, _filter = null_filter):
-        pm = ProcessMonitor(self.uut, _filter)
+    def run_mgt(self, filter = null_filter, set_arm=True):
+        pm = ProcessMonitor(self, AcqPorts.MGTDRAM, filter, set_arm)
         while pm.quit_requested != True:
             time.sleep(1)
 
@@ -1214,9 +1365,9 @@ class Acq2106_Mgtdram8(Acq2106):
 
 class Acq2106_TIGA(Acq2106):
    
-    def __init__(self, uut, monitor=True):
+    def __init__(self, uut, monitor=True, s0_client=None):
         print("acq400_hapi.Acq2106_TIGA %s" % (uut))
-        Acq2106.__init__(self, uut, monitor, has_wr=True)
+        Acq2106.__init__(self, uut, monitor=monitor, s0_client=s0_client, has_wr=True)
         self.pg_sites = [ sx for sx in range(1,6+1) if sx in self.sites and self.svc["s{}".format(sx)].MTYPE == '7B' ]
             
     def load_dio482pg(self, site, stl, trace = False):
@@ -1255,24 +1406,49 @@ def factory(_uut):
     ''' instantiate s0. deduce what sort of ACQ400 this is and invoke the appropriate subclass
     '''
     try:
-        return Acq400.uuts[_uut]
+        cached = Acq400.uuts[_uut]
+        return cached
     except KeyError:
         pass
     
     s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
     
-    # now work out what it is from s0.special sites etc and instantiate the approprirate class
-    # eg .. this one doesn't quite work .. do any of the others?
-    # hoping the s0_client kwarg gets through without extra boilerplate
-    if s0.has_mgt and s0.has_mgt_dram:
-        return Acq2106_Mgtdram8(_uut, s0_client=s0)
-    if s0.has_wr:
-        return Acq2106(_uut, has_wr=True, s0_client=s0)
+    if not s0.MODEL.startswith("acq2106"):
+        return Acq400(_uut, s0_client=s0)
     
-    ''' nothing special, make it a default class with existing s0
-    '''
-    return Acq400(_uut, s0_client=s0)
+    # here with acq2106
     
+    try:
+        if s0.is_tiga != "none":
+            return Acq2106_TIGA(_uut, s0_client=s0)
+        if s0.has_mgt != "none" and s0.has_mgtdram != "none":
+            return Acq2106_Mgtdram8(_uut, s0_client=s0)
+           
+        has_dsp = s0.has_dsp != "none"
+        has_wr = s0.has_wr != "none"
+        has_sfp = s0.has_mgt != "none"
+        
+       
+        return Acq2106(_uut, s0_client=s0,  has_dsp=has_dsp, has_comms=has_sfp, has_wr=has_wr)
+    except:
+        ''' nothing special, make it a default class with existing s0
+        '''
+        print("Factory method encountered a problem. Most likely target system"
+              "\nFW is older than necessary. Using default acq2106 settings.\n")
+        return Acq2106(_uut, s0_client=s0)
     
+def get_hapi():
+    ''' find instance of hapi '''
+    return os.path.dirname(os.path.dirname(__file__))
+
+def freq(sig):
+    return float(sig.split(" ")[1])
+
+def intpv(pv):
+    return int(pv.split(" ")[1])
+
+def pv(pv):
+    return pv.split(" ")[1]
+       
 if __name__ == '__main__':
     run_unit_test()

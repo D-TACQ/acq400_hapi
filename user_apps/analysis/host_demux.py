@@ -268,11 +268,13 @@ def plot_plotext(args, raw_channels):
     plotext.clf()
     plotext.clt()
     #plotext.cls()
+
     nc = len(args.pc_list)
     plotext.subplots(nc, 1)
         
     for num, sp in enumerate(args.pc_list):
         plotext.subplot(num+1, 1)
+
         #plotext.clc()
         data = raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]]
         plotext.plot(data.tolist(), marker = "fhd")
@@ -285,6 +287,7 @@ def plot_plotext(args, raw_channels):
            plotext.xlabel("samples")
         if num == 0:
            plotext.title("{} src {}".format(args.uut[0], args.src))
+
         
     plotext.show()
     
@@ -358,7 +361,7 @@ def plot_data(args, raw_channels):
         # if arg set then plot with matplotlib instead.
         plot_mpl(args, raw_channels)
         return None
-    elif args.plot_mpl == 0:
+    elif args.plot_mpl == -1:
         plot_plotext(args, raw_channels)
 
     if has_pykst:

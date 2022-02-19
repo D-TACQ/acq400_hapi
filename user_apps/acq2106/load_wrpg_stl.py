@@ -114,13 +114,13 @@ def tee_shots(args, uut, shot):
 def run_wrpg(args):
     uut = acq400_hapi.acq400.Acq400(args.uut[0])
     if args.shots > 0:
-	shot = 0
-	tee_shots(args, uut, shot)
+        shot = 0
+        tee_shots(args, uut, shot)
         
         shot_controller = acq400_hapi.ShotController([uut])
         while shot < args.shots:
             load_stl_file(uut, args.stl)
-	    rt = SendsWrtd(uut) if args.trg == 'WrtdImmediate' else EnablesWrtt(uut)
+            rt = SendsWrtd(uut) if args.trg == 'WrtdImmediate' else EnablesWrtt(uut)
             shot_controller.run_shot(remote_trigger=rt)
             shot = shot + 1
     else:

@@ -17,6 +17,18 @@ matplot will get very congested with more channels.
 this is really meant as a demonstration of capture, load to numpy,
 it's not really intended as a scope UI.
 
+example:
+python3 ./user_apps/acq400/acq400_upload.py --post=100k --capture=1 --trace_upload=1 --plot_data=2 --channels=1,2,3,4 --trg=1,1,1 acq2106_339
+
+--post=100k :: capture 100k samples, post trigger
+--capture=1 :: capture
+--trace_upload=1 :: observe upload timings (remove this)
+--plot_data=2  :: plot data V vs time
+--channels=1,2,3,4 :: plot 4 channels (plotter will struggle with many channels)
+--trg=1,1,1   :: select soft trigger (default: front panel)
+acq2106_339   :: UUT, DNS name
+
+
 usage: acq400_upload.py [-h] [--soft_trigger SOFT_TRIGGER]
                     [--trace_upload TRACE_UPLOAD] [--save_data SAVE_DATA]
                     [--plot_data PLOT_DATA] [--capture CAPTURE]
@@ -96,7 +108,7 @@ def upload(args):
         trigger_action = ActionScript(args.remote_trigger)
     else:
         trigger_action = None
-        st = SOFT_TRIGGER
+        st = args.soft_trigger
 
     try:
         if args.capture == 0:
@@ -143,8 +155,7 @@ def get_args(argStr=None):
     parser.add_argument('--soft_trigger', default=SOFT_TRIGGER, type=int, help="help use soft trigger on capture")
     parser.add_argument('--capture', default=CAPTURE, type=int, help="1: capture data, 0: wait for someone else to capture, -1: just upload")
     parser.add_argument('--remote_trigger', default=None, type=str, help="your function to fire trigger")
-    parser.add_argument('--wrtd_tx', default=0, type=int, help="release a wrtd_tx when all boards read .. works when free-running trigger")
-    parser.add_argument('--one_plot', default=0, type=int, help="Whether or not to take a new subplot for each channel.")
+    parser.add_argument('--wrtd_tx', default=0, type=int, help="release a wrtd_tx when all boards read .. works when free-running trigger")    
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     return parser.parse_args(argStr)
 

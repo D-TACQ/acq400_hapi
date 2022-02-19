@@ -6,35 +6,40 @@ Created on 29 Sep 2020
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+logger.addHandler(ch)
 
 class Debugger(object):
     """ Debug a method and return it back"""
 
     enabled = 0
+    stack_level = 0
 
     def __init__(self, func):
         self.func = func
 
     def __call__(self, *args, **kwargs):
-        if self.enabled:
-            logger.debug(f'{"Enter" if self.enabled > 2 else "Entering"} : {self.func.__name__}')
-            logger.debug(f'args, kwargs : {args, kwargs}')
+        if Debugger.enabled:
+            Debugger.stack_level += 1            
+            logger.debug('{} {} {} {}'.format("===>" * self.stack_level, "Enter" if Debugger.enabled > 2 else "Entering", self.func.__name__, args, kwargs))
             
-            if self.enabled > 2:
-                inp = input("q/C?")
+            if Debugger.enabled > 2:
+                inp = input("Enter {}() q/C?".format(self.func.__name__))
                 if inp == 'q':
                     exit(1)
                     
         rc = self.func(*args, **kwargs)
         
-        if self.enabled:
-            logger.debug(f'{self.func.__name__} returned : {rc}')
+        if Debugger.enabled:
+            logger.debug('{} returned : {}'.format(self.func.__name__, rc))
             if self.enabled > 1:
-                logger.debug(f'Exit : {self.func.__name__}')
-                inp = input("q/C?")
+                logger.debug('Exit : {}'.format(self.func.__name__))
+                inp = input("Exit {}() q/C?".format(self.func.__name__))
                 if inp == 'q':
                     exit(1)
+            Debugger.stack_level = Debugger.stack_level - 1
             
         return rc

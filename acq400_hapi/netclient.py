@@ -14,6 +14,7 @@ import re
 import sys
 import os
 from threading import Lock
+import select
 
 
 if sys.version_info < (3, 0):
@@ -32,6 +33,9 @@ class Netclient:
         port (int) : server port number.
         
     """
+    
+    trace = int(os.getenv("NETCLIENT_TRACE", "0"))   
+    
     def receive_message(self, termex, maxlen=4096):
         """Read the information from the socket line at a time.
     
@@ -46,14 +50,28 @@ class Netclient:
         match = termex.search(self.buffer)
         while match == None:
             self.buffer += self.sock.recv(maxlen).decode("latin-1")
+            if Netclient.trace > 1:
+                print("self.buffer {}".format(self.buffer))
             match = termex.search(self.buffer)
 
         rc = self.buffer[:match.start(1)]
         self.buffer = self.buffer[match.end(1):]
         return rc
     
-    trace = int(os.getenv("NETCLIENT_TRACE", "0"))   
-                
+    
+      
+    def send(self, message):
+        if Netclient.trace > 1:
+            print("send({})".format(message)) 
+        self.sock.send(message.encode())
+        
+    def has_data(self):
+        socket_list = [self.sock]
+        rs, wr, es = select.select(socket_list, [], [], 0)
+        return self.sock in rs
+
+    instances = []
+
     def __init__(self, addr, port) :
         if Netclient.trace:
             print("Netclient.init {} {}".format(addr, port))
@@ -68,16 +86,29 @@ class Netclient:
         except socket.error as e:
             print("Netclient {}.{} connect fail {}".format(addr, port, e))
             raise e
+        Netclient.instances.append(self)
+
 
     def __enter__(self):
         return self
-    
-    def __exit__(self, exc_type, exc_value, traceback):
+   
+    def close(self):
+#        print("close() {} {}".format(self.__addr, self.__port))
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
         except socket.error:
             pass
         self.sock.close()
+        Netclient.instances.remove(self)
+
+#    def __exit__(self, exc_type, exc_value, traceback):
+#        print("__exit__ {} {}".format(self.__addr, self.__port))
+#        self.close()
+
+#    def __del__(self):
+#        print("__del__ {} {}".format(self.__addr, self.__port))
+#        self.close()
+
             
     #@property
     def addr(self):
@@ -121,7 +152,7 @@ class Siteclient(Netclient):
     """
     knobs = {}
     prevent_autocreate = False
-    pat = re.compile(r":")
+    pat = re.compile(r"[:.]")
     
     @synchronized
     def sr(self, message):        
