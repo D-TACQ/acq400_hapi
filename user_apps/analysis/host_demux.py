@@ -87,6 +87,7 @@ import argparse
 import subprocess
 import acq400_hapi
 import time
+import matplotlib
 import matplotlib.pyplot as plt
 import plotext
 
@@ -287,11 +288,13 @@ def plot_plotext(args, raw_channels):
            plotext.xlabel("samples")
         if num == 0:
            plotext.title("{} src {}".format(args.uut[0], args.src))
-
-        
     plotext.show()
+    return None
     
 def plot_mpl(args, raw_channels):
+    if matplotlib.get_backend() == "agg":
+        print("Text terminal: plot with plotext")
+        return plot_plotext(args, raw_channels)
     print("Plotting with MatPlotLib. Subrate = {}".format(args.mpl_subrate))
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
     num_of_ch = len(args.pc_list)
