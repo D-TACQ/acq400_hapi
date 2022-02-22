@@ -18,6 +18,21 @@ def update_states(uuts, states):
     return states
 
 
+ST_ARM = 1
+ST_RUN = 2
+
+def wait_arm_or_run(uuts, states):
+   wait_trigger = True
+   while not all(elem == 'CONTINUOUS:STATE ARM' for elem in states[1:]):
+       states = update_states(uuts, states)
+       if all(elem == 'CONTINUOUS:STATE RUN' for elem in states[1:]):
+           wait_trigger = False
+           break
+   if wait_trigger:
+       return ST_ARM
+   else:
+       return ST_RUN
+
 def main(args):
     uuts = []
     states = []
@@ -29,6 +44,8 @@ def main(args):
 
     for index, uut in enumerate(uuts):
         uut.s0.streamtonowhered = 'stop'
+        if args.shot:
+            uut.s1.shot = args.shot
         states.append(uut.s0.CONTINUOUS_STATE)
         uut.s1.SIG_sample_count_RESET = '1'
         uut.s1.SIG_sample_count_RESET = '0'
@@ -36,20 +53,25 @@ def main(args):
 
     print("Arming systems now - please wait. Do not trigger yet.")
 
-    for uut in reversed(uuts):
+    for uut in reversed(uuts[1:]):
         uut.s0.streamtonowhered = 'start'
 
-    wait_trigger = True
-    while not all(elem == 'CONTINUOUS:STATE ARM' for elem in states):
-        states = update_states(uuts, states)
-        if all(elem == 'CONTINUOUS:STATE RUN' for elem in states):
-            wait_trigger = False
-            break
-
-    if wait_trigger:
-        print("All UUTs are armed and ready for trigger.")
+    st = wait_arm_or_run(uuts[1:], states[1:])
+    if st==ST_ARM:
+        pass
     else:
         print("Didn't see wait for trigger, maybe not start at zero")
+
+
+
+    uuts[0].s0.streamtonowhered = 'start'
+
+
+    st = wait_arm_or_run(uuts, states)
+    if st==ST_ARM:
+        print("All UUTs are armed and ready for trigger.")
+    else:
+        pass
 
     # Included as a comment below is an example of how this
     # script was tested. If the user wishes to automate
@@ -79,6 +101,7 @@ def main(args):
 def run_main():
     parser = argparse.ArgumentParser(description='acq400 stream to nowhere')
 
+    parser.add_argument('--shot', default=None, type=int, help="set shot number")
     parser.add_argument('--samples', default=100000, type=int,
     help='The number of samples to stream. Not exact.')
 

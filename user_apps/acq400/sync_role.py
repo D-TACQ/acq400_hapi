@@ -73,6 +73,7 @@ def set_sync_role(args):
 
     for t in threads:
         t.join()
+        print("join {}".format(t))
         
     if args.enable_trigger == 99:
         master.enable_trigger()
