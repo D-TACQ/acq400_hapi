@@ -23,9 +23,9 @@ ST_RUN = 2
 
 def wait_arm_or_run(uuts, states):
    wait_trigger = True
-   while not all(elem == 'CONTINUOUS:STATE ARM' for elem in states[1:]):
+   while not all(elem == 'CONTINUOUS:STATE ARM' for elem in states):
        states = update_states(uuts, states)
-       if all(elem == 'CONTINUOUS:STATE RUN' for elem in states[1:]):
+       if all(elem == 'CONTINUOUS:STATE RUN' for elem in states):
            wait_trigger = False
            break
    if wait_trigger:
