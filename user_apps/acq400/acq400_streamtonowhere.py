@@ -78,6 +78,7 @@ def main(args):
 
     st = wait_arm_or_run(uuts, states)
     if st==ST_ARM:
+        uuts[0].enable_trigger()
         print("All UUTs are armed and ready for trigger.")
     else:
         pass
