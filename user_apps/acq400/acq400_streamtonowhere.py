@@ -8,7 +8,7 @@ import acq400_hapi
 import argparse
 import time
 import datetime
-import subprocess
+import threading
 import os
 
 
@@ -33,28 +33,40 @@ def wait_arm_or_run(uuts, states):
    else:
        return ST_RUN
 
+
+def mt_action(uuts, fun, arg):
+    threads = []
+    for uut in uuts:
+        t = threading.Thread(target=fun, args=(uut, arg))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
+def init_action(uut, args):
+    uut.s0.streamtonowhered = 'stop'
+    if args.shot:
+        uut.s1.shot = args.shot
+    uut.s1.SIG_sample_count_RESET = '1'
+    uut.s1.SIG_sample_count_RESET = '0'
+
+def stream_start(uut, args):
+    uut.s0.streamtonowhered = 'start'
+
+def stream_stop(uut, args):
+    uut.s0.streamtonowhered = 'stop'
+
 def main(args):
-    uuts = []
-    states = []
+    uuts = [ acq400_hapi.Acq400(u) for u in args.uuts ]
 
-    for uut in args.uuts:
-        uuts.append(acq400_hapi.Acq400(uut))
+    mt_action(uuts, init_action, args)
 
-    initial_samples = int(uuts[0].s1.sample_count)
-
-    for index, uut in enumerate(uuts):
-        uut.s0.streamtonowhered = 'stop'
-        if args.shot:
-            uut.s1.shot = args.shot
-        states.append(uut.s0.CONTINUOUS_STATE)
-        uut.s1.SIG_sample_count_RESET = '1'
-        uut.s1.SIG_sample_count_RESET = '0'
-
+    states = [ u.s0.CONTINUOUS_STATE for u in uuts ]
 
     print("Arming systems now - please wait. Do not trigger yet.")
 
-    for uut in reversed(uuts[1:]):
-        uut.s0.streamtonowhered = 'start'
+    mt_action(reversed(uuts[1:]), stream_start, args)
 
     st = wait_arm_or_run(uuts[1:], states[1:])
     if st==ST_ARM:
@@ -62,10 +74,7 @@ def main(args):
     else:
         print("Didn't see wait for trigger, maybe not start at zero")
 
-
-
     uuts[0].s0.streamtonowhered = 'start'
-
 
     st = wait_arm_or_run(uuts, states)
     if st==ST_ARM:
@@ -94,8 +103,7 @@ def main(args):
         
 
     print("\nStream finished.")
-    for uut in uuts:
-        uut.s0.streamtonowhered = 'stop'
+    mt_action(uuts, stream_stop, args)
 
 
 def run_main():
