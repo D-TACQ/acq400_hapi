@@ -46,24 +46,22 @@ parser.add_argument('--test_loops', default=1, type=int, help="iterate in test m
 parser.add_argument('--auto_soft_trigger', default=0, type=int, help="1: fire soft trigger on restart")
 parser.add_argument('--site', type=int, default=1, help="site with AWG")
 parser.add_argument('uut', nargs=1, help="uut")
-parser.add_argument('mode', nargs=1, help="mode restart|stop")
+parser.add_argument('mode', nargs='+', help="mode restart|stop")
 
 args = parser.parse_args()
 
 uut = acq400_hapi.factory(args.uut[0])
 args.xwg_site = uut.svc["s{}".format(args.site)]
 
-mode = args.mode[0]
-
-if mode == "restart":
-    restart_action(uut, args)
-elif mode == "stop":
-    abort_action(uut, args)
-elif mode == 'test':
-    for ii in range(args.test_loops):
-        abort_action(uut, args)
+for mode in args.mode:
+    if mode == "restart":
         restart_action(uut, args)
-
-else:
-    print("sorry, bad mode, MUST be start|stop")
-    exit(1)
+    elif mode == "stop":
+        abort_action(uut, args)
+    elif mode == 'test':
+        for ii in range(args.test_loops):
+            abort_action(uut, args)
+            restart_action(uut, args)
+    else:
+        print("sorry, bad mode, MUST be start|stop")
+        exit(1)
