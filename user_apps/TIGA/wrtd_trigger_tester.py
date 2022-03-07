@@ -32,7 +32,7 @@ def pg_trigger_test_init(args, uuts):
         u.cC.WR_WRTT0_RESET = '1'
         u.cC.WR_WRTT1_RESET = '1'
         u.s0.SIG_SRC_TRG_0 = 'WRTT0'    # default on WR system
-        u.s0.SIG_SRC_TRG_1 = 'WRTT1'    # repalce STRG.
+        u.s0.SIG_SRC_TRG_1 = 'WRTT1'    # replace STRG.
     
  
 def pg_trigger_test1(args, uuts):
