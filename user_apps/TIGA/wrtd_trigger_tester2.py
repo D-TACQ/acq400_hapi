@@ -51,9 +51,15 @@ def trigger_test(args):
         
         while True:   
             count1 = [ acq400_hapi.Acq400.intpv(u.cC.WR_WRTT0_COUNT) for u in uuts ]
+            trg = [ u.s0.wr_tai_trg for u in uuts ]
+            for tv in trg[1:]:
+                if trg[0] != tv:
+                    print("ERROR: mismatch trigger {}".format(trg))
+                    sys.exit(1)
+
             pollcount += 1
             if count1 == count01:
-                print("PASS: in {} {}".format(pollcount, count1))
+                print("PASS: in {} {} {}".format(pollcount, count1, trg))
                 break
             else:                
                 if pollcount > 10:
