@@ -16,7 +16,8 @@ import time
 
     
 def get_args():
-    parser = argparse.ArgumentParser(description='wrtd_trigger_tester') 
+    parser = argparse.ArgumentParser(description='wrtd_trigger_tester')
+    parser.add_argument('--wrtt0_trg_loopback', default=0, type=int, help="loopback WRTT0 out (AUX2) to TRG input and record latch time")
     parser.add_argument('--txa', default=0, type=int, help="send txa message")   
     parser.add_argument('--shots', default=10, type=int, help="number of shots") 
     parser.add_argument('uut', nargs='+', help="uuts")    
@@ -31,6 +32,9 @@ def trigger_test_init(args, uuts):
         u.cC.WR_WRTT1_RESET = '1'
         u.s0.SIG_SRC_TRG_0 = 'WRTT0'    # default on WR system
         u.s0.SIG_SRC_TRG_1 = 'WRTT1'    # repalce STRG.
+        if args.wrtt0_trg_loopback != 0:
+            u.s0.SIG_FP_GPIO = 'EVT0'
+
         
 def trigger_test(args):
     uuts = [ acq400_hapi.factory(u) for u in args.uut ]
@@ -51,15 +55,19 @@ def trigger_test(args):
         
         while True:   
             count1 = [ acq400_hapi.Acq400.intpv(u.cC.WR_WRTT0_COUNT) for u in uuts ]
-            trg = [ u.s0.wr_tai_trg for u in uuts ]
-            for tv in trg[1:]:
-                if trg[0] != tv:
-                    print("ERROR: mismatch trigger {}".format(trg))
-                    sys.exit(1)
 
             pollcount += 1
             if count1 == count01:
-                print("PASS: in {} {} {}".format(pollcount, count1, trg))
+                trg = [ u.s0.wr_tai_trg for u in uuts ]
+                for tv in trg[1:]:
+                    if trg[0] != tv:
+                        print("ERROR: mismatch trigger {}".format(trg))
+                        sys.exit(1)
+                if args.wrtt0_trg_loopback != 0:
+                    tai_ts = [ u.s0.wr_tai_stamp for u in uuts ]
+                    print("PASS: in {} {} {} {}".format(pollcount, count1, trg, tai_ts))
+                else:
+                    print("PASS: in {} {} {}".format(pollcount, count1, trg))
                 break
             else:                
                 if pollcount > 10:
