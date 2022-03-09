@@ -14,7 +14,9 @@ import argparse
 import sys
 import time
 
-    
+   
+TICKS_PER_SECOND = 40000000
+
 def get_args():
     parser = argparse.ArgumentParser(description='wrtd_trigger_tester')
     parser.add_argument('--wrtt0_trg_loopback', default=0, type=int, help="loopback WRTT0 out (AUX2) to TRG input and record latch time")
@@ -58,14 +60,18 @@ def trigger_test(args):
 
             pollcount += 1
             if count1 == count01:
-                trg = [ u.s0.wr_tai_trg for u in uuts ]
+                trg = [ [ int(x) for x in u.s0.wr_tai_trg.split(' ')[1:]] for u in uuts ]
                 for tv in trg[1:]:
                     if trg[0] != tv:
                         print("ERROR: mismatch trigger {}".format(trg))
                         sys.exit(1)
                 if args.wrtt0_trg_loopback != 0:
-                    tai_ts = [ u.s0.wr_tai_stamp for u in uuts ]
-                    print("PASS: in {} {} {} {}".format(pollcount, count1, trg, tai_ts))
+                    tai_ts = [ [ int(x) for x in u.s0.wr_tai_stamp.split(' ')[1:] ] for u in uuts ]
+                    tai_tss = [ tai_ts[ii][0]*TICKS_PER_SECOND + tai_ts[ii][1] for ii in range(len(uuts))]
+                    tl0 = trg[0][0]*TICKS_PER_SECOND + trg[0][1]
+                    tl_delta = [ tai_tss[ii]-tl0 for ii in range(len(uuts))]
+
+                    print("PASS: in {} {} {} {} {} {}".format(pollcount, count1, trg, tai_ts, trg[0][1], tl_delta))
                 else:
                     print("PASS: in {} {} {}".format(pollcount, count1, trg))
                 break
