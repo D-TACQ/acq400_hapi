@@ -21,6 +21,7 @@ def get_args():
     parser = argparse.ArgumentParser(description='wrtd_trigger_tester')
     parser.add_argument('--wrtt0_trg_loopback', default=0, type=int, help="loopback WRTT0 out (AUX2) to TRG input and record latch time")
     parser.add_argument('--txa', default=0, type=int, help="send txa message")   
+    parser.add_argument('--hdmi', default=0, type=int, help="1: connect signals via HDMI")
     parser.add_argument('--shots', default=10, type=int, help="number of shots") 
     parser.add_argument('uut', nargs='+', help="uuts")    
     return parser.parse_args()
@@ -33,9 +34,21 @@ def trigger_test_init(args, uuts):
         u.cC.WR_WRTT0_RESET = '1'
         u.cC.WR_WRTT1_RESET = '1'
         u.s0.SIG_SRC_TRG_0 = 'WRTT0'    # default on WR system
-        u.s0.SIG_SRC_TRG_1 = 'WRTT1'    # repalce STRG.
+        u.s0.SIG_SRC_TRG_1 = 'WRTT1'    # replace STRG.
         if args.wrtt0_trg_loopback != 0:
-            u.s0.SIG_FP_GPIO = 'EVT0'
+            if args.hdmi != 0:
+                print("connect SYNC_OUT on BOX1 to SYNC_IN on BOX2 and vice-versa")
+                u.s0.SIG_SYNC_OUT_TRG = 'TRG'
+                u.s0.SIG_SYNC_OUT_TRG_DX = 'd0'
+                u.s0.SIG_FP_GPIO = 'INPUT'
+            else:
+                print("connect FP AUX2 to TRG")
+                u.s0.SIG_SYNC_OUT_TRG = 'DO'
+                u.s0.SIG_FP_GPIO = 'EVT0'
+
+            u.s0.WR_TRG_DX = 'HDMI' if args.hdmi != 0 else 'FPTRG'
+            u.s0.WR_TRG_SENSE = 'rising'
+
 
         
 def trigger_test(args):
@@ -71,7 +84,8 @@ def trigger_test(args):
                     tl0 = trg[0][0]*TICKS_PER_SECOND + trg[0][1]
                     tl_delta = [ tai_tss[ii]-tl0 for ii in range(len(uuts))]
 
-                    print("PASS: in {} {} {} {} {} {}".format(pollcount, count1, trg, tai_ts, trg[0][1], tl_delta))
+                    print("{}: in {} {} {} {} {} {}".format("PASS" if max([abs(x) for x in tl_delta]) < 20 else "FAIL", 
+                            pollcount, count1, trg, tai_ts, trg[0][1], tl_delta))
                 else:
                     print("PASS: in {} {} {}".format(pollcount, count1, trg))
                 break
