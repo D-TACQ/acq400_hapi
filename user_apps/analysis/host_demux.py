@@ -302,8 +302,15 @@ def plot_mpl(args, raw_channels):
     f.suptitle("{} src {}".format(args.uut[0], args.src))
     for num, sp in enumerate(args.pc_list):
         try:
+            y = raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]]
+            if args.egu:
+                try:
+                    y = y/256
+                    y = args.the_uut.chan2volts(sp+1, y)                    
+                except:
+                    pass
             plots[num].set_ylabel("CH{}".format(sp+1))
-            plots[num].plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]])
+            plots[num].plot(y)
         except TypeError:
             plots.plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]])
     
