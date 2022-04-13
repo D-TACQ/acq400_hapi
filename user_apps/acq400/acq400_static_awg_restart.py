@@ -24,9 +24,8 @@ def abort_action(uut, args):
     args.xwg_site.AWG_MODE_ABO = 1
     while acq400_hapi.Acq400.intpv(args.xwg_site.AWG_SHOT_COMPLETE) == 0:
         time.sleep(0.25)
-    
- 
-def restart_action(uut, args):       
+
+def start_action(uut, args):    
     pll = args.xwg_site.playloop_length
     args.xwg_site.playloop_length = "0 0"
     args.xwg_site.playloop_length = pll
@@ -34,6 +33,10 @@ def restart_action(uut, args):
         while acq400_hapi.Acq400.intpv(args.xwg_site.AWG_ARM) == 0:
             time.sleep(0.25)
         uut.s0.soft_trigger = 1
+         
+def restart_action(uut, args):       
+    abort_action(uut, args)
+    start_action(uut, args)
     
     
 
@@ -46,7 +49,7 @@ parser.add_argument('--test_loops', default=1, type=int, help="iterate in test m
 parser.add_argument('--auto_soft_trigger', default=0, type=int, help="1: fire soft trigger on restart")
 parser.add_argument('--site', type=int, default=1, help="site with AWG")
 parser.add_argument('uut', nargs=1, help="uut")
-parser.add_argument('mode', nargs='+', help="mode restart|stop")
+parser.add_argument('mode', nargs='+', help="mode start|stop|restart")
 
 args = parser.parse_args()
 
@@ -56,6 +59,8 @@ args.xwg_site = uut.svc["s{}".format(args.site)]
 for mode in args.mode:
     if mode == "restart":
         restart_action(uut, args)
+    elif mode == "start":
+        start_action(uut, args)
     elif mode == "stop":
         abort_action(uut, args)
     elif mode == 'test':
