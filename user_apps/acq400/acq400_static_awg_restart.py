@@ -39,22 +39,31 @@ def start_action(uut, args, xwg_site):
 def run_action(u):
     def _run_action():
         pass
-      
-parser = argparse.ArgumentParser(description='configure acq400_abort')
-parser.add_argument('--auto_soft_trigger', default=0, type=int, help="1: fire soft trigger on restart")
-parser.add_argument('--site', type=int, default=1, help="site with AWG")
-parser.add_argument('--mode', default='stop', help="mode start|stop")
-parser.add_argument('uut', nargs='+', help="uut [uut2...]")
 
 
-args = parser.parse_args()
+def run_main():      
+    parser = argparse.ArgumentParser(description='configure acq400_abort')
+    parser.add_argument('--auto_soft_trigger', default=0, type=int, help="1: fire soft trigger on restart")
+    parser.add_argument('--site', type=int, default=1, help="site with AWG")
+    parser.add_argument('--command', default='stop', help="command start|stop")
+    parser.add_argument('uuts', nargs='+', help="uut [uut2...]")
 
-uuts = [ acq400_hapi.factory(u) for u in args.uut ]
 
-for u in uuts:
-    xwg_site = u.svc["s{}".format(args.site)]
+    args = parser.parse_args()
 
-    if args.mode == "start":
-        start_action(u, args, xwg_site)
-    else:
-        stop_action(u, args, xwg_site)
+    uuts = [ acq400_hapi.factory(u) for u in args.uuts ]
+
+
+    for u in uuts:
+        xwg_site = u.svc["s{}".format(args.site)]
+
+        if args.command == "start":
+            start_action(u, args, xwg_site)
+        else:
+            stop_action(u, args, xwg_site)
+            
+
+# execution starts here
+
+if __name__ == '__main__':
+    run_main()
