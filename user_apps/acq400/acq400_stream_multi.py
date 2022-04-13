@@ -153,8 +153,8 @@ class StreamsOne:
                 if self.args.verbose == 1:
                     print(".", end='')
                 if self.args.verbose >= 2:
-                    print("{:5d} {} total bytes {:10d} rate {:.2f} MB/s".
-                          format(int(t_run), fn, int(data_length), 0 if t_run==0 else data_length/t_run/0x100000))
+                    print("{:8.3f} {} total bytes {:10d} rate {:.2f} MB/s".
+                          format(t_run, fn, int(data_length), 0 if t_run==0 else data_length/t_run/0x100000))
                 fnum += 1
                 
             if t_run >= self.args.runtime or data_length > self.args.totaldata:                
