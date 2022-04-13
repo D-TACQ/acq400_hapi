@@ -67,12 +67,12 @@ import shutil
 import multiprocessing
 
 def make_data_dir(directory, verbose):
-    if verbose:
+    if verbose > 2:
         print("make_data_dir {}".format(directory))
     try:
         os.makedirs(directory)
     except Exception:
-        if verbose:
+        if verbose > 2:
             print("Directory already exists")
         pass
 
@@ -123,16 +123,15 @@ class StreamsOne:
                         
         blen = self.args.filesize//data_size      
             
-        start_time = time.time()
+        
         self.log_file = open("{}_times.log".format(self.uut_name), "w")
             
         for buf in uut.stream(recvlen=blen, data_size=data_size):
-            if data_length > 0:
-                t0 = self.logtime(t0, time.time())
-            else:
-                t0 = time.time()
-
-            data_length += len(buf)
+            if data_length == 0:
+                t0 = time.time()            
+            t_run = self.logtime(t0, time.time()) - t0
+            
+            data_length += len(buf)            
             
             if len(buf) == 0:
                 print("Zero length buffer, quit")
@@ -145,16 +144,18 @@ class StreamsOne:
                     root = os.path.join(self.args.root, self.uut_name, "{:06d}".format(cycle))
                     make_data_dir(root, self.args.verbose)
 
-                data_file = open(os.path.join(root, "{:04d}.dat".format(fnum)), "wb")
+                fn = os.path.join(root, "{:04d}.dat".format(fnum))
+                data_file = open(fn, "wb")
                 buf.tofile(data_file, '')
                 
                 if self.args.verbose == 1:
                     print(".", end='')
                 if self.args.verbose >= 2:
-                    print("{} new file {}".format(self.uut_name, data_file))
+                    print("{:5d} {} total bytes {:10d} rate {:.2f} MB/s".
+                          format(int(t_run), fn, int(data_length), 0 if t_run==0 else data_length/t_run/0x100000))
                 fnum += 1
                 
-            if time.time() >= (start_time + self.args.runtime) or data_length > self.args.totaldata:                
+            if t_run >= self.args.runtime or data_length > self.args.totaldata:                
                 return
             
                
