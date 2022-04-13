@@ -125,11 +125,13 @@ class StreamsOne:
             
         
         self.log_file = open("{}_times.log".format(self.uut_name), "w")
-            
+        t_run = 0
+        
         for buf in uut.stream(recvlen=blen, data_size=data_size):
             if data_length == 0:
-                t0 = time.time()            
-            t_run = self.logtime(t0, time.time()) - t0
+                t0 = time.time()
+            else:           
+                t_run = self.logtime(t0, time.time()) - t0
             
             data_length += len(buf)            
             
@@ -170,7 +172,7 @@ def run_stream(args):
     for uut_name in reversed(args.uuts):
         streamer = StreamsOne(args, uut_name)
         if len(args.uuts) > 1 and uut_name == args.uuts[0]:
-            print("Pause before launching M")
+            print("Pausing 2 before launching M")
             time.sleep(2)
         multiprocessing.Process(target=streamer.run).start()
         #streamer.run()
