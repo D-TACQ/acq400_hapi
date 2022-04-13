@@ -123,7 +123,7 @@ class StreamsOne:
             wordsizetype = "<i2"  # 16 bit little endian
             data_size = 2
             
-        self.args.filesize = self.args.filesize/data_size      
+        self.args.filesize = self.args.filesize//data_size      
             
         start_time = time.time()
         self.log_file = open("{}_times.log".format(self.uut_name), "w")
