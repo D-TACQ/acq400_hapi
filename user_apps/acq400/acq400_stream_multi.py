@@ -107,17 +107,23 @@ class StreamsOne:
         data_length = 0
         if self.args.filesize > self.args.totaldata:
             self.args.filesize = self.args.totaldata
+            
+        if self.args.filesamples:
+            self.args.filesize = self.args.filesamples*uut.s0.ssb
+            
         try:
             if int(uut.s0.data32):
                 data_size = 4
                 wordsizetype = "<i4"  # 32 bit little endian
             else:
                 wordsizetype = "<i2"  # 16 bit little endian
-                data_size = 2
+                data_size = 2        
         except AttributeError:
             print("Attribute error detected. No data32 attribute - defaulting to 16 bit")
             wordsizetype = "<i2"  # 16 bit little endian
             data_size = 2
+            
+        self.args.filesize = self.args.filesize/data_size      
             
         start_time = time.time()
         self.log_file = open("{}_times.log".format(self.uut_name), "w")
@@ -180,7 +186,8 @@ def run_main():
     parser = argparse.ArgumentParser(description='acq400 stream')
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
-    parser.add_argument('--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
+    parser.add_argument('--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False, help="file size in bytes")
+    parser.add_argument('--filesamples', default=None, action=acq400_hapi.intSIAction, decimal=False, help="file size in samples (overrides filesize)")
     parser.add_argument('--files_per_cycle', default=100, type=int, help="files per cycle (directory)")
     parser.add_argument('--force_delete', default=0, type=int, help="silently delete any existing data files")
     parser.add_argument('--nowrite', default=0, help="do not write file")
