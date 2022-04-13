@@ -20,24 +20,20 @@ import time
 
 
 
-def abort_action(uut, args):
-    args.xwg_site.AWG_MODE_ABO = 1
-    while acq400_hapi.Acq400.intpv(args.xwg_site.AWG_SHOT_COMPLETE) == 0:
+def stop_action(uut, args, xwg_site):
+    xwg_site.AWG_MODE_ABO = 1
+    while acq400_hapi.Acq400.intpv(xwg_site.AWG_SHOT_COMPLETE) == 0:
         time.sleep(0.25)
 
-def start_action(uut, args):    
-    pll = args.xwg_site.playloop_length
-    args.xwg_site.playloop_length = "0 0"
-    args.xwg_site.playloop_length = pll
+def start_action(uut, args, xwg_site):    
+    pll = xwg_site.playloop_length
+    xwg_site.playloop_length = "0 0"
+    xwg_site.playloop_length = pll
     if args.auto_soft_trigger:
-        while acq400_hapi.Acq400.intpv(args.xwg_site.AWG_ARM) == 0:
+        while acq400_hapi.Acq400.intpv(xwg_site.AWG_ARM) == 0:
             time.sleep(0.25)
         uut.s0.soft_trigger = 1
-         
-def restart_action(uut, args):       
-    abort_action(uut, args)
-    start_action(uut, args)
-    
+
     
 
 def run_action(u):
@@ -45,28 +41,20 @@ def run_action(u):
         pass
       
 parser = argparse.ArgumentParser(description='configure acq400_abort')
-parser.add_argument('--test_loops', default=1, type=int, help="iterate in test mode for timing")
 parser.add_argument('--auto_soft_trigger', default=0, type=int, help="1: fire soft trigger on restart")
 parser.add_argument('--site', type=int, default=1, help="site with AWG")
-parser.add_argument('uut', nargs=1, help="uut")
-parser.add_argument('mode', nargs='+', help="mode start|stop|restart")
+parser.add_argument('--mode', default='stop', help="mode start|stop")
+parser.add_argument('uut', nargs='+', help="uut [uut2...]")
+
 
 args = parser.parse_args()
 
-uut = acq400_hapi.factory(args.uut[0])
-args.xwg_site = uut.svc["s{}".format(args.site)]
+uuts = [ acq400_hapi.factory(u) for u in args.uut ]
 
-for mode in args.mode:
-    if mode == "restart":
-        restart_action(uut, args)
-    elif mode == "start":
-        start_action(uut, args)
-    elif mode == "stop":
-        abort_action(uut, args)
-    elif mode == 'test':
-        for ii in range(args.test_loops):
-            abort_action(uut, args)
-            restart_action(uut, args)
+for u in uuts:
+    xwg_site = u.svc["s{}".format(args.site)]
+
+    if args.mode == "start":
+        start_action(u, args, xwg_site)
     else:
-        print("sorry, bad mode, MUST be start|stop")
-        exit(1)
+        stop_action(u, args, xwg_site)
