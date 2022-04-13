@@ -103,14 +103,12 @@ class StreamsOne:
     def run(self):        
         uut = acq400_hapi.Acq400(self.uut_name)
         cycle = -1
-        num = 999       # force initial directory create
+        fnum = 999       # force initial directory create
         data_length = 0
-        if self.args.filesize > self.args.totaldata:
-            self.args.filesize = self.args.totaldata
-            
+      
         if self.args.filesamples:
-            self.args.filesize = self.args.filesamples*uut.s0.ssb
-            
+            self.args.filesize = self.args.filesamples*int(uut.s0.ssb)
+        
         try:
             if int(uut.s0.data32):
                 data_size = 4
@@ -122,13 +120,13 @@ class StreamsOne:
             print("Attribute error detected. No data32 attribute - defaulting to 16 bit")
             wordsizetype = "<i2"  # 16 bit little endian
             data_size = 2
-            
-        self.args.filesize = self.args.filesize//data_size      
+                        
+        blen = self.args.filesize//data_size      
             
         start_time = time.time()
         self.log_file = open("{}_times.log".format(self.uut_name), "w")
             
-        for buf in uut.stream(recvlen=self.args.filesize, data_size=data_size):
+        for buf in uut.stream(recvlen=blen, data_size=data_size):
             if data_length > 0:
                 t0 = self.logtime(t0, time.time())
             else:
@@ -141,26 +139,20 @@ class StreamsOne:
                 return
 
             if not self.args.nowrite:
-                if num >= self.args.files_per_cycle:
-                    num = 0
+                if fnum >= self.args.files_per_cycle:
+                    fnum = 0
                     cycle += 1
                     root = os.path.join(self.args.root, self.uut_name, "{:06d}".format(cycle))
                     make_data_dir(root, self.args.verbose)
 
-                data_file = open(os.path.join(root, "{:04d}.dat".format(num)), "wb")
+                data_file = open(os.path.join(root, "{:04d}.dat".format(fnum)), "wb")
                 buf.tofile(data_file, '')
                 
                 if self.args.verbose == 1:
                     print(".", end='')
-
-                if self.args.verbose > 2:
-                    print("New data file written.")
-                    print("Data Transferred: ", data_length, "KB")
-                    print("Streaming time remaining: ", -1*(time.time() - (start_time + self.args.runtime)))
-                    print("")
-                    print("")
-
-            num += 1
+                if self.args.verbose >= 2:
+                    print("{} new file {}".format(self.uut_name, data_file))
+                fnum += 1
                 
             if time.time() >= (start_time + self.args.runtime) or data_length > self.args.totaldata:                
                 return
@@ -198,6 +190,9 @@ def run_main():
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uuts', nargs='+', help="uuts")
     args = parser.parse_args()
+    
+    if args.filesize > args.totaldata:
+            args.filesize = args.totaldata
     remove_stale_data(args)
     run_stream(args)
 
