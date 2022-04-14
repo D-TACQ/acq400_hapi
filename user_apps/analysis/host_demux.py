@@ -89,7 +89,6 @@ import acq400_hapi
 import time
 import matplotlib
 import matplotlib.pyplot as plt
-import plotext
 
 has_pykst = False
 if os.name != "nt":
