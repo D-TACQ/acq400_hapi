@@ -78,7 +78,7 @@ def make_data_dir(directory, verbose):
 
 def remove_stale_data(args):
     for uut in args.uuts:
-        path = args.root + uut
+        path = os.path.join(args.root, uut)
         if os.path.exists(path):
             if args.force_delete:
                 pass
