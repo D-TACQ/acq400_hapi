@@ -1227,7 +1227,7 @@ class Acq400:
 
     def stream(self, recvlen=4096*32, port=AcqPorts.STREAM, data_size=2):
         dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
-        nc = netclient.Netclient(self.uut, AcqPorts.STREAM)
+        nc = netclient.Netclient(self.uut, port)
 
         buf = bytearray(recvlen*data_size)
         while True:       
