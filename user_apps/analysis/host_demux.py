@@ -330,7 +330,9 @@ def plot_mpl(args, raw_channels):
                 ylabel = "CH{} TAIv".format(sp+1)
             elif args.egu:
                 try:
-                    y = args.the_uut.chan2volts(sp+1, y/256)
+                    if args.WSIZE == 4:
+                        y = y/256
+                    y = args.the_uut.chan2volts(sp+1, y)
                     ylabel = "CH{} V".format(sp+1)
                 except:
                     pass
