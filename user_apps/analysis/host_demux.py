@@ -95,15 +95,17 @@ if os.name != "nt":
     try:
         import pykst
         has_pykst = True
+        print("INFO: pykst selected as default plot")
     except ImportError:
-        print("WARNING: failed to import pykst, no kst plots")
+        pass
         
 has_plotext = False
 try:
     import plotext
     has_plotext = True
+    print("INFO: plotext available as plot backup when no graphics")
 except ImportError:
-    print("WARNING: failed to import plotext, no text plots")
+    pass
 
 
 def channel_required(args, ch):
@@ -560,7 +562,7 @@ def run_main():
    
     print("args.pc_list {}".format(args.pc_list))
     if args.egu:
-        args.the_uut = acq400_hapi.Acq2106(args.uut[0])
+        args.the_uut = acq400_hapi.factory(args.uut[0])
     process_data(args)
 
 if __name__ == '__main__':
