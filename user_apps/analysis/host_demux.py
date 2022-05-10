@@ -5,7 +5,7 @@
   - data is stored locally, either from mgtdram/ftp or fiber-optic AFHBA404
   - channelize the data
   - optionally store file-per-channel
-  - optionally plot in pykst
+  - optionally plot in pykst if available
   - @@todo store to MDSplus as segments.
 
 example usage::
@@ -393,17 +393,16 @@ def plot_data_kst(args, raw_channels):
 
 
 def plot_data(args, raw_channels):
-    if args.plot_mpl == 1:
-        # if arg set then plot with matplotlib instead.
-        plot_mpl(args, raw_channels)
-        return None
-    elif args.plot_mpl == -1:
-        plot_plotext(args, raw_channels)
-
     if has_pykst:
         plot_data_kst(args, raw_channels)
+    elif args.plot_mpl == -1:
+        # forced test mode..
+        plot_plotext(args, raw_channels)        
     else:
-        print("SORRY, kst automation via pykst not available. Please install pykst, or use kst DirFile importer")
+        # reverts to plot_plotext if graphics not available
+        plot_mpl(args, raw_channels)
+        
+    return None
 
 # double_up : data is presented as [ ch010, ch011, ch020, ch021 ] .. so zip them together..
 def double_up(args, d1):
@@ -447,7 +446,7 @@ def process_data(args):
 
     if args.save != None:
         save_data(args, raw_data)
-    if len(args.pc_list) > 0:
+    if args.plot and len(args.pc_list) > 0:
         plot_data(args, raw_data)
 
 def make_pc_list(args):
@@ -519,7 +518,8 @@ def run_main():
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
     parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
     parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
-    parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data.')
+    parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data. (legacy option)')
+    parser.add_argument('--plot', type=int, default=1, help="plot data when set")
     parser.add_argument('--mpl_subrate', type=str, default='1', help='Control subrate for mpl plotting. (accepts a list matching mpl)')
     parser.add_argument('--mpl_start', type=int, default=0, help='Control number of samples to plot with mpl.')
     parser.add_argument('--mpl_end', type=int, default=-1, help='Control number of samples to plot with mpl.')
@@ -552,8 +552,8 @@ def run_main():
             if os.name != "nt":
                 args.saveroot = r"{}/{}".format(args.uutroot, args.save)
 
-    # ch 0.. (comp)
     make_plot_lists(args)
+
     
    
     print("args.pc_list {}".format(args.pc_list))
