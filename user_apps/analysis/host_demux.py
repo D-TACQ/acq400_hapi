@@ -289,7 +289,29 @@ def plot_plotext(args, raw_channels):
            plotext.title("{} src {}".format(args.uut[0], args.src))
     plotext.show()
     return None
-    
+
+
+def decode_tai_vernier(args, y):
+    xdt = 25e-9 if args.xdt == 0 else args.xdt
+    secs = np.right_shift(np.bitwise_and(y, 0x70000000), 28)
+# secs has a spike on rollover, suppress it
+    for ii in range(1,len(secs)-1):
+        if secs[ii-1] == secs[ii+1] and secs[ii] != secs[ii-1]:
+            print("ted fix at {}".format(ii))
+            secs[ii] = secs[ii-1]
+    ticks = np.bitwise_and(y, 0x0fffffff)*xdt
+
+# catch ticks only spike
+    for ii in range(1,len(ticks)-1):
+        if ticks[ii] < ticks[ii-1] and ticks[ii+1] > ticks[ii-1]:
+            ticks[ii] = (ticks[ii+1]+ticks[ii-1])/2
+        elif ticks[ii] > ticks[ii+1] and ticks[ii+1] > ticks[ii-1]:
+            ticks[ii] = (ticks[ii+1]+ticks[ii-1])/2
+
+    secs = secs + ticks
+    print("decode_tai_vernier @@todoi stubbed spikes")
+    return secs
+ 
 def plot_mpl(args, raw_channels):
     if matplotlib.get_backend() == "agg":
         print("Text terminal: plot with plotext")
@@ -303,7 +325,10 @@ def plot_mpl(args, raw_channels):
         try:
             y = raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]]
             ylabel = "CH{} raw".format(sp+1)
-            if args.egu:
+            if args.tai_vernier and args.tai_vernier == sp+1:
+                y = decode_tai_vernier(args, y)
+                ylabel = "CH{} TAIv".format(sp+1)
+            elif args.egu:
                 try:
                     y = args.the_uut.chan2volts(sp+1, y/256)
                     ylabel = "CH{} V".format(sp+1)
@@ -489,6 +514,7 @@ def run_main():
     parser.add_argument('--src', type=str, default='/data', help='data source root')
     parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
+    parser.add_argument('--tai_vernier', type=int, default=None, help='decode this channel as tai_vernier')
     parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
     parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
