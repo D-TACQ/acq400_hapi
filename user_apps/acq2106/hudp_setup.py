@@ -50,16 +50,17 @@ def run_main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="hdup_setup")
-    parser.add_argument("--netmask", default='255.255.255.0', help='netmask, default 255.255.255.0')
-    parser.add_argument("--tx_ip",   default='10.12.198.128')
-    parser.add_argument("--rx_ip",   default='10.12.198.129')
-    parser.add_argument("--gw",      default='10.12.198.1')
-    parser.add_argument("--port",    default='53676')
-    parser.add_argument("--run0",    default='1 1,8,0', help="set tx sites+spad")
-    parser.add_argument("--play0",   default='1 8',     help="set rx sites+spad")
-    parser.add_argument("txuut", nargs=1, help="transmit uut")
-    parser.add_argument("rxuut", nargs=1, help="transmit uut")
+    parser = argparse.ArgumentParser(description="hdup_setup", 
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--netmask", default='255.255.255.0', help='netmask')
+    parser.add_argument("--tx_ip",   default='10.12.198.128', help='rx ip address')
+    parser.add_argument("--rx_ip",   default='10.12.198.129', help='tx ip address')
+    parser.add_argument("--gw",      default='10.12.198.1',   help='gateway')
+    parser.add_argument("--port",    default='53676',         help='port')
+    parser.add_argument("--run0",    default='1 1,8,0',       help="set tx sites+spad")
+    parser.add_argument("--play0",   default='1 8',           help="set rx sites+spad")
+    parser.add_argument("txuut", nargs=1,                     help="transmit uut")
+    parser.add_argument("rxuut", nargs=1,                     help="transmit uut")
     run_main(parser.parse_args())
 
 
