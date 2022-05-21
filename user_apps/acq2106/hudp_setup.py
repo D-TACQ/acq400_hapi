@@ -29,16 +29,16 @@ def run_main(args):
     print("txuut {}".format(txuut.uut))
     print("rxuut {}".format(rxuut.uut))
     
-    print("txuut assume aggregator, capture has been set up")
+    txuut.s0.run0 = args.run0
     hdup_init(args, txuut, args.tx_ip)
     txuut.s10.src_port = args.port
     txuut.s10.dst_port = args.port
-    txuut.s10.dst_ip = args.rx_ip
+    txuut.s10.dst_ip = args.rx_ip    
     txuut.s10.tx_pkt_sz = txuut.s0.ssb
     hdup_enable(txuut)
-       
-    print("rxuut assume play sites pad done {}".format(rxuut.s0.distributor))
-    rxuut.s0.distributor = 'comms=U off'             
+    
+    rxuut.s0.play0 = args.play0       
+    rxuut.s0.distributor = 'comms=U off'        
     rxuut.s0.distributor = 'on'
 
     hdup_init(args, rxuut, args.rx_ip)
@@ -56,6 +56,8 @@ if __name__ == '__main__':
     parser.add_argument("--rx_ip",   default='10.12.198.129')
     parser.add_argument("--gw",      default='10.12.198.1')
     parser.add_argument("--port",    default='53676')
+    parser.add_argument("--run0",    default='1 1,8,0', help="set tx sites+spad")
+    parser.add_argument("--play0",   default='1 8',     help="set rx sites+spad")
     parser.add_argument("txuut", nargs=1, help="transmit uut")
     parser.add_argument("rxuut", nargs=1, help="transmit uut")
     run_main(parser.parse_args())
