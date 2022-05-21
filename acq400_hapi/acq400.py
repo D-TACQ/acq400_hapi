@@ -82,6 +82,7 @@ class AcqSites:
     SITE_CB = 12
     SITE_CC = 11
     SITE_DSP = 14
+    SITE_HUDP = 10
 
 class SF:
     """state constants"""
@@ -1263,7 +1264,7 @@ class Acq2106(Acq400):
     Defines features specific to ACQ2106
     """
 
-    def __init__(self, _uut, monitor=True, s0_client=None, has_dsp=False, has_comms=True, has_wr=False):
+    def __init__(self, _uut, monitor=True, s0_client=None, has_dsp=False, has_comms=True, has_wr=False, has_hudp=False):
 #        print("acq400_hapi.Acq2106 %s" % (_uut))
         Acq400.__init__(self, _uut, monitor=monitor, s0_client=s0_client)
         self.mb_clk_min = 100000
@@ -1274,6 +1275,8 @@ class Acq2106(Acq400):
             sn_map += (('cC', AcqSites.SITE_CC), )
         if has_dsp:
             sn_map += (('s14', AcqSites.SITE_DSP),)
+        if has_hudp:
+            sn_map += (('s10', AcqSites.SITE_HUDP), )
 
         for ( service_name, site ) in sn_map:
             try:
@@ -1427,9 +1430,10 @@ def factory(_uut):
         has_dsp = s0.has_dsp != "none"
         has_wr = s0.has_wr != "none"
         has_sfp = s0.has_mgt != "none"
+        has_hudp = s0.has_hudp != "none"
         
        
-        return Acq2106(_uut, s0_client=s0,  has_dsp=has_dsp, has_comms=has_sfp, has_wr=has_wr)
+        return Acq2106(_uut, s0_client=s0,  has_dsp=has_dsp, has_comms=has_sfp, has_wr=has_wr, has_hudp=has_hudp)
     except:
         ''' nothing special, make it a default class with existing s0
         '''
