@@ -22,6 +22,19 @@ def hdup_init(args, uut, ip):
     
 def hdup_enable(uut):
     uut.s10.ctrl = 1
+    
+def ip_broadcast(args):
+    ip_dest = args.rx_ip.split('.')
+    nm = args.netmask.split('.')
+    
+    for ii in range(3,0,-1):
+        if nm[ii] != '0':
+            break
+        else:
+            ip_dest[ii] = '255'
+    
+    return '.'.join(ip_dest)
+        
        
 def run_main(args):
     txuut = acq400_hapi.factory(args.txuut[0])
@@ -33,7 +46,7 @@ def run_main(args):
     hdup_init(args, txuut, args.tx_ip)
     txuut.s10.src_port = args.port
     txuut.s10.dst_port = args.port
-    txuut.s10.dst_ip = args.rx_ip    
+    txuut.s10.dst_ip = args.rx_ip if args.broadcast == 0 else ip_broadcast(args)   
     txuut.s10.tx_pkt_sz = txuut.s0.ssb
     hdup_enable(txuut)
     
@@ -59,6 +72,7 @@ if __name__ == '__main__':
     parser.add_argument("--port",    default='53676',         help='port')
     parser.add_argument("--run0",    default='1 1,8,0',       help="set tx sites+spad")
     parser.add_argument("--play0",   default='1 8',           help="set rx sites+spad")
+    parser.add_argument("--broadcast", default=0,             help="broadcast the data")
     parser.add_argument("txuut", nargs=1,                     help="transmit uut")
     parser.add_argument("rxuut", nargs=1,                     help="transmit uut")
     run_main(parser.parse_args())
