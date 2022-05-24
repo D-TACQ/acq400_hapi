@@ -52,7 +52,9 @@ def set_sync_role(args):
     master.s0.sync_role = "{} {} {} {}".format(expand_role(args, args.toprole),
                                             args.fclk, args.fin if not args.toprole=="master" else "", 
                                             " ".join(args.postfix), " ".join(postfix))
-    
+   
+    if args.si5326_bypass:
+        master.s0.si5326bypass = '1'
     if args.downstream_bypass:
         master.s0.SIG_SYNC_OUT_CLK_DX = 'd1'
 
@@ -86,6 +88,7 @@ def run_main():
     parser.add_argument('--fin',  default='1000000', help="external clock rate")
     parser.add_argument('--clkdiv', default=None, help="optional clockdiv")
     parser.add_argument('--downstream_bypass', default=0, type=int, help="provide full rate clock downstream")
+    parser.add_argument('--si5326_bypass', default=0, type=int, help="bypass Si5326")
     parser.add_argument('--trgsense', default='rising', help="trigger sense rising unless falling specified")
     parser.add_argument('uuts', nargs='+', help="uut ")
     set_sync_role(parser.parse_args())
