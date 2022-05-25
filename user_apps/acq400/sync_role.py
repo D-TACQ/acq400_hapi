@@ -35,7 +35,7 @@ def configure_slave(name, args, postfix):
     slave = acq400_hapi.Acq400(name)
     slave.s0.sync_role = "{} {} {} {}".format('slave', args.fclk, args.fin, " ".join(postfix))
     if args.downstream_bypass:
-        slave.s0.SYS_CLK_BYPASS = 1
+        slave.s0.set_si5326_bypass = 1
 
 def set_sync_role(args):
     master = acq400_hapi.Acq400(args.uuts[0])
@@ -54,7 +54,7 @@ def set_sync_role(args):
                                             " ".join(args.postfix), " ".join(postfix))
    
     if args.si5326_bypass:
-        master.s0.si5326bypass = '1'
+        master.s0.set_si5326_bypass = '1'
     if args.downstream_bypass:
         master.s0.SIG_SYNC_OUT_CLK_DX = 'd1'
 
