@@ -19,6 +19,12 @@ def hdup_init(args, uut, ip):
     uut.s10.ip = ip
     uut.s10.gw = args.gw
     uut.s10.netmask = args.netmask
+    if args.disco is not None:
+        print("enable disco at {}".format(args.disco))
+        uut.s10.disco_idx = args.disco
+        uut.s10.disco_en  = 1
+    else:
+        uut.s10.disco_en = 0
     
 def hdup_enable(uut):
     uut.s10.ctrl = 1
@@ -41,15 +47,7 @@ def run_main(args):
     rxuut = acq400_hapi.factory(args.rxuut[0])
     print("txuut {}".format(txuut.uut))
     print("rxuut {}".format(rxuut.uut))
-    
-    txuut.s0.run0 = args.run0
-    hdup_init(args, txuut, args.tx_ip)
-    txuut.s10.src_port = args.port
-    txuut.s10.dst_port = args.port
-    txuut.s10.dst_ip = args.rx_ip if args.broadcast == 0 else ip_broadcast(args)   
-    txuut.s10.tx_pkt_sz = txuut.s0.ssb
-    hdup_enable(txuut)
-    
+        
     rxuut.s0.play0 = args.play0       
     rxuut.s0.distributor = 'comms=U off'        
     rxuut.s0.distributor = 'on'
@@ -59,6 +57,13 @@ def run_main(args):
     rxuut.s10.rx_port = args.port
     hdup_enable(rxuut)
 
+    txuut.s0.run0 = args.run0
+    hdup_init(args, txuut, args.tx_ip)
+    txuut.s10.src_port = args.port
+    txuut.s10.dst_port = args.port
+    txuut.s10.dst_ip = args.rx_ip if args.broadcast == 0 else ip_broadcast(args)   
+    txuut.s10.tx_pkt_sz = txuut.s0.ssb
+    hdup_enable(txuut)
     
 
 
@@ -70,9 +75,10 @@ if __name__ == '__main__':
     parser.add_argument("--rx_ip",   default='10.12.198.129', help='tx ip address')
     parser.add_argument("--gw",      default='10.12.198.1',   help='gateway')
     parser.add_argument("--port",    default='53676',         help='port')
-    parser.add_argument("--run0",    default='1 1,16,0',       help="set tx sites+spad")
-    parser.add_argument("--play0",   default='1 16',           help="set rx sites+spad")
-    parser.add_argument("--broadcast", default=0,             help="broadcast the data")
+    parser.add_argument("--run0",    default='1 1,16,0',      help="set tx sites+spad")
+    parser.add_argument("--play0",   default='1 16',          help="set rx sites+spad")
+    parser.add_argument("--broadcast", default=0, type = int, help="broadcast the data")
+    parser.add_argument("--disco",   default=None, type=int,  help="enable discontinuity check at index x")
     parser.add_argument("txuut", nargs=1,                     help="transmit uut")
     parser.add_argument("rxuut", nargs=1,                     help="transmit uut")
     run_main(parser.parse_args())
