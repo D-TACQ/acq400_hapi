@@ -1,23 +1,29 @@
 #!/bin/bash
-set -x
+#set -x
 TX1=${TX1:-acq2106_189} 
 RX1=${RX1:-acq2106_274}
 RX2=${RX2:-acq2106_130}
 IP_TX1=${IP_TX1:-10.12.198.128}
 IP_RX1=${IP_RX1:-10.12.198.129}
 IP_RX2=${IP_RX2:-10.12.198.130}
+if [ "x$DISCO_IDX" != "x" ]; then
+DISCO=--disco=$DISCO_IDX
+echo DISCO set $DISCO
+else
+DISCO=
+fi
 
 echo HUDP Demo TX1:$TX1,$IP_TX1 RX1:$RX1,$IP_RX1 RX2:$RX2,$IP_RX2
 echo set clk/trg
 ./user_apps/acq400/sync_role.py --fin=50k --fclk=50k --si5326_bypass 1 --toprole=fpmaster,strg acq2106_189
 echo 'UNICAST ->' $RX1
-./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX1 --broadcast=0 $TX1 $RX1
+./user_apps/acq2106/hudp_setup.py $DISCO --tx_ip $IP_TX1 --rx_ip $IP_RX1 --broadcast=0 $TX1 $RX1
 echo "Enter y to continue";read yn
 echo 'UNICAST ->' $RX2
-./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX2 --broadcast=0 $TX1 $RX2
+./user_apps/acq2106/hudp_setup.py $DISCO --tx_ip $IP_TX1 --rx_ip $IP_RX2 --broadcast=0 $TX1 $RX2
 echo "Enter y to continue";read yn
 echo 'BROADCAST ->' $RX1 $RX2 and naboo
-./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX1 --broadcast=1 $TX1 $RX1
-./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX2 --broadcast=1 $TX1 $RX2
+./user_apps/acq2106/hudp_setup.py $DISCO --tx_ip $IP_TX1 --rx_ip $IP_RX1 --broadcast=1 $TX1 $RX1
+./user_apps/acq2106/hudp_setup.py $DISCO --tx_ip $IP_TX1 --rx_ip $IP_RX2 --broadcast=1 $TX1 $RX2
 echo "Enter y to continue";read yn
 
