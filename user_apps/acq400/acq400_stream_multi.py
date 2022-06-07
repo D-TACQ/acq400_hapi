@@ -104,7 +104,8 @@ class StreamsOne:
         uut = acq400_hapi.Acq400(self.uut_name)
         cycle = -1
         fnum = 999       # force initial directory create
-        data_length = 0
+        data_bytes = 0
+        files = 0
       
         if self.args.filesamples:
             self.args.filesize = self.args.filesamples*int(uut.s0.ssb)
@@ -129,12 +130,12 @@ class StreamsOne:
         fn = "no-file"
         
         for buf in uut.stream(recvlen=blen, data_size=data_size):
-            if data_length == 0:
+            if data_bytes == 0:
                 t0 = time.time()
             else:           
                 t_run = self.logtime(t0, time.time()) - t0
             
-            data_length += len(buf)            
+            data_bytes += len(buf) * data_size           
             
             if len(buf) == 0:
                 print("Zero length buffer, quit")
@@ -150,15 +151,18 @@ class StreamsOne:
                 fn = os.path.join(root, "{:04d}.dat".format(fnum))
                 data_file = open(fn, "wb")
                 buf.tofile(data_file, '')
+                files += 1
                 
-            if self.args.verbose == 1:
+            if self.args.verbose == 0:
+                pass
+            elif self.args.verbose == 1:
                 print(".", end='')
-            if self.args.verbose >= 2:
-                print("{:8.3f} {} total bytes {:10d} rate {:.2f} MB/s".
-                          format(t_run, fn, int(data_length), 0 if t_run==0 else data_length/t_run/0x100000))
+            elif t_run > 0 and (self.args.verbose > 2 or fnum == 0):
+                print("{:8.3f} {} files {:4d} total bytes: {:10d} rate: {:.2f} MB/s".
+                          format(t_run, fn, files, int(data_bytes), data_bytes/t_run/0x100000))
             fnum += 1
                 
-            if t_run >= self.args.runtime or data_length > self.args.totaldata:                
+            if t_run >= self.args.runtime or data_bytes > self.args.totaldata:                
                 return
             
                
