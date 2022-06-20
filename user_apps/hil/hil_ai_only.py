@@ -23,6 +23,19 @@ import sys
 import matplotlib.pyplot as plt
 from builtins import input
 
+import time
+from functools import wraps
+
+def timing(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        ts = time.time()
+        result = f(*args, **kw)
+        te = time.time()
+        print('TIMING:func:%r took: %2.2f sec' % (f.__name__, te-ts))
+        return result
+    return wrap
+
 
 def configure_sig_gen(args):
     skt = socket.socket()
@@ -51,6 +64,14 @@ def make_data_dir(directory, verbose):
         pass
 
 
+@timing
+def run_oneshot(uut):
+    uut.run_oneshot()
+
+@timing
+def read_xx(args, uut):
+    return uut.read_chan(0, args.post * args.nchan)
+
 def run_shots(args):
     file_num = 0
     cycle = 0
@@ -69,7 +90,7 @@ def run_shots(args):
         if args.wait_user == 1:
             input("Hit any key to continue: ")
 
-        uut.run_oneshot()
+        run_oneshot(uut)
 
         if args.store == 1:
             if file_num > 99:
@@ -78,7 +99,7 @@ def run_shots(args):
                 root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
                 make_data_dir(root, args.verbose)
 
-            rdata = uut.read_chan(0, args.post * args.nchan)
+            rdata = read_xx(args, uut)
 
             if args.plot == 1:
                 plt.plot(rdata[0:-1:args.nchan]) # plots first channel
