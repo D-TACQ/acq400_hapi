@@ -102,7 +102,6 @@ class Netclient:
         Netclient.instances.remove(self)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        print("__exit__ {} {}".format(self.__addr, self.__port))
         self.close()
 
 #    def __del__(self):
