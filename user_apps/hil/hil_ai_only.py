@@ -38,8 +38,8 @@ def configure_sig_gen(args):
 
 def configure_ai(args, uut):
     uut.s0.transient = "PRE=%d POST=%d SOFT_TRIGGER=0 DEMUX=0" % (0, args.post)
-    for sx in uut.modules:
-        uut.modules[sx].trg = '1,0,1'
+#    for sx in uut.modules:
+#        uut.modules[sx].trg = '1,0,1'
 
 
 def make_data_dir(directory, verbose):
@@ -58,7 +58,7 @@ def run_shots(args):
     make_data_dir(root, args.verbose)
     uut = acq400_hapi.Acq400(args.uuts[0])
     acq400_hapi.Acq400UI.exec_args(uut, args)
-    configure_ai(args, uut)
+    #configure_ai(args, uut)
     if args.sg == 1:
         configure_sig_gen(args)
 
@@ -92,7 +92,7 @@ def run_shots(args):
 
 def run_main():
     parser = argparse.ArgumentParser(description='acq1001 HIL demo')
-    acq400_hapi.Acq400UI.add_args(parser, post=False, pre=True)
+    acq400_hapi.Acq400UI.add_args(parser, transient=True, demux=0)
     parser.add_argument('--store', type=int, default=1, help='Whether to store data or not')
     # parser.add_argument('',type=int, default=1, help='')
     parser.add_argument('--sg',type=int, default=0, help='Whether to configure a sig gen. Default = False')
@@ -102,7 +102,6 @@ def run_main():
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--loop', type=int, default=1, help="loop count")
     parser.add_argument('--nchan', type=int, default=128, help='channel count for pattern')
-    parser.add_argument('--post', type=int, default=100000, help='samples in ADC waveform')
     parser.add_argument('uuts', nargs="+", help="uut ")
     run_shots(parser.parse_args())
 
