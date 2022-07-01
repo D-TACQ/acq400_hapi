@@ -14,6 +14,4 @@
 * make_clktrg_chain.py : ditto
 * set_burst.py : enables burst mode
 
-## source doc
-https://d-tacq.github.io/acq400_hapi/html/user_apps/acq400/
 

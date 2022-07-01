@@ -7,8 +7,6 @@
 * cleanup.py : cleanup on exit
 * rad_dds.py : support for RADCELF triple DDS
 
-## API Documentation
-https://D-TACQ.github.io/acq400_hapi/html/acq400_hapi/index.html
 
 ## Glossary
 
