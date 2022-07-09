@@ -81,9 +81,9 @@ def get_src_names(root):
     for name in  os.listdir(root):
         if p.match(name):
             src_names.append(name)
-            
+
     src_names.sort()
-   
+
     return src_names
 
 def get_esi(chx):
@@ -92,12 +92,12 @@ def get_esi(chx):
     esn = len(chx)/8
     esi = [ [] for ii in range(esn)]     # index
     esc = [ [] for ii in range(esn)]     # count (ich+1)
- 
+
     if VERBOSE:
         print("sanity check, check we are looking at real data, rows with 2857759060 are es, rest is data32")
         for ii in range(5):
             print("{} {}".format(ii, [chx[ic][ii] for ic in range(len(chx))]))
- 
+
     for ich, ch in enumerate(chx):
 #        print("ich {} len(chx) {}".format(ich, len(chx)))
         if ich%8 == 1:
@@ -110,16 +110,16 @@ def get_esi(chx):
                 # esi in shorts
                     esi[ich/8].append(ii*2)
                     esc[ich/8].append(chx[ich-1][ii])
-   
+
     print("esi lengths {}".format([len(esi[ii]) for ii in range(0, len(esi))]))
-    
+
     if VERBOSE:
         for ii, es in enumerate(esi):
             deltac = [ es[jj]-esi[0][jj] for jj in range(esn) ]
             deltas = [ es[jj] - es[jj-1] for jj in range(1, esn)]
             print("difference between channels ii {} max {}".format(ii, max(deltac)))
             print("difference between bursts ii {} min {} max {}".format(ii, min(deltas), max(deltas)))
-        
+
     errors = 0  
     print("scanning embedded counts..")
     for icount in range(len(esc[0])):
@@ -129,13 +129,13 @@ def get_esi(chx):
         if min(cv) != max(cv):
             print("ERROR: count discrepancy at {} {}".format(icount, cv))
             errors += 1
-        
+
     print("scanned {}*{} counts, errors {}".format(esn, icount, errors))
-         
-              
+
+
     lmin = len(esi[0])
     truncate = False
-    
+
     for ll in [ len(esi[ii]) for ii in range(1, len(esi))]:
         if ll != lmin:
             lmin = min(ll, lmin)
@@ -143,7 +143,7 @@ def get_esi(chx):
             truncate = True
 
     bmin = esi[0][1] - esi[0][0]
-    
+
     for bl in [ esi[0][ii]-esi[0][ii-1] for ii in range(2,len(esi))]:
         if bl != bmin:
             bmin = min(bl, bmin)
@@ -160,7 +160,7 @@ def get_data(args):
     nbursts, blen, esi = get_esi([ np.fromfile("{}/{}".format(args.root, srcs[ii]), dtype=np.uint32) for ii in range(0,nchan)])
     chx = np.zeros((nchan, nbursts, blen+FRONTPORCH))
     esi0 = esi[0]
-    
+
     print("chx 01 3 dimension {}",len(chx[0,0]))
     try:
         for ic in range(nchan):
@@ -169,7 +169,7 @@ def get_data(args):
 
     except IndexError as ie:
         print("IndexError {} ic {} ib {} ii {}".format(ie, ic, ib, ii))
-              
+
     print("chx 99 3 dimension {}",len(chx[0,0]))                
     return chx
 
@@ -188,7 +188,7 @@ def fix_args(chx, args):
             bursts = range(min(ubursts), max(bursts))
         else:
             bursts = ubursts
-    
+
     args.bursts = bursts
 
 def plot_data(chx, args):
@@ -200,7 +200,7 @@ def plot_data(chx, args):
     print(plotchan)
     print("PLOT nchan {} nburst {} blen {}".format(nchan, args.nburst, blen))
     #plt.figure(1)
-    
+
     top_plot = True
     sp = len(plotchan*100)+11
     for ch in plotchan:
@@ -209,17 +209,17 @@ def plot_data(chx, args):
             plt.title("Stack plot of {} bursts {} .. {}".\
                       format(len(bursts), bursts[0], bursts[len(bursts)-1]))
             top_plot = False
-            
+
         plt.ylabel("CH{:0}".format(ch))
         sp += 1
         ich = int(ch)-1
-    
+
         for ib in bursts:
             plt.plot(chx[ich,ib,:blen]+args.stack_offset*ib, label="B{}".format(ib))
-            
+
         if len(bursts) < 9:                
             plt.legend()            
-    
+
     plt.show()    
 
 REBASE_COMP = ( 3, 3, 4, 4, 4, 4, 4, 4)
@@ -249,7 +249,7 @@ def rebase(chx, ib, ith):
     except ValueError as ve:
         print("Value Error {} {} {} {} {}".format(ve, ic, ib, len(chx[ic,ib]), len(chx[ic,ib,ith:])))
         VALUE_ERRORS += 1
-            
+
 def realign_burst(chx, ib, iref):
     #print("realign on {}".format(iref))
     baseline = np.mean(chx[iref, 0, 0:5])
@@ -264,11 +264,11 @@ def realign_burst(chx, ib, iref):
                 break
     else:
         print("iref {} ERROR: enough amplitude baseline {} tophat {}".format(iref, baseline, tophat))
-        
+
 def realign(chx, iref):
     for ib in range(len(chx[0,:])):
         realign_burst(chx, ib, iref)
-        
+
 def process_data(args):
     chx = get_data(args)
     if args.alignref != None and args.alignref > 0:
@@ -276,12 +276,12 @@ def process_data(args):
         realign(chx, args.alignref-1)
     fix_args(chx, args)
     if args.plotchan != '0':
-	plot_data(chx, args)
+        plot_data(chx, args)
     if args.store_chan:
         store_chan(chx, args)
-    
-    
-    
+
+
+
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
     parser.add_argument('--plotchan', type=str, default='1,17', help='list of channels to plot')
@@ -298,9 +298,9 @@ def run_main():
         process_data(args)
     else:
         print("ERROR: --root {} is not a directory".format(args.root))
-    
-    
-    
+
+
+
 
 if __name__ == '__main__':
     run_main()

@@ -65,6 +65,8 @@ def ip_broadcast(args):
     
     return '.'.join(ip_dest)
         
+MTU = 1400
+
 # tx: XI : AI, DI       
 def config_tx_uut(args):
     txuut = acq400_hapi.factory(args.txuut[0])
@@ -74,7 +76,10 @@ def config_tx_uut(args):
     txuut.s10.src_port = args.port
     txuut.s10.dst_port = args.port
     txuut.s10.dst_ip = args.rx_ip if args.broadcast == 0 else ip_broadcast(args)   
-    txuut.s10.tx_pkt_sz = txuut.s0.ssb
+    txuut.s10.tx_sample_sz = txuut.s0.ssb
+    txuut.s10.tx_spp = args.spp
+    if int(txuut.s0.ssb)*args.spp > MTU:
+        print("ERROR packet length {} exceeds MTU {}".format(txuut.s10.tx_sample_sz*args.spp, MTU))
     hdup_enable(txuut)
 
 # rx: XO : AO, DO        
@@ -110,6 +115,7 @@ def ui():
     parser.add_argument("--play0",   default='1 16',          help="set rx sites+spad")
     parser.add_argument("--broadcast", default=0, type = int, help="broadcast the data")
     parser.add_argument("--disco",   default=None, type=int,  help="enable discontinuity check at index x")
+    parser.add_argument("--spp",     default=1, type=int,     help="samples per packet")
     parser.add_argument("txuut", nargs=1,                     help="transmit uut")
     parser.add_argument("rxuut", nargs=1,                     help="transmit uut")
     return parser.parse_args()
