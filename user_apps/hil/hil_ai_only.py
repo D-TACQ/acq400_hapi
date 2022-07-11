@@ -22,6 +22,7 @@ import os
 import sys
 import matplotlib.pyplot as plt
 from builtins import input
+import hashlib
 
 import time
 from functools import wraps
@@ -105,8 +106,12 @@ def run_shots(args):
                 plt.plot(rdata[0:-1:args.nchan]) # plots first channel
                 plt.show()
 
-            data_file = open("{}/{:04d}".format(root, file_num), "wb+")
-            data_file.write(rdata)
+            fn = "{}/{:04d}".format(root, file_num)
+            if args.verbose:
+                print("write {} bytes to file {} {}".format(len(rdata), fn, hashlib.sha1(rdata).hexdigest()))
+
+            with open(fn, "wb+") as data_file:
+                data_file.write(rdata)
             file_num += 1
             lp += 1
 
