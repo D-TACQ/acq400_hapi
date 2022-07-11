@@ -225,6 +225,9 @@ class ChannelClient(netclient.Netclient):
         while len(buffer) < ndata*data_size:
             buffer += self.sock.recv(maxbuf)
 
+        self.sock.shutdown(socket.SHUT_RDWR)
+        self.sock.close()
+
         return np.frombuffer(buffer, dtype=_dtype, count=ndata)
 
 
