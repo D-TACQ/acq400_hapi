@@ -7,7 +7,5 @@
 * hil_plot_support.py : plot support
 * zero_offset.py : autozero algorithm
 
-## source doc
-https://d-tacq.github.io/acq400_hapi/html/user_apps/hil/
 
 

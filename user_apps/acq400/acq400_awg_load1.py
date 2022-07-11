@@ -20,7 +20,7 @@ import sys
 import acq400_hapi
 from acq400_hapi import awg_data
 import argparse
-if sys.version_info < (3, 0)
+if sys.version_info < (3, 0):
     from future import builtins
     from builtins import input
 import numpy as np
@@ -32,7 +32,7 @@ def load_awg(args):
 
     if args.clear_autorearm:
         uut.s1.playloop_maxshot = '1'
-        print "allow system to run final shot and return to idle"
+        print("allow system to run final shot and return to idle")
     else:
         if args.awg_extend > 1:
             data = np.fromfile(args.file, dtype=np.int32)
