@@ -298,6 +298,9 @@ class Statusmonitor:
     
     def get_total(self):
         return self.get_pre() + self.get_post()
+
+    def get_elapsed(self):
+        return self.status[SF.ELAPSED]
     
 
     def wait_event(self, ev, descr):
