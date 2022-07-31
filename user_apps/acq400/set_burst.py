@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 set burst mode
@@ -42,7 +42,8 @@ def configure_bm(args, uuts):
         u.s1.trace      = args.trace
 
         u.s0.GPG_ENABLE = '0'       # needed if running set.burst multiple times
-        u.clear_counters()          # makes COUNTERS opi easier to read
+        if args.clear_counters:
+            u.clear_counters()          # makes COUNTERS opi easier to read
         u.s1.trg        = args.trg
         u.s1.RGM        = args.rgm
         u.s1.RGM_DX     = args.dx
@@ -89,6 +90,7 @@ def run_main():
     parser.add_argument('--trace', default=0, type=int, help='1: enable command trace')
     parser.add_argument('--demux', default=1, type=int, help='0: do not demux')
     parser.add_argument('--config_only', default=1, type=int, help='1: configure RGM, do nothing else')
+    parser.add_argument('--clear_counters', default=0, type=int, help="clear counters (slow)")
     parser.add_argument('uuts', nargs='+', help="uut")
     args = parser.parse_args()
     configure_and_run(args, [acq400_hapi.Acq400(u) for u in args.uuts])
