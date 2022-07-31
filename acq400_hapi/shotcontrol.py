@@ -248,6 +248,7 @@ class ShotControllerWithDataHandler(ShotController):
                 print("plotting first {} channels".format(nchan))
                        
         ax = {}
+        ax0 = None
                            
         for col in range(ncol):
             for chn in range(0,nchan):
@@ -255,8 +256,12 @@ class ShotControllerWithDataHandler(ShotController):
                     axkey = '{}{}'.format(chn, 0 if overlay_plot else col)                    
                     if not overlay_plot or col == 0:
                         fignum = 1 + (0 if overlay_plot else col) + chn*(1 if overlay_plot else ncol)
-                        print("calling plt.subplot({}, {}, {})".format(nchan, 0 if overlay_plot else ncol , fignum))                           
-                        ax[axkey] = plt.subplot(nchan, 1 if overlay_plot else ncol, fignum)
+                        print("calling plt.subplot({}, {}, {})".format(nchan, 0 if overlay_plot else ncol , fignum))
+                        if not ax0:                           
+                            ax[axkey] = plt.subplot(nchan, 1 if overlay_plot else ncol, fignum)                        
+                            ax0 = ax[axkey]
+                        else:
+                            ax[axkey] = plt.subplot(nchan, 1 if overlay_plot else ncol, fignum, sharex=ax0) 
                 _label = "{}.{:03d}".format(args.uuts[col], self.cmap[col][chn])
 
                 plt.suptitle('{} shot {}'.format(args.uuts[0] if len(args.uuts) == 1 else args.uuts, self.uuts[0].s1.shot))
