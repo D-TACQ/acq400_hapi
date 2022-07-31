@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 capture upload test
@@ -70,13 +70,13 @@ import time
 
 from subprocess import call
 
-class ActionScript:
-    def __init__(self, script_and_args):
-        self.sas = script_and_args.split()
-        print("ActionScript creates {}".format(self.sas))
+class EnableExtTrgAction:
+    def __init__(self, master):
+        self.master = master
+        self.master.s0.SIG_SRC_TRG_0 = "NONE"
+        
     def __call__(self):
-        print("ActionScript: call()")
-        call(self.sas)
+        self.master.s0.SIG_SRC_TRG_0 = "EXT"
 
 class WrtdAction:
     def __init__(self, master, max_triggers = 1):
@@ -105,7 +105,7 @@ def upload(args):
             print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
             u.s0.si5326_tune_phase = 1
     elif args.remote_trigger:
-        trigger_action = ActionScript(args.remote_trigger)
+        trigger_action = EnableExtTrgAction(uuts[0])
     else:
         trigger_action = None
         st = args.soft_trigger
@@ -154,7 +154,7 @@ def get_args(argStr=None):
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     parser.add_argument('--soft_trigger', default=SOFT_TRIGGER, type=int, help="help use soft trigger on capture")
     parser.add_argument('--capture', default=CAPTURE, type=int, help="1: capture data, 0: wait for someone else to capture, -1: just upload")
-    parser.add_argument('--remote_trigger', default=None, type=str, help="your function to fire trigger")
+    parser.add_argument('--remote_trigger', default=None, type=str, help="options: EXT")
     parser.add_argument('--wrtd_tx', default=0, type=int, help="release a wrtd_tx when all boards read .. works when free-running trigger")    
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     return parser.parse_args(argStr)
