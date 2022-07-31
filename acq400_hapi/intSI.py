@@ -10,6 +10,8 @@ DEC = AttributeDict({ 'k': 1000, 'M': 1000000, 'G': 1000000000 })
 BIN = AttributeDict({ 'k': 0x400, 'M': 0x100000, 'G': 0x40000000 })
 
 def intSI_cvt(value, decimal=True):
+    if value == None:
+        return None
     x = str(value)
     if x == "Inf":
         return sys.maxint

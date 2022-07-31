@@ -957,7 +957,8 @@ class Acq400:
         then this function can put the GPG output onto the event bus (to use as
         an Event for RTM).
         """
-        self.s0.transient = "PRE=0 POST={}".format(post)
+        if post > 0:
+            self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.rtm_translen = rtm_translen
         self.s1.TRG = 1
         if role == "slave" or trigger[1] == 0:
