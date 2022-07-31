@@ -108,12 +108,12 @@ class RAD3DDS(acq400.Acq400):
     def chirp_freq(self, idds):
         # idds 0: A, 1: B
         assert idds >= 0 and idds <= 1
-        return acq400.Acq400.freq(self.s0.get_knob('SIG_TRG_S{}_FREQ'.format(2+idds)))
+        return acq400.freq(self.s0.get_knob('SIG_TRG_S{}_FREQ'.format(2+idds)))
                                   
     def dds_freq(self, idds):
         # idds 0: A, 1: B, 2: C
         assert idds >= 0 and idds <= 2 
-        return acq400.Acq400.freq(self.s0.get_knob('SIG_CLK_S{}_FREQ'.format(3+idds)))
+        return acq400.freq(self.s0.get_knob('SIG_CLK_S{}_FREQ'.format(3+idds)))
     
     def radcelf_init(self):
         # port of original RADCELF_init shell script

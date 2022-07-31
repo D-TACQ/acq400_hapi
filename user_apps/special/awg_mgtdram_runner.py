@@ -62,7 +62,7 @@ procs = []
 
 def set_shot_seconds(args):
     ssb = int(args.uuts[0].s0.ssb)
-    fs = int(acq400_hapi.Acq400.freq(args.uuts[0].s0.SIG_CLK_S1_FREQ))
+    fs = int(acq400_hapi.freq(args.uuts[0].s0.SIG_CLK_S1_FREQ))
     mbps = fs*ssb/1000000
     nbufs = int(mbps*args.shot_seconds//4)
     nbufs += 16

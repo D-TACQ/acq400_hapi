@@ -74,6 +74,9 @@ class EnableExtTrgAction:
     def __init__(self, master):
         self.master = master
         self.master.s0.SIG_SRC_TRG_0 = "NONE"
+#        while int(float(self.master.s0.SIG_TRG_EXT_ACTIVE.split(" ")[1])) == 1:
+        while acq400_hapi.activepv(self.master.s0.SIG_TRG_EXT_ACTIVE):
+            time.sleep(.1)
         
     def __call__(self):
         self.master.s0.SIG_SRC_TRG_0 = "EXT"

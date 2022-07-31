@@ -1253,16 +1253,18 @@ class Acq400:
             yield np.frombuffer(buf[:pos], dtype)
 
 
-    @staticmethod
-    def freq(sig):
-        return float(sig.split(" ")[1])
 
-    @staticmethod
-    def intpv(pv):
-        return int(pv.split(" ")[1])
-    @staticmethod
-    def pv(pv):
-        return pv.split(" ")[1]
+def freq(sig):
+    return float(sig.split(" ")[1])
+
+def intpv(pv):
+    return int(pv.split(" ")[1])
+
+def activepv(pv):
+    return int(float(pv.split(" ")[1])) == 1
+
+def pv(pv):
+    return pv.split(" ")[1]
 
 
 class Acq2106(Acq400):
