@@ -38,9 +38,6 @@ import argparse
 ## configure burst mode. call this if we import the class..
 def configure_bm(args, uuts):
     for u in uuts:
-        u.s0.trace      = args.trace
-        u.s1.trace      = args.trace
-
         u.s0.GPG_ENABLE = '0'       # needed if running set.burst multiple times
         if args.clear_counters:
             u.clear_counters()          # makes COUNTERS opi easier to read
@@ -52,6 +49,8 @@ def configure_bm(args, uuts):
         u.s1.RTM_TRANSLEN = args.rtm_translen if args.rgm == 'RTM' else 0
         u.s0.transient  = 'PRE={} POST={} DEMUX={}'.format(args.pre, args.post, args.demux)
         u.s0.set_knob('SIG_SRC_TRG_1', 'GPG1' if args.gpg == 'on' and args.dx == 'd1' else 'STRIG')
+    
+    uuts[0].s0.SIG_SYNC_OUT_TRG_DX = args.dx 
 
 def run_shot(args, uuts):
     for u in uuts:
@@ -87,7 +86,6 @@ def run_main():
     parser.add_argument('--pre', default=0, type=int, help='pre shot length')
     parser.add_argument('--trg', default='1,0,1', type=str, help='shot trigger triplet')
     parser.add_argument('--es_enable', default=1, type=int, help='0 disables Event Signature')
-    parser.add_argument('--trace', default=0, type=int, help='1: enable command trace')
     parser.add_argument('--demux', default=1, type=int, help='0: do not demux')
     parser.add_argument('--config_only', default=1, type=int, help='1: configure RGM, do nothing else')
     parser.add_argument('--clear_counters', default=0, type=int, help="clear counters (slow)")
