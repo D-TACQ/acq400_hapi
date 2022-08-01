@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """ radcelf-freq-test - iterate a set of frequencies with self-test0
 
@@ -19,9 +19,7 @@ def set_upd_clk_fpga(uut, idds, value):
     else:
         uut.s2.ddsB_upd_clk_fpga = value
 
-
-def freq(sig):
-    return float(sig.split(" ")[1])
+from acq400_hapi import freq
 
 
 FINT = float(300000000)
@@ -103,9 +101,9 @@ def run_test(args):
             fA = f*1000000
             fB = next_freq(f)*1000000
             write_retry = 0
-            pass = False
+            success = False
 
-            while not pass:
+            while not success:
                 if write_retry > 3:
                     print("FAIL FAIL FAIL on write retry")
                     break
@@ -113,7 +111,7 @@ def run_test(args):
                 set_freq(uut, uut.ddsA, fA)
                 set_freq(uut, uut.ddsB, fB)
 
-                pass = verify_freq(uut, test, fA, fB)
+                success = verify_freq(uut, test, fA, fB)
                 write_retry += 1
 
 
