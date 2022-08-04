@@ -34,7 +34,8 @@ class Netclient:
         
     """
     
-    trace = int(os.getenv("NETCLIENT_TRACE", "0"))   
+    trace = int(os.getenv("NETCLIENT_TRACE", "0"))
+    connect_timeout = int(os.getenv("NETCLIENT_CONNECT_TO", "0")) 
     
     def receive_message(self, termex, maxlen=4096):
         """Read the information from the socket line at a time.
@@ -80,6 +81,8 @@ class Netclient:
         self.__port = int(port)
         try:
             self.sock = socket.socket()
+            if Netclient.connect_timeout:
+                self.sock.settimeout(Netclient.connect_timeout);
             if Netclient.trace > 1:
                 print("Netclient(%s, %d) connect" % (self.__addr, self.__port))
             self.sock.connect((self.__addr, self.__port))
