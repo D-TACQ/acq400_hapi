@@ -93,26 +93,7 @@ def set_shot(args, uuts):
         for u in uuts:
             u.s1.shot = args.shot
 
-def upload(args):
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
-    [ acq400_hapi.Acq400UI.exec_args(uut, args) for uut in uuts ]
-    st = None
-
-    acq400_hapi.cleanup.init()
-
-    shot_controller = acq400_hapi.ShotControllerWithDataHandler(uuts, args)
-
-    if args.wrtd_tx != 0:
-        trigger_action = WrtdAction(uuts[0], args.wrtd_tx)
-        for u in uuts:
-            print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
-            u.s0.si5326_tune_phase = 1
-    elif args.remote_trigger:
-        trigger_action = EnableExtTrgAction(uuts[0])
-    else:
-        trigger_action = None
-        st = args.soft_trigger
-
+def run_shot(args, uuts, shot_controller, trigger_action, st):
     try:
         if args.capture == 0:
             state = '99'
@@ -140,6 +121,31 @@ def upload(args):
     finally:
         print("Finally, going down")
 
+
+def upload(args):
+    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
+    [ acq400_hapi.Acq400UI.exec_args(uut, args) for uut in uuts ]
+    st = None
+
+    acq400_hapi.cleanup.init()
+
+    shot_controller = acq400_hapi.ShotControllerWithDataHandler(uuts, args)
+
+    if args.wrtd_tx != 0:
+        trigger_action = WrtdAction(uuts[0], args.wrtd_tx)
+        for u in uuts:
+            print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
+            u.s0.si5326_tune_phase = 1
+    elif args.remote_trigger:
+        trigger_action = EnableExtTrgAction(uuts[0])
+    else:
+        trigger_action = None
+        st = args.soft_trigger
+
+    for shot in range(args.shots):
+        print("shot {} uut {}".format(shot, uuts[0].s0.shot))
+        run_shot(args, uuts, shot_controller, trigger_action, st)
+
 SOFT_TRIGGER=int(os.getenv("SOFT_TRIGGER", "1"))
 CAPTURE=int(os.getenv("CAPTURE", "0"))
 
@@ -159,6 +165,7 @@ def get_args(argStr=None):
     parser.add_argument('--capture', default=CAPTURE, type=int, help="1: capture data, 0: wait for someone else to capture, -1: just upload")
     parser.add_argument('--remote_trigger', default=None, type=str, help="options: EXT")
     parser.add_argument('--wrtd_tx', default=0, type=int, help="release a wrtd_tx when all boards read .. works when free-running trigger")    
+    parser.add_argument('--shots', default=1, type=int, help="number of shots to run")
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     return parser.parse_args(argStr)
 
