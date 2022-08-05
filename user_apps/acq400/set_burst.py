@@ -68,7 +68,15 @@ def run_shot(args, uuts):
         for u in uuts:
             u.s0.soft_trigger
 
+def disable_rgm_and_quit(uuts):
+    for u in uuts:
+        u.s1.RGM = 'OFF'
+    return 0
+
 def configure_and_run(args, uuts):
+    if args.rgm == 'OFF':
+        return disable_rgm_and_quit(uuts)
+    
     configure_bm(args, uuts)
     if not args.config_only:
         print("running a shot")
@@ -77,7 +85,7 @@ def configure_and_run(args, uuts):
 
 def run_main():
     parser = argparse.ArgumentParser(description='set_burst mode')
-    parser.add_argument('--rgm', default='RTM', type=str, help="mode RGM|RTM")
+    parser.add_argument('--rgm', default='RTM', type=str, help="mode OFF|RGM|RTM")
     parser.add_argument('--dx', default='d0', type=str, help='dx d0|d1|d2')
     parser.add_argument('--gpg', default='off', type=str, help='source from gpg on|off')
     parser.add_argument('--sense', default='rising', type=str, help='rising|falling')
