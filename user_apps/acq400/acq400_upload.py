@@ -122,7 +122,7 @@ def run_shot(args, uuts, shot_controller, trigger_action, st):
         print("Finally, going down")
 
 
-def upload(args):
+def upload(args, shots, doClose=False):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     [ acq400_hapi.Acq400UI.exec_args(uut, args) for uut in uuts ]
     st = None
@@ -142,9 +142,13 @@ def upload(args):
         trigger_action = None
         st = args.soft_trigger
 
-    for shot in range(args.shots):
+    for shot in range(shots):
         print("shot {} uut {}".format(shot, uuts[0].s0.shot))
         run_shot(args, uuts, shot_controller, trigger_action, st)
+        
+    if doClose:
+        for u in uuts:
+            u.close()
 
 SOFT_TRIGGER=int(os.getenv("SOFT_TRIGGER", "1"))
 CAPTURE=int(os.getenv("CAPTURE", "0"))
@@ -166,6 +170,7 @@ def get_args(argStr=None):
     parser.add_argument('--remote_trigger', default=None, type=str, help="options: EXT")
     parser.add_argument('--wrtd_tx', default=0, type=int, help="release a wrtd_tx when all boards read .. works when free-running trigger")    
     parser.add_argument('--shots', default=1, type=int, help="number of shots to run")
+    parser.add_argument('--newobjectsplease', default=0, type=int, help="create new object instantiations every run")
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     return parser.parse_args(argStr)
 
@@ -178,8 +183,11 @@ def run_main():
     if re.search(r'^\d$', args.channels) is not None:
         args.channels += ','
     args.shot = None
-    upload(args)
-
+    if args.newobjectsplease:
+        for shot in range(args.shots):
+            upload(args, 1, doClose=True)
+    else:
+        upload(args, args.shots)
 
 # execution starts here
 
