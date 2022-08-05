@@ -470,9 +470,18 @@ class Acq400:
 
     def close(self):
         self.statmon.quit_reqested = True
-        self.statmon.logclient.close()
-        for k, s in self.svc.items():
-            s.close()
+
+        try:
+            self.statmon.logclient.close()
+        except Exception as e:
+            print(f"error closing statmon log client {e}")
+
+        try:
+            for k, s in self.svc.items():
+                s.close()
+        except Exception as e:
+            print(f"error closing svc item {k}:{s} {e}")
+
         try:
             del Acq400.uuts[self.uut]
             del Acq400.uuts_methods[self.uut]
@@ -481,6 +490,11 @@ class Acq400:
 
     def __del__(self):
         print("__del__ {}".format(self.uut))
+        try:
+            self.close()
+        except Exception as e:
+            print(f"Error closing Acq400 object ... {e}")
+
 
     def __getattr__(self, name):
         if self.svc.get(name) != None:
