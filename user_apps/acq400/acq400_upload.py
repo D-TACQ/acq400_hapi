@@ -121,7 +121,7 @@ def run_shot(args, uuts, shot_controller, trigger_action, st):
     finally:
         print("Finally, going down")
 
-
+@acq400_hapi.timing
 def upload(args, shots, doClose=False):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     [ acq400_hapi.Acq400UI.exec_args(uut, args) for uut in uuts ]
@@ -174,7 +174,7 @@ def get_args(argStr=None):
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     return parser.parse_args(argStr)
 
-
+@acq400_hapi.timing
 def run_main():
     args = get_args()
     # deduplicate (yes, some non-optimal apps call with duplicated uuts, wastes time)
