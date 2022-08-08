@@ -488,12 +488,12 @@ class Acq400:
         except KeyError:
             print("ERROR {} instance not in cache".format(self.uut))
 
-    def __del__(self):
-        print("__del__ {}".format(self.uut))
-        try:
-            self.close()
-        except Exception as e:
-            print(f"Error closing Acq400 object ... {e}")
+#    def __del__(self):
+#        print("__del__ {}".format(self.uut))
+#        try:
+#            self.close()
+#        except Exception as e:
+#            print(f"Error closing Acq400 object ... {e}")
 
 
     def __getattr__(self, name):
