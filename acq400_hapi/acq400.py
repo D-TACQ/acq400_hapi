@@ -521,6 +521,8 @@ class Acq400:
 
     def fetch_all_calibration(self):
 #        print("Fetching calibration data")
+        self.cal_eslo = [0.]
+        self.cal_eoff = [0.]
         for m in (self.modules[int(c)] for c in self.get_aggregator_sites()):
             self.cal_eslo.extend(m.AI_CAL_ESLO.split(' ')[3:])
             self.cal_eoff.extend(m.AI_CAL_EOFF.split(' ')[3:])
