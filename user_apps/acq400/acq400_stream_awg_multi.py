@@ -59,15 +59,14 @@ def buffer_changer():
             ix = int(cc)            
             if ix >= 0 and ix < NBUFS:
                 IBUF = ix
-                print("ix {} NBUFS {}".format(ix, NBUFS))
                 
 def monitor():
-    global BCOUNT, BSIZE
+    global IBUF, NBUFS, BCOUNT, BSIZE
     bc = BCOUNT
     
     while True:
         time.sleep(1)
-        print("\rrate: {} MB/s".format((BCOUNT-bc)*BSIZE/0x100000), end="")
+        print("\rix {} NBUFS {} rate: {} MB/s >".format(IBUF, NBUFS, (BCOUNT-bc)*BSIZE/0x100000), end="")
         bc = BCOUNT
 
 def get_args(argStr=None):
