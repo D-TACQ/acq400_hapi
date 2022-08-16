@@ -27,10 +27,14 @@ def read(file):
 NBUFS = 0
 IBUF = 0
 
+# monitor
+BCOUNT = 0
+BSIZE  = 0
+
 
 @timing
 def load_awg_top(args):
-    global NBUFS
+    global NBUFS, BCOUNT, BSIZE
     uut = acq400_hapi.Acq400(args.uuts[0])
     trigger = args.soft_trigger
 
@@ -44,18 +48,27 @@ def load_awg_top(args):
             if trigger:
                 uut.s0.soft_trigger = 1
                 trigger = 0
-                
-    print("Hello World")
+            BCOUNT += 1
+            BSIZE = len(bufs[IBUF])
     
 def buffer_changer():
     global IBUF
     while True:
         cc = sys.stdin.read(1)
         if "0123456789".find(cc) >= 0:
-            ix = int(cc)
-            print("ix {} NBUFS {}".format(ix, NBUFS))
+            ix = int(cc)            
             if ix >= 0 and ix < NBUFS:
                 IBUF = ix
+                print("ix {} NBUFS {}".format(ix, NBUFS))
+                
+def monitor():
+    global BCOUNT, BSIZE
+    bc = BCOUNT
+    
+    while True:
+        time.sleep(1)
+        print("\rrate: {} MB/s".format((BCOUNT-bc)*BSIZE/0x100000), end="")
+        bc = BCOUNT
 
 def get_args(argStr=None):
     parser = argparse.ArgumentParser(description='acq400 load awg simplest')
@@ -67,10 +80,8 @@ def get_args(argStr=None):
 
 def run_main(args):
     threading.Thread(target=buffer_changer).start()
+    threading.Thread(target=monitor).start()
     load_awg_top(args)
-    while True:
-        time.sleep(1)
-        print("IBUF {}".format(IBUF))
 
 # execution starts here
 
