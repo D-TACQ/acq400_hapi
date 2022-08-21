@@ -196,7 +196,9 @@ class ShotController:
         return cmap
 
     def read_channels(self, channels=()):
+        print("read_channels()")
         self.cmap = self.map_channels(channels)
+        print("read_channels() after map")
         chx = [u.read_channels(self.cmap[iu]) for iu, u in enumerate(self.uuts)]
 
         if self.uuts[0].save_data:
@@ -286,7 +288,8 @@ class ShotControllerWithDataHandler(ShotController):
         
         plt.show()
                 
-    def handle_data(self, args):
+    def handle_data(self, args):        
+        print("INFO: Shotcontroller.handle_data() {} data valid: {}".format(self.uuts[0].uut, self.uuts[0].statmon.data_valid))
         if args.save_data:
             shotdir = args.save_data.format(self.increment_shot(args))
             for u in self.uuts:
@@ -344,7 +347,7 @@ class ShotControllerWithDataHandler(ShotController):
 
     def run_shot(self, soft_trigger=False, acq1014_ext_trigger=0,
             remote_trigger=None):
-            super().run_shot(soft_trigger, acq1014_ext_trigger, remote_trigger)
+            super().run_shot(soft_trigger, acq1014_ext_trigger, remote_trigger)            
             if self.args.save_data or self.args.plot_data:
                 self.handle_data(self.args)
 

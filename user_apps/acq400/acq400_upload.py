@@ -127,8 +127,7 @@ def upload(args, shots, doClose=False):
     [ acq400_hapi.Acq400UI.exec_args(uut, args) for uut in uuts ]
     st = None
 
-    acq400_hapi.cleanup.init()
-
+    acq400_hapi.cleanup.init()    
     shot_controller = acq400_hapi.ShotControllerWithDataHandler(uuts, args)
 
     if args.wrtd_tx != 0:

@@ -38,6 +38,10 @@ import socket
 import timeit
 import time
 
+class DataNotAvailableError(Exception):
+    pass
+
+
 class AcqPorts:
     """server port constants"""
     TSTAT = 2235
@@ -244,10 +248,15 @@ class Statusmonitor:
     Efficient event-driven monitoring in a separate thread
     """
     st_re = re.compile(r"([0-9]) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9])+" )
+    st_shot_re = re.compile(r"SHOT=([0-9]),([0-9]+),([0-9]+),([0-9]+)")
+    
+    
 
     def __repr__(self):
         return repr(self.logclient)
     def st_monitor(self):
+        self.data_valid = "UNKNOWN"
+        
         while self.quit_requested == False:
             try:
                 st = self.logclient.poll()
@@ -257,6 +266,19 @@ class Statusmonitor:
                 else:
                     raise err
                 
+            if self.trace > 1:
+                print("%s <%s>" % (repr(self), st))
+        
+            match = self.st_shot_re.search(st)
+            if match:
+                status1 = [int(x) for x in match.groups()]
+                if status1[0] == 1:
+                    self.data_valid = "ARM"
+                elif status1[0] == 0:
+                    if self.data_valid == "ARM" and status1[1] > 0 and status1[1] == status1[3]:
+                        self.data_valid = "DATA_VALID"
+                continue
+            
             match = self.st_re.search(st)
             # status is a match. need to look at group(0). It's NOT a LIST!
             if match:
@@ -284,8 +306,7 @@ class Statusmonitor:
                         os.kill(self.main_pid, signal.SIGINT)
                         sys.exit(1)
                 self.status = status1
-            elif self.trace > 1:
-                print("%s <%s>" % (repr(self), st))
+            
 
     def get_state(self):
         return self.status[SF.STATE]
@@ -342,6 +363,7 @@ class Statusmonitor:
         self.st_thread = threading.Thread(target=self.st_monitor)
         self.st_thread.setDaemon(True)
         self.st_thread.start()
+        self.data_valid = "UNKNOWN"
 
 
 class NullFilter:
@@ -620,6 +642,8 @@ class Acq400:
 #        print ("uut_demux_enabled(): transient {} decoded DEMUX={} rc={}".format(ts, ts.split("DEMUX=",1)[1][0], rc))
         return rc
 
+
+    
     def read_channels(self, channels=(), nsam=0, localdemux=False):
         """read all channels post shot data.
 
@@ -656,8 +680,20 @@ class Acq400:
         chx = []
         data_size = 4 if self.s0.data32 == '1' else 2
         if self.uut_demux_enabled():
-           localdemux = False
+            try:
+                nbytes = int(self.s1.ch_data_size)
+                if nbytes == 0:
+                    raise DataNotAvailableError
+            except AttributeError:
+                print("using older firmware, unable to determine ch_data_size, keep going")
+            localdemux = False
         else:
+            try:
+                nbytes = int(self.s0.raw_data_size)
+                if nbytes == 0:
+                    raise DataNotAvailableError
+            except AttributeError:
+                print("using older firmware, unable to determine raw_data_size, keep going")            
             if not bulk_channels:
                 localdemux = True 
         
