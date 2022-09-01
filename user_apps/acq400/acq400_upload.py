@@ -147,8 +147,8 @@ def upload(args, shots, doClose=False):
         for u in uuts:
             print("si5326_tune_phase on {}, this may take 30s".format(u.uut))
             u.s0.si5326_tune_phase = 1
-    elif args.sig_gen_name:
-        trigger_action = NetworkFgAction(args, uuts[0], args.sig_gen_name)
+    elif args.sig_gen:
+        trigger_action = NetworkFgAction(args, uuts[0], args.sig_gen)
     elif args.remote_trigger:
         trigger_action = EnableExtTrgAction(uuts[0])
     else:
@@ -184,7 +184,7 @@ def get_args(argStr=None):
     parser.add_argument('--wrtd_tx', default=0, type=int, help="release a wrtd_tx when all boards read .. works when free-running trigger")    
     parser.add_argument('--shots', default=1, type=int, help="number of shots to run")
     parser.add_argument('--newobjectsplease', default=0, type=int, help="create new object instantiations every run")
-    parser.add_argument('--sig_gen_name', default=None, type=str,
+    parser.add_argument('--sig_gen', default=None, type=str,
                         help='Network of Agilent 33210A or equivalent.')    
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     return parser.parse_args(argStr)
