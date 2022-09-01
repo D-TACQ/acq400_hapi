@@ -249,7 +249,7 @@ class Statusmonitor:
     """
     st_re = re.compile(r"([0-9]) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9])+" )
     st_shot_re = re.compile(r"SHOT=([0-9]),([0-9]+),([0-9]+),([0-9]+)")
-    
+    st_failed_to_find_event_re = re.compile(r"ERROR EVENT NOT FOUND")
     
 
     def __repr__(self):
@@ -269,6 +269,11 @@ class Statusmonitor:
             if self.trace > 1:
                 print("%s <%s>" % (repr(self), st))
         
+        
+            match = self.st_failed_to_find_event_re.search(st)
+            if match:
+                self.data_valid = "ERROR EVENT NOT FOUND"
+                
             match = self.st_shot_re.search(st)
             if match:
                 status1 = [int(x) for x in match.groups()]
