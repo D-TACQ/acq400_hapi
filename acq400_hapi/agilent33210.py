@@ -25,6 +25,8 @@ class Agilent33210A:
         self.send("OUTP:SYNC ON")    
         self.send("FREQ {}".format(freq))
         self.send("FUNC:SHAP {}".format(shape))
+        self.send("BURS:STAT OFF")
+        self.send("TRIG:SOUR IMM")
                   
     def config_burst(self, ncyc=1):
         self.send("BURS:STAT ON")

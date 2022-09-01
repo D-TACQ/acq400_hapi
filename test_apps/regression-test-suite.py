@@ -134,18 +134,21 @@ def config_gpg(uut, args, trg=1):
 def configure_sig_gen(sig_gen, args, freq):
     print("Configuring sig gen.")
 
-    sig_gen.config(freq)
+    if args.test == "rtm_gpg":
+        sig_gen.config(1, shape="RAMP")
+        return None
+    else:
+        sig_gen.config(freq)
 
     if args.test == "post":
         if args.trg[1] == 0:
             sig_gen.config_burst()
 
         elif args.trg[1] == 1:
-            sig_gen.send("BURS:STAT OFF")
-            sig_gen.send("TRIG:SOUR IMM")
+            pass
 
         if args.trg[2] == 0:
-            # If ext falling then we need two sine waves
+            # If ext falling then we need two sine waves @@pgm not sure what this means..
             print("TRG FALLING set sg")
             sig_gen.send("BURS:STAT ON")
             sig_gen.send("BURS:NCYC 3")
@@ -155,17 +158,9 @@ def configure_sig_gen(sig_gen, args, freq):
 
     elif args.test == "rtm" or args.test == "rgm":
         # sig_gen.send("FREQ 1000")
-        sig_gen.send("TRIG:SOUR IMM")
-        sig_gen.send("BURS:STAT OFF")
         if args.test == "rgm":
-            sig_gen.send("BURS:STAT ON")
-            sig_gen.send("BURS:NCYC 5")
-            sig_gen.send("TRIG:SOUR BUS")
-    elif args.test == "rtm_gpg":
-        sig_gen.send("TRIG:SOUR IMM")
-        sig_gen.send("BURS:STAT OFF")
-        sig_gen.send("FUNC:SHAP RAMP")
-        sig_gen.send("FREQ 1")
+            sig_gen.config_burst(ncyc=5)
+
     return None
 
 
