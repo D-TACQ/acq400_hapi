@@ -18,3 +18,4 @@ from .intSI import *
 from .debug import Debugger
 from .utils import timing
 from .afhba404 import *
+from .agilent33210 import Agilent33210A
