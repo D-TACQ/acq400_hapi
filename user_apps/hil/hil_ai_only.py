@@ -17,7 +17,7 @@ Capture for infinty:
 
 import argparse
 import acq400_hapi
-import socket
+
 import os
 import sys
 import matplotlib.pyplot as plt
@@ -39,15 +39,9 @@ def timing(f):
 
 
 def configure_sig_gen(args):
-    skt = socket.socket()
-    skt.connect((args.uuts[1], 5025))
-    skt.send(b"SYST:BEEP")
-    skt.send(b"OUTP OFF")
-    skt.send(b"TRIG:SOUR IMM")
-    skt.send(b"BURS:INT:PER 10")
-    skt.send(b"BURS:NCYC 2")
-    skt.send(b"BURS:MODE TRIG")
-    skt.send(b"OUTP ON")
+    sg = acq400_hapi.Agilent33210A(args.uuts[1])
+    sg.config(1000)
+    sg.config_free_running_burst(ncyc=2, rate=10)
 
 
 def configure_ai(args, uut):

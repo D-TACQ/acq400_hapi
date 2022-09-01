@@ -20,13 +20,22 @@ class Agilent33210A:
     def trigger(self):
         self.send("TRIG")
 
-    def config_burst(self, freq, ncyc=1, volts=1, shape="SIN"):
+    def config(self, freq, volts=1, shape="SIN"):
         self.send("VOLT {}".format(volts))
         self.send("OUTP:SYNC ON")    
         self.send("FREQ {}".format(freq))
-        self.send("FUNC:SHAP {}".format(shape))  
+        self.send("FUNC:SHAP {}".format(shape))
+                  
+    def config_burst(self, ncyc=1):
         self.send("BURS:STAT ON")
         self.send("BURS:NCYC {}".format(ncyc))
         self.send("TRIG:SOUR BUS")
 
-        
+    def config_free_running_burst(self, ncyc=1, rate=1):
+         self.send("SYST:BEEP")
+         self.send("OUTP OFF")
+         self.send("TRIG:SOUR IMM")
+         self.send("BURS:INT:PER {}".format(rate))
+         self.send("BURS:NCYC {}".format(ncyc))
+         self.send("BURS:MODE TRIG")
+         self.send("OUTP ON")       

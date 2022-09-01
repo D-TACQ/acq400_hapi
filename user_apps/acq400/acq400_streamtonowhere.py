@@ -88,6 +88,7 @@ def main(args):
     # a test that involves this script then a signal generator
     # may be triggered like so:
     # os.system("echo 'TRIG' | nc 10.12.196.174 5025")
+    # acq400_hapi.Agilent33210A("10.12.196.174").trigger()
 
     while not all(elem == 'CONTINUOUS:STATE RUN' for elem in states):
         states = update_states(uuts, states)

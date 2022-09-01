@@ -24,7 +24,7 @@ import numpy as np
 import os
 import time
 import argparse
-import socket
+#import socket
 from future import builtins
 import matplotlib.pyplot as plt
 
@@ -102,10 +102,10 @@ def trigger_system(args, sig_gen):
     time.sleep(1)
     if args.test != "rtm":
         print("Triggering now.")
-        sig_gen.send("TRIG\n".encode())
+        sig_gen.trigger()
         if args.trg[1] == 0 and args.test == "pre_post":
             time.sleep(2)
-            sig_gen.send("TRIG\n".encode())
+            sig_gen.trigger()
     return None
 
 
@@ -134,45 +134,38 @@ def config_gpg(uut, args, trg=1):
 def configure_sig_gen(sig_gen, args, freq):
     print("Configuring sig gen.")
 
-    sig_gen.send("VOLT 1\n".encode())
-    sig_gen.send("OUTP:SYNC ON\n".encode())
-    freq_string = "FREQ {}\n".format(freq)
-    sig_gen.send(freq_string.encode())
-    sig_gen.send("FUNC:SHAP SIN\n".encode())
+    sig_gen.config(freq)
 
     if args.test == "post":
         if args.trg[1] == 0:
-            sig_gen.send("BURS:STAT ON\n".encode())
-            sig_gen.send("BURS:NCYC 1\n".encode())
-            sig_gen.send("TRIG:SOUR BUS\n".encode())
+            sig_gen.config_burst()
+
         elif args.trg[1] == 1:
-            sig_gen.send("BURS:STAT OFF\n".encode())
-            sig_gen.send("TRIG:SOUR IMM\n".encode())
+            sig_gen.send("BURS:STAT OFF")
+            sig_gen.send("TRIG:SOUR IMM")
 
         if args.trg[2] == 0:
             # If ext falling then we need two sine waves
             print("TRG FALLING set sg")
-            sig_gen.send("BURS:STAT ON\n".encode())
-            sig_gen.send("BURS:NCYC 3\n".encode())
+            sig_gen.send("BURS:STAT ON")
+            sig_gen.send("BURS:NCYC 3")
 
     if args.test == "pre_post":
-        sig_gen.send("BURS:STAT ON\n".encode())
-        sig_gen.send("BURS:NCYC 1\n".encode())
-        sig_gen.send("TRIG:SOUR BUS\n".encode())
+        sig_gen.config_burst()
 
     elif args.test == "rtm" or args.test == "rgm":
-        # sig_gen.send("FREQ 1000\n".encode())
-        sig_gen.send("TRIG:SOUR IMM\n".encode())
-        sig_gen.send("BURS:STAT OFF\n".encode())
+        # sig_gen.send("FREQ 1000")
+        sig_gen.send("TRIG:SOUR IMM")
+        sig_gen.send("BURS:STAT OFF")
         if args.test == "rgm":
-            sig_gen.send("BURS:STAT ON\n".encode())
-            sig_gen.send("BURS:NCYC 5\n".encode())
-            sig_gen.send("TRIG:SOUR BUS\n".encode())
+            sig_gen.send("BURS:STAT ON")
+            sig_gen.send("BURS:NCYC 5")
+            sig_gen.send("TRIG:SOUR BUS")
     elif args.test == "rtm_gpg":
-        sig_gen.send("TRIG:SOUR IMM\n".encode())
-        sig_gen.send("BURS:STAT OFF\n".encode())
-        sig_gen.send("FUNC:SHAP RAMP\n".encode())
-        sig_gen.send("FREQ 1\n".encode())
+        sig_gen.send("TRIG:SOUR IMM")
+        sig_gen.send("BURS:STAT OFF")
+        sig_gen.send("FUNC:SHAP RAMP")
+        sig_gen.send("FREQ 1")
     return None
 
 
@@ -247,12 +240,11 @@ def run_test(args, axs, plt_count):
         uut.s0.transient  # print transient config
         uuts.append(uut)
 
-    sig_gen = socket.socket()
-    sig_gen.connect((args.sig_gen_name, 5025))
-
+    
+    sig_gen = acq400_hapi.Agilent33210A(args.sig_gen_name)
+    
     if args.config_sig_gen == 1:
-        freq = calculate_frequency(args, uuts[0], args.clock_divisor)
-        configure_sig_gen(sig_gen, args, freq)
+        configure_sig_gen(sig_gen, args, calculate_frequency(args, uuts[0], args.clock_divisor))
 
     for iteration in list(range(1, args.loops+1)):
         data = []
