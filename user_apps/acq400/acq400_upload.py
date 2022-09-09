@@ -133,13 +133,35 @@ def run_shot(args, uuts, shot_controller, trigger_action, st):
     finally:
         print("Finally, going down")
 
+
+class TriggerCountLogger:
+    knobs = ("SIG:TRG_EXT:", "SIG:TRG_MB:", "SIG:TRG_S1:")
+    
+    def __init__(self, uuts):
+        self.uuts = uuts
+        for u in uuts:
+            for k in TriggerCountLogger.knobs:
+                u.s0.sr("{}RESET=1".format(k))
+        
+    def __call__(self):
+        results = []
+        for u in self.uuts:
+            for k in TriggerCountLogger.knobs:
+                results.append(acq400_hapi.intpv(u.s0.sr("{}COUNT".format(k))))
+                
+        print("Trigger Check {} {}".format(results, "GOOD" if results[0]+results[1] == results[2] else "FAIL"))
+
 @acq400_hapi.timing
 def upload(args, shots, doClose=False):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
     [ acq400_hapi.Acq400UI.exec_args(uut, args) for uut in uuts ]
     st = None
 
-    acq400_hapi.cleanup.init()    
+    acq400_hapi.cleanup.init()
+    if args.validate_triggers:
+        tcl = TriggerCountLogger(uuts)
+        
+          
     shot_controller = acq400_hapi.ShotControllerWithDataHandler(uuts, args)
 
     if args.wrtd_tx != 0:
@@ -158,6 +180,8 @@ def upload(args, shots, doClose=False):
     for shot in range(shots):
         print("shot {} uut {}".format(shot, uuts[0].s0.shot))
         run_shot(args, uuts, shot_controller, trigger_action, st)
+        if args.validate_triggers:
+            tcl()      
         
     if doClose:
         for u in uuts:
@@ -185,7 +209,8 @@ def get_args(argStr=None):
     parser.add_argument('--shots', default=1, type=int, help="number of shots to run")
     parser.add_argument('--newobjectsplease', default=0, type=int, help="create new object instantiations every run")
     parser.add_argument('--sig_gen', default=None, type=str,
-                        help='Network of Agilent 33210A or equivalent.')    
+                        help='Network of Agilent 33210A or equivalent.') 
+    parser.add_argument('--validate_triggers', default=0, type=int, help="check trigger counts after each shot")   
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     return parser.parse_args(argStr)
 
