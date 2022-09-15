@@ -96,6 +96,10 @@ class NetworkFgAction:
     def __call__(self):
         while acq400_hapi.intpv(self.uut.s0.TRANS_ACT_PRE) < self.args.pre:
             time.sleep(0.5)
+        while self.uut.s1.event0 == '0,0,0':
+            print("NetworkFgAction: snapped event disabled")
+            time.sleep(0.5)
+            
         print("TRIGGER")
         self.fg.trigger()
         
