@@ -183,7 +183,15 @@ def upload(args, shots, doClose=False):
 
     for shot in range(shots):
         print("shot {} uut {}".format(shot, uuts[0].s0.shot))
-        run_shot(args, uuts, shot_controller, trigger_action, st)
+        try:
+            run_shot(args, uuts, shot_controller, trigger_action, st)
+        except acq400_hapi.acq400.DataNotAvailableError:
+            print("DataNotAvailableError pick up RAW data and exit")
+            for u in uuts:  
+                u.read_chan(0)
+                rawfn = "{}/{}_CH00".format(args.save_data, u.uut)              
+                print("RAW DATA {} size {}".format(rawfn, os.stat(rawfn).st_size))
+            
         if args.validate_triggers:
             tcl()      
         
