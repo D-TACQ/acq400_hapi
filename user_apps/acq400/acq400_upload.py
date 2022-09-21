@@ -165,6 +165,8 @@ def upload(args, shots, doClose=False):
     if args.validate_triggers:
         tcl = TriggerCountLogger(uuts)
         
+    for u in uuts:
+        u.s0.TRANSIENT_SET_ABORT = '1'
           
     shot_controller = acq400_hapi.ShotControllerWithDataHandler(uuts, args)
 
@@ -194,7 +196,10 @@ def upload(args, shots, doClose=False):
             
         if args.validate_triggers:
             tcl()      
-        
+    
+    if shots > 1:
+        for u in uuts:
+            print("Search Stats: {} ROI {} ALL {}".format(u.uut, u.statmon.search_roi_count, u.statmon.search_all_count))   
     if doClose:
         for u in uuts:
             u.close()
