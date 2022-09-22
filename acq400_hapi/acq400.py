@@ -250,8 +250,7 @@ class Statusmonitor:
     st_re = re.compile(r"([0-9]) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9])+" )
     st_shot_re = re.compile(r"SHOT=([0-9]),([0-9]+),([0-9]+),([0-9]+)")
     st_failed_to_find_event_re = re.compile(r"ERROR EVENT NOT FOUND")
-    st_timer_re = re.compile(r"Timer:: ([A-Z]{3}) ([0-9]+) msec")
-    
+    st_timer_re = re.compile(r"Timer::report\(([0-9]+)\) ([A-Z]{3}) ([0-9]+) msec")    
 
     def __repr__(self):
         return repr(self.logclient)
@@ -277,13 +276,13 @@ class Statusmonitor:
                 
             match = self.st_timer_re.search(st)
             if match:
-                print("TIMER: {} {} ms".format(match.group(1), match.group(2)))
-                if match.group(1) == "ROI":
+                print("TIMER: {} {} {} ms".format(match.group(2), match.group(1), match.group(3)))
+                if match.group(2) == "ROI":
                     self.search_roi_count += 1
-                elif match.group(1) == "ALL":
+                elif match.group(2) == "ALL":
                     self.search_all_count += 1
                 else:
-                    printf("ERROR bad match {}".format(match.group(1)))
+                    print("ERROR bad match {}".format(match.group(1)))
                 
             match = self.st_shot_re.search(st)
             if match:

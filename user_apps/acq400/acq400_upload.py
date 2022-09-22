@@ -184,7 +184,7 @@ def upload(args, shots, doClose=False):
         st = args.soft_trigger
 
     for shot in range(shots):
-        print("shot {} uut {}".format(shot, uuts[0].s0.shot))
+        print("host shot {} uut shot {}".format(shot, uuts[0].s0.shot))
         try:
             run_shot(args, uuts, shot_controller, trigger_action, st)
         except acq400_hapi.acq400.DataNotAvailableError:
