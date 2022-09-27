@@ -24,7 +24,7 @@ import numpy as np
 import os
 import time
 import argparse
-#import socket
+
 from future import builtins
 import matplotlib.pyplot as plt
 
