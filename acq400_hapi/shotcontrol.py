@@ -4,11 +4,6 @@ import time
 import os
 import errno
 
-try:
-    import matplotlib.pyplot as plt
-except Exception as e:
-    plt = e
-
 def wait_for_state(uut, state, timeout=0):
     UUTS = [uut]
     time0 = 0
@@ -222,6 +217,11 @@ class ShotController:
 class ShotControllerWithDataHandler(ShotController):
        
     def plot_data(self, args, plot_data, chx, ncol, nchan, nsam):
+        try:
+            import matplotlib.pyplot as plt
+        except Exception as e:
+            plt = e
+
         if isinstance(plt, Exception):
             print("Sorry, plotting not available")
             return        
