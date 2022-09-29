@@ -49,7 +49,7 @@ def create_array(nsam, args):
 
     limit = 2*np.pi*args.w 
     fxn = args.fx(np.linspace(-limit/2, limit/2, nsam)) # Creates sine wave
-    fxn = 32767 * fxn # Scales the sine wave to 16 bit
+    fxn = args.scale * fxn # Scales the sine wave to 16 bit
     fxn = np.rint(fxn) # round the sine wave to integers
 
     # An empty list is created that will eventually contain our waveform
@@ -74,7 +74,7 @@ def create_array(nsam, args):
 
     # We then ensure that the waveforms points are of type int16. This is important as the UUT requires the data type
     # to be int16.
-    waveform = waveform.astype(np.int16)
+    waveform = waveform.astype(args.dtype)
     return waveform
 
 
@@ -86,7 +86,7 @@ def generate_awg(args):
     else:
         fname = fname[1]
 
-    waveform.tofile("{}/{}-{}-{}.dat".format(args.dir, "{}{}".format(fname, "" if args.w == 1 else str(args.w)), args.nchan, args.nsam), "")
+    waveform.tofile("{}/{}-{}-{}-{}.dat".format(args.dir, "{}{}".format(fname, "" if args.w == 1 else str(args.w)), args.nchan, args.nsam, "" if args.scale==32767 else args.scale), "")
 
 
 def run_main():
