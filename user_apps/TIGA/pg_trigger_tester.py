@@ -55,8 +55,8 @@ def pg_trigger_test_init(args, uuts):
             
     
 def get_counts(args, u):
-    counts = [ acq400_hapi.Acq400.intpv(u.cC.WR_WRTT0_COUNT), ]
-    counts.append([ acq400_hapi.Acq400.intpv(u.s0.get_knob("SIG_TRG_S{}_COUNT".format(s))) for s in (args.sites)])
+    counts = [ acq400_hapi.intpv(u.cC.WR_WRTT0_COUNT), ]
+    counts.append([ acq400_hapi.intpv(u.s0.get_knob("SIG_TRG_S{}_COUNT".format(s))) for s in (args.sites)])
     return counts  
 def pg_trigger_test1(args, uuts):
     print("trigger!")
@@ -65,8 +65,8 @@ def pg_trigger_test1(args, uuts):
     counts = []
     for u in uuts:
         if args.pulse_count:
-            npc = acq400_hapi.Acq400.intpv(u.s0.SIG_EVT_EXT_COUNT)
-            pc = "pulse count: {} pc/wrtt {}".format(npc, npc/acq400_hapi.Acq400.intpv(u.cC.WR_WRTT0_COUNT))
+            npc = acq400_hapi.intpv(u.s0.SIG_EVT_EXT_COUNT)
+            pc = "pulse count: {} pc/wrtt {}".format(npc, npc/acq400_hapi.intpv(u.cC.WR_WRTT0_COUNT))
         else:
             pc = ""
         print("{} wrtt, pgidx {} {}".format(u.uut, get_counts(args, u), pc))

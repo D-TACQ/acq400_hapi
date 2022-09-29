@@ -22,7 +22,7 @@ import time
 
 def stop_action(uut, args, xwg_site):
     xwg_site.AWG_MODE_ABO = 1
-    while acq400_hapi.Acq400.intpv(xwg_site.AWG_SHOT_COMPLETE) == 0:
+    while acq400_hapi.intpv(xwg_site.AWG_SHOT_COMPLETE) == 0:
         time.sleep(0.25)
 
 def start_action(uut, args, xwg_site):    
@@ -30,7 +30,7 @@ def start_action(uut, args, xwg_site):
     xwg_site.playloop_length = "0 0"
     xwg_site.playloop_length = pll
     if args.auto_soft_trigger:
-        while acq400_hapi.Acq400.intpv(xwg_site.AWG_ARM) == 0:
+        while acq400_hapi.intpv(xwg_site.AWG_ARM) == 0:
             time.sleep(0.25)
         uut.s0.soft_trigger = 1
 

@@ -56,7 +56,7 @@ def trigger_test(args):
     
     trigger_test_init(args, uuts)
 
-    count0 = [ acq400_hapi.Acq400.intpv(u.cC.WR_WRTT0_COUNT) for u in uuts ]
+    count0 = [ acq400_hapi.intpv(u.cC.WR_WRTT0_COUNT) for u in uuts ]
     
     
     for shot in range(0, args.shots):
@@ -69,7 +69,7 @@ def trigger_test(args):
         pollcount = 0
         
         while True:   
-            count1 = [ acq400_hapi.Acq400.intpv(u.cC.WR_WRTT0_COUNT) for u in uuts ]
+            count1 = [ acq400_hapi.intpv(u.cC.WR_WRTT0_COUNT) for u in uuts ]
 
             pollcount += 1
             if count1 == count01:

@@ -69,7 +69,7 @@ def pg_trigger_test(args):
  
     time.sleep(2)                   # let the counters ketchup
     for u in uuts:
-        print("result WRTT {} {}".format(acq400_hapi.Acq400.intpv(u.cC.WR_WRTT0_COUNT), acq400_hapi.Acq400.intpv(u.cC.WR_WRTT1_COUNT)))   
+        print("result WRTT {} {}".format(acq400_hapi.intpv(u.cC.WR_WRTT0_COUNT), acq400_hapi.intpv(u.cC.WR_WRTT1_COUNT)))   
 
 def main():
     pg_trigger_test(get_args())

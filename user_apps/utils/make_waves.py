@@ -109,11 +109,11 @@ def load_uut(args, iarg):
     if uut:
         if args.continuous:
             uut.s0.awg = 'SOFT_TRIGGER=0'
-        if (acq400_hapi.Acq400.intpv(uut.s1.AWG_ACTIVE)) == 1:
+        if (acq400_hapi.intpv(uut.s1.AWG_ACTIVE)) == 1:
             print("AWG already running: call a halt")
             uut.s1.AWG_MODE_ABO = '1'
             time.sleep(1)
-            while acq400_hapi.Acq400.intpv(uut.s1.AWG_MODE_ABO) == 1:
+            while acq400_hapi.intpv(uut.s1.AWG_MODE_ABO) == 1:
                 time.sleep(0.2)
 
         args.rawx = args.raw

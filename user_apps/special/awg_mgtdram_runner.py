@@ -113,7 +113,7 @@ def restart_awg(args):
     else:
         args.mu.s1.AWG_MODE_ABO = '1'
         time.sleep(1)
-        while acq400_hapi.Acq400.intpv(args.mu.s1.AWG_MODE_ABO) == 1:
+        while acq400_hapi.intpv(args.mu.s1.AWG_MODE_ABO) == 1:
             time.sleep(0.2)            
         args.mu.s1.playloop_length = '0'
         time.sleep(0.1)        
@@ -152,7 +152,7 @@ def offload_monitor(args):
         runs += 2
         print("{:3d}:".format(runs), end='')
         for ix, uut in enumerate(args.uuts):
-            npull = acq400_hapi.Acq400.intpv(uut.cA.SIG_MGT_PULL_BUFS_COUNT)
+            npull = acq400_hapi.intpv(uut.cA.SIG_MGT_PULL_BUFS_COUNT)
             idle[ix] = 1 if npull > (args.nbufs-64) else 0
             print("{:11} {:3d}".format(uut.uut, npull), end=', ' if ix < len(args.uuts)-1 else '\n')
         if np.all(idle) == 1:

@@ -246,7 +246,7 @@ def run_shot(uut, args):
 
 def wait_shot(uut, args):    
     if args.offloadblocks != 'capture': 
-        args.offloadblocks_count = acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS_M)
+        args.offloadblocks_count = acq400_hapi.intpv(uut.s0.BLT_BUFFERS_M)
     uut.run_mgt(AtFilter(), set_arm=False)
     return int(uut.s1.shot)
         
@@ -270,12 +270,12 @@ def run_shots(args):
 
     if args.captureblocks != 0:
         uut.s0.BLT_BUFFERS = args.captureblocks
-        args.captureblocks = acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS_M)
+        args.captureblocks = acq400_hapi.intpv(uut.s0.BLT_BUFFERS_M)
 
     if args.offloadblocks != 'capture':
         args.offloadblocks_count = int(args.offloadblocks)
     else:
-        args.offloadblocks_count = acq400_hapi.Acq400.intpv(uut.s0.BLT_BUFFERS_M)
+        args.offloadblocks_count = acq400_hapi.intpv(uut.s0.BLT_BUFFERS_M)
         print("offload {} buffers from uut".format(args.offloadblocks_count))
     
     uut.s14.mgt_taskset = '1'
