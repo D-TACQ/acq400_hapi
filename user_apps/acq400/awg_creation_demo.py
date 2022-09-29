@@ -97,9 +97,11 @@ def run_main():
     parser.add_argument('--nchan', default=32, type=int, help="Number of channels in AO module.")
     parser.add_argument('--even_ch_to_zeros', default=0, type=int, help="Whether to set even channels to zero.")
     parser.add_argument('--dir', default="waves", type=str, help="Location to save files")
-    parser.
+    parser.add_argument('--scale', default=32767, type=int, help="Raw Scale Factor")
+    parser.add_argument('--ds', default=16, type=int, help="Data size in bits")
     args = parser.parse_args()
     args.fx = eval(args.fn)
+    args.dtype = np.int16 if args.ds==16 else np.int32
     generate_awg(args)
 
 
