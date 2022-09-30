@@ -86,7 +86,14 @@ def generate_awg(args):
     else:
         fname = fname[1]
 
-    waveform.tofile("{}/{}-{}-{}-{}.dat".format(args.dir, "{}{}".format(fname, "" if args.w == 1 else str(args.w)), args.nchan, args.nsam, "" if args.scale==32767 else args.scale), "")
+    outfn = "{}/{}-{}-{}{}.dat".format(
+        args.dir, 
+        "{}{}".format(fname, "" if args.w == 1 else str(args.w)), 
+        args.nchan, args.nsam, 
+        "" if args.scale==32767 else "-{}".format(args.scale)
+    )
+    print("generate output file {}".format(outfn))
+    waveform.tofile(outfn, "")
 
 
 def run_main():
