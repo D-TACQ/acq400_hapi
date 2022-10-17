@@ -89,6 +89,7 @@ import acq400_hapi
 import time
 import matplotlib
 import matplotlib.pyplot as plt
+import logging
 
 has_pykst = False
 if os.name != "nt":
@@ -107,6 +108,7 @@ try:
 except ImportError:
     pass
 
+logging.getLogger('matplotlib.font_manager').disabled = True
 
 def channel_required(args, ch):
 #    print("channel_required {} {}".format(ch, 'in' if ch in args.pc_list else 'out', args.pc_list))
@@ -184,7 +186,7 @@ def read_data(args, NCHAN):
 
 
     if args.NSAM == 0:
-        args.NSAM = GROUP*os.path.getsize(data_files[0])/args.WSIZE/NCHAN
+        args.NSAM = GROUP*os.path.getsize(data_files[0])//args.WSIZE//NCHAN
         print("NSAM set {}".format(args.NSAM))
 
     NBLK = len(data_files)
@@ -203,7 +205,10 @@ def read_data(args, NCHAN):
             break
         if blkfile != "analysis.py" and blkfile != "root":
 
-            print(blkfile, blknum)
+            if blknum == 0:
+                args.src = blkfile
+
+#            print("iblock={} blkfile={}, blknum={}".format(iblock, blkfile, blknum))
             # concatenate 3 blocks to ensure modulo 3 channel align
             if iblock == 0:
                 data = np.fromfile(blkfile, dtype=args.np_data_type)
@@ -224,6 +229,7 @@ def read_data(args, NCHAN):
             i0 = i1
             blocks += 1
             iblock = 0
+    args.src = "{}..{}".format(args.src, os.path.basename(blkfile))
 
     print("length of data = ", len(raw_channels))
     print("length of data[0] = ", len(raw_channels[0]))
