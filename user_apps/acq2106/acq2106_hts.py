@@ -70,7 +70,7 @@ def read_knob(knob):
 
 def config_shot(uut, args):
     acq400_hapi.Acq400UI.exec_args(uut, args)
-    uut.s0.run0 = uut.s0.sites
+    uut.s0.run0 = "{} {}".format(uut.s0.sites, args.spad)
     if args.decimate != None:
         uut.s0.decimate = args.decimate
 
