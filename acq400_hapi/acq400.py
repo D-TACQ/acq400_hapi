@@ -261,7 +261,7 @@ class Statusmonitor:
             try:
                 st = self.logclient.poll()
             except OSError as err:
-                if self.quit_reqested:
+                if self.quit_requested:
                     return
                 else:
                     raise err
