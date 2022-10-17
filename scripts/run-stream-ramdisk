@@ -1,0 +1,19 @@
+#!/bin/bash
+# runs the data streaming backend
+if [ !  -e ../AFHBA404 ]; then
+	echo "ERROR: did not find ../AFHBA404"
+	exit 1
+fi
+#cd ../AFHBA404; mate-terminal -e "sudo ./scripts/stream-to-ramdisk-oneshot $1 $2"
+#cd ../AFHBA404; xterm -e "sudo ./scripts/stream-to-ramdisk-oneshot $1 $2"
+(
+	(cd ../AFHBA404; sudo ./scripts/stream-to-ramdisk-oneshot $1 $2 2>&1) >stream.log & 
+	 wait; echo log file $(ls -l stream.log); echo DATA $(du -sh /mnt/afhba.$1/) 
+) &
+
+
+
+ 
+
+
+
