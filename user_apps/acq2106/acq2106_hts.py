@@ -100,13 +100,13 @@ def init_comms(uut, args):
     if args.commsA != "none":
         uut.cA.spad = 0 if args.spad == None else 1
         csites = uut.s0.sites if args.commsA == 'all' else args.commsA
-        uut.cA.aggregator = "sites=%s" % (csites)
+        uut.cA.aggregator = "sites={} on".format(csites)
         if args.hexdump:
             hexdump_string(uut, "A", csites, args.spad)
     if args.commsB != "none":
         uut.cB.spad = 0 if args.spad == None else 1
         csites = uut.s0.sites if args.commsB == 'all' else args.commsB
-        uut.cB.aggregator = "sites=%s" % (csites)
+        uut.cB.aggregator = "sites={} on".format(csites)
         if args.hexdump:
             hexdump_string(uut, "B", csites, args.spad)
 
