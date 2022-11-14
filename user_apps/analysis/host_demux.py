@@ -543,6 +543,9 @@ def run_main():
     if args.data_type == 16:
         args.np_data_type = np.int16
         args.WSIZE = 2
+    elif args.data_type == 8:
+        args.np_data_type = np.int8
+        args.WSIZE = 1
     else:       
         args.np_data_type = np.int32
         args.WSIZE = 4
