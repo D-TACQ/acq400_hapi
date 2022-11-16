@@ -346,7 +346,12 @@ def plot_mpl(args, raw_channels):
                     pass
 
             plots[num].set_ylabel(ylabel)
-            plots[num].plot(y)
+            if args.plen == 0:
+                plots[num].plot(y, linewidth=0.75)
+            else :
+                plots[num].plot(y[:args.plen], linewidth=0.75)
+            plots[num].grid("True", linewidth=0.2)
+            plots[num].ticklabel_format(style='plain')    # to prevent scientific notation
         except TypeError:
             plots.plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]])
     
@@ -523,6 +528,7 @@ def run_main():
     parser.add_argument('--src', type=str, default='/data', help='data source root')
     parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
+    parser.add_argument('--plen', type=int, default=0, help='Number of samples to plot')
     parser.add_argument('--tai_vernier', type=int, default=None, help='decode this channel as tai_vernier')
     parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
