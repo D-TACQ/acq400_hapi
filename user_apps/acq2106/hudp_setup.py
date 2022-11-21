@@ -73,14 +73,22 @@ def config_tx_uut(args):
     print("txuut {}".format(txuut.uut))
     txuut.s0.run0 = args.run0
     hdup_init(args, txuut, args.tx_ip)
+    txuut.s10.hudp_decim = args.hudp_decim
     txuut.s10.src_port = args.port
     txuut.s10.dst_port = args.port
-    txuut.s10.dst_ip = args.rx_ip if args.broadcast == 0 else ip_broadcast(args)   
-    txuut.s10.tx_sample_sz = txuut.s0.ssb
+    txuut.s10.dst_ip = args.rx_ip if args.broadcast == 0 else ip_broadcast(args)
+
+    tx_ssb = int(txuut.s0.ssb)
+    txuut.s10.tx_sample_sz = tx_ssb
     txuut.s10.tx_spp = args.spp
-    if int(txuut.s0.ssb)*args.spp > MTU:
-        print("ERROR packet length {} exceeds MTU {}".format(txuut.s10.tx_sample_sz*args.spp, MTU))
+    tx_pkt_sz = tx_ssb*args.spp                         # compute tx pkt sz and check bounds
+    if  tx_pkt_sz > MTU:
+        print("ERROR packet length {} exceeds MTU {}".format(tx_pkt_sz, MTU))
     hdup_enable(txuut)
+    tx_calc_pkt_sz = int(txuut.s10.tx_calc_pkt_sz)      # actual tx pkt sz computed by FPGA logic.
+    if tx_pkt_sz != tx_calc_pkt_sz:
+        print("ERROR: set tx_pkt_size {} actual tx_pkt_size {}".format(tx_pkt_sz, tx_calc_pkt_sz))    
+    print("TX configured. ssb:{} spp:{} tx_pkt_size {}".format(tx_ssb, args.spp, tx_pkt_sz))
 
 # rx: XO : AO, DO        
 def config_rx_uut(args):
@@ -116,6 +124,7 @@ def ui():
     parser.add_argument("--broadcast", default=0, type = int, help="broadcast the data")
     parser.add_argument("--disco",   default=None, type=int,  help="enable discontinuity check at index x")
     parser.add_argument("--spp",     default=1, type=int,     help="samples per packet")
+    parser.add_argument("--hudp_decim", default=1, type=int,  help="hudp decimation, 1..16")
     parser.add_argument("txuut", nargs=1,                     help="transmit uut")
     parser.add_argument("rxuut", nargs=1,                     help="transmit uut")
     return parser.parse_args()
