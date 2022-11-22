@@ -39,7 +39,7 @@ if sys.version_info < (3, 0):
     from builtins import input
 
 def hdup_init(args, uut, ip):
-    uut.s10.ctrl = 9
+    uut.s10.tx_ctrl = 9
     uut.s10.ip = ip
     uut.s10.gw = args.gw
     uut.s10.netmask = args.netmask
@@ -51,7 +51,7 @@ def hdup_init(args, uut, ip):
         uut.s10.disco_en = 0
     
 def hdup_enable(uut):
-    uut.s10.ctrl = 1
+    uut.s10.tx_ctrl = 1
     
 def ip_broadcast(args):
     ip_dest = args.rx_ip.split('.')
