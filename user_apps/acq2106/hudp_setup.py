@@ -128,14 +128,23 @@ MTU = 1400
 # tx: XI : AI, DI       
 def config_tx_uut(txuut, args):    
     print("txuut {}".format(txuut.uut))
-    txuut.s0.run0 = args.run0
+    if args.run0 != 'notouch':
+        txuut.s0.run0 = args.run0
     hudp_init(args, txuut, args.tx_ip)
     txuut.s10.hudp_decim = args.hudp_decim
     txuut.s10.src_port = args.port
     txuut.s10.dst_port = args.port
     txuut.s10.dst_ip = args.rx_ip if args.broadcast == 0 else ip_broadcast(args)
 
-    tx_ssb = int(txuut.s0.ssb)
+    if args.hudp_relay is not None:
+        txuut.s10.udp_data_src = 1
+        tx_ssb = int(txuut.s0.dssb) - args.hudp_relay
+        txuut.s10.slice_len = tx_ssb//4
+        txuut.s10.slice_off = args.hudp_relay//4
+    else:
+        txuut.s10.udp_data_src = 0
+        tx_ssb = int(txuut.s0.ssb)
+
     txuut.s10.tx_sample_sz = tx_ssb
     txuut.s10.tx_spp = args.spp
     tx_pkt_sz = tx_ssb*args.spp                         # compute tx pkt sz and check bounds
@@ -150,8 +159,9 @@ def config_tx_uut(txuut, args):
 # rx: XO : AO, DO        
 def config_rx_uut(rxuut, args):
     print("rxuut {}".format(rxuut.uut))
-        
-    rxuut.s0.play0 = args.play0       
+       
+    if args.play0 != 'notouch':
+        rxuut.s0.play0 = args.play0       
     rxuut.s0.distributor = 'comms=U off'        
     rxuut.s0.distributor = 'on'
 
@@ -175,10 +185,11 @@ def ui():
     parser.add_argument("--rx_ip",   default='10.12.198.129', help='rx ip address')
     parser.add_argument("--gw",      default='10.12.198.1',   help='gateway')
     parser.add_argument("--port",    default='53676',         help='port')
-    parser.add_argument("--run0",    default='1 1,16,0',      help="set tx sites+spad")
-    parser.add_argument("--play0",   default='1 16',          help="set rx sites+spad")
+    parser.add_argument("--run0",    default='1 1,16,0',      help="set tx sites+spad or notouch if set elsewhere")
+    parser.add_argument("--play0",   default='1 16',          help="set rx sites+spad or notouch if set elsewhere")
     parser.add_argument("--broadcast", default=0, type = int, help="broadcast the data")
     parser.add_argument("--disco",   default=None, type=int,  help="enable discontinuity check at index x")
+    parser.add_argument("--hudp_relay", default=None, type=int,  help="0..N: relay LLC VI out HUDP txt offset in vector")
     parser.add_argument("--spp",     default=1, type=int,     help="samples per packet")
     parser.add_argument("--hudp_decim", default=1, type=int,  help="hudp decimation, 1..16")
     parser.add_argument("txuut", nargs=1,                     help="transmit uut")
