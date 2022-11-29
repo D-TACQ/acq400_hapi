@@ -523,7 +523,7 @@ def make_plot_lists(args):
     
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
-    parser.add_argument('--nchan', type=int, default=32)
+    parser.add_argument('--nchan', type=int, default=None)
     parser.add_argument('--nblks', type=int, default=-1)
     parser.add_argument('--save', type=str, default=None, help='save channelized data to dir')
     parser.add_argument('--src', type=str, default='/data', help='data source root')
@@ -533,7 +533,7 @@ def run_main():
     parser.add_argument('--tai_vernier', type=int, default=None, help='decode this channel as tai_vernier')
     parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
-    parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
+    parser.add_argument('--data_type', type=int, default=None, help='Use int16 or int32 for data demux.')
     parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
     parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data. (legacy option)')
     parser.add_argument('--plot', type=int, default=1, help="plot data when set")
@@ -547,6 +547,14 @@ def run_main():
     calc_stack_480(args)
     args.WSIZE = 2
     args.NSAM = 0
+    if args.data_type == None or args.nchan == None or args.egu == 1:
+        args.the_uut = acq400_hapi.factory(args.uut[0])
+        
+    if args.data_type == None:
+        args.data_type = 32 if args.the_uut.s0.data32 else 16
+    if args.nchan == None:
+        args.nchan = int(args.the_uut.s0.NCHAN)
+     
     if args.data_type == 16:
         args.np_data_type = np.int16
         args.WSIZE = 2
@@ -577,8 +585,7 @@ def run_main():
     
    
     print("args.pc_list {}".format(args.pc_list))
-    if args.egu:
-        args.the_uut = acq400_hapi.factory(args.uut[0])
+    
     process_data(args)
 
 if __name__ == '__main__':
