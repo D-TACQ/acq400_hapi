@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """ hudp_setup.py : configure Hardware UDP 
 
 hudp_setup.py [opts] TXUUT RXUUT
