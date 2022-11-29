@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """ host_demux.py Demux Data on HOST Computer
 
@@ -148,6 +148,7 @@ def get_file_names(args):
     fnlist = list()
 # matches BOTH 0.?? for AFHBA an 0000 for FTP
     datapat = re.compile('[.0-9]{4}$')
+    datapat_dat = re.compile('[.0-9]{4}.dat$')
     has_cycles = True
     for cycle in make_cycle_list(args):
         if cycle == "err.log":
@@ -164,7 +165,7 @@ def get_file_names(args):
 
         ls.sort()
         for n, file in enumerate(ls):
-            if datapat.match(file):
+            if datapat.match(file) or datapat_dat.match(file):
                 fnlist.append(r'{}/{}'.format(uutroot, file) )
             else:
                 print("no match {}".format(file))
@@ -552,7 +553,7 @@ def run_main():
     elif args.data_type == 8:
         args.np_data_type = np.int8
         args.WSIZE = 1
-    else:       
+    else:
         args.np_data_type = np.int32
         args.WSIZE = 4
 
