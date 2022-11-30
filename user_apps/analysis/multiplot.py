@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 plot multiple single channel data sets stored as .npy files
@@ -38,16 +38,33 @@ def plot_data(args, data):
 def load_data(args):
     data = []
     for fn in args.files:
-        data.append(np.load(fn))
+        if args.data_type is None:
+            data.append(np.load(fn))
+        else:
+            data.append(np.fromfile(fn, dtype=args.np_data_type))
+        
     return data
 
 def run_main():
     parser = argparse.ArgumentParser(description='multiplot')
     parser.add_argument('--title', default="multiplot", help="Plot Title")
+    parser.add_argument('--data_type', default=None, help="default: .npy file, else 16 or 32 for raw data")
     parser.add_argument('--maxlen', type=int, default=None, help="max length to plot")
     parser.add_argument('files', nargs='+', help='file names')
     
     args = parser.parse_args()
+    if args.data_type is None:
+        print("plot .npy file")
+    elif args.data_type == 16:
+        args.np_data_type = np.int16
+        args.WSIZE = 2
+    elif args.data_type == 8:
+        args.np_data_type = np.int8
+        args.WSIZE = 1
+    else:
+        args.np_data_type = np.int32
+        args.WSIZE = 4    
+    
     plot_data(args, load_data(args))
 
 if __name__ == '__main__':
