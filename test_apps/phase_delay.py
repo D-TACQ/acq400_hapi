@@ -8,27 +8,7 @@ from prettytable import PrettyTable
 
 #./phase_delay_multi.py --s_clk=20000 --fsig=20 --method=1,2,4 --type=32 BROTH/*
 
-def run_comparison(args):
-    files = args.files.copy()
-    t = PrettyTable(['File1','File2','Diff(Nanoseconds)','Diff as % of sample clock'])
-    method_str, method_fun = methods[args.method]
-
-    while len(files) > 1:
-        first = files.pop(0)
-        for second in files:
-            first_filename = os.path.basename(first)
-            second_filename = os.path.basename(second)
-            phase_diff, degrees, sec, percent = method_fun(args,first,second)
-            t.add_row([first_filename, second_filename, sec, percent])
-        t.add_row(["-","-","-","-"]) # Empty row to demarcate first box in comparison
-    title = "{} fsig: {} s_clk: {}".format(method_str, args.fsig, args.s_clk)
-    t.title = title
-    print(t)
-    if args.output:
-        filename = "{}_{}.csv".format(args.output,title.replace(" ", "_"))
-        with open(filename, 'w', newline='') as f_output:
-            f_output.write(t.get_csv_string())
-
+# Define a number of methods of performing the comparison:
 def common_calc(args,first,second):
     x1 = np.fromfile(first, dtype=args.type)
     x2 = np.fromfile(second, dtype=args.type)
@@ -78,6 +58,37 @@ def common_out(phase_diff,args):
     percent = sec * 100 * args.s_clk
     return  round(phase_diff,2), round(degrees,2), round(sec * 1000000000,2), round(percent,2)
 
+methods = { 
+    1: ( "Taylor Series", taylor_series ), 
+    2: ("Phase Sensitive Detector", phase_sensitive_detector),
+    3: ("Fast Fourier Transform", fast_fourier_transform),
+    4: ("Hilbert Transform", hilbert_transform)
+}
+
+
+
+def run_comparison(args):
+    files = args.files.copy()
+    t = PrettyTable(['File1','File2','Diff(Nanoseconds)','Diff as % of sample clock'])
+    method_str, method_fun = methods[args.method]
+
+    while len(files) > 1:
+        first = files.pop(0)
+        for second in files:
+            first_filename = os.path.basename(first)
+            second_filename = os.path.basename(second)
+            phase_diff, degrees, sec, percent = method_fun(args,first,second)
+            t.add_row([first_filename, second_filename, sec, percent])
+        t.add_row(["-","-","-","-"]) # Empty row to demarcate first box in comparison
+    title = "{} fsig: {} s_clk: {}".format(method_str, args.fsig, args.s_clk)
+    t.title = title
+    print(t)
+    if args.output:
+        filename = "{}_{}.csv".format(args.output,title.replace(" ", "_"))
+        with open(filename, 'w', newline='') as f_output:
+            f_output.write(t.get_csv_string())
+
+
 def run_main():
     method_help = ""
     for k, v in sorted(methods.items()):
@@ -97,12 +108,6 @@ def run_main():
         exit("More than 2 files required")
     run_comparison(args)
 
-methods = { 
-    1: ( "Taylor Series", taylor_series ), 
-    2: ("Phase Sensitive Detector", phase_sensitive_detector),
-    3: ("Fast Fourier Transform", fast_fourier_transform),
-    4: ("Hilbert Transform", hilbert_transform)
-}
 
 if __name__ == '__main__':
     run_main()
