@@ -11,15 +11,17 @@ from prettytable import PrettyTable
 def run_comparison(args):
     files = args.files.copy()
     t = PrettyTable(['File1','File2','Diff(Nanoseconds)','Diff as % of sample clock'])
+    method_str, method_fun = methods[args.method]
+
     while len(files) > 1:
         first = files.pop(0)
         for second in files:
             first_filename = os.path.basename(first)
             second_filename = os.path.basename(second)
-            phase_diff, degrees, sec, percent = methods[args.method][1](args,first,second)
+            phase_diff, degrees, sec, percent = method_fun(args,first,second)
             t.add_row([first_filename, second_filename, sec, percent])
         t.add_row(["-","-","-","-"]) # Empty row to demarcate first box in comparison
-    title = "{} fsig: {} s_clk: {}".format(methods[args.method][0],args.fsig,args.s_clk)
+    title = "{} fsig: {} s_clk: {}".format(method_str, args.fsig, args.s_clk)
     t.title = title
     print(t)
     if args.output:
