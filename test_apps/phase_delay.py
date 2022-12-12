@@ -9,7 +9,7 @@ from prettytable import PrettyTable
 #./phase_delay_multi.py --s_clk=20000 --fsig=20 --method=1,2,4 --type=32 BROTH/*
 
 # Define a number of methods of performing the comparison:
-def common_calc(args,first,second):
+def common_calc(args, first, second):
     x1 = np.fromfile(first, dtype=args.type)
     x2 = np.fromfile(second, dtype=args.type)
     # Remove offsets
@@ -22,19 +22,19 @@ def common_calc(args,first,second):
     y3 = (x2 - x1) / m1
     return x1, x2, m1
     
-def taylor_series(args,first,second):
-    x1, x2, m1  = common_calc(args,first,second)
+def taylor_series(args, first, second):
+    x1, x2, m1  = common_calc(args, first, second)
     phase_diff = np.mean(abs(np.subtract(x2, x1)) / m1)
-    return common_out(phase_diff,args)
+    return common_out(phase_diff, args)
 
-def phase_sensitive_detector(args,first,second):
-    x1, x2, m1  = common_calc(args,first,second)
+def phase_sensitive_detector(args, first, second):
+    x1, x2, m1  = common_calc(args, first, second)
     phase_diff = np.arccos(np.dot(x1, x2) / (np.linalg.norm(x1)*np.linalg.norm(x2)))
-    return common_out(phase_diff,args)
+    return common_out(phase_diff, args)
 
-def fast_fourier_transform(args,first,second):
+def fast_fourier_transform(args, first, second):
     exit("method broke")
-    x1, x2, m1  = common_calc(args,first,second)
+    x1, x2, m1  = common_calc(args, first, second)
     fft_x1 = np.fft.fft(x1)
     fft_x2 = np.fft.fft(x2)
     #print "ffts = ", fft_x1, fft_x2
@@ -42,17 +42,17 @@ def fast_fourier_transform(args,first,second):
     l2 = len(fft_x2)
     phase_diff = np.angle(fft_x1[0:(l1+1/2)] / fft_x2[0:l2+1/2]) #slices array by float?
     phase_diff = float(np.pi) - float(phase_diff[0])
-    return common_out(phase_diff,args)
+    return common_out(phase_diff, args)
 
-def hilbert_transform(args,first,second):
-    x1, x2, m1  = common_calc(args,first,second)
+def hilbert_transform(args, first, second):
+    x1, x2, m1  = common_calc(args, first, second)
     x1h = hilbert(x1)
     x2h = hilbert(x2)
     ph_diff = np.angle(x1h/x2h)
     phase_diff = abs(ph_diff[0])
-    return common_out(phase_diff,args)
+    return common_out(phase_diff, args)
 
-def common_out(phase_diff,args):
+def common_out(phase_diff, args):
     degrees = phase_diff * (1/(np.pi / 180))
     sec = degrees / (360 * args.fsig)
     percent = sec * 100 * args.s_clk
@@ -77,7 +77,7 @@ def run_comparison(args):
         for second in files:
             first_filename = os.path.basename(first)
             second_filename = os.path.basename(second)
-            phase_diff, degrees, sec, percent = method_fun(args,first,second)
+            phase_diff, degrees, sec, percent = method_fun(args, first, second)
             t.add_row([first_filename, second_filename, sec, percent])
         t.add_row(["-","-","-","-"]) # Empty row to demarcate first box in comparison
     title = "{} fsig: {} s_clk: {}".format(method_str, args.fsig, args.s_clk)
@@ -97,8 +97,8 @@ def run_main():
     parser = argparse.ArgumentParser(description='awg speed test')
     parser.add_argument('--fsig', type=int, default=488,help='Frequency of the signal.',required=True)
     parser.add_argument('--s_clk', type=int, default=48800,help='Frequency of the clk.',required=True)
-    parser.add_argument('--method',default=1,type=int,help=method_help)
-    parser.add_argument('--type', type=int, default=16,help='16 or 32 bit data')
+    parser.add_argument('--method', default=1, type=int, help=method_help)
+    parser.add_argument('--type', type=int, default=16, help='16 or 32 bit data')
     parser.add_argument('--output', type=str, default=None,help='cs filename to write to')
     parser.add_argument('files',help='Files to process',nargs='+')
     
