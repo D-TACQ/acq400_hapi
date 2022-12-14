@@ -102,7 +102,21 @@ class NetworkFgAction:
             
         print("TRIGGER")
         self.fg.trigger()
-        
+
+class EnableSoftSoftTrgAction:
+    def __init__(self, args, uut):
+        self.args = args
+        self.uut = uut
+    def __call__(self):
+        while acq400_hapi.intpv(self.uut.s0.TRANS_ACT_PRE) < self.args.pre:
+            time.sleep(0.5)
+        while self.uut.s1.event0 == '0,0,0':
+            print("NetworkFgAction: snapped event disabled")
+            time.sleep(0.5)
+
+        print("SOFT EVENT TRIGGER")
+        self.uut.s0.soft_trigger = '1'
+
  
 def set_shot(args, uuts):
     if args.shot != None:
@@ -167,6 +181,9 @@ def upload(args, shots, doClose=False):
         
     for u in uuts:
         u.s0.TRANSIENT_SET_ABORT = '1'
+    for u in uuts:
+        while u.s0.TRANS_ACT_STATE.split(' ')[1] != 'IDLE':
+            time.sleep(0.1)
           
     shot_controller = acq400_hapi.ShotControllerWithDataHandler(uuts, args)
 
@@ -179,6 +196,11 @@ def upload(args, shots, doClose=False):
         trigger_action = NetworkFgAction(args, uuts[0], args.sig_gen)
     elif args.remote_trigger:
         trigger_action = EnableExtTrgAction(uuts[0])
+    elif args.soft_soft:
+        print("setting soft_soft trigger condition")
+        u.s1.trg = '1,1,1'
+        u.s1.event0 = '1,1,1'
+        trigger_action = EnableSoftSoftTrgAction(args, uuts[0])
     else:
         trigger_action = None
         st = args.soft_trigger
@@ -227,6 +249,8 @@ def get_args(argStr=None):
     parser.add_argument('--newobjectsplease', default=0, type=int, help="create new object instantiations every run")
     parser.add_argument('--sig_gen', default=None, type=str,
                         help='Network of Agilent 33210A or equivalent.') 
+    parser.add_argument('--soft_soft', default=None, type=str,
+                        help='double soft trigger, first a start trig, then a pre->post event trig')
     parser.add_argument('--validate_triggers', default=0, type=int, help="check trigger counts after each shot")   
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     return parser.parse_args(argStr)
