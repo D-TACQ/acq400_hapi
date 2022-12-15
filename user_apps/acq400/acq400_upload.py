@@ -103,17 +103,23 @@ class NetworkFgAction:
         print("TRIGGER")
         self.fg.trigger()
 
+
+ST_DELAY=float(os.getenv("SOFT_TRIGGER_DELAY", "1.0"))
+
 class EnableSoftSoftTrgAction:
     def __init__(self, args, uut):
         self.args = args
         self.uut = uut
+        self.uut.s1.trg = '1,1,1'
+        self.uut.s1.event0 = '1,1,1'
     def __call__(self):
         while acq400_hapi.intpv(self.uut.s0.TRANS_ACT_PRE) < self.args.pre:
             time.sleep(0.5)
         while self.uut.s1.event0 == '0,0,0':
             print("NetworkFgAction: snapped event disabled")
             time.sleep(0.5)
-
+ 
+        time.sleep(ST_DELAY)
         print("SOFT EVENT TRIGGER")
         self.uut.s0.soft_trigger = '1'
 
@@ -198,8 +204,6 @@ def upload(args, shots, doClose=False):
         trigger_action = EnableExtTrgAction(uuts[0])
     elif args.soft_soft:
         print("setting soft_soft trigger condition")
-        u.s1.trg = '1,1,1'
-        u.s1.event0 = '1,1,1'
         trigger_action = EnableSoftSoftTrgAction(args, uuts[0])
     else:
         trigger_action = None
