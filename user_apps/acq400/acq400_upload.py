@@ -129,6 +129,7 @@ def set_shot(args, uuts):
         for u in uuts:
             u.s1.shot = args.shot
 
+@acq400_hapi.timing
 def run_shot(args, uuts, shot_controller, trigger_action, st):
     try:
         if args.capture == 0:
@@ -156,6 +157,7 @@ def run_shot(args, uuts, shot_controller, trigger_action, st):
         print("ExitCommand raised and caught")
     finally:
         print("Finally, going down")
+
 
 
 class TriggerCountLogger:
