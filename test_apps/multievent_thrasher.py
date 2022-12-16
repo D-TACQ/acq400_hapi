@@ -42,14 +42,14 @@ def main(args):
     test_num = 1
     uut = setup(args)
     while True:
-        log("Test {}".format(test_num),prYellow)
+        log("Test {}".format(test_num), prYellow)
 
         current = get_event(current)
         check_event(current)
 
         log_event(test_num)
 
-        reset_test(test_num,uut,args.max_tests)
+        reset_test(test_num, uut, args.max_tests)
 
         clean([current])
         test_num += 1
@@ -57,7 +57,7 @@ def main(args):
 
 def clean(files_to_erase):
     for filename in files_to_erase:
-        filepath = "{}/{}".format(args.data_path,filename)
+        filepath = "{}/{}".format(args.data_path, filename)
         if os.path.exists(filepath):
             os.remove(filepath)
             prYellow("Erasing " + filename)
@@ -90,8 +90,8 @@ def stop_stream(uut):
         prYellow("Stopping Stream")
         uut.s0.CONTINUOUS = 'stop'
 
-def set_padding(uut,new):
-    log("Setting Pre/Post Samples to: {}".format(new),prYellow)
+def set_padding(uut, new):
+    log("Setting Pre/Post Samples to: {}".format(new), prYellow)
     uut.s1.MEV_POST = new
     uut.s1.MEV_PRE = new
     time.sleep(2)
@@ -115,7 +115,7 @@ def setup(args):
     uut.s0.SIG_SRC_TRG_0 = "EXT"
     uut.s1.MEV_MAX = 100
 
-    set_padding(uut,padding['current'])
+    set_padding(uut, padding['current'])
     prYellow("Threshold is {} tests".format(padding['threshold']))
     clean(['latest'])
     erase_all_events()
@@ -134,7 +134,7 @@ def get_event(current):
 
 def send_trigger():
     if args.sig_gen:
-        log("Sending Trigger",prYellow)
+        log("Sending Trigger", prYellow)
         acq400_hapi.Agilent33210A(args.sig_gen).trigger()
     else:
         print("Ready for trigger")
@@ -158,15 +158,15 @@ def get_new_event(current):
             if latest == "ERROR":
                 exit("Error  received")
             if latest != "":
-                log("Received: {}".format(latest),prGreen)
+                log("Received: {}".format(latest), prGreen)
                 return latest
-        print('Waiting for new Event {}s'.format(round(count,2)),end='\r')
+        print('Waiting for new Event {}s'.format(round(count,2)), end='\r')
         count += sleep
         time.sleep(sleep)
 
 def get_latest():
     filename = 'latest'
-    filepath = "{}/{}".format(args.data_path,filename)
+    filepath = "{}/{}".format(args.data_path, filename)
     if not os.path.isfile(filepath):
         return None
     line = open(filepath, 'r').readline().strip()
@@ -174,7 +174,7 @@ def get_latest():
 
 ####
 def check_event(current):
-    filepath = "{}/{}".format(args.data_path,current)
+    filepath = "{}/{}".format(args.data_path, current)
     data_array = np.fromfile(filepath, dtype=np.int32)
     #data_array = np.fromfile(filepath, dtype=np.uint32)
     """
@@ -184,7 +184,7 @@ def check_event(current):
         if num < 0:
             num = max_unsigned_32 + num
         count += 1
-        print("{} {}".format(hex(num),count))
+        print("{} {}".format(hex(num), count))
         if  count == 100:
             exit()
             pass
@@ -193,8 +193,8 @@ def check_event(current):
     """
     #data_array.shape = (-1,52)
     data_array.shape = (-1,20)
-    check_event_signatures(get_event_signatures(data_array),current)
-    check_sample_order(data_array,current)
+    check_event_signatures(get_event_signatures(data_array), current)
+    check_sample_order(data_array, current)
     get_filesize(current)
     del data_array
 
@@ -205,7 +205,7 @@ def get_event_signatures(data_array):
     max_unsigned_32 = 1 << 32
 
     array_len = len(data_array)
-    for i in range(0,array_len):
+    for i in range(0, array_len):
         num = data_array[i][1]
         if num < 0:
             num = max_unsigned_32 + num
@@ -213,7 +213,7 @@ def get_event_signatures(data_array):
             events.append(i)
     return events 
 
-def check_event_signatures(events,current):
+def check_event_signatures(events, current):
     if not events:
         error("Error: No Event Signature found got: {}".format(events))
         archive_error(current)
@@ -222,35 +222,35 @@ def check_event_signatures(events,current):
             error("Error: Extra event found at {}".format(event))
             archive_error(current)
         if event - padding['current'] == 0:
-            log("Event {} is a right position {}".format(i,event),prGreen)
+            log("Event {} is a right position {}".format(i, event), prGreen)
         else:
-            error("Error: Event {} is a wrong position {}".format(i,event))
+            error("Error: Event {} is a wrong position {}".format(i, event))
             archive_error(current)
 
-def check_sample_order(data_array,latest):
+def check_sample_order(data_array, latest):
     sc = 16
     array_len = len(data_array)
     previous = data_array[0][sc] - 1
-    for i in range(0,array_len):
+    for i in range(0, array_len):
         current = data_array[i][sc]
         diff = current - previous
         know_errors = [-1956863,1956865]
         if diff != 1:
             if diff in know_errors:
-                log("Sample count rolled back?",prCyan)
-                error("Known Error: {} Sample wrong Current is: {} Previous was: {} Diff is {}".format(i,current,previous,diff))
+                log("Sample count rolled back?", prCyan)
+                error("Known Error: {} Sample wrong Current is: {} Previous was: {} Diff is {}".format(i, current, previous, diff))
                 archive_error(latest)
                 return
-            error("Error: {} Sample wrong Current is: {} Previous was: {} Diff is {}".format(i,current,previous,diff))
+            error("Error: {} Sample wrong Current is: {} Previous was: {} Diff is {}".format(i, current, previous, diff))
             archive_error(latest)
             return
         previous = current
-    log("{} samples in order".format(array_len),prGreen)
+    log("{} samples in order".format(array_len), prGreen)
 
 def get_filesize(filename):
-    event_file = "{}/{}".format(args.data_path,filename)
+    event_file = "{}/{}".format(args.data_path, filename)
     size = round(os.path.getsize(event_file)/(1<<20))
-    log("File is {}MB".format(size),prYellow)
+    log("File is {}MB".format(size), prYellow)
 
 ####
 def log_event(test_num):
@@ -259,7 +259,7 @@ def log_event(test_num):
         logger['file'] = create_log_filename(test_num)
         write_log()
 
-def log(message,color = None):
+def log(message, color = None):
     global logger
     if color:
         color(message)
@@ -267,13 +267,13 @@ def log(message,color = None):
 
 def error(message):
     global logger
-    log(message,prRed)
+    log(message, prRed)
     logger['errors'] += 1
 
 def log_time(start):
     global logger
     timetaken = round(time.time() - start,2)
-    log("{}s elapsed".format(timetaken),prYellow)
+    log("{}s elapsed".format(timetaken), prYellow)
     logger['time'] += timetaken
     if timetaken > logger['worst']:
         prYellow("New worst time! {}s".format(timetaken))
@@ -282,12 +282,12 @@ def log_time(start):
 
 def create_log_filename(test_num):
     test_start = int((test_num - 1) / padding['threshold']) * padding['threshold'] + 1
-    return "Tests[{}-{}]{}-{}.log".format(test_start,test_num,padding['current'],padding['current'])
+    return "Tests[{}-{}]{}-{}.log".format(test_start, test_num, padding['current'], padding['current'])
 
 def write_log():
     global logger
     average_time = round(logger['time'] / padding['threshold'], 2) 
-    log("writing log to file ",prYellow)
+    log("writing log to file ", prYellow)
     log("Total Errors: {}".format(logger['errors']))
     log("Average time: {}s".format(average_time))
     log("Worst time: {}s".format(logger['worst']))
@@ -302,12 +302,12 @@ def write_log():
 def archive_error(name):
     prRed("Archiving error")
     dest = "{}.error".format(name)
-    cmd = "cp {}/{} {}/{}".format(args.data_path,name,args.data_path,dest)
+    cmd = "cp {}/{} {}/{}".format(args.data_path, name, args.data_path, dest)
     #print(cmd)
     os.system(cmd)
     time.sleep(1)
 ####
-def reset_test(test_num,uut,max_tests):
+def reset_test(test_num, uut, max_tests):
     #change slowmon freq here
     #slomon(freq) ?
     if test_num % padding['threshold'] == 0:
@@ -318,19 +318,19 @@ def reset_test(test_num,uut,max_tests):
         else:
             if not increase_samples(uut):
                 exit("Max samples reached")
-    fix_stream(test_num,uut)
+    fix_stream(test_num, uut)
 
 def increase_samples(uut):
     global padding
     if padding['current'] < padding['max']:
         padding['current'] += padding['step']
-        set_padding(uut,padding['current'])
+        set_padding(uut, padding['current'])
         return True
     return False
 
-def fix_stream(test_num,uut):
+def fix_stream(test_num, uut):
     if test_num % 100 == 0:
-        log("Fixing stream",prYellow)
+        log("Fixing stream", prYellow)
         uut.s1.MEV_MAX = 100
         stop_stream(uut)
         start_stream(uut)
