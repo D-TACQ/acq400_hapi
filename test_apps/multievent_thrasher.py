@@ -2,6 +2,28 @@
 ''' test program for multivent. 
 1 autotriggers
 2 waits for data, analyses data, repeats 1
+
+[pgm@hoy5 acq400_hapi]$ ./test_apps/multievent_thrasher.py --help
+usage: multievent_thrasher.py [-h] [-i INITIAL] [-s STEP] [-m MAX] [-t THRESHOLD] [-n MAX_TESTS] [--sig_gen SIG_GEN] [--root ROOT] uuts
+
+Multivent Thrash Test
+
+positional arguments:
+  uuts                  uut dns name or ip
+
+options:
+  -h, --help            show this help message and exit
+  -i INITIAL, --initial INITIAL
+                        Initial prepost samples
+  -s STEP, --step STEP  Sample increase amount
+  -m MAX, --max MAX     Max samples before stop max 100,000
+  -t THRESHOLD, --threshold THRESHOLD
+                        number of shots before write log and stepping samples
+  -n MAX_TESTS, --max_tests MAX_TESTS
+                        maximum tests to do
+  --sig_gen SIG_GEN     dns name or ip-address of remote FG
+  --root ROOT           data root path for arriving data files
+
 '''
 
 import os
@@ -11,12 +33,9 @@ import argparse
 import acq400_hapi
 import subprocess
 
-uut_name = "acq2106_178"
-signal_gen = "sg0153"
-data_path = "/home/dt100/DATA/TESTING"
+args = None
 padding = {}
 logger = {}
-#current here?  global
 
 def main(args):
     current = None
@@ -30,10 +49,6 @@ def main(args):
 
         log_event(test_num)
 
-
-
-
-
         reset_test(test_num,uut,args.max_tests)
 
         clean([current])
@@ -42,13 +57,13 @@ def main(args):
 
 def clean(files_to_erase):
     for filename in files_to_erase:
-        filepath = "{}/{}".format(data_path,filename)
+        filepath = "{}/{}".format(args.data_path,filename)
         if os.path.exists(filepath):
             os.remove(filepath)
             prYellow("Erasing " + filename)
 
 def erase_all_events():
-    files = sorted(os.listdir(data_path))
+    files = sorted(os.listdir(args.data_path))
     for filename in files:
         if filename[-4:] == '.dat':
             clean([filename])
@@ -93,7 +108,7 @@ def setup(args):
     if(args.max_tests < args.threshold and args.max_tests != 0):
         exit("Error: threshold larger than max_tests")
 
-    uut = acq400_hapi.Acq400(uut_name, monitor=False)
+    uut = acq400_hapi.Acq400(args.uuts[0], monitor=False)
     uut.s1.EVENT0 = 'enable'
     uut.s1.EVENT0_SENSE = 'rising'
     uut.s0.SIG_SRC_TRG_0 = "EXT"
@@ -117,8 +132,11 @@ def get_event(current):
     return event
 
 def send_trigger():
-    log("Sending Trigger",prYellow)
-    acq400_hapi.Agilent33210A(signal_gen).trigger()
+    if args.sig_gen:
+        log("Sending Trigger",prYellow)
+        acq400_hapi.Agilent33210A(args.sig_gen).trigger()
+    else:
+        print("Ready for trigger")
 
 def get_new_event(current):
     second_chance = True
@@ -147,7 +165,7 @@ def get_new_event(current):
 
 def get_latest():
     filename = 'latest'
-    filepath = "{}/{}".format(data_path,filename)
+    filepath = "{}/{}".format(args.data_path,filename)
     if not os.path.isfile(filepath):
         return None
     line = open(filepath, 'r').readline().strip()
@@ -155,7 +173,7 @@ def get_latest():
 
 ####
 def check_event(current):
-    filepath = "{}/{}".format(data_path,current)
+    filepath = "{}/{}".format(args.data_path,current)
     data_array = np.fromfile(filepath, dtype=np.int32)
     #data_array = np.fromfile(filepath, dtype=np.uint32)
     """
@@ -229,7 +247,7 @@ def check_sample_order(data_array,latest):
     log("{} samples in order".format(array_len),prGreen)
 
 def get_filesize(filename):
-    event_file = "{}/{}".format(data_path,filename)
+    event_file = "{}/{}".format(args.data_path,filename)
     size = round(os.path.getsize(event_file)/(1<<20))
     log("File is {}MB".format(size),prYellow)
 
@@ -283,7 +301,7 @@ def write_log():
 def archive_error(name):
     prRed("Archiving error")
     dest = "{}.error".format(name)
-    cmd = "cp {}/{} {}/{}".format(data_path,name,data_path,dest)
+    cmd = "cp {}/{} {}/{}".format(args.data_path,name,args.data_path,dest)
     #print(cmd)
     os.system(cmd)
     time.sleep(1)
@@ -329,17 +347,20 @@ def prCyan(skk): print("\033[96m{}\033[00m" .format(skk))
 def prBlue(skk): print("\033[94m{}\033[00m" .format(skk))
 
 def cmdArgs():
-    parser = argparse.ArgumentParser(description='MulitEvent + slowmon Test')
+    global args
+    parser = argparse.ArgumentParser(description='Multivent Thrash Test')
     parser.add_argument('-i', '--initial', default=5000, type=int, help='Initial prepost samples')
     parser.add_argument('-s', '--step', default=5000, type=int, help='Sample increase amount')
     parser.add_argument('-m', '--max', default=100000, type=int, help='Max samples before stop max 100,000')
-    parser.add_argument('-t', '--threshold', default=100, type=int, help='how mnay before incrase samples and write log')
+    parser.add_argument('-t', '--threshold', default=100, type=int, help='number of shots before write log and stepping samples')
     parser.add_argument('-n', '--max_tests', default=0, type=int, help='maximum tests to do')
-    #siggen
-    #uut
-    #event dir
-    #
-    return parser.parse_args()
+    parser.add_argument('--sig_gen', default=None, type=str, help='dns name or ip-address of remote FG')    
+    parser.add_argument('--root', default='/home/dt100/DATA/{}', help='data root path for arriving data files')
+    parser.add_argument('uuts', nargs = 1, help="uut  dns name or ip")
+    
+    args = parser.parse_args()
+    args.data_path = args.root.format(args.uuts[0])
+    return args
 
 if __name__ == '__main__':
     main(cmdArgs())
