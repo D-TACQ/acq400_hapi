@@ -74,20 +74,22 @@ def get_stream_state(uut):
 
 def start_stream(uut):
     state = get_stream_state(uut)
-    if state in ['IDLE','CLEANUP']:
-        prYellow("Starting Stream")
-        uut.s0.streamtonowhered = 'start'
-        while state != "RUN":
-            print("Waiting for start")
-            state = get_stream_state(uut)
-            time.sleep(1)
-        prGreen("Stream Started")
+    while not state in ['IDLE','CLEANUP']:
+        time.sleep(1)
+        state = get_stream_state(uut)
+    prYellow("Starting Stream")
+    uut.s0.CONTINUOUS = 'start'
+    while state != "RUN":
+        print("Waiting for start")
+        state = get_stream_state(uut)
+        time.sleep(1)
+    prGreen("Stream Started")
 
 def stop_stream(uut):
     state = get_stream_state(uut)
     if state in ['RUN','ARM']:
         prYellow("Stopping Stream")
-        uut.s0.streamtonowhered = 'stop'
+        uut.s0.CONTINUOUS = 'stop'
 
 def set_padding(uut,new):
     log("Setting Pre/Post Samples to: {}".format(new),prYellow)
