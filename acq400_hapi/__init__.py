@@ -13,6 +13,7 @@ from .shotcontrol import *
 from . import cleanup
 from . import awg_data
 from .acq400_ui import Acq400UI
+from .acq400_print import PR
 from . import awg_data
 from .intSI import *
 from .debug import Debugger

@@ -32,6 +32,7 @@ import numpy as np
 import argparse
 import acq400_hapi
 import subprocess
+from acq400_hapi import PR
 
 args = None
 padding = {}
@@ -42,7 +43,7 @@ def main(args):
     test_num = 1
     uut = setup(args)
     while True:
-        log("Test {}".format(test_num), prYellow)
+        log("Test {}".format(test_num), PR.Yellow)
 
         current = get_event(current)
         check_event(current)
@@ -60,7 +61,7 @@ def clean(files_to_erase):
         filepath = "{}/{}".format(args.data_path, filename)
         if os.path.exists(filepath):
             os.remove(filepath)
-            prYellow("Erasing " + filename)
+            PR.Yellow("Erasing " + filename)
 
 def erase_all_events():
     files = sorted(os.listdir(args.data_path))
@@ -76,22 +77,22 @@ def start_stream(uut):
     while not state in ['IDLE','CLEANUP']:
         time.sleep(1)
         state = get_stream_state(uut)
-    prYellow("Starting Stream")
+    PR.Yellow("Starting Stream")
     uut.s0.CONTINUOUS = 'start'
     while state != "RUN":
         print("Waiting for start")
         state = get_stream_state(uut)
         time.sleep(1)
-    prGreen("Stream Started")
+    PR.Green("Stream Started")
 
 def stop_stream(uut):
     state = get_stream_state(uut)
     if state in ['RUN','ARM']:
-        prYellow("Stopping Stream")
+        PR.Yellow("Stopping Stream")
         uut.s0.CONTINUOUS = 'stop'
 
 def set_padding(uut, new):
-    log("Setting Pre/Post Samples to: {}".format(new), prYellow)
+    log("Setting Pre/Post Samples to: {}".format(new), PR.Yellow)
     uut.s1.MEV_POST = new
     uut.s1.MEV_PRE = new
     time.sleep(2)
@@ -116,7 +117,7 @@ def setup(args):
     uut.s1.MEV_MAX = 100
 
     set_padding(uut, padding['current'])
-    prYellow("Threshold is {} tests".format(padding['threshold']))
+    PR.Yellow("Threshold is {} tests".format(padding['threshold']))
     clean(['latest'])
     erase_all_events()
 
@@ -134,7 +135,7 @@ def get_event(current):
 
 def send_trigger():
     if args.sig_gen:
-        log("Sending Trigger", prYellow)
+        log("Sending Trigger", PR.Yellow)
         acq400_hapi.Agilent33210A(args.sig_gen).trigger()
     else:
         print("Ready for trigger")
@@ -158,7 +159,7 @@ def get_new_event(current):
             if latest == "ERROR":
                 exit("Error  received")
             if latest != "":
-                log("Received: {}".format(latest), prGreen)
+                log("Received: {}".format(latest), PR.Green)
                 return latest
         print('Waiting for new Event {}s'.format(round(count,2)), end='\r')
         count += sleep
@@ -222,7 +223,7 @@ def check_event_signatures(events, current):
             error("Error: Extra event found at {}".format(event))
             archive_error(current)
         if event - padding['current'] == 0:
-            log("Event {} is a right position {}".format(i, event), prGreen)
+            log("Event {} is a right position {}".format(i, event), PR.Green)
         else:
             error("Error: Event {} is a wrong position {}".format(i, event))
             archive_error(current)
@@ -237,7 +238,7 @@ def check_sample_order(data_array, latest):
         know_errors = [-1956863,1956865]
         if diff != 1:
             if diff in know_errors:
-                log("Sample count rolled back?", prCyan)
+                log("Sample count rolled back?", PR.Cyan)
                 error("Known Error: {} Sample wrong Current is: {} Previous was: {} Diff is {}".format(i, current, previous, diff))
                 archive_error(latest)
                 return
@@ -245,12 +246,12 @@ def check_sample_order(data_array, latest):
             archive_error(latest)
             return
         previous = current
-    log("{} samples in order".format(array_len), prGreen)
+    log("{} samples in order".format(array_len), PR.Green)
 
 def get_filesize(filename):
     event_file = "{}/{}".format(args.data_path, filename)
     size = round(os.path.getsize(event_file)/(1<<20))
-    log("File is {}MB".format(size), prYellow)
+    log("File is {}MB".format(size), PR.Yellow)
 
 ####
 def log_event(test_num):
@@ -267,16 +268,16 @@ def log(message, color = None):
 
 def error(message):
     global logger
-    log(message, prRed)
+    log(message, PR.Red)
     logger['errors'] += 1
 
 def log_time(start):
     global logger
     timetaken = round(time.time() - start,2)
-    log("{}s elapsed".format(timetaken), prYellow)
+    log("{}s elapsed".format(timetaken), PR.Yellow)
     logger['time'] += timetaken
     if timetaken > logger['worst']:
-        prYellow("New worst time! {}s".format(timetaken))
+        PR.Yellow("New worst time! {}s".format(timetaken))
         logger['worst'] = timetaken
         pass
 
@@ -287,7 +288,7 @@ def create_log_filename(test_num):
 def write_log():
     global logger
     average_time = round(logger['time'] / padding['threshold'], 2) 
-    log("writing log to file ", prYellow)
+    log("writing log to file ", PR.Yellow)
     log("Total Errors: {}".format(logger['errors']))
     log("Average time: {}s".format(average_time))
     log("Worst time: {}s".format(logger['worst']))
@@ -300,7 +301,7 @@ def write_log():
     logger['worst'] =  0
 
 def archive_error(name):
-    prRed("Archiving error")
+    PR.Red("Archiving error")
     dest = "{}.error".format(name)
     cmd = "cp {}/{} {}/{}".format(args.data_path, name, args.data_path, dest)
     #print(cmd)
@@ -330,7 +331,7 @@ def increase_samples(uut):
 
 def fix_stream(test_num, uut):
     if test_num % 100 == 0:
-        log("Fixing stream", prYellow)
+        log("Fixing stream", PR.Yellow)
         uut.s1.MEV_MAX = 100
         stop_stream(uut)
         start_stream(uut)
@@ -339,14 +340,14 @@ def fix_stream(test_num, uut):
         #stop_stream(uut)
         #start_stream(uut)
 
-
-def prRed(skk): print("\033[91m{}\033[00m" .format(skk))
-def prGreen(skk): print("\033[92m{}\033[00m" .format(skk)) 
-def prYellow(skk): print("\033[93m{}\033[00m" .format(skk)) 
-def prPurple(skk): print("\033[95m{}\033[00m" .format(skk)) 
-def prCyan(skk): print("\033[96m{}\033[00m" .format(skk)) 
-def prBlue(skk): print("\033[94m{}\033[00m" .format(skk))
-
+'''
+def PR.Red(skk): print("\033[91m{}\033[00m" .format(skk))
+def PR.Green(skk): print("\033[92m{}\033[00m" .format(skk)) 
+def PR.Yellow(skk): print("\033[93m{}\033[00m" .format(skk)) 
+def PR.Purple(skk): print("\033[95m{}\033[00m" .format(skk)) 
+def PR.Cyan(skk): print("\033[96m{}\033[00m" .format(skk)) 
+def PR.Blue(skk): print("\033[94m{}\033[00m" .format(skk))
+'''
 def cmdArgs():
     global args
     parser = argparse.ArgumentParser(description='Multivent Thrash Test')
