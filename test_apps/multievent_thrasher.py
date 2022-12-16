@@ -69,8 +69,7 @@ def erase_all_events():
             clean([filename])
 
 def get_stream_state(uut):
-    state = uut.s0.CONTINUOUS_STATE
-    return state.replace('CONTINUOUS:STATE', '').strip()
+    return acq400_hapi.pv(uut.s0.CONTINUOUS_STATE)
 
 def start_stream(uut):
     state = get_stream_state(uut)
