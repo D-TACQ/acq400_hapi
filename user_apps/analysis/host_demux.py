@@ -551,7 +551,7 @@ def run_main():
         args.the_uut = acq400_hapi.factory(args.uut[0])
         
     if args.data_type == None:
-        args.data_type = 32 if args.the_uut.s0.data32 else 16
+        args.data_type = 32 if int(args.the_uut.s0.data32) else 16
     if args.nchan == None:
         args.nchan = int(args.the_uut.s0.NCHAN)
      
