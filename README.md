@@ -19,7 +19,7 @@ cd acq400_hapi
 #export PYTHONPATH=~/PROJECTS/acq400_hapi
 
 on Linux,   run: source ./setpath
-on Windows, run: SETPYTHONPATH.BAT
+on Windows, run: SETPYTHONPATH.BAT      # then start a new shell.
 ```
 
 ### Standard method use PIP
