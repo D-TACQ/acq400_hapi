@@ -72,6 +72,7 @@ class AcqPorts:
     AWG_STREAM = 54207
     MGTDRAM = 53993
     MGTDRAM_PULL_DATA = 53991
+    SLOWMON = 53666
 
 class AcqSites:
     # site service at AcqPorts.SITE0+ AcqSites.SITEi
