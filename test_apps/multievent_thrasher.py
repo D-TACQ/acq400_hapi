@@ -335,19 +335,7 @@ def fix_stream(test_num, uut):
         uut.s1.MEV_MAX = 100
         stop_stream(uut)
         start_stream(uut)
-    #if test_num % 1000 == 0:
-    #strange behaviour :(
-        #stop_stream(uut)
-        #start_stream(uut)
 
-'''
-def PR.Red(skk): print("\033[91m{}\033[00m" .format(skk))
-def PR.Green(skk): print("\033[92m{}\033[00m" .format(skk)) 
-def PR.Yellow(skk): print("\033[93m{}\033[00m" .format(skk)) 
-def PR.Purple(skk): print("\033[95m{}\033[00m" .format(skk)) 
-def PR.Cyan(skk): print("\033[96m{}\033[00m" .format(skk)) 
-def PR.Blue(skk): print("\033[94m{}\033[00m" .format(skk))
-'''
 def cmdArgs():
     global args
     parser = argparse.ArgumentParser(description='Multivent Thrash Test')
