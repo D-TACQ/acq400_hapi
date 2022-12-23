@@ -567,7 +567,13 @@ def run_main():
 
     print("data_type {} np {}".format(args.data_type, args.np_data_type))
     if os.name == "nt":  # do this if windows system.
-        args.uutroot = r"{}:\{}\{}".format(args.drive_letter, args.src, args.uut[0])
+        args.src  = args.src.replace("/","\\")
+        if os.path.isdir(args.src):
+            args.uutroot = args.src
+        elif os.path.isfile(args.src):
+            args.uutroot = os.path.dirname(args.src)
+        else:
+            exit("file not found")
     elif os.path.isdir(args.src):
         args.uutroot = r"{}/{}".format(args.src, args.uut[0])
         print("uutroot {}".format(args.uutroot))
