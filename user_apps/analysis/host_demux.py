@@ -454,8 +454,11 @@ def process_data(args):
 
     raw_data = read_data(args, NCHAN) if not os.path.isfile(args.src) else read_data_file(args, NCHAN)
 
+    if args.es == 0:
+        raw_data = strip_es(args,raw_data)
+
     if args.double_up:
-	       raw_data = double_up(args, raw_data)
+           raw_data = double_up(args, raw_data)
 
     if args.stack_480:
         raw_data = stack_480_shuffle(args, raw_data)
@@ -464,6 +467,22 @@ def process_data(args):
         save_data(args, raw_data)
     if args.plot and len(args.pc_list) > 0:
         plot_data(args, raw_data)
+
+def strip_es(args,data):
+    if args.data_type == 32:
+        esr = [-0x55aa0000,-0x55aaffff]
+    else:
+        #esr = [] #unknown es range
+        return data
+
+    for ch in args.pc_list:
+        index = 0
+        while index < len(data[ch]):
+            num = data[ch][index]
+            if esr[1] <= num <= esr[0]:
+                data[ch][index] = 0
+            index += 1
+    return data
 
 def make_pc_list(args):
     # ch in 1.. (human)
@@ -542,6 +561,7 @@ def run_main():
     parser.add_argument('--mpl_end', type=int, default=-1, help='Control number of samples to plot with mpl.')
     parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
     parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
+    parser.add_argument('--es', type=int, default=1, help="Show or strip es")
     parser.add_argument('uut', nargs=1, help='uut')
     args = parser.parse_args()
     calc_stack_480(args)
