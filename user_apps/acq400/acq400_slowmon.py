@@ -15,6 +15,25 @@ examples:
 3 [ 0054, ffef, 0001, ffc3, ff8a, ff92, ff6f, 0006 ] [ 723a5004, 00000000, 00000001, 00000030 ]
 4 [ 0053, fff0, 0005, ffc6, ff89, ff8f, ff71, 0006 ] [ 723ab601, 00000000, 000065fd, 00000030 ]
 
+[pgm@hoy5 acq400_hapi]$ ./user_apps/acq400/acq400_slowmon.py --egu=1 --pchan=8 acq2106_178 | head
+0, -7.52828e-04,-1.47888e-03,-7.92902e-04,-4.81650e-04,-7.51480e-04,-9.10488e-04,-7.71380e-04,-1.01143e-03
+1, -6.29032e-04,-1.47888e-03,-7.92902e-04,-3.58180e-04,-7.51480e-04,-7.87045e-04,-7.71380e-04,-1.25875e-03
+2, -2.57644e-04,-4.90988e-04,-5.24180e-05,-1.11240e-04,-3.80620e-04,-1.69830e-04,-4.00040e-04,-2.69477e-04
+3, -2.57644e-04,-6.14475e-04,-2.99246e-04,3.82640e-04,-2.57000e-04,7.70560e-05,-2.76260e-04,-1.45818e-04
+
+
+** set runtime to 10s (from first rx sample)
+
+[pgm@hoy5 acq400_hapi]$ ./user_apps/acq400/acq400_slowmon.py --runtime=10 --show_raw=h --pchan=8 acq2106_178
+0 [ 005b, fff0, 0007, ffc5, ff8c, ff93, ff75, 0008 ] [ 101e3401, 00000000, 101e3401, 00000077 ]
+1 [ 005c, fff7, 000d, ffca, ff90, ff97, ff75, 0010 ] [ 101e3402, 00000000, 00000001, 00000077 ]
+2 [ 0055, ffec, 0001, ffc1, ff88, ff8f, ff70, 0006 ] [ 101e3403, 00000000, 00000001, 00000077 ]
+...
+1534 [ 0057, ffee, 0005, ffc2, ff89, ff94, ff6e, 0003 ] [ 10b6ce03, 00000000, 00000001, 0000003a ]
+1535 [ 0057, fff4, 0007, ffc8, ff8f, ff95, ff75, 0009 ] [ 10b6ce04, 00000000, 00000001, 0000003a ]
+1536 [ 0054, ffeb, ffff, ffbf, ff8a, ff8f, ff6d, 0003 ] [ 10b73401, 00000000, 000065fd, 0000003b ]
+
+
 '''
 
 import acq400_hapi
@@ -54,7 +73,14 @@ def to_egu(uut, xarr):
     return ",".join(egu)
 
 def run_stream(args, uut):
+    t_run = 0
+    
     for row, (chx, spx) in enumerate(uut.stream_slowmon()):
+        
+        if row == 0:
+            t0 = time.time()
+        else:
+            t_run = time.time() - t0
         #print("{} len {},{} type {},{} shape {},{}\n{} {}".format(row, len(chx), len(spx), chx.dtype, spx.dtype, chx.shape, spx.shape, chx, spx))
         if args.show_raw:
             if args.show_raw == 'd':
@@ -64,6 +90,9 @@ def run_stream(args, uut):
                 
         if args.egu == 1:
             print("{}, {}".format(row, to_egu(uut, chx[:args.pchan])))
+            
+        if t_run >= args.runtime:
+            return
 
     
 def run_main():
