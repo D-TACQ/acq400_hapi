@@ -49,6 +49,10 @@ def str_dec(xarr):
     
     return txt + dfmte.format(xarr[-1])
 
+def to_egu(uut, xarr):
+    egu = [ "{:.5e}".format(uut.chan2volts(ix+1, xx)) for ix, xx in enumerate(xarr)]
+    return ",".join(egu)
+
 def run_stream(args, uut):
     for row, (chx, spx) in enumerate(uut.stream_slowmon()):
         #print("{} len {},{} type {},{} shape {},{}\n{} {}".format(row, len(chx), len(spx), chx.dtype, spx.dtype, chx.shape, spx.shape, chx, spx))
@@ -57,6 +61,9 @@ def run_stream(args, uut):
                 print("{} {} {}".format(row, str_dec(chx[:args.pchan]), str_dec(spx)))
             else:
                 print("{} {} {}".format(row, str_hex(chx[:args.pchan]), str_hex(spx)))
+                
+        if args.egu == 1:
+            print("{}, {}".format(row, to_egu(uut, chx[:args.pchan])))
 
     
 def run_main():
@@ -66,6 +73,7 @@ def run_main():
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
+    parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
     parser.add_argument('uuts', nargs=1, help="uuts")
     args = parser.parse_args()
     
