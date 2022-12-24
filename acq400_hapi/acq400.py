@@ -1322,6 +1322,35 @@ class Acq400:
                     pos += nrx
             yield np.frombuffer(buf[:pos], dtype)
 
+    def stream_slowmon(self):
+        ssb = int(self.s0.ssb)
+        data_sz = 4 if int(self.s0.data32) else 2
+        nspad = int(self.s0.spad.split(',')[1])
+        spad_sz = nspad*4
+        nchan = (ssb - spad_sz)//data_sz
+        ch_dtype = np.dtype('i4' if data_sz == 4 else 'i2')
+        sp_dtype = np.dtype('u4')
+        
+        nc = netclient.Netclient(self.uut, AcqPorts.SLOWMON)
+        buf = bytearray(ssb)
+        view = memoryview(buf).cast('B') 
+        
+        while True:
+            view = memoryview(buf).cast('B')
+            ib = 0
+            
+            while ib < ssb:
+                nrx = nc.sock.recv_into(view)
+                #print("stream_slowmon: nrx:{} ib:{} len(view) {}".format(nrx, ib, len(view)))
+                if nrx == 0:
+                    print("stream_slowmon: nrx:{} ib:{} len(view) {}".format(nrx, ib, len(view)))
+                    #sys.exit(-1)
+                else:
+                    view = view[nrx:]
+                    ib += nrx
+            chx = np.frombuffer(buf, ch_dtype)[:nchan]
+            spx = np.frombuffer(buf, sp_dtype)[spad_sz:]
+            yield(chx, spx)
 
 
 def freq(sig):

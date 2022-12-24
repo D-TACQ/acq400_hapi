@@ -12,7 +12,12 @@ import sys
 import shutil
 
 
-def run_stream(args):
+def run_stream(args, uut):
+    for row, (chx, spx) in enumerate(uut.stream_slowmon()):
+        #print("{} len {},{} type {},{} shape {},{}\n{} {}".format(row, len(chx), len(spx), chx.dtype, spx.dtype, chx.shape, spx.shape, chx, spx))
+        print("{} {} {}".format(row, chx[:8], spx))
+        
+    
     return
     
 def run_main():
@@ -25,13 +30,7 @@ def run_main():
     args = parser.parse_args()
     
     uut = acq400_hapi.factory(args.uuts[0])
-    args.ssb = int(uut.s0.ssb)
-    args.data32 = int(uut.s0.data32)
-    args.nspad = int(uut.s0.spad.split(',')[1])
-    args.nchan = (args.ssb - 4*args.nspad)//(4 if args.data32 else 2)
-    
-    print("ssb: {} nchan: {}*{} nspad:{}".format(args.ssb, args.nchan, 4 if args.data32 else 2, args.nspad))
-    run_stream(args)
+    run_stream(args, uut)
 
 
 if __name__ == '__main__':
