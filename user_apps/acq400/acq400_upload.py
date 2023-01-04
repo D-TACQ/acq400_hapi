@@ -259,11 +259,10 @@ def get_args(argStr=None):
                         help='double soft trigger, first a start trig, then a pre->post event trig')
     parser.add_argument('--validate_triggers', default=0, type=int, help="check trigger counts after each shot")   
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
-    return parser.parse_args(argStr)
+    return parser
 
 @acq400_hapi.timing
-def run_main():
-    args = get_args()
+def run_main(args):    
     # deduplicate (yes, some non-optimal apps call with duplicated uuts, wastes time)
     args.uuts = uniq(args.uuts)
     # encourage single ints to become a list
@@ -279,4 +278,4 @@ def run_main():
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_args().parse_args())
