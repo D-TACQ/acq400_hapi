@@ -1,5 +1,29 @@
 #!/usr/bin/env python3
 
+''' gpg_load_oneshot [--stl stl] [acq400_upload opts] uut [uut2] ...
+
+Configure uut for Burst RGM operation, with bursts self-stimulated from the Gate Pulse Generator GPG.
+
+This program makes initial customisation:
+    set_rgm(): configures Burst RGM
+    set_gpg(): configures Gate Pulse Generator GPG
+
+Example usage:
+
+ NETCLIENT_TRACE=1 SITECLIENT_TRACE=1 ./user_apps/acq400/gpg_load_oneshot.py \
+    --capture=1 --remote_trigger=EXT --pre=0 --post=4000000 \
+    --stl ./STL/4x2Hz.stl \ 
+    --es_enable=0 \
+    --channels=1,2 --plot_data=-2 \
+    acq2106_178
+    
+ref: acq2106-gpg-acq48x-fat-r2
+
+START trigger is supplied ONCE on FP TRG (TRG.d0)
+GPG provides BURST pulses on EVT.d0 to both ADC system and output on AUX2
+
+'''
+
 import acq400_hapi
 import argparse
 import acq400_upload
