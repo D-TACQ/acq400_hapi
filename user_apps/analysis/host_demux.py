@@ -100,14 +100,6 @@ if os.name != "nt":
     except ImportError:
         pass
         
-has_plotext = False
-try:
-    import plotext
-    has_plotext = True
-    print("INFO: plotext available as plot backup when no graphics")
-except ImportError:
-    pass
-
 logging.getLogger('matplotlib.font_manager').disabled = True
 
 def channel_required(args, ch):
@@ -273,33 +265,6 @@ def save_data(args, raw_channels):
 
     return raw_channels
 
-def plot_plotext(args, raw_channels):
-    plotext.clf()
-    plotext.clt()
-    #plotext.cls()
-
-    nc = len(args.pc_list)
-    plotext.subplots(nc, 1)
-        
-    for num, sp in enumerate(args.pc_list):
-        plotext.subplot(num+1, 1)
-
-        #plotext.clc()
-        data = raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]]
-        plotext.plot(data.tolist(), marker = "fhd")
-        plotext.xaxis(0, "upper")
-        #plotext.yaxis(0, "right")
-        if num != nc - 1:
-           plotext.xfrequency(0) 
-           #plotext.xaxis(0, "lower")
-        if num == nc - 1:
-           plotext.xlabel("samples")
-        if num == 0:
-           plotext.title("{} src {}".format(args.uut[0], args.src))
-    plotext.show()
-    return None
-
-
 def decode_tai_vernier(args, y):
     xdt = 25e-9 if args.xdt == 0 else args.xdt
     secs = np.right_shift(np.bitwise_and(y, 0x70000000), 28)
@@ -322,9 +287,6 @@ def decode_tai_vernier(args, y):
     return secs
  
 def plot_mpl(args, raw_channels):
-    if matplotlib.get_backend() == "agg":
-        print("Text terminal: plot with plotext")
-        return plot_plotext(args, raw_channels)
     print("Plotting with MatPlotLib. Subrate = {}".format(args.mpl_subrate))
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
     num_of_ch = len(args.pc_list)
@@ -349,7 +311,7 @@ def plot_mpl(args, raw_channels):
             plots[num].set_ylabel(ylabel)
             if args.plen == 0:
                 plots[num].plot(y, linewidth=0.75)
-            else :
+            else:
                 plots[num].plot(y[:args.plen], linewidth=0.75)
             plots[num].grid("True", linewidth=0.2)
             plots[num].ticklabel_format(style='plain')    # to prevent scientific notation
@@ -411,11 +373,7 @@ def plot_data_kst(args, raw_channels):
 def plot_data(args, raw_channels):
     if has_pykst:
         plot_data_kst(args, raw_channels)
-    elif args.plot_mpl == -1:
-        # forced test mode..
-        plot_plotext(args, raw_channels)        
     else:
-        # reverts to plot_plotext if graphics not available
         plot_mpl(args, raw_channels)
         
     return None
