@@ -522,11 +522,10 @@ def run_main():
         else:
             if os.name != "nt":
                 args.saveroot = r"{}/{}".format(args.uutroot, args.save)
+                
     args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
-
     args.pses = [ int(x) for x in args.pses.split(':') ]
-   
-    print("args.pc_list {}".format(args.pc_list))
+
     
     process_data(args)
 
