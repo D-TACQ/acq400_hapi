@@ -167,7 +167,7 @@ def wait_completion(uut, args):
     stop_shot(uut, args)
 
 
-def run_shot(args):    
+def run_shot(args):
     uut = acq400_hapi.Acq2106(args.uut[0])
 
     if args.datahandler != None:
@@ -191,8 +191,7 @@ def run_shot(args):
     if args.nowait == 0:
         wait_completion(uut, args)
 
-
-def run_main():    
+def get_args():
     parser = argparse.ArgumentParser(description='configure acq2106 High Throughput Stream')    
     acq400_hapi.Acq400UI.add_args(parser, transient=False)
     parser.add_argument('--nowait', default=0, help='start the shot but do not wait for completion')
@@ -207,12 +206,10 @@ def run_main():
     parser.add_argument('--nbuffers', type=int, default=9999999999, help='set capture length in buffers')
     parser.add_argument('--etrig', type=int, default=0, help='ext trigger TODO')
     parser.add_argument('uut', nargs='+', help="uut ")
-    run_shot(parser.parse_args())
-
-
+    return parser
 
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    run_shot(get_args().parse_args())
 
