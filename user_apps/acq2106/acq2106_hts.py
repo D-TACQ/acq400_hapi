@@ -60,9 +60,6 @@ from acq400_hapi import intSI as intSI
 import argparse
 import time
 import os
-import signal
-
-from propellor import Propellor as P
 
 def read_knob(knob):
     with open(knob, 'r') as f:
@@ -191,7 +188,7 @@ def run_shot(args):
     if args.nowait == 0:
         wait_completion(uut, args)
 
-def get_args():
+def get_parser():
     parser = argparse.ArgumentParser(description='configure acq2106 High Throughput Stream')    
     acq400_hapi.Acq400UI.add_args(parser, transient=False)
     parser.add_argument('--nowait', default=0, help='start the shot but do not wait for completion')
@@ -211,5 +208,8 @@ def get_args():
 # execution starts here
 
 if __name__ == '__main__':
-    run_shot(get_args().parse_args())
+    from propellor import Propellor as P
+    run_shot(get_parser().parse_args())
+else:
+    from .propellor import Propellor as P
 
