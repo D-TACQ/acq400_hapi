@@ -286,43 +286,38 @@ def decode_tai_vernier(args, y):
     print("decode_tai_vernier @@todoi stubbed spikes")
     return secs
  
-def plot_mpl(args, raw_channels):
-    print("Plotting with MatPlotLib. Subrate = {}".format(args.mpl_subrate))
+def plot_mpl(args, raw_channels):    
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
-    num_of_ch = len(args.pc_list)
-    f, plots = plt.subplots(num_of_ch, 1, sharex=True)
-    f.suptitle("{} src {}".format(args.uut[0], args.src))
-    for num, sp in enumerate(args.pc_list):
-        try:
-            y = raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]]
-            ylabel = "CH{} raw".format(sp+1)
-            if args.tai_vernier and args.tai_vernier == sp+1:
-                y = decode_tai_vernier(args, y)
-                ylabel = "CH{} TAIv".format(sp+1)
-            elif args.egu:
-                try:
-                    if args.WSIZE == 4:
-                        y = y/256
-                    y = args.the_uut.chan2volts(sp+1, y)
-                    ylabel = "CH{} V".format(sp+1)
-                except:
-                    pass
+    nplot = len(args.pc_list)
+    if nplot > 1:
+        fig, plots = plt.subplots(nplot, 1, sharex=True)
+    else:
+        fig, p1 = plt.subplots()
+        plots = (p1,)
+        
+    fig.suptitle("{} src {}".format(args.uut[0], args.src))
+    for num, sp in enumerate(args.pc_list):      
+        y = raw_channels[sp][args.pses[0]:args.pses[1]:args.pses[2]]
+        ylabel = "CH{} raw".format(sp+1)
+        if args.tai_vernier and args.tai_vernier == sp+1:
+            y = decode_tai_vernier(args, y)
+            ylabel = "CH{} TAIv".format(sp+1)
+        elif args.egu:
+            try:
+                if args.WSIZE == 4:
+                    y = y/256
+                y = args.the_uut.chan2volts(sp+1, y)
+                ylabel = "CH{} V".format(sp+1)
+            except:
+                pass
 
-            plots[num].set_ylabel(ylabel)
-            if args.plen == 0:
-                plots[num].plot(y, linewidth=0.75)
-            else:
-                plots[num].plot(y[:args.plen], linewidth=0.75)
-            plots[num].grid("True", linewidth=0.2)
-            plots[num].ticklabel_format(style='plain')    # to prevent scientific notation
-        except TypeError:
-            plots.plot(raw_channels[sp][args.mpl_start:args.mpl_end:args.mpl_subrates[num]])
+        plots[num].set_ylabel(ylabel)
+        plots[num].plot(y, linewidth=0.75)
+        plots[num].grid("True", linewidth=0.2)
+        plots[num].ticklabel_format(style='plain')    # to prevent scientific notation
     
-    print("plot_mpl num {}".format(num))
-    try:
-        plots[num].set_xlabel("Samples")
-    except:
-        print("set_xlabel failed for single channel (sorry)")
+    
+    plots[num].set_xlabel("Samples")
     plt.show()
     return None
 
@@ -465,19 +460,6 @@ def calc_stack_480(args):
         quit()
 
     print("args.stack_480_cmap: {}".format(args.stack_480_cmap))
-
-def make_plot_lists(args):
-    args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
-    
-    subrates = args.mpl_subrate.split(",")
-    if len(subrates) == 1:
-        args.mpl_subrates = [ int(subrates[0]) for i in args.pc_list ]
-    elif len(subrates) == len(args.pc_list):
-        args.mpl_subrates = [ int(i) for i in subrates ]
-    else:
-        print("ERROR: mpl_subrates : accepts one entry or NPLOTS ({}) entries".format(len(args.pc_list)))
-        args.mpl_subrates = [ int(subrates[0]) for i in args.pc_list ]
-        
     
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
@@ -487,7 +469,7 @@ def run_main():
     parser.add_argument('--src', type=str, default='/data', help='data source root')
     parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
-    parser.add_argument('--plen', type=int, default=0, help='Number of samples to plot')
+    parser.add_argument('--pses', type=str, default='0:-1:1', help="plot start end stride, default: 0:-1:1")
     parser.add_argument('--tai_vernier', type=int, default=None, help='decode this channel as tai_vernier')
     parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
@@ -495,9 +477,6 @@ def run_main():
     parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
     parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data. (legacy option)')
     parser.add_argument('--plot', type=int, default=1, help="plot data when set")
-    parser.add_argument('--mpl_subrate', type=str, default='1', help='Control subrate for mpl plotting. (accepts a list matching mpl)')
-    parser.add_argument('--mpl_start', type=int, default=0, help='Control number of samples to plot with mpl.')
-    parser.add_argument('--mpl_end', type=int, default=-1, help='Control number of samples to plot with mpl.')
     parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
     parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
     parser.add_argument('uut', nargs=1, help='uut')
@@ -543,10 +522,9 @@ def run_main():
         else:
             if os.name != "nt":
                 args.saveroot = r"{}/{}".format(args.uutroot, args.save)
+    args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
 
-    make_plot_lists(args)
-
-    
+    args.pses = [ int(x) for x in args.pses.split(':') ]
    
     print("args.pc_list {}".format(args.pc_list))
     
