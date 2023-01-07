@@ -99,22 +99,22 @@ if os.name != "nt":
         print("INFO: pykst selected as default plot")
     except ImportError:
         pass
-        
+
 logging.getLogger('matplotlib.font_manager').disabled = True
 
 def channel_required(args, ch):
 #    print("channel_required {} {}".format(ch, 'in' if ch in args.pc_list else 'out', args.pc_list))
-    return args.save != None or args.double_up or ch in args.pc_list
+    return args.save != None or args.double_up or ch in list(pc.ic for pc in args.pc_list)
 
 def create_npdata(args, nblk, nchn):
     channels = []
 
     for counter in range(nchn):
-       if channel_required(args, counter):
-           channels.append(np.zeros((int(nblk)*args.NSAM), dtype=args.np_data_type))
+        if channel_required(args, counter):
+            channels.append(np.zeros((int(nblk)*args.NSAM), dtype=args.np_data_type))
 
-       else:
-           channels.append(np.zeros(16, dtype=args.np_data_type))
+        else:
+            channels.append(np.zeros(16, dtype=args.np_data_type))
     # print "length of data = ", len(total_data)
     # print "npdata = ", npdata
     return channels
@@ -285,7 +285,7 @@ def decode_tai_vernier(args, y):
     secs = secs + ticks
     print("decode_tai_vernier @@todoi stubbed spikes")
     return secs
- 
+
 def plot_mpl(args, raw_channels):    
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
     nplot = len(args.pc_list)
@@ -294,40 +294,95 @@ def plot_mpl(args, raw_channels):
     else:
         fig, p1 = plt.subplots()
         plots = (p1,)
-        
-    fig.suptitle("{} src {}".format(args.uut, args.src))
-    for num, sp in enumerate(args.pc_list):  
 
-# @@todo : make sp an array of executable objects
-# raw, egu, tai, bitfield        
-#   y = sp(raw_channels, args.pses)                 
-        y = raw_channels[sp][args.pses[0]:args.pses[1]:args.pses[2]]
-        ylabel = "CH{} raw".format(sp+1)
-        if args.tai_vernier and args.tai_vernier == sp+1:
-            y = decode_tai_vernier(args, y)
-            ylabel = "CH{} TAIv".format(sp+1)
-        elif args.egu:
-            try:
-                if args.WSIZE == 4:
-                    y = y/256
-                y = args.the_uut.chan2volts(sp+1, y)
-                ylabel = "CH{} V".format(sp+1)
-            except:
-                pass
+    fig.suptitle("{} src {}".format(args.uut, args.src))
+    print(args.pc_list)
+    print("raw_channels {}".format(np.shape(raw_channels)))
+    print("raw_channels[0] {}".format(np.shape(raw_channels[0])))
+    for num, ch_handler in enumerate(args.pc_list):                 
+        yy, ylabel = ch_handler(raw_channels, args.pses)
 
         plots[num].set_ylabel(ylabel)
-        plots[num].plot(y, linewidth=0.75)
+        plots[num].plot(yy, linewidth=0.75)
         plots[num].grid("True", linewidth=0.2)
         plots[num].ticklabel_format(style='plain')    # to prevent scientific notation
-    
-    
+
+
     plots[num].set_xlabel("Samples")
     plt.show()
     return None
 
+''' formatfile
+CH=1,raw[,fmt=F]
+CH=2,egu
+CH=3,tai
+CH=4,bf,MASK
+'''
 
-                    
-        
+class channel_handler:
+    def __init__ (self, ic, fmt):
+        self.ic = ic
+        self.ch = ic+1
+        self.fmt = fmt
+    def __call__(self, raw_channels, pses):
+        print("ERRROR : abstract base class does nothing")
+
+class ch_raw(channel_handler):
+    def __init__ (self, ic, fmt = "CH{} bits"):
+        super().__init__(ic, fmt)
+
+    def __call__(self, raw_channels, pses):
+        return raw_channels[self.ic][pses[0]:pses[1]:pses[2]], self.fmt.format(self.ch)
+
+
+class ch_egu(ch_raw):
+    def __init__ (self, ic, args, fmt="CH{} V"):
+        super().__init__(ic)
+        self.args = args
+        self.egu_fmt = fmt
+
+    def __call__(self, raw_channels, pses):
+        print(np.shape(raw_channels))
+        yy, raw_fmt = super().__call__(raw_channels, pses)
+        try:
+            if args.WSIZE == 4:
+                yy = yy/256
+            return self.args.the_uut.chan2volts(self.ch, yy), self.egu_fmt.format(self.ch)
+        except:
+            return yy, raw_fmt.format(self.ch)
+
+            yy = decode_tai_vernier(args, yy)            
+
+class ch_tai_vernier(ch_raw):
+    def __init__ (self, ic, args, fmt = "CH{} TAIv"):
+        super().__init__(ic, fmt)
+        self.args = args
+
+    def __call__(self, raw_channels, pses):
+        yy, fmt = super.__call__(raw_channels, pses)
+        return decode_tai_vernier(self.args, yy), fmt
+
+
+def process_pcfg(args):
+    ''' return list of channel_handler objects built from config file '''
+    print("process_pcfg {}".format(args.pcfg))
+    return () 
+
+def process_cmdline_cfg(args):
+    ''' return list of channel_handler objects built from command line args'''    
+    print_ic = [ int(i)-1 for i in make_pc_list(args)]
+    pl = ()
+    if args.egu == 1:
+        pl = list(ch_egu(ic, args) for ic in print_ic)
+    else:
+        pl = list(ch_raw(ic) for ic in print_ic) 
+
+    if args.tai_vernier:
+        pl = pl.extend(ch_tai_vernier(args.tai_vernier-1))
+
+    return pl
+
+
 
 def plot_data_kst(args, raw_channels):
     client = pykst.Client("NumpyVector")
@@ -377,7 +432,7 @@ def plot_data(args, raw_channels):
         plot_data_kst(args, raw_channels)
     else:
         plot_mpl(args, raw_channels)
-        
+
     return None
 
 # double_up : data is presented as [ ch010, ch011, ch020, ch021 ] .. so zip them together..
@@ -390,9 +445,9 @@ def double_up(args, d1):
         rr = d1[ch2+1]
         #print rr.shape
         mm = np.column_stack((ll, rr))
-	#print mm.shape
+        #print mm.shape
         mm1 = np.reshape(mm, (len(ll)*2, 1))
-	#print mm1.shape
+        #print mm1.shape
         d2.append(mm1)
 
     return d2
@@ -415,7 +470,7 @@ def process_data(args):
     raw_data = read_data(args, NCHAN) if not os.path.isfile(args.src) else read_data_file(args, NCHAN)
 
     if args.double_up:
-	       raw_data = double_up(args, raw_data)
+        raw_data = double_up(args, raw_data)
 
     if args.stack_480:
         raw_data = stack_480_shuffle(args, raw_data)
@@ -467,7 +522,7 @@ def calc_stack_480(args):
         quit()
 
     print("args.stack_480_cmap: {}".format(args.stack_480_cmap))
-    
+
 def run_main():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
     parser.add_argument('--nchan', type=int, default=None)
@@ -494,12 +549,12 @@ def run_main():
     args.NSAM = 0
     if args.data_type == None or args.nchan == None or args.egu == 1:
         args.the_uut = acq400_hapi.factory(args.uut)
-        
+
     if args.data_type == None:
         args.data_type = 32 if int(args.the_uut.s0.data32) else 16
     if args.nchan == None:
         args.nchan = int(args.the_uut.s0.NCHAN)
-     
+
     if args.data_type == 16:
         args.np_data_type = np.int16
         args.WSIZE = 2
@@ -530,10 +585,13 @@ def run_main():
         else:
             if os.name != "nt":
                 args.saveroot = r"{}/{}".format(args.uutroot, args.save)
-                
-    args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
+
     args.pses = [ int(x) for x in args.pses.split(':') ]
-  
+    if args.pcfg:
+        args.pc_list = process_pcfg(args)
+    else:
+        args.pc_list = process_cmdline_cfg(args)
+
     process_data(args)
 
 if __name__ == '__main__':
