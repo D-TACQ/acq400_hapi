@@ -295,8 +295,12 @@ def plot_mpl(args, raw_channels):
         fig, p1 = plt.subplots()
         plots = (p1,)
         
-    fig.suptitle("{} src {}".format(args.uut[0], args.src))
-    for num, sp in enumerate(args.pc_list):      
+    fig.suptitle("{} src {}".format(args.uut, args.src))
+    for num, sp in enumerate(args.pc_list):  
+
+# @@todo : make sp an array of executable objects
+# raw, egu, tai, bitfield        
+#   y = sp(raw_channels, args.pses)                 
         y = raw_channels[sp][args.pses[0]:args.pses[1]:args.pses[2]]
         ylabel = "CH{} raw".format(sp+1)
         if args.tai_vernier and args.tai_vernier == sp+1:
@@ -321,6 +325,9 @@ def plot_mpl(args, raw_channels):
     plt.show()
     return None
 
+
+                    
+        
 
 def plot_data_kst(args, raw_channels):
     client = pykst.Client("NumpyVector")
@@ -423,7 +430,7 @@ def make_pc_list(args):
     if args.pchan == 'none':
         return list()
     if args.pchan == 'all':
-        return list(range(0,args.nchan))
+        return list(range(1,args.nchan+1))
     elif len(args.pchan.split(':')) > 1:
         lr = args.pchan.split(':')
         x1 = 1 if lr[0] == '' else int(lr[0])
@@ -479,13 +486,14 @@ def run_main():
     parser.add_argument('--plot', type=int, default=1, help="plot data when set")
     parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
     parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
-    parser.add_argument('uut', nargs=1, help='uut')
+    parser.add_argument('--pcfg', default=None, type=str, help="plot configuration file, overrides pchan")
+    parser.add_argument('uut', help='uut - for auto configuration data_type, nchan, egu or just a label')
     args = parser.parse_args()
     calc_stack_480(args)
     args.WSIZE = 2
     args.NSAM = 0
     if args.data_type == None or args.nchan == None or args.egu == 1:
-        args.the_uut = acq400_hapi.factory(args.uut[0])
+        args.the_uut = acq400_hapi.factory(args.uut)
         
     if args.data_type == None:
         args.data_type = 32 if int(args.the_uut.s0.data32) else 16
@@ -525,8 +533,7 @@ def run_main():
                 
     args.pc_list = [ int(i)-1 for i in make_pc_list(args)]
     args.pses = [ int(x) for x in args.pses.split(':') ]
-
-    
+  
     process_data(args)
 
 if __name__ == '__main__':
