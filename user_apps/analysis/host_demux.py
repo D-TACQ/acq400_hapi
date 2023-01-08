@@ -326,6 +326,32 @@ class channel_handler:
         self.fmt = fmt
     def __call__(self, raw_channels, pses):
         print("ERRROR : abstract base class does nothing")
+        
+    def defsplit(nchan, defstr):
+        lstr, rstr = defstr.split("=")
+        
+        if lstr == 'all' or lstr == ':':
+            cdef = list(range(1,nchan+1))
+        elif len(lstr.split(':')) > 1:
+            lr = lstr.split(':')
+            x1 = 1 if lr[0] == '' else int(lr[0])
+            x2 = nchan+1 if lr[1] == '' else int(lr[1])+1
+            cdef = list(range(x1, x2))
+        else:
+            cdef = lstr.split(',')
+        return list(int(xx) for xx in cdef), rstr.split(',')
+    handlers = []
+    builders = []
+    
+    def decode_config(nchan, lno, defstr):
+        if len(defstr) < 2 or defstr.startswith("#"):
+            return
+        else:
+            for builder in channel_handler.builders:
+                if builder.build(nchan, defstr):
+                    return 
+            print("ERROR: {} no handler found for \"{}\"".format(lno, defstr))
+        
 
 class ch_raw(channel_handler):
     def __init__ (self, ic, fmt = "CH{} bits"):
@@ -333,6 +359,16 @@ class ch_raw(channel_handler):
 
     def __call__(self, raw_channels, pses):
         return raw_channels[self.ic][pses[0]:pses[1]:pses[2]], self.fmt.format(self.ch)
+    
+    def build(nchan, defstr):
+        channels, args = channel_handler.defsplit(nchan, defstr)
+        if args[0] == 'ch_raw':
+            for ch in channels:
+                channel_handler.handlers.append(ch_raw(ch-1))
+            return True
+        return False
+   
+channel_handler.builders.append(ch_raw)         
 
 
 class ch_egu(ch_raw):
@@ -366,7 +402,11 @@ class ch_tai_vernier(ch_raw):
 def process_pcfg(args):
     ''' return list of channel_handler objects built from config file '''
     print("process_pcfg {}".format(args.pcfg))
-    return () 
+    with open(args.pcfg) as fp:
+        for lno, defstr in enumerate(fp.readlines()):
+            channel_handler.decode_config(args.nchan, lno, defstr.strip())
+    return channel_handler.handlers
+    
 
 def process_cmdline_cfg(args):
     ''' return list of channel_handler objects built from command line args'''    
