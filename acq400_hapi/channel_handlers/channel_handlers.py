@@ -34,11 +34,18 @@ CHDEF ::
    N : channel number from 1
    LIST : list of channels   eg 1,2,3
    RANGE: range of channels 1:4,   : means ALL
-   
-CHDEF,raw[,fmt=F]
-CHDEF,egu
-CHDEF,tai
-CHDEF,bf,MASK
+
+CHDEF,ch_raw[,fmt=F0[,F1,...]]
+CHDEF,ch_egu
+CHDEF,ch_taiv
+CHDEF,ch_bf,MASK[,fmt=l1,l2,l3]
+
+[pgm@hoy5 acq400_hapi]$ cat PCFG/user.pcfg 
+# all channels raw:
+1,2,8=ch_raw,fmt=AqB1,CNT1,SC
+10=ch_bf,0x70000000,fmt=TAIs
+10=ch_taiv
+
 '''
 
 class channel_handler:
@@ -46,12 +53,16 @@ class channel_handler:
         self.ic = ic
         self.ch = ic+1
         self.fmt = fmt
+
     def __call__(self, raw_channels, pses):
         print("ERRROR : abstract base class does nothing")
-        
-    def defsplit(nchan, defstr):
-        lstr, rstr = defstr.split("=")
-        
+
+    def make_label(self):
+        return self.fmt.format(self.ch)
+
+    def defsplit(nchan, defstr, fmt):
+        lstr, rstr = defstr.split("=", 1)
+
         if lstr == 'all' or lstr == ':':
             cdef = list(range(1,nchan+1))
         elif len(lstr.split(':')) > 1:
@@ -61,43 +72,57 @@ class channel_handler:
             cdef = list(range(x1, x2))
         else:
             cdef = lstr.split(',')
-        return list(int(xx) for xx in cdef), rstr.split(',')
+        rlist = rstr.split(',')
+        fmts = (fmt,)
+        for arg in rlist:
+            if arg.startswith("fmt="):
+                _fmts = arg[4:].split(';')
+                fmts = []
+                for cn, ch in enumerate(cdef):
+                    fmts.append(fmt if len(_fmts) == 0 else _fmts[0] if cn >= len(_fmts) else _fmts[cn])
+
+        return list(int(xx) for xx in cdef), rlist, fmts
     handlers = []
     builders = []
-    
-    def decode_config(nchan, lno, defstr):
+
+    def decode_config(nchan, lno, defstr, client_args=None):
         if len(defstr) < 2 or defstr.startswith("#"):
             return
         else:
             for builder in channel_handler.builders:
-                if builder.build(nchan, defstr):
-                    return 
+                if builder.build(nchan, defstr, client_args):
+                    return
             print("ERROR: {} no handler found for \"{}\"".format(lno, defstr))
-        
+
 
 class ch_raw(channel_handler):
-    def __init__ (self, ic, fmt = "CH{} bits"):
-        super().__init__(ic, fmt)
+    def_fmt = "CH{} bits"
 
-    def __call__(self, raw_channels, pses):        
+    def __init__ (self, ic, fmt=None):
+        _fmt = fmt if fmt else ch_raw.def_fmt
+        super().__init__(ic, _fmt)
+
+    def __call__(self, raw_channels, pses):
         return raw_channels[self.ic][pses[0]:pses[1]:pses[2]], self.fmt.format(self.ch)
-    
-    def build(nchan, defstr):
-        channels, args = channel_handler.defsplit(nchan, defstr)
+
+    def build(nchan, defstr, client_args):
+        channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_raw.def_fmt)
         if args[0] == 'ch_raw':
-            for ch in channels:
-                channel_handler.handlers.append(ch_raw(ch-1))
+            for cn, ch in enumerate(channels):
+                channel_handler.handlers.append(ch_raw(ch-1, fmt=fmts[cn]))
             return True
         return False
-   
-channel_handler.builders.append(ch_raw)         
+
+channel_handler.builders.append(ch_raw)
 
 
 class ch_egu(ch_raw):
-    def __init__ (self, ic, args, fmt="CH{} V"):
+    def_fmt = "CH{} V"
+    def __init__ (self, ic, args, fmt=None):
         super().__init__(ic)
+        _fmt = fmt if fmt else ch_egu.def_fmt
         self.args = args
-        self.egu_fmt = fmt
+        self.egu_fmt = _fmt
 
     def __call__(self, raw_channels, pses):
         print(np.shape(raw_channels))
@@ -109,23 +134,72 @@ class ch_egu(ch_raw):
         except:
             return yy, raw_fmt.format(self.ch)
 
-            yy = decode_tai_vernier(args, yy)            
+    def build(nchan, defstr, client_args):
+        channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_egu.def_fmt)
+        if args[0] == 'ch_egu':
+            for cn, ch in enumerate(channels):
+                channel_handler.handlers.append(ch_egu(ch-1, fmt=fmts[cn]))
+            return True
+        return False
+
+channel_handler.builders.append(ch_raw)
+
 
 class ch_tai_vernier(ch_raw):
-    def __init__ (self, ic, args, fmt = "CH{} TAIv"):
-        super().__init__(ic, fmt)
+    def_fmt = "CH{} TAIv"
+    def __init__ (self, ic, args, fmt=None):
+        _fmt = fmt if fmt else ch_raw.def_fmt
+        super().__init__(ic, _fmt)
+
         self.args = args
 
     def __call__(self, raw_channels, pses):
-        yy, fmt = super.__call__(raw_channels, pses)
+        yy, fmt = super().__call__(raw_channels, pses)
         return decode_tai_vernier(self.args, yy), fmt
 
+    def build(nchan, defstr, client_args):
+        channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_tai_vernier.def_fmt)
+        if args[0] == 'ch_taiv':
+            for cn, ch in enumerate(channels):
+                channel_handler.handlers.append(ch_tai_vernier(ch-1, client_args, fmt=fmts[cn]))
+            return True
+        return False
+
+channel_handler.builders.append(ch_tai_vernier)
+
+class ch_bitfield(channel_handler):
+    def_fmt = "BITS{}"
+    def __init__ (self, ic, mask, fmt=None):
+        _fmt = fmt if fmt else ch_bitfield.def_fmt
+        super().__init__(ic, fmt)
+        self.mask = mask
+        self.shr = 0
+        while mask&0x1 == 0:
+            mask = mask >> 1
+            self.shr += 1
+
+    def __call__(self, raw_channels, pses):
+        yy = raw_channels[self.ic][pses[0]:pses[1]:pses[2]]
+        bf = np.right_shift(np.bitwise_and(yy, self.mask), self.shr)
+
+        return bf, self.fmt.format(self.ch)
+
+    def build(nchan, defstr, client_args):
+        channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_bitfield.def_fmt)
+        if args[0] == 'ch_bf':
+            mask = int(args[1], 16)
+            for cn, ch in enumerate(channels):
+                channel_handler.handlers.append(ch_bitfield(ch-1, mask, fmt=fmts[cn]))
+            return True
+        return False
+
+channel_handler.builders.append(ch_bitfield)
 
 def process_pcfg(args):
     ''' return list of channel_handler objects built from config file '''
     print("process_pcfg {}".format(args.pcfg))
     with open(args.pcfg) as fp:
         for lno, defstr in enumerate(fp.readlines()):
-            channel_handler.decode_config(args.nchan, lno, defstr.strip())
+            channel_handler.decode_config(args.nchan, lno, defstr.strip(), client_args=args)
     return channel_handler.handlers
 
