@@ -35,16 +35,22 @@ CHDEF ::
    LIST : list of channels   eg 1,2,3
    RANGE: range of channels 1:4,   : means ALL
 
-CHDEF,ch_raw[,fmt=F0[,F1,...]]
+CHDEF,ch_raw[,fmt=F0[;F1,...]]
 CHDEF,ch_egu
 CHDEF,ch_taiv
-CHDEF,ch_bf,MASK[,fmt=l1,l2,l3]
+CHDEF,ch_bf,MASK[,fmt=l1;l2;l3]
 
 [pgm@hoy5 acq400_hapi]$ cat PCFG/user.pcfg 
 # all channels raw:
-1,2,8=ch_raw,fmt=AqB1,CNT1,SC
+1,2,8=ch_raw,fmt=AqB1;CNT1;SC
 10=ch_bf,0x70000000,fmt=TAIs
 10=ch_taiv
+
+# print entire BF
+7=ch_bf,0x0000003f,fmt=DI6
+# break BF in to bits, lable each bit ..
+7=ch_bf,0x0000003f,fmt=d4;d3;d2;d2;d1;d0
+
 
 '''
 
@@ -173,10 +179,7 @@ class ch_bitfield(channel_handler):
         _fmt = fmt if fmt else ch_bitfield.def_fmt
         super().__init__(ic, fmt)
         self.mask = mask
-        self.shr = 0
-        while mask&0x1 == 0:
-            mask = mask >> 1
-            self.shr += 1
+        self.shr = ch_bitfield.calc_shr(mask)        
 
     def __call__(self, raw_channels, pses):
         yy = raw_channels[self.ic][pses[0]:pses[1]:pses[2]]
@@ -184,12 +187,40 @@ class ch_bitfield(channel_handler):
 
         return bf, self.fmt.format(self.ch)
 
+    @staticmethod
+    def count_bits(mask):
+        mask_bits = 0;
+        while mask != 0:
+            if (mask&1) != 0:
+                mask_bits += 1
+            mask = mask >> 1
+        return mask_bits
+    
+    @staticmethod
+    def calc_shr(mask):
+        shr = 0
+        while mask&0x1 == 0:
+            mask = mask >> 1
+            shr += 1
+        return shr
+    
     def build(nchan, defstr, client_args):
         channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_bitfield.def_fmt)
         if args[0] == 'ch_bf':
             mask = int(args[1], 16)
-            for cn, ch in enumerate(channels):
-                channel_handler.handlers.append(ch_bitfield(ch-1, mask, fmt=fmts[cn]))
+            mask_bits = ch_bitfield.count_bits(mask)
+            for arg in args:
+                if arg.startswith("fmt="):
+                    _fmts = arg[4:].split(';')
+            print("len(channels) {} mask_bits {} len(_fmts) {}".format(len(channels), mask_bits, len(_fmts)))
+            if len(channels) == 1 and mask_bits > 1 and len(_fmts) == mask_bits:
+                m1 = 1 << (mask_bits + ch_bitfield.calc_shr(mask) - 1)
+                for ii in range(0, mask_bits):
+                    channel_handler.handlers.append(ch_bitfield(channels[0]-1, m1, fmt=_fmts[ii]))
+                    m1 = m1 >> 1
+            else:
+                for cn, ch in enumerate(channels):
+                    channel_handler.handlers.append(ch_bitfield(ch-1, mask, fmt=fmts[cn]))
             return True
         return False
 
