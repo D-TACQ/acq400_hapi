@@ -239,7 +239,6 @@ def read_data_file(args, NCHAN):
     for ch in range(NCHAN):
         if channel_required(args, ch):
             raw_channels[ch] = data[ch::NCHAN]
-
     return raw_channels
 
 def save_data(args, raw_channels):
@@ -268,7 +267,7 @@ def save_data(args, raw_channels):
 
 
 
-def plot_mpl(args, raw_channels):    
+def plot_mpl(args, raw_channels):
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
     nplot = len(args.pc_list)
     if nplot > 1:
@@ -277,10 +276,9 @@ def plot_mpl(args, raw_channels):
         fig, p1 = plt.subplots()
         plots = (p1,)
 
+     
     fig.suptitle("{} src {}".format(args.uut, args.src))
-    print(args.pc_list)
-    print("raw_channels {}".format(np.shape(raw_channels)))
-    print("raw_channels[0] {}".format(np.shape(raw_channels[0])))
+    
     for num, ch_handler in enumerate(args.pc_list):                 
         yy, ylabel = ch_handler(raw_channels, args.pses)
 

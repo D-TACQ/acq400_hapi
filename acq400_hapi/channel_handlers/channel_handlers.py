@@ -79,7 +79,7 @@ class ch_raw(channel_handler):
     def __init__ (self, ic, fmt = "CH{} bits"):
         super().__init__(ic, fmt)
 
-    def __call__(self, raw_channels, pses):
+    def __call__(self, raw_channels, pses):        
         return raw_channels[self.ic][pses[0]:pses[1]:pses[2]], self.fmt.format(self.ch)
     
     def build(nchan, defstr):
