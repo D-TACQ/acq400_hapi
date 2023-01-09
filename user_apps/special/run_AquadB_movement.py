@@ -38,10 +38,10 @@ class AquadB_callback:
 
     def __call__(self):
         if self.state == AquadB_callback.State.WaitArm:
-            if acq400_hapi.pv(self.uut.s0.CONTINUOUS_STATE) == 'ARM':
-                print("Pressing the trigger..")
-                self.args.uut_stim.s0.soft_trigger = 1
-                self.state = AquadB_callback.State.WaitCountActive
+            self.uut.statmon.wait_armed()            
+            print("Pressing the trigger..")
+            self.args.uut_stim.s0.soft_trigger = 1
+            self.state = AquadB_callback.State.WaitCountActive
             print("AquadB_callback {}".format(self.state.name))
             return False
 
