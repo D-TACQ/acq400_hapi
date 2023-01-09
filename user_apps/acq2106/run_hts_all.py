@@ -35,7 +35,7 @@ def make_fifos(args):
         fn = "/tmp/{}.hts".format(uut)
         try:
             os.mkfifo(fn)
-        except OSError, e:
+        except (OSError, e):
             if e.errno != 17:
                 sys.exit("ERROR OSError, {}", e)
 
@@ -130,7 +130,7 @@ def _store_shot(shot):
     try:
         os.makedirs(shotbase)
 #OSError: [Errno 17] File exists: '/mnt/datastream/SHOTS/00000144'
-    except OSError, e:
+    except (OSError, e):
         if e.errno == 17:
             sys.exit("WARNING: {}\nrefusing to overwrite duplicate shot, please backup by hand".format(e))
         else:
@@ -216,9 +216,11 @@ def run_shot(args):
     if args.store == 1:
         store_shot(args)
 
+def run_main(args):
+    init_shot(args)
+    run_shot(args)
 
-
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='run hts all uuts')
     parser.add_argument('--secs', default=100, help='seconds to run')
     parser.add_argument('--etrg', type=int, default=0, help='1: enable external trg')
@@ -226,11 +228,9 @@ def run_main():
     parser.add_argument('--store', type=int, default=0, help='1: store shot after capture')
     parser.add_argument('--run_hts', type=int, default=1, help='1: run the hts-helper, 0: do not run')
     parser.add_argument('uutnames', nargs='+', help='uut')
-    args = parser.parse_args()
-    init_shot(args)
-    run_shot(args)
+    return parser
 
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

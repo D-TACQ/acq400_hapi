@@ -177,7 +177,7 @@ def run_main(args):
         config_rx_uut(acq400_hapi.factory(args.rxuut[0]), args)
 
 
-def ui():
+def get_parser():
     parser = argparse.ArgumentParser(description="hudp_setup", 
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--netmask", default='255.255.255.0', help='netmask')
@@ -194,10 +194,10 @@ def ui():
     parser.add_argument("--hudp_decim", default=1, type=int,  help="hudp decimation, 1..16")
     parser.add_argument("txuut", nargs=1,                     help="transmit uut")
     parser.add_argument("rxuut", nargs=1,                     help="transmit uut")
-    return parser.parse_args()
+    return parser
     
 if __name__ == '__main__':
-    run_main(ui())
+    run_main(get_parser().parse_args())
 
 
 

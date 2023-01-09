@@ -24,13 +24,15 @@ def run_main(args):
         uut.s0.sync_role = sr
         role = "slave"
 
-
-if __name__ == '__main__':
+def get_parser():
     parser = argparse.ArgumentParser(description="ustc_set_sync_role")
     parser.add_argument("--fs", default='10M', help='sample clock')
     parser.add_argument("--fclk", default='33333000', help='master clock')
     parser.add_argument("uuts", nargs='+', help="uuts m1 [s1 s2 ...]")
-    run_main(parser.parse_args())
+    return parser
+
+if __name__ == '__main__':
+    run_main(get_parser().parse_args())
 
 
 

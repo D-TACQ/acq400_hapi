@@ -112,10 +112,7 @@ def run_main(parser):
         input("say when")
         uuts[0].set_master_trg(mtrg, edge, enabled=True)       
 
-
-# execution starts here
-
-if __name__ == '__main__':
+def get_parser():
     parser = argparse.ArgumentParser(description="acq2106_set_sync_role")
     parser.add_argument("--master_clk", default="zclk,2000000", help="master_clk role alt fp,sampleclk[,sysclk]")
     parser.add_argument("--master_trg", default="soft,rising", help="master_trg src alt: fp")    
@@ -124,6 +121,11 @@ if __name__ == '__main__':
     parser.add_argument("--trace", default=0, help="set command tracing")
     parser.add_argument("--slave_sync_trg_to_clk", default='0', help="0: do NOT retime the trg on the slave")
     parser.add_argument("uuts", nargs='+', help="uuts m1 [s1 s2 ...]")
-    run_main(parser.parse_args())
+    return parser
+    
+# execution starts here
+
+if __name__ == '__main__':
+    run_main(get_parser().parse_args())
 
 
