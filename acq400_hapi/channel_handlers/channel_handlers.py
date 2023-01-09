@@ -54,6 +54,11 @@ CHDEF,ch_bf,MASK[,fmt=l1;l2;l3]
 
 '''
 
+
+STEP = True
+SMOO = False
+
+
 class channel_handler:
     def __init__ (self, ic, fmt):
         self.ic = ic
@@ -61,7 +66,7 @@ class channel_handler:
         self.fmt = fmt
 
     def __call__(self, raw_channels, pses):
-        print("ERRROR : abstract base class does nothing")
+        print("ERROR : abstract base class does nothing")
 
     def make_label(self):
         return self.fmt.format(self.ch)
@@ -109,7 +114,7 @@ class ch_raw(channel_handler):
         super().__init__(ic, _fmt)
 
     def __call__(self, raw_channels, pses):
-        return raw_channels[self.ic][pses[0]:pses[1]:pses[2]], self.fmt.format(self.ch)
+        return raw_channels[self.ic][pses[0]:pses[1]:pses[2]], self.fmt.format(self.ch), SMOO
 
     def build(nchan, defstr, client_args):
         channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_raw.def_fmt)
@@ -132,13 +137,13 @@ class ch_egu(ch_raw):
 
     def __call__(self, raw_channels, pses):
         print(np.shape(raw_channels))
-        yy, raw_fmt = super().__call__(raw_channels, pses)
+        yy, raw_fmt, step = super().__call__(raw_channels, pses)
         try:
             if args.WSIZE == 4:
                 yy = yy/256
-            return self.args.the_uut.chan2volts(self.ch, yy), self.egu_fmt.format(self.ch)
+            return self.args.the_uut.chan2volts(self.ch, yy), self.egu_fmt.format(self.ch), SMOO
         except:
-            return yy, raw_fmt.format(self.ch)
+            return yy, raw_fmt.format(self.ch), SMOO
 
     def build(nchan, defstr, client_args):
         channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_egu.def_fmt)
@@ -160,8 +165,8 @@ class ch_tai_vernier(ch_raw):
         self.args = args
 
     def __call__(self, raw_channels, pses):
-        yy, fmt = super().__call__(raw_channels, pses)
-        return decode_tai_vernier(self.args, yy), fmt
+        yy, fmt, step = super().__call__(raw_channels, pses)
+        return decode_tai_vernier(self.args, yy), fmt, STEP
 
     def build(nchan, defstr, client_args):
         channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_tai_vernier.def_fmt)
@@ -184,8 +189,7 @@ class ch_bitfield(channel_handler):
     def __call__(self, raw_channels, pses):
         yy = raw_channels[self.ic][pses[0]:pses[1]:pses[2]]
         bf = np.right_shift(np.bitwise_and(yy, self.mask), self.shr)
-
-        return bf, self.fmt.format(self.ch)
+        return bf, self.fmt.format(self.ch), STEP
 
     @staticmethod
     def count_bits(mask):
@@ -212,7 +216,7 @@ class ch_bitfield(channel_handler):
             for arg in args:
                 if arg.startswith("fmt="):
                     _fmts = arg[4:].split(';')
-            print("len(channels) {} mask_bits {} len(_fmts) {}".format(len(channels), mask_bits, len(_fmts)))
+
             if len(channels) == 1 and mask_bits > 1 and len(_fmts) == mask_bits:
                 m1 = 1 << (mask_bits + ch_bitfield.calc_shr(mask) - 1)
                 for ii in range(0, mask_bits):

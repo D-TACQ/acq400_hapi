@@ -278,12 +278,16 @@ def plot_mpl(args, raw_channels):
 
      
     fig.suptitle("{} src {}".format(args.uut, args.src))
+    xx = np.array([ x for x in range(0, len(raw_channels[0]))][args.pses[0]:args.pses[1]:args.pses[2]], dtype=np.int32)
     
     for num, ch_handler in enumerate(args.pc_list):                 
-        yy, ylabel = ch_handler(raw_channels, args.pses)
+        yy, ylabel, step = ch_handler(raw_channels, args.pses)
 
         plots[num].set_ylabel(ylabel)
-        plots[num].plot(yy, linewidth=0.75)
+        if step:
+            plots[num].step(xx, yy, linewidth=0.75)
+        else:
+            plots[num].plot(xx, yy, linewidth=0.75)
         plots[num].grid("True", linewidth=0.2)
         plots[num].ticklabel_format(style='plain')    # to prevent scientific notation
 
