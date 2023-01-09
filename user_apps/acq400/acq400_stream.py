@@ -149,8 +149,8 @@ def get_parser():
     parser = argparse.ArgumentParser(description='acq400 stream')
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
-    parser.add_argument('-filesize', '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
-    parser.add_argument('-totaldata', '--totaldata', default=10000000000, action=acq400_hapi.intSIAction, decimal = False)
+    parser.add_argument( '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
+    parser.add_argument( '--totaldata', default=10000000000, action=acq400_hapi.intSIAction, decimal = False)
     #parser.add_argument('--totaldata', default=4194304, type=int, help="Total amount of data to store in KB")
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
