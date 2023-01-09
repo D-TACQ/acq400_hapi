@@ -502,7 +502,11 @@ class Acq400:
         self.sites = [int(s.split('=')[0]) for s in sl]
 
 # init _status so that values are valid even if this Acq400 doesn't run a shot ..
-        _status = [int(x) for x in s0.state.split(" ")]
+        stx = s0.state
+        find_stx = stx.find("STX ")
+        if find_stx != -1:
+            stx = stx[4:]
+        _status = [int(x) for x in stx.split(" ")]
         if monitor:
             self.statmon = Statusmonitor(self.uut, _status)
         Acq400.uuts_methods[_uut] = self.__dict__   # store the dict for reuse by __init__
