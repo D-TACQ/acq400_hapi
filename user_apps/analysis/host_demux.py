@@ -244,7 +244,7 @@ def read_data_file(args, NCHAN):
 def save_data(args, raw_channels):
 
     if os.name == "nt": # if system is windows.
-        path = r'{}:\\demuxed\{}'.format(args.drive_letter, args.uut[0]) # raw string literal so we can use \ in path.
+        path = r'{}:\\demuxed\{}'.format(args.drive_letter, args.uut) # raw string literal so we can use \ in path.
         if not os.path.exists(path):
             os.makedirs(path)
         args.saveroot = path # set args.saveroot to windows style dir.
@@ -252,7 +252,7 @@ def save_data(args, raw_channels):
     else:
         subprocess.call(["mkdir", "-p", args.saveroot])
 
-    uutname = args.uut[0]
+    uutname = args.uut
     for enum, channel in enumerate(raw_channels):
         data_file = open("{}/{}_{:02d}.dat".format(args.saveroot, uutname, enum+1), "wb+")
         channel.tofile(data_file, '')
@@ -350,7 +350,7 @@ def plot_data_kst(args, raw_channels):
                 print("ERROR: no calibration for CH{:02d}".format(ch1))
 
         # label 1.. (human)
-        V2 = client.new_editable_vector(channel.astype(np.float64), name="{}:CH{:02d}".format(re.sub(r"_", r"-", args.uut[0]), ch1))
+        V2 = client.new_editable_vector(channel.astype(np.float64), name="{}:CH{:02d}".format(re.sub(r"_", r"-", args.uut), ch1))
         c1 = client.new_curve(V1, V2)
         p1 = client.new_plot()
         p1.set_left_label(yu1)
@@ -506,7 +506,7 @@ def run_main():
         else:
             exit("file not found")
     elif os.path.isdir(args.src):
-        args.uutroot = r"{}/{}".format(args.src, args.uut[0])
+        args.uutroot = r"{}/{}".format(args.src, args.uut)
         print("uutroot {}".format(args.uutroot))
     elif os.path.isfile(args.src):
         args.uutroot = "{}".format(os.path.dirname(args.src))
