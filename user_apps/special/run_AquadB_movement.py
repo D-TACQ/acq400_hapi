@@ -30,13 +30,18 @@ class AquadB_callback:
         self.state = AquadB_callback.State.WaitCountActive
         self.uut = uut
         self.count = uut.s1.QEN_COUNT
+        self.count_unchanged = 0
         pass
     
     def __call__(self):
         newcount = self.uut.s1.QEN_COUNT
-        if self.state == AquadB_callback.State.WaitCountActive and newcount != self.count:
+        if newcount != self.count:
+            self.count_unchanged += 1
+        else:
+            self.count_unchanged = 0
+        if self.state == AquadB_callback.State.WaitCountActive and self.count_unchanged > 2:
             self.state = AquadB_callback.State.WaitCountStop
-        elif self.state == AquadB_callback.State.WaitCountStop and newcount == self.count:
+        elif self.state == AquadB_callback.State.WaitCountStop and self.count_unchanged == 0:
             self.state = AquadB_callback.State.Finished
             
             
