@@ -62,13 +62,13 @@ def main(args):
 
     acq400_upload.run_main(args)
     
-def get_args():
-    parser = acq400_upload.get_args()    
+def get_parser():
+    parser = acq400_upload.get_parser()    
     parser.add_argument('--stl', default='./test.stl', type=str, help="GPG pulse pattern STL") 
     parser.add_argument('--es_enable', default=None, help="enable/disable Event Signature (default: no touch)")
     return parser
 
 if __name__ == '__main__':
-    main(get_args().parse_args())
+    main(get_parser().parse_args())
 
 

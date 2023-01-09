@@ -243,7 +243,7 @@ def uniq(inp):
     return out
 
 
-def get_args(argStr=None):
+def get_parser(argStr=None):
     parser = argparse.ArgumentParser(description='acq400 upload')
     acq400_hapi.ShotControllerUI.add_args(parser)
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
@@ -278,4 +278,4 @@ def run_main(args):
 # execution starts here
 
 if __name__ == '__main__':
-    run_main(get_args().parse_args())
+    run_main(get_parser().parse_args())
