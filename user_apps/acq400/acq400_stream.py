@@ -132,6 +132,10 @@ def run_stream(args):
                 upload_time = time.time()  # Reset upload time
                 data_written_flag = 1
 
+                if args.callback is not None and args.callback():
+                    print("Callback says \"enough\"")
+                    break
+
         try:
             data_written_flag
         except NameError:
@@ -141,8 +145,7 @@ def run_stream(args):
             data.tofile(data_file, '')
             print("runtime exceeded: all stream data written to single file")
 
-
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400 stream')
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
@@ -152,9 +155,12 @@ def run_main():
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
+    parser.add_argument('--callback', default=None, help="for client program use only. Assume object with __call_ method")
     parser.add_argument('uuts', nargs='+', help="uuts")
+    return parser
 
-    run_stream(parser.parse_args())
+def run_main():
+    run_stream(get_parser().parse_args())
 
 
 if __name__ == '__main__':
