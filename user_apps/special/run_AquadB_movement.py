@@ -21,11 +21,33 @@ import sys
 sys.path.append(os.path.dirname(os.path.realpath('../../user_apps')))
 
 from  user_apps.acq400 import acq400_stream
-        
+
+from enum import Enum
+       
+class AquadB_callback:
+    State = Enum('State', ["WaitCountActive", "WaitCountStop", "Finished"])
+    def __init__(self, uut):
+        self.state = AquadB_callback.State.WaitCountActive
+        self.count = uut.s1.QEN_COUNT
+        pass
+    
+    def __call__(self):
+        newcount = uut.s1.QEN_COUNT
+        if self.state == AquadB_callback.State.WaitCountActive and newcount != self.count:
+            self.state = AquadB_callback.State.WaitCountStop
+        elif self.state == AquadB_callback.State.WaitCountStop and newcount == self.count:
+            self.state = AquadB_callback.State.Finished
+            
+            
+           
+        print("AquadB_callback {} {}".format(self.state.name, newcount))
+        self.count = newcount
+        return self.state == AquadB_callback.State.Finished
+     
 
 def main(args):
-    uuts = [ acq400_hapi.factory(u) for u in args.uuts ]    
-
+    uut = acq400_hapi.factory(args.uuts[0]) 
+    args.callback = AquadB_callback(uut)
     acq400_stream.run_main(args)
     
 def get_parser():
