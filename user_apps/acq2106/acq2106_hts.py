@@ -53,16 +53,12 @@ acq2106_hts.py will quit on the first of either elapsed_seconds > secs or buffer
 Recommendation: --secs is really a timeout, use --nbuffers for exact data length
 
 """
-
 import sys
 import acq400_hapi
-from acq400_hapi import intSI as intSI
 import argparse
 import time
 import os
-import signal
-
-from propellor import Propellor as P
+from acq400_hapi import intSI as intSI
 
 def read_knob(knob):
     with open(knob, 'r') as f:
@@ -152,7 +148,7 @@ def wait_completion(uut, args):
                     print("\ndatahandler has dropped out at NBUFS {}/{} {}".format(
                         rx, args.nbuffers, "COMPLETE" if rx>=args.nbuffers else "ERROR" ))
                     break
-            sys.stdout.write( (STATFMT+"\r") % (buf_rate, rx, ts, int(args.secs), P.spin()))
+            sys.stdout.write( (STATFMT+"\r") % (buf_rate, rx, ts, int(args.secs), acq400_hapi.Propellor.spin()))
             sys.stdout.flush()
             time.sleep(1)
             if buf_rate > 0:
@@ -167,9 +163,8 @@ def wait_completion(uut, args):
     stop_shot(uut, args)
 
 
-def run_shot(args):    
+def run_shot(args): 
     uut = acq400_hapi.Acq2106(args.uut[0])
-
     if args.datahandler != None:
         cmd = args.datahandler.format(args.lport, args.nbuffers)
         print("datahandler command {}".format(cmd))
@@ -191,8 +186,7 @@ def run_shot(args):
     if args.nowait == 0:
         wait_completion(uut, args)
 
-
-def run_main():    
+def get_parser():    
     parser = argparse.ArgumentParser(description='configure acq2106 High Throughput Stream')    
     acq400_hapi.Acq400UI.add_args(parser, transient=False)
     parser.add_argument('--nowait', default=0, help='start the shot but do not wait for completion')
@@ -207,12 +201,9 @@ def run_main():
     parser.add_argument('--nbuffers', type=int, default=9999999999, help='set capture length in buffers')
     parser.add_argument('--etrig', type=int, default=0, help='ext trigger TODO')
     parser.add_argument('uut', nargs='+', help="uut ")
-    run_shot(parser.parse_args())
-
-
+    return parser
 
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
-
+    run_shot(get_parser().parse_args())
