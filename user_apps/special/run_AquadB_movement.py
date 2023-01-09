@@ -28,11 +28,12 @@ class AquadB_callback:
     State = Enum('State', ["WaitCountActive", "WaitCountStop", "Finished"])
     def __init__(self, uut):
         self.state = AquadB_callback.State.WaitCountActive
+        self.uut = uut
         self.count = uut.s1.QEN_COUNT
         pass
     
     def __call__(self):
-        newcount = uut.s1.QEN_COUNT
+        newcount = self.uut.s1.QEN_COUNT
         if self.state == AquadB_callback.State.WaitCountActive and newcount != self.count:
             self.state = AquadB_callback.State.WaitCountStop
         elif self.state == AquadB_callback.State.WaitCountStop and newcount == self.count:
@@ -48,7 +49,7 @@ class AquadB_callback:
 def main(args):
     uut = acq400_hapi.factory(args.uuts[0]) 
     args.callback = AquadB_callback(uut)
-    acq400_stream.run_main(args)
+    acq400_stream.run_stream(args)
     
 def get_parser():
     parser = acq400_stream.get_parser()    
