@@ -278,10 +278,11 @@ def plot_mpl(args, raw_channels):
 
      
     fig.suptitle("{} src {}".format(args.uut, args.src))
-    xx = np.array([ x for x in range(0, len(raw_channels[0]))][args.pses[0]:args.pses[1]:args.pses[2]], dtype=np.int32)
+    xx1 = np.array([ x for x in range(0, len(raw_channels[0])+1)][args.pses[0]:args.pses[1]:args.pses[2]], dtype=np.int32)
     
     for num, ch_handler in enumerate(args.pc_list):                 
         yy, ylabel, step = ch_handler(raw_channels, args.pses)
+        xx = xx1[0:len(yy)]
 
         plots[num].set_ylabel(ylabel)
         if step:
