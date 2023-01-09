@@ -27,9 +27,9 @@ from  user_apps.acq400 import acq400_stream_multi
 from enum import Enum
 
 class AquadB_callback:
-    State = Enum('State', ["Init", "WaitCountActive", "WaitCountStop", "Finished"])
+    State = Enum('State', ["WaitArm", "WaitCountActive", "WaitCountStop", "Finished"])
     def __init__(self, args, uut):
-        self.state = AquadB_callback.State.Init
+        self.state = AquadB_callback.State.WaitArm
         self.args = args
         self.uut = uut
         self.count = uut.s1.QEN_COUNT
@@ -37,10 +37,13 @@ class AquadB_callback:
         pass
 
     def __call__(self):
-        if self.state == AquadB_callback.State.Init:
-            print("Pressing the trigger..")
-            self.args.uut_stim.s0.soft_trigger = 1
-            self.state = AquadB_callback.State.WaitCountActive
+        if self.state == AquadB_callback.State.WaitArm:
+            if acq400_hapi.pv(self.uut.s0.CONTINUOUS_STATE) == 'ARM':
+                print("Pressing the trigger..")
+                self.args.uut_stim.s0.soft_trigger = 1
+                self.state = AquadB_callback.State.WaitCountActive
+            print("AquadB_callback {}".format(self.state.name))
+            return False
 
         newcount = self.uut.s1.QEN_COUNT
         if newcount != self.count:
