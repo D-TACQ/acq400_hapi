@@ -4,8 +4,8 @@
 
 Run a stream capture while monitoring AquadB position.
    WAIT_START: wait for position to change
-   WAIT_END : wait for position to stop changing 
-   
+   WAIT_END : wait for position to stop changing
+
 The UUT is assumed to trigger a stimulator box that will run a movement simulation.
 OR, it could be a real movement. We don't care.
 
@@ -15,15 +15,16 @@ OR, it could be a real movement. We don't care.
 
 import acq400_hapi
 import argparse
+import time
 
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.realpath('../../user_apps')))
 
-from  user_apps.acq400 import acq400_stream
+from  user_apps.acq400 import acq400_stream_multi
 
 from enum import Enum
-       
+
 class AquadB_callback:
     State = Enum('State', ["WaitCountActive", "WaitCountStop", "Finished"])
     def __init__(self, uut):
@@ -32,7 +33,7 @@ class AquadB_callback:
         self.count = uut.s1.QEN_COUNT
         self.count_unchanged = 0
         pass
-    
+
     def __call__(self):
         newcount = self.uut.s1.QEN_COUNT
         if newcount != self.count:
@@ -43,22 +44,25 @@ class AquadB_callback:
             self.state = AquadB_callback.State.WaitCountStop
         elif self.state == AquadB_callback.State.WaitCountStop and self.count_unchanged == 0:
             self.state = AquadB_callback.State.Finished
-            
-            
-           
+
+
         print("AquadB_callback {} {}".format(self.state.name, newcount))
         self.count = newcount
         return self.state == AquadB_callback.State.Finished
-     
+
 
 def main(args):
-    uut = acq400_hapi.factory(args.uuts[0]) 
-    args.callback = AquadB_callback(uut)
-    acq400_stream.run_stream(args)
-    
+    uut = acq400_hapi.factory(args.uuts[0])
+    callback = AquadB_callback(uut)
+    acq400_stream_multi.run_stream(args)
+    while True:
+        time.sleep(2)
+        if callback():
+            break
+
 def get_parser():
-    parser = acq400_stream.get_parser()    
-    parser.add_argument('--stl', default='./test.stl', type=str, help="GPG pulse pattern STL") 
+    parser = acq400_stream_multi.get_parser()
+    parser.add_argument('--stl', default='./test.stl', type=str, help="GPG pulse pattern STL")
     parser.add_argument('--es_enable', default=None, help="enable/disable Event Signature (default: no touch)")
     return parser
 

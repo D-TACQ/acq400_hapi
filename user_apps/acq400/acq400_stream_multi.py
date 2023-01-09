@@ -86,7 +86,7 @@ def remove_stale_data(args):
                 if answer != 'y':
                     continue
             if args.verbose:
-                print("removing {}".format(path))          
+                print("removing {}".format(path))
             shutil.rmtree(path)
 
 class StreamsOne:
@@ -99,43 +99,43 @@ class StreamsOne:
         return t1
 
 
-    def run(self):        
+    def run(self):
         uut = acq400_hapi.Acq400(self.uut_name)
         cycle = -1
         fnum = 999       # force initial directory create
         data_bytes = 0
         files = 0
-      
+
         if self.args.filesamples:
             self.args.filesize = self.args.filesamples*int(uut.s0.ssb)
-        
+
         try:
             if int(uut.s0.data32):
                 data_size = 4
                 wordsizetype = "<i4"  # 32 bit little endian
             else:
                 wordsizetype = "<i2"  # 16 bit little endian
-                data_size = 2        
+                data_size = 2
         except AttributeError:
             print("Attribute error detected. No data32 attribute - defaulting to 16 bit")
             wordsizetype = "<i2"  # 16 bit little endian
             data_size = 2
-                        
-        blen = self.args.filesize//data_size      
-            
-        
+
+        blen = self.args.filesize//data_size
+
+
         self.log_file = open("{}_times.log".format(self.uut_name), "w")
         t_run = 0
         fn = "no-file"
-        
+
         for buf in uut.stream(recvlen=blen, data_size=data_size):
             if data_bytes == 0:
                 t0 = time.time()
-            else:           
+            else:
                 t_run = self.logtime(t0, time.time()) - t0
-            
-            data_bytes += len(buf) * data_size           
-            
+
+            data_bytes += len(buf) * data_size
+
             if len(buf) == 0:
                 print("Zero length buffer, quit")
                 return
@@ -151,7 +151,7 @@ class StreamsOne:
                 data_file = open(fn, "wb")
                 buf.tofile(data_file, '')
                 files += 1
-                
+
             if self.args.verbose == 0:
                 pass
             elif self.args.verbose == 1:
@@ -160,19 +160,19 @@ class StreamsOne:
                 print("{:8.3f} {} files {:4d} total bytes: {:10d} rate: {:.2f} MB/s".
                           format(t_run, fn, files, int(data_bytes), data_bytes/t_run/0x100000))
             fnum += 1
-                
-            if t_run >= self.args.runtime or data_bytes > self.args.totaldata:                
+
+            if t_run >= self.args.runtime or data_bytes > self.args.totaldata:
                 return
-            
-               
-    
-def run_stream(args):
+
+
+
+def run_stream_run(args):
     RXBUF_LEN = 4096
     cycle = 1
     root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
     data = bytes()
     num = 0
-        
+
     for uut_name in reversed(args.uuts):
         streamer = StreamsOne(args, uut_name)
         if len(args.uuts) > 1 and uut_name == args.uuts[0]:
@@ -181,7 +181,13 @@ def run_stream(args):
         multiprocessing.Process(target=streamer.run).start()
         #streamer.run()
 
-def run_main():
+def run_stream_prep(args):
+    if args.filesize > args.totaldata:
+            args.filesize = args.totaldata
+    remove_stale_data(args)
+    return args
+
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400 stream')
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
@@ -196,12 +202,14 @@ def run_main():
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uuts', nargs='+', help="uuts")
-    args = parser.parse_args()
-    
-    if args.filesize > args.totaldata:
-            args.filesize = args.totaldata
-    remove_stale_data(args)
-    run_stream(args)
+    return parser
+
+def run_stream(args):
+    run_stream_prep(args)
+    run_stream_run(args)
+
+def run_main():
+    run_stream(parser.parse_args())
 
 
 if __name__ == '__main__':
