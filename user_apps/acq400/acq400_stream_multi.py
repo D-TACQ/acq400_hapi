@@ -172,21 +172,40 @@ def run_stream_run(args):
     root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
     data = bytes()
     num = 0
+    
+    args.ps = []
 
     for uut_name in reversed(args.uuts):
         streamer = StreamsOne(args, uut_name)
         if len(args.uuts) > 1 and uut_name == args.uuts[0]:
             print("Pausing 2 before launching M")
             time.sleep(2)
-        multiprocessing.Process(target=streamer.run).start()
-        #streamer.run()
+        ps = multiprocessing.Process(target=streamer.run, name=uut_name, daemon=True)
+        args.ps.append(ps)
+        ps.start()
 
 def run_stream_prep(args):
+    if args.callback is None:
+        args.callback = lambda : False    
     if args.filesize > args.totaldata:
             args.filesize = args.totaldata
     remove_stale_data(args)
     return args
 
+def run_stream_monitor(args):
+    while not args.callback():
+        for ps in args.ps:
+            ps.join(1)
+            if ps.exitcode is not None:
+                print("ps {} terminated with code {}".format(ps, ps.exitcode))
+                return
+            
+def tidy_up(args):
+    for ps in args.ps:
+        if ps.exitcode is None:
+            ps.terminate()
+            ps.join()    
+                
 def get_parser():
     parser = argparse.ArgumentParser(description='acq400 stream')
     #parser.add_argument('--filesize', default=1048576, type=int,
@@ -201,15 +220,18 @@ def get_parser():
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
+    parser.add_argument('--callback', default=None, help='not for users, client programs can install a callback here')
     parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
 
 def run_stream(args):
     run_stream_prep(args)
     run_stream_run(args)
+    run_stream_monitor(args)
+    tidy_up(args)                
 
 def run_main():
-    run_stream(parser.parse_args())
+    run_stream(get_parser().parse_args())
 
 
 if __name__ == '__main__':

@@ -53,17 +53,11 @@ class AquadB_callback:
 
 def main(args):
     uut = acq400_hapi.factory(args.uuts[0])
-    callback = AquadB_callback(uut)
+    args.callback = AquadB_callback(uut)
     acq400_stream_multi.run_stream(args)
-    while True:
-        time.sleep(2)
-        if callback():
-            break
 
 def get_parser():
     parser = acq400_stream_multi.get_parser()
-    parser.add_argument('--stl', default='./test.stl', type=str, help="GPG pulse pattern STL")
-    parser.add_argument('--es_enable', default=None, help="enable/disable Event Signature (default: no touch)")
     return parser
 
 if __name__ == '__main__':
