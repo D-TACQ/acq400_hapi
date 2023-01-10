@@ -377,7 +377,19 @@ def control_many(args):
     for p in ps:
         p.join()
 
-def run_main():
+def run_main(args):
+    if args.wait_shot > 0:
+        args.captureblocks = 0
+       
+    if args.twa:
+        trigger_when_armed(args)
+    elif len(args.uuts) > 1:
+        control_many(args)
+    else:
+        args.uut = args.uuts[0]
+        run_shots(args)
+
+def get_parser():
     parser = argparse.ArgumentParser(description='acq2106 mgtdram test')
     acq400_hapi.Acq400UI.add_args(parser)
     parser.add_argument('--loop', type=int, default=1, help="loop count")
@@ -399,23 +411,10 @@ def run_main():
     parser.add_argument('--logprint', type=int, default=1,
                               help='1: Print log messages. '
                               '2: Save reduced log to log file.')
-
     parser.add_argument('uuts', nargs='+', help="uut ")
-    args = parser.parse_args()
+    return parser
     
-    if args.wait_shot > 0:
-        args.captureblocks = 0
-       
-    if args.twa:
-        trigger_when_armed(args)
-    elif len(args.uuts) > 1:
-        control_many(args)
-    else:
-        args.uut = args.uuts[0]
-        run_shots(args)
-
 # execution starts here
 
-
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())
