@@ -414,7 +414,7 @@ def process_data(args):
         raw_data = stack_480_shuffle(args, raw_data)
 
     if args.callback:
-        pass
+        process_callback(args, raw_data)
 
     if args.save != None:
         save_data(args, raw_data)
