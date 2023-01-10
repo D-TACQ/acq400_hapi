@@ -99,12 +99,15 @@ class StreamsOne:
         return t1
 
 
-    def run(self):
+    def run(self, callback=None):
         uut = acq400_hapi.Acq400(self.uut_name)
         cycle = -1
         fnum = 999       # force initial directory create
         data_bytes = 0
         files = 0
+
+        if callback is None:
+            callback = lambda : False
 
         if self.args.filesamples:
             self.args.filesize = self.args.filesamples*int(uut.s0.ssb)
@@ -161,51 +164,52 @@ class StreamsOne:
                           format(t_run, fn, files, int(data_bytes), data_bytes/t_run/0x100000))
             fnum += 1
 
+            if callback():
+                return
             if t_run >= self.args.runtime or data_bytes > self.args.totaldata:
                 return
 
 
-
+def status_cb():
+    print("Another one")
+    
 def run_stream_run(args):
     RXBUF_LEN = 4096
     cycle = 1
     root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
     data = bytes()
     num = 0
-    
+
     args.ps = []
 
-    for uut_name in reversed(args.uuts):
-        streamer = StreamsOne(args, uut_name)
-        if len(args.uuts) > 1 and uut_name == args.uuts[0]:
-            print("Pausing 2 before launching M")
-            time.sleep(2)
-        ps = multiprocessing.Process(target=streamer.run, name=uut_name, daemon=True)
+    # run all slave units su in separate processes
+    for su in reversed(args.uuts[1:]):
+        streamer = StreamsOne(args, su)
+        ps = multiprocessing.Process(target=streamer.run, name=su, daemon=True)
         args.ps.append(ps)
         ps.start()
 
+    # run master in foreground process.
+    ms = StreamsOne(args, args.uuts[0])
+    if len(args.uuts) > 1:
+        print("Pausing 2 before launching M")
+        time.sleep(2)
+
+    ms.run(callback=args.callback)
+#    ms.run(callback=status_cb)
+
 def run_stream_prep(args):
-    if args.callback is None:
-        args.callback = lambda : False    
     if args.filesize > args.totaldata:
             args.filesize = args.totaldata
     remove_stale_data(args)
     return args
 
-def run_stream_monitor(args):
-    while not args.callback():
-        for ps in args.ps:
-            ps.join(1)
-            if ps.exitcode is not None:
-                print("ps {} terminated with code {}".format(ps, ps.exitcode))
-                return
-            
 def tidy_up(args):
     for ps in args.ps:
         if ps.exitcode is None:
             ps.terminate()
-            ps.join()    
-                
+            ps.join()
+
 def get_parser():
     parser = argparse.ArgumentParser(description='acq400 stream')
     #parser.add_argument('--filesize', default=1048576, type=int,
@@ -227,8 +231,7 @@ def get_parser():
 def run_stream(args):
     run_stream_prep(args)
     run_stream_run(args)
-    run_stream_monitor(args)
-    tidy_up(args)                
+    tidy_up(args)
 
 def run_main():
     run_stream(get_parser().parse_args())
