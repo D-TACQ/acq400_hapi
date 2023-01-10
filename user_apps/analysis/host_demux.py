@@ -276,11 +276,11 @@ def plot_mpl(args, raw_channels):
         fig, p1 = plt.subplots()
         plots = (p1,)
 
-     
+
     fig.suptitle("{} src {}".format(args.uut, args.src))
     xx1 = np.array([ x for x in range(0, len(raw_channels[0])+1)][args.pses[0]:args.pses[1]:args.pses[2]], dtype=np.int32)
-    
-    for num, ch_handler in enumerate(args.pc_list):                 
+
+    for num, ch_handler in enumerate(args.pc_list):
         yy, ylabel, step = ch_handler(raw_channels, args.pses)
         xx = xx1[0:len(yy)]
 
@@ -298,16 +298,16 @@ def plot_mpl(args, raw_channels):
     return None
 
 
-    
+
 
 def process_cmdline_cfg(args):
-    ''' return list of channel_handler objects built from command line args'''    
+    ''' return list of channel_handler objects built from command line args'''
     print_ic = [ int(i)-1 for i in make_pc_list(args)]
     pl = ()
     if args.egu == 1:
         pl = list(CH.ch_egu(ic, args) for ic in print_ic)
     else:
-        pl = list(CH.ch_raw(ic) for ic in print_ic) 
+        pl = list(CH.ch_raw(ic) for ic in print_ic)
 
     if args.tai_vernier:
         pl = pl.extend(CH.ch_tai_vernier(args.tai_vernier-1))
@@ -392,6 +392,12 @@ def stack_480_shuffle(args, raw_data):
 
     return r2
 
+def process_callback(args, raw_channels):
+    clidata = {}
+    for num, ch_handler in enumerate(args.pc_list):
+        yy, ylabel, step = ch_handler(raw_channels, args.pses)
+        clidata[ylabel] = yy
+    args.callback(clidata)
 
 def process_data(args):
     NCHAN = args.nchan
@@ -406,6 +412,8 @@ def process_data(args):
 
     if args.stack_480:
         raw_data = stack_480_shuffle(args, raw_data)
+
+    if args.callback:
 
     if args.save != None:
         save_data(args, raw_data)
@@ -474,6 +482,7 @@ def run_main():
     parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
     parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
     parser.add_argument('--pcfg', default=None, type=str, help="plot configuration file, overrides pchan")
+    parser.add_argument('--callback', default=None, help="callback for external automation")
     parser.add_argument('uut', help='uut - for auto configuration data_type, nchan, egu or just a label')
     args = parser.parse_args()
     calc_stack_480(args)
