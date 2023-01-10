@@ -414,6 +414,7 @@ def process_data(args):
         raw_data = stack_480_shuffle(args, raw_data)
 
     if args.callback:
+        process_callback(args, raw_data)
 
     if args.save != None:
         save_data(args, raw_data)
@@ -463,28 +464,7 @@ def calc_stack_480(args):
 
     print("args.stack_480_cmap: {}".format(args.stack_480_cmap))
 
-def run_main():
-    parser = argparse.ArgumentParser(description='host demux, host side data handling')
-    parser.add_argument('--nchan', type=int, default=None)
-    parser.add_argument('--nblks', type=int, default=-1)
-    parser.add_argument('--save', type=str, default=None, help='save channelized data to dir')
-    parser.add_argument('--src', type=str, default='/data', help='data source root')
-    parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
-    parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
-    parser.add_argument('--pses', type=str, default='0:-1:1', help="plot start end stride, default: 0:-1:1")
-    parser.add_argument('--tai_vernier', type=int, default=None, help='decode this channel as tai_vernier')
-    parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
-    parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
-    parser.add_argument('--data_type', type=int, default=None, help='Use int16 or int32 for data demux.')
-    parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
-    parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data. (legacy option)')
-    parser.add_argument('--plot', type=int, default=1, help="plot data when set")
-    parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
-    parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
-    parser.add_argument('--pcfg', default=None, type=str, help="plot configuration file, overrides pchan")
-    parser.add_argument('--callback', default=None, help="callback for external automation")
-    parser.add_argument('uut', help='uut - for auto configuration data_type, nchan, egu or just a label')
-    args = parser.parse_args()
+def run_main(args):
     calc_stack_480(args)
     args.WSIZE = 2
     args.NSAM = 0
@@ -535,5 +515,28 @@ def run_main():
 
     process_data(args)
 
+def get_parser():
+    parser = argparse.ArgumentParser(description='host demux, host side data handling')
+    parser.add_argument('--nchan', type=int, default=None)
+    parser.add_argument('--nblks', type=int, default=-1)
+    parser.add_argument('--save', type=str, default=None, help='save channelized data to dir')
+    parser.add_argument('--src', type=str, default='/data', help='data source root')
+    parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
+    parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
+    parser.add_argument('--pses', type=str, default='0:-1:1', help="plot start end stride, default: 0:-1:1")
+    parser.add_argument('--tai_vernier', type=int, default=None, help='decode this channel as tai_vernier')
+    parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
+    parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
+    parser.add_argument('--data_type', type=int, default=None, help='Use int16 or int32 for data demux.')
+    parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
+    parser.add_argument('--plot_mpl', type=int, default=0, help='Use MatPlotLib to plot subrate data. (legacy option)')
+    parser.add_argument('--plot', type=int, default=1, help="plot data when set")
+    parser.add_argument('--stack_480', type=str, default=None, help='Stack : 2x4, 2x8, 4x8, 6x8')
+    parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
+    parser.add_argument('--pcfg', default=None, type=str, help="plot configuration file, overrides pchan")
+    parser.add_argument('--callback', default=None, help="callback for external automation")
+    parser.add_argument('uut', help='uut - for auto configuration data_type, nchan, egu or just a label')
+    return parser
+
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())
