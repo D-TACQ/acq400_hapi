@@ -62,7 +62,6 @@ class AquadB_callback:
             if self.count > AquadB_callback.COUNT_DEADBAND and self.count_unchanged > AquadB_callback.BUFFERS_PER_EPICS_CB:
                 self.state = AquadB_callback.State.Finished
 
-
         print("AquadB_callback {} {}".format(self.state.name, newcount))
         
         return self.state == AquadB_callback.State.Finished
@@ -76,6 +75,7 @@ def load_stim(uut, dwg):
         time.sleep(1)
         pc += 1
     uut.s1.dio422_TxEN = 1
+    uut.s2.dio422_TxEN = 1
 
 def main(args):
     if args.stim is not None:
