@@ -164,10 +164,11 @@ class StreamsOne:
                           format(t_run, fn, files, int(data_bytes), data_bytes/t_run/0x100000))
             fnum += 1
 
-            if callback():
-                return
-            if t_run >= self.args.runtime or data_bytes > self.args.totaldata:
-                return
+            if callback() or t_run >= self.args.runtime or data_bytes > self.args.totaldata:
+                break
+        
+        uut.stream_close()
+                
 
 
 def status_cb():

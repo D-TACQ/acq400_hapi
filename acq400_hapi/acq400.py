@@ -1309,15 +1309,15 @@ class Acq400:
 
     def stream(self, recvlen=4096*32, port=AcqPorts.STREAM, data_size=2):
         dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
-        nc = netclient.Netclient(self.uut, port)
+        self.stream_nc = netclient.Netclient(self.uut, port)
 
         buf = bytearray(recvlen*data_size)
-        while True:       
+        while self.stream_nc:       
             view = memoryview(buf).cast('B')        
             pos = 0
             
-            while len(view):
-                nrx = nc.sock.recv_into(view)
+            while len(view) and self.stream_nc:                
+                nrx = self.stream_nc.sock.recv_into(view)
                 if nrx == 0:                    
                     yield np.frombuffer(buf[:pos], dtype)
                     pos = 0
@@ -1325,6 +1325,12 @@ class Acq400:
                     view = view[nrx:]
                     pos += nrx
             yield np.frombuffer(buf[:pos], dtype)
+    def stream_close(self):
+            if self.stream_nc:
+                self.stream_nc.close()
+                self.stream_nc = None
+            else:
+                print("stream_close(), sorry not possible to close it down ..")        
 
     def stream_slowmon(self):
         ssb = int(self.s0.ssb)
@@ -1335,16 +1341,16 @@ class Acq400:
         ch_dtype = np.dtype('i4' if data_sz == 4 else 'i2')
         sp_dtype = np.dtype('u4')
         
-        nc = netclient.Netclient(self.uut, AcqPorts.SLOWMON)
+        self.slowmon_nc = netclient.Netclient(self.uut, AcqPorts.SLOWMON)
         buf = bytearray(ssb)
         view = memoryview(buf).cast('B') 
         
-        while True:
+        while self.slowmon_nc:
             view = memoryview(buf).cast('B')
             ib = 0
             
-            while ib < ssb:
-                nrx = nc.sock.recv_into(view)
+            while ib < ssb and self.slowmon_nc:
+                nrx = self.slowmon_nc.sock.recv_into(view)
                 #print("stream_slowmon: nrx:{} ib:{} len(view) {}".format(nrx, ib, len(view)))
                 if nrx == 0:
                     print("stream_slowmon: nrx:{} ib:{} len(view) {}".format(nrx, ib, len(view)))
@@ -1355,6 +1361,13 @@ class Acq400:
             chx = np.frombuffer(buf, ch_dtype)[:nchan]
             spx = np.frombuffer(buf, sp_dtype)[spad_sz:]
             yield(chx, spx)
+            
+    def slowmon_close(self):
+            if self.slowmon_nc:
+                self.slowmon_nc.close()
+                self.slowmon_nc = None
+            else:
+                print("slowmon_close(), sorry not possible to close it down ..")  
 
 
 def freq(sig):
