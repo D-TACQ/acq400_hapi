@@ -14,9 +14,9 @@ import numpy as np
 
 """
     example cmd
-    ./ansto_analysis.py --ecolumn=DI6 --run_test=yes --silence=YES acq2106_999
+    ./AquadB_analysis.py --ecolumn=DI6 --run_test=yes --silence=YES acq2106_999
 
-    ./ansto_analysis.py --stim=acq2106_888 --dwg=dat_files/dwg123 --run_test=yes --silence=NO acq2106_999
+    ./AquadB_analysis.py --stim=acq2106_888 --dwg=dat_files/dwg123 --run_test=yes --silence=NO acq2106_999
     
     args for subordinate scripts should pass through wrapper
 """
