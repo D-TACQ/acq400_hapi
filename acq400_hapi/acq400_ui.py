@@ -119,7 +119,7 @@ class Acq400UI:
 
         """
         
-        if transient:
+        if transient is True:
             if pre:
                 parser.add_argument('--pre', default=0, action=intSIAction, help='pre-trigger samples')
             if post:
