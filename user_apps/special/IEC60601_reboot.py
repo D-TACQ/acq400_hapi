@@ -42,12 +42,12 @@ while True:
             print('uut hapi interface not ready yet')
             time.sleep(2)
     
-    for retry in range(0,3):    
-        print('Getting .MODEL .. {}'.format(uut.svc["s{}".format(retry)].MODEL))
+#    for retry in range(0,3):    
+#        print('Getting .MODEL .. {}'.format(uut.svc["s{}".format(retry)].MODEL))
 
-    for retry in range(0,3):    
-        print('Getting AWG_ACTIVE... {}'.format(uut.s2.AWG_ACTIVE))
-        time.sleep(1)
+#    for retry in range(0,3):    
+#        print('Getting AWG_ACTIVE... {}'.format(uut.s2.AWG_ACTIVE))
+#        time.sleep(1)
 
     uut.s0.reboot = "3210"
     time.sleep(3)
