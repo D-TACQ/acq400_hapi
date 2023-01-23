@@ -14,9 +14,9 @@ import numpy as np
 
 """
     example cmd
-    ./AquadB_analysis.py --ecolumn=DI6 --run_test=yes --silence=YES acq2106_999
+    ./user_apps/special/AquadB_analysis.py --ecolumn=DI6 --run_test=yes --silence=YES acq2106_999
 
-    ./AquadB_analysis.py --stim=acq2106_888 --dwg=dat_files/dwg123 --run_test=yes --silence=NO acq2106_999
+    ./user_apps/special/AquadB_analysis.py --stim=acq2106_888 --dwg=dat_files/dwg123 --run_test=yes --silence=NO acq2106_999
     
     args for subordinate scripts should pass through wrapper
 """
@@ -89,12 +89,14 @@ def print_numpy_arrays(data):
 def get_events(data):
     arr_name = wrapper_args.ecolumn
     if arr_name not in data:
-        exit(PR.Red('Error: Array "{}" not found'.format(arr_name)))
+        PR.Red('Warning: Event array "{}" not found'.format(arr_name))
+        return []
     event_arr = data[arr_name]
     lower = event_arr[0]
     arr_len = len(event_arr)
     consecutive = False
     events = []
+    events.append(0)
     for i in range(arr_len):
         if event_arr[i] > lower:
             if not consecutive:
@@ -135,8 +137,6 @@ def demarcate(events):
             output.append('-')
         output.append(num)
         pre = num
-    if output[1] != '-':
-        output.insert(1,'-')
     return output
     
 def homecoming(data):
@@ -144,14 +144,15 @@ def homecoming(data):
     PR.Green('Homecoming')
     #print_numpy_arrays(data)
     events = get_events(data)
-    if len(events) == 0:
-        exit('No events found')
+    if len(events) == 1:
+        PR.Red('Warning: No events found')
+        return
     build_table(events,data)
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Wrapper for move aquadb and host demux')
     parser.add_argument('--run_test', default='YES', help="whether or not to run the test")
-    parser.add_argument('--ecolumn', default='DI6', help="Event column")
+    parser.add_argument('--ecolumn', default=None, help="Event column")
     parser.add_argument('--silence', default='YES', help='Hide subordinate script output')
     parser.add_argument('uut', help='uut - for auto configuration data_type, nchan, egu or just a label')
     return parser
