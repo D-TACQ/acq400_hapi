@@ -1,0 +1,16 @@
+# all channels raw:
+#1,2,10=ch_raw
+#1,2,10=ch_raw,fmt=XX{}
+1,2,3,4,6=ch_raw,fmt=AqB1;IDX1;AqB2;IDX2;SC
+8=ch_bf,0x70000000,fmt=TAIs
+8=ch_bf,0x0fffffff,fmt=TAIbf
+8=ch_taiv
+#7=ch_bf,0x0000003f,fmt=DI6
+5=ch_bf,0x0000003f,fmt=DI6
+#5=ch_bf,0x0000003f,fmt=d5;d4;d3;d2;d1;d0
+#8=ch_bf,0x00000f00,fmt=SCX
+
+
+
+
+

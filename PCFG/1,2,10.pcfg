@@ -1,0 +1,5 @@
+# all channels raw:
+#1,2,10=ch_raw
+#1,2,10=ch_raw,fmt=XX{}
+1,2,10=ch_raw,fmt=XXA;XXB;XXC
+
