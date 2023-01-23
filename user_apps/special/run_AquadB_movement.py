@@ -75,7 +75,7 @@ def load_stim(uut, dwg):
         time.sleep(1)
         pc += 1
     uut.s1.dio422_TxEN = 1
-    uut.s2.dio422_TxEN = 1
+    #uut.s2.dio422_TxEN = 1
 
 def main(args):
     if args.stim is not None:
