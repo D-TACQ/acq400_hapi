@@ -145,7 +145,7 @@ def homecoming(data):
     enablePrint()
     PR.Green('Homecoming')
     events = get_events(data)
-    if len(events) == 1:
+    if len(events) == 0:
         PR.Red('Warning: No events found')
         return
     build_table(events,data)
