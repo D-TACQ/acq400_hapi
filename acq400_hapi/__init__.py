@@ -1,7 +1,7 @@
 from .netclient import Netclient
 from .netclient import Siteclient
 from .netclient import Logclient
-from .acq400 import Acq400, STATE, AcqPorts, ChannelClient, MgtDramPullClient, sigsel, factory, freq, intpv, pv, activepv
+from .acq400 import Acq400, STATE, AcqPorts, ChannelClient, MgtDramPullClient, sigsel, factory, freq, freqpv, intpv, pv, activepv
 from .acq400 import Acq2106
 from .acq400 import Acq2106_Mgtdram8
 from .acq400 import Acq2106_TIGA
