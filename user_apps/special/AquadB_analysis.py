@@ -43,7 +43,8 @@ def aquadb_move_args():
         'force_delete' : 1,
         'root': '/home/dt100/DATA',
         'stim': 'acq2106_274',
-        'dwg': 'dat_files/wiggle.2x32',
+        'dwg': 'dat_files/wiggle',
+#        'dwg': 'dat_files/wiggle.2x32',
         'verbose': 2
     }
     parser = imported_defaults_overrider(parser,default_args)   
@@ -80,11 +81,6 @@ def blockPrint():
 def enablePrint():
     if wrapper_args.silence.upper() == 'YES':
         sys.stdout = sys.__stdout__
-
-def print_numpy_arrays(data):
-    keys = data.keys()
-    for key in keys:
-        print("\033[93m{}\033[00m: {} \033[93m Length: {}\033[00m".format(key,data[key],len(data[key])))
 
 def get_events(data):
     arr_name = wrapper_args.ecolumn
@@ -142,7 +138,6 @@ def demarcate(events):
 def homecoming(data):
     enablePrint()
     PR.Green('Homecoming')
-    #print_numpy_arrays(data)
     events = get_events(data)
     if len(events) == 1:
         PR.Red('Warning: No events found')
