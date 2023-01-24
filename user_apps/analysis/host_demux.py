@@ -465,6 +465,7 @@ def calc_stack_480(args):
     print("args.stack_480_cmap: {}".format(args.stack_480_cmap))
 
 def run_main(args):
+    args.uut = args.uuts[0]
     calc_stack_480(args)
     args.WSIZE = 2
     args.NSAM = 0
@@ -515,8 +516,9 @@ def run_main(args):
 
     process_data(args)
 
-def get_parser():
-    parser = argparse.ArgumentParser(description='host demux, host side data handling')
+def get_parser(parser=None):
+    if not parser:
+        parser = argparse.ArgumentParser(description='host demux, host side data handling')
     parser.add_argument('--nchan', type=int, default=None)
     parser.add_argument('--nblks', type=int, default=-1)
     parser.add_argument('--save', type=str, default=None, help='save channelized data to dir')
@@ -535,7 +537,7 @@ def get_parser():
     parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
     parser.add_argument('--pcfg', default=None, type=str, help="plot configuration file, overrides pchan")
     parser.add_argument('--callback', default=None, help="callback for external automation")
-    parser.add_argument('uut', help='uut - for auto configuration data_type, nchan, egu or just a label')
+    parser.add_argument('uuts', nargs='+',help='uut - for auto configuration data_type, nchan, egu or just a label')
     return parser
 
 if __name__ == '__main__':

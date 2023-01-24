@@ -25,20 +25,23 @@ wrapper_args = None
 
 def main(args):
     global wrapper_args
+    args.callback = homecoming
+    PR.Yellow("Running Host_Demux: pses={} pcfg={}".format(args.pses,args.pcfg))    
+
     wrapper_args = args
     if args.run_test.upper() == 'YES':
-        aquadb_args = aquadb_move_args()
+        #aquadb_args = aquadb_move_args()
         blockPrint()
-        MOVE.main(aquadb_args)
+        MOVE.main(args)
         enablePrint()
 
-    demux_args = host_demux_args()
+    #demux_args = host_demux_args()
     blockPrint()
-    DEMUX.run_main(demux_args)
+    DEMUX.run_main(args)
     enablePrint()
 
-def aquadb_move_args():
-    parser = MOVE.get_parser()
+def aquadb_move_args(parser):
+    parser = MOVE.get_parser(parser)
     default_args = {
         'force_delete' : 1,
         'root': '/home/dt100/DATA',
@@ -47,13 +50,14 @@ def aquadb_move_args():
 #        'dwg': 'dat_files/wiggle.2x32',
         'verbose': 2
     }
-    parser = imported_defaults_overrider(parser,default_args)   
-    args = parser.parse_known_args()[0]
-    PR.Yellow("Running AquadB_movement: stim={} dwg={}".format(args.stim,args.dwg))
-    return args
+    parser = imported_defaults_overrider(parser,default_args)  
+    return parser 
+#    args = parser.parse_known_args()[0]
+#    PR.Yellow("Running AquadB_movement: stim={} dwg={}".format(args.stim,args.dwg))
+#    return args
 
-def host_demux_args():
-    parser = DEMUX.get_parser()
+def host_demux_args(parser):
+    parser = DEMUX.get_parser(parser)
     default_args = {
         'src' : '/home/dt100/DATA',
         'pcfg': 'PCFG/ansto_qen_and_di.pcfg',
@@ -61,9 +65,11 @@ def host_demux_args():
         'plot': 0
     }    
     parser = imported_defaults_overrider(parser,default_args)
+    return parser
     args = parser.parse_known_args()[0]
     args.callback = homecoming
     PR.Yellow("Running Host_Demux: pses={} pcfg={}".format(args.pses,args.pcfg))
+    
     return args
 
 def imported_defaults_overrider(parser,defaults):
@@ -149,7 +155,9 @@ def get_parser():
     parser.add_argument('--run_test', default='YES', help="whether or not to run the test")
     parser.add_argument('--ecolumn', default=None, help="Event column")
     parser.add_argument('--silence', default='YES', help='Hide subordinate script output')
-    parser.add_argument('uut', help='uut - for auto configuration data_type, nchan, egu or just a label')
+    parser.add_argument('uuts', nargs='+', help='uuts - for auto configuration data_type, nchan, egu or just a label')
+    aquadb_move_args(parser)
+    host_demux_args(parser)
     return parser
 
 if __name__ == '__main__':

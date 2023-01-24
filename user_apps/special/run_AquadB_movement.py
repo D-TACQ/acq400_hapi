@@ -90,8 +90,8 @@ def main(args):
 #    while args.callback() == False:
 #        time.sleep(1)
 
-def get_parser():
-    parser = acq400_stream_multi.get_parser()
+def get_parser(parser=None):
+    parser = acq400_stream_multi.get_parser(parser=parser)
 #    parser = argparse.ArgumentParser(description='run_AquadB_movement')
 #    parser.add_argument('uut', help="AquadB receiver, to monitor")
     parser.add_argument('--stim', default=None, help='stimulator uut')

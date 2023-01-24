@@ -211,8 +211,11 @@ def tidy_up(args):
             ps.terminate()
             ps.join()
 
-def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 stream')
+def get_parser(parser=None):
+    if not parser:
+        parser = argparse.ArgumentParser(description='acq400 stream')
+        parser.add_argument('--callback', default=None, help='not for users, client programs can install a callback here')
+        
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
     parser.add_argument('--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False, help="file size in bytes")
@@ -225,7 +228,6 @@ def get_parser():
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
-    parser.add_argument('--callback', default=None, help='not for users, client programs can install a callback here')
     parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
 
