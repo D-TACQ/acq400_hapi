@@ -170,3 +170,11 @@ class Acq400UI:
         except:
             pass
         
+    @staticmethod
+    def imported_defaults_overrider(parser, defaults):
+        arr = parser._positionals._actions
+        for x in arr:
+            if x.dest in defaults.keys():
+            #print("Overriding {} with {}".format(x.dest,defaults[x.dest]))
+                x.default = defaults[x.dest]
+        return parser

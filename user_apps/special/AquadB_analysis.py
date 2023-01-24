@@ -5,7 +5,7 @@ import os
 import sys
 import argparse
 
-from acq400_hapi import PR
+from acq400_hapi import PR, Acq400UI
 import user_apps.special.run_AquadB_movement as MOVE
 import user_apps.analysis.host_demux as DEMUX
 
@@ -53,7 +53,7 @@ def aquadb_move_args(parser):
 #        'dwg': 'dat_files/wiggle.2x32',
         'verbose': 2
     }
-    parser = imported_defaults_overrider(parser, default_args)
+    parser = Acq400UI.imported_defaults_overrider(parser,default_args)
     return parser
 
 def host_demux_args(parser):
@@ -64,21 +64,9 @@ def host_demux_args(parser):
         'pses': '1:-1:1',
         'plot': 0
     }
-    parser = imported_defaults_overrider(parser,default_args)
+    parser = Acq400UI.imported_defaults_overrider(parser,default_args)
     return parser
-    args = parser.parse_known_args()[0]
-    args.callback = homecoming
-    PR.Yellow("Running Host_Demux: pses={} pcfg={}".format(args.pses, args.pcfg))
 
-    return args
-
-def imported_defaults_overrider(parser,defaults):
-    arr = parser._positionals._actions
-    for x in arr:
-        if x.dest in defaults.keys():
-            #print("Overriding {} with {}".format(x.dest,defaults[x.dest]))
-            x.default = defaults[x.dest]
-    return parser
 
 def blockPrint():
     if wrapper_args.silence.upper() == 'YES':
