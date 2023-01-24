@@ -17,7 +17,7 @@ import numpy as np
     ./user_apps/special/AquadB_analysis.py --ecolumn=DI6 --run_test=yes --silence=YES acq2106_999
 
     ./user_apps/special/AquadB_analysis.py --stim=acq2106_888 --dwg=dat_files/dwg123 --run_test=yes --silence=NO acq2106_999
-    
+
     args for subordinate scripts should pass through wrapper
 """
 
@@ -25,8 +25,9 @@ wrapper_args = None
 
 def main(args):
     global wrapper_args
-    args.callback = homecoming
-    PR.Yellow("Running Host_Demux: pses={} pcfg={}".format(args.pses,args.pcfg))    
+
+    PR.Yellow("Running Host_Demux: pses={} pcfg={}".format(args.pses, args.pcfg))
+    PR.Yellow("Running Host_Demux: stim={} dwg={}".format(args.stim, args.dwg))
 
     wrapper_args = args
     if args.run_test.upper() == 'YES':
@@ -35,6 +36,8 @@ def main(args):
         MOVE.main(args)
         enablePrint()
 
+    # hazard: MOVE callback and DEMUX callback have different signatures, so args.callback MUST be null for MOVE
+    args.callback = homecoming
     #demux_args = host_demux_args()
     blockPrint()
     DEMUX.run_main(args)
@@ -50,11 +53,8 @@ def aquadb_move_args(parser):
 #        'dwg': 'dat_files/wiggle.2x32',
         'verbose': 2
     }
-    parser = imported_defaults_overrider(parser,default_args)  
-    return parser 
-#    args = parser.parse_known_args()[0]
-#    PR.Yellow("Running AquadB_movement: stim={} dwg={}".format(args.stim,args.dwg))
-#    return args
+    parser = imported_defaults_overrider(parser, default_args)
+    return parser
 
 def host_demux_args(parser):
     parser = DEMUX.get_parser(parser)
@@ -63,13 +63,13 @@ def host_demux_args(parser):
         'pcfg': 'PCFG/ansto_qen_and_di.pcfg',
         'pses': '1:-1:1',
         'plot': 0
-    }    
+    }
     parser = imported_defaults_overrider(parser,default_args)
     return parser
     args = parser.parse_known_args()[0]
     args.callback = homecoming
-    PR.Yellow("Running Host_Demux: pses={} pcfg={}".format(args.pses,args.pcfg))
-    
+    PR.Yellow("Running Host_Demux: pses={} pcfg={}".format(args.pses, args.pcfg))
+
     return args
 
 def imported_defaults_overrider(parser,defaults):
@@ -140,7 +140,7 @@ def demarcate(events):
         output.append(num)
         pre = num
     return output
-    
+
 def homecoming(data):
     enablePrint()
     PR.Green('Homecoming')
@@ -161,4 +161,4 @@ def get_parser():
     return parser
 
 if __name__ == '__main__':
-    main(get_parser().parse_known_args()[0])
+    main(get_parser().parse_args())
