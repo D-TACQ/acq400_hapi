@@ -47,10 +47,9 @@ def aquadb_move_args(parser):
     parser = MOVE.get_parser(parser)
     default_args = {
         'force_delete' : 1,
-        'root': '/home/dt100/DATA',
-        'stim': 'acq2106_274',
-        'dwg': 'dat_files/wiggle',
-#        'dwg': 'dat_files/wiggle.2x32',
+        'root': '../AquadB_FAT/DATA',
+        'stim': 'acq2106_351',
+        'dwg': '../AquadB/DWG/wiggle',
         'verbose': 2
     }
     parser = Acq400UI.imported_defaults_overrider(parser,default_args)
@@ -59,8 +58,8 @@ def aquadb_move_args(parser):
 def host_demux_args(parser):
     parser = DEMUX.get_parser(parser)
     default_args = {
-        'src' : '/home/dt100/DATA',
-        'pcfg': 'PCFG/ansto_qen_and_di.pcfg',
+        'src' : '../AquadB_FAT/DATA',
+        'pcfg': '../AquadB_FAT/PCFG/qen_and_wr_and_di.pcfg',
         'pses': '1:-1:1',
         'plot': 0
     }
