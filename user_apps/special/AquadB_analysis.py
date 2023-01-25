@@ -23,6 +23,8 @@ import numpy as np
 
 wrapper_args = None
 
+FAT_ROOT = '../AquadB_FAT'
+
 def main(args):
     global wrapper_args
 
@@ -47,9 +49,9 @@ def aquadb_move_args(parser):
     parser = MOVE.get_parser(parser)
     default_args = {
         'force_delete' : 1,
-        'root': '../AquadB_FAT/DATA',
+        'root': FAT_ROOT+'/DATA',
         'stim': 'acq2106_351',
-        'dwg': '../AquadB/DWG/wiggle',
+        'dwg': FAT_ROOT+'/DWG/wiggle',
         'verbose': 2
     }
     parser = Acq400UI.imported_defaults_overrider(parser,default_args)
@@ -58,8 +60,8 @@ def aquadb_move_args(parser):
 def host_demux_args(parser):
     parser = DEMUX.get_parser(parser)
     default_args = {
-        'src' : '../AquadB_FAT/DATA',
-        'pcfg': '../AquadB_FAT/PCFG/qen_and_wr_and_di.pcfg',
+        'src' : FAT_ROOT+'/DATA',
+        'pcfg': FAT_ROOT+'/PCFG/qen_and_wr_and_di.pcfg',
         'pses': '1:-1:1',
         'plot': 0
     }
