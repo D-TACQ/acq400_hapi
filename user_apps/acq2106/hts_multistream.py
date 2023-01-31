@@ -86,16 +86,24 @@ def get_parser():
     parser.add_argument('--delete', default=1, type=int, help='delete stale data')
     parser.add_argument('--recycle', default=1, type=int, help='overwrite data')
 
-    parser.add_argument('uuts', nargs='+', help="uuts")
+    parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
+
+## "world" data structure is indexed by name, and is a mapping of:
+## 'API' :: uut proxy object
+## 'UID' :: [ uut_serial uutname ]
+## 'PRT':: port map
+## 'SRM' :: stream info 
+## 'STA' :: status
+
 
 def run_main(args):
     args.map = map_parser_and_validator(args.map)
-    args.uuts = build_data_structure(args.uuts,args.map)
-    get_ramdisk_ready(args.uuts,args)
-    setup_remote_sites(args.uuts,args)
-    configure_shot(args.uuts,args)
-    run(args.uuts,args)
+    args.world = build_data_structure(args.uutnames, args.map)
+    get_ramdisk_ready(args.world, args)
+    setup_remote_sites(args.world, args)
+    configure_shot(args.world, args)
+    run(args.world, args)
 
 def map_parser_and_validator(maps):
     valid_remote_ports = ['A', 'B', 'BOTH']
@@ -111,32 +119,32 @@ def map_parser_and_validator(maps):
         port_map[uut][port] = sites
     return port_map
 
-def build_data_structure(uuts,map):
-    struct = {}
-    for uut in uuts:
-        new = {}
-        new['API'] = attach_hapi(uut)
-        uid = get_uid(new)
-        new['UID'] = uid
+def build_data_structure(uutnames, map):
+    world = {}
+    for uut in uutnames:
+        new_obj = {}
+        new_obj['API'] = attach_hapi(uut)
+        uid = get_uid(new_obj)
+        new_obj['UID'] = uid
         if 'ALL' in map:
-            new['PRT'] = map['ALL']
+            new_obj['PRT'] = map['ALL']
         elif uid[0] in map:
-            new['PRT'] = map[uid[0]]
+            new_obj['PRT'] = map[uid[0]]
         else:
             PR.Red(f'Warning: UUT {uut} has no port map')
-        new['SRM'] = attach_stream(uid[1])
-        if not new['SRM']:
-            del new
+        new_obj['SRM'] = attach_stream(uid[1])
+        if not new_obj['SRM']:
+            del new_obj
             PR.Red(f'Warning: {uut} has no connections ignoring')
             continue
-        new['STA'] = {
+        new_obj['STA'] = {
             'last_poll'     : 0,
             'poll_delay'    : 2,
             'state'         : None,
         }
-        new['SIT'] = {}
-        struct[uut] = new
-    return struct
+        new_obj['SIT'] = {}
+        world[uut] = new_obj
+    return world
 
 def get_ramdisk_ready(uuts,args):
 
