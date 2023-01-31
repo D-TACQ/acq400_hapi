@@ -21,7 +21,7 @@ usage::
                           [--clear_counters] [--spad SPAD]
                           [--decimate DECIMATE] [--nbuffers NBUFFERS]
                           [--secs SECS] [--map MAP] [--sig_gen SIG_GEN]
-                          [--delete DELETE] [--recycle RECYCLE]
+                          [--delete DELETE] [--recycle RECYCLE] [--check CHECK]
                           uuts [uuts ...]
 
 figure acq2106 High Throughput Stream
@@ -46,7 +46,8 @@ optional arguments:
   --sig_gen SIG_GEN     Signal gen to trigger when all uuts armed
   --delete DELETE       delete stale data
   --recycle RECYCLE     overwrite data
-
+  --check               run ramp test
+  
 Recommendation: --secs is really a timeout, use --nbuffers for exact data length
 
 If data rate exceeds bandwidth uut will stay in arm
@@ -73,7 +74,8 @@ import re
 import subprocess
 import psutil
 
-def get_parser():    
+
+def get_parser():
     parser = argparse.ArgumentParser(description='configure acq2106 High Throughput Stream')    
     acq400_hapi.Acq400UI.add_args(parser, transient=False)
     parser.add_argument('--spad', default=None, help="scratchpad, eg 1,16,0")
@@ -85,6 +87,7 @@ def get_parser():
     parser.add_argument('--sig_gen', default=None, help='Signal gen to trigger when all uuts armed')
     parser.add_argument('--delete', default=1, type=int, help='delete stale data')
     parser.add_argument('--recycle', default=1, type=int, help='overwrite data')
+    parser.add_argument('--check', default=0, type=int, help='check ramp')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -93,7 +96,7 @@ def get_parser():
 ## 'API' :: uut proxy object
 ## 'UID' :: [ uut_serial uutname ]
 ## 'PRT':: port map
-## 'SRM' :: stream info 
+## 'SRM' :: stream info
 ## 'STA' :: status
 
 
@@ -110,43 +113,48 @@ def map_parser_and_validator(maps):
     maps = maps.split('/')
     port_map = {}
     for map in maps:
-        uut,port,sites = map.upper().split(':')
-        uut = uut.lstrip('0')
+        uutname, port, sites = map.upper().split(':')
+        uutname = uutname.lstrip('0')
         if port not in valid_remote_ports:
             exit(PR.Red(f'ERROR: Invalid port: {port}'))
-        if uut not in port_map:
-            port_map[uut] = {}
-        port_map[uut][port] = sites
+        if uutname not in port_map:
+            port_map[uutname] = {}
+        port_map[uutname][port] = sites
     return port_map
 
 def build_data_structure(uutnames, map):
     world = {}
+    stream_conns = get_stream_idents()
     for uut in uutnames:
         new_obj = {}
+        new_obj['SIT'] = {}
         new_obj['API'] = attach_hapi(uut)
         uid = get_uid(new_obj)
         new_obj['UID'] = uid
+
         if 'ALL' in map:
             new_obj['PRT'] = map['ALL']
         elif uid[0] in map:
             new_obj['PRT'] = map[uid[0]]
         else:
             PR.Red(f'Warning: UUT {uut} has no port map')
-        new_obj['SRM'] = attach_stream(uid[1])
+
+        new_obj['SRM'] = attach_stream(uid[1], stream_conns)
         if not new_obj['SRM']:
             del new_obj
             PR.Red(f'Warning: {uut} has no connections ignoring')
             continue
+
         new_obj['STA'] = {
             'last_poll'     : 0,
             'poll_delay'    : 2,
             'state'         : None,
         }
-        new_obj['SIT'] = {}
+
         world[uut] = new_obj
     return world
 
-def get_ramdisk_ready(uuts,args):
+def get_ramdisk_ready(uuts, args):
 
     if not os.path.ismount("/mnt"):
         exit(PR.Red(f'Error: /mnt is not a ramdisk'))
@@ -170,46 +178,46 @@ def get_ramdisk_ready(uuts,args):
         for uid in uuts:
             total_streams += len(uuts[uid]['SRM'])
         memory_needed = total_streams * args.nbuffers
-        PR.Blue(F'Memory needed: {memory_needed} MB')
-        PR.Blue(F'Memory available: {int(free_memory)} MB')
+        PR.Blue(f'Memory needed: {memory_needed} MB')
+        PR.Blue(f'Memory available: {free_memory} MB')
         if memory_needed > free_memory - 1024:
             exit(PR.Red(f'Error: Needed memory exceeds safe usage'))
 
-def get_uid(uut):
-    hostname = uut['API'].s0.HN
+def get_uid(uut_item):
+    uut = uut_item['API']
+    hostname = uut.s0.HN
     match = re.search(r'^acq[\d]+_([\d]+)$', hostname)
     if not match:
-        exit(PR.Red(f'Error: {uut} HAPI Hostname {hostname} is invalid'))
+        exit(PR.Red(f'Error: {uut_item} Hostname {hostname} is invalid'))
     return [match.group(1).lstrip('0'), match.group()]
 
-def attach_hapi(uut):
+def attach_hapi(uut_name):
     try:
-        hapi = acq400_hapi.factory(uut)
-    except:
-        exit(PR.Red(f'Error: Connection failed {uut}'))
-    return hapi
+        uut = acq400_hapi.factory(uut_name)
+    except Exception:
+        exit(PR.Red(f'Error: Connection failed {uut_name}'))
+    return uut
 
-def attach_stream(uut):
-    local_ports = range(12)
-    streams = {}
-    for lport in local_ports:
-        ruut, rport = get_stream_ident(lport)
-        if uut == ruut:
-            streams[lport] = [rport, 'uninitialized']
-    return streams
+def attach_stream(uut_name, stream_conns):
+    if uut_name in stream_conns:
+        return stream_conns[uut_name]
+    return None
 
 def read_knob(knob):
     with open(knob, 'r') as f:
         return f.read().strip()
 
-def get_stream_ident(lport):
-    #improve
-    if stream_exists(lport):
+def get_stream_idents():
+    local_ports = range(12)
+    config = {}
+    for lport in local_ports:
         kill_stream_if_active(lport)
-        rport = read_knob('/dev/rtm-t.{}.ctrl/acq_port'.format(lport))
-        ruut = read_knob('/dev/rtm-t.{}.ctrl/acq_ident'.format(lport))
-        return ruut, rport
-    return None, None
+        remote_port = read_knob('/dev/rtm-t.{}.ctrl/acq_port'.format(lport))
+        remote_name = read_knob('/dev/rtm-t.{}.ctrl/acq_ident'.format(lport))
+        if remote_name not in config:
+            config[remote_name] = {}
+        config[remote_name][lport] = [remote_port, 'uninitialized']
+    return config
 
 def kill_stream_if_active(lport):
     pid = get_stream_pid(lport)
@@ -221,7 +229,7 @@ def kill_stream_if_active(lport):
     time.sleep(4)
     pid = get_stream_pid(lport)
     if pid != 0:
-        exit(PR.Red(f'FATAL ERROR: FAILED TO KILL STREAM {lport}'))
+        exit(PR.Red(f'Fatal Error: Stream failed to die {lport}'))
 
 def stream_exists(lport):
     if os.path.isdir('/dev/rtm-t.{}.ctrl'.format(lport)):
@@ -231,101 +239,104 @@ def stream_exists(lport):
 def get_stream_pid(lport):
     return int(read_knob("/dev/rtm-t.{}.ctrl/streamer_pid".format(lport)))
 
-def setup_remote_sites(uuts, args):
-    for uut in uuts.items():
-        hapi = uut[1]['API']
-        ports = uut[1]['PRT']
+def setup_remote_sites(uut_collection, args):
+    for uut_item in uut_collection.items():
+        ports = uut_item[1]['PRT']
+        site_map = uut_item[1]['SIT']
+        uut = uut_item[1]['API']
 
         if args.spad != None:
-            hapi.s0.spad = args.spad
+            uut.s0.spad = args.spad
             # use spare spad elements as data markers
             for sp in ('1', '2', '3', '4' , '5', '6', '7'):
-                hapi.s0.sr("spad{}={}".format(sp, sp*8))
+                uut.s0.sr("spad{}={}".format(sp, sp*8))
 
         if 'BOTH' in ports:
             sitesA = sitesB = ports['BOTH']
             if sitesA == 'ALL':
-                sitesA = sitesB = hapi.s0.sites
+                sitesA = sitesB = uut.s0.sites
             if sitesA == 'SPLIT':
-                sitesA = sitesB = hapi.s0.sites.split(',')
+                sitesA = sitesB = uut.s0.sites.split(',')
                 sitesA = ','.join(sitesA[:len(sitesA) - 1])
                 sitesB = ','.join(sitesB[len(sitesB) - 1:])
-            hapi.cA.aggregator = "sites={} on".format(sitesA)
-            uut[1]['SIT']['A'] = sitesA
+            uut.cA.aggregator = "sites={} on".format(sitesA)
+            site_map['A'] = sitesA
             time.sleep(1)
-            hapi.cB.aggregator = "sites={} on".format(sitesB)
-            uut[1]['SIT']['B'] = sitesB
+            uut.cB.aggregator = "sites={} on".format(sitesB)
+            site_map['B'] = sitesB
             continue
 
         if 'A' in ports:
-            sites = ports['A']
-            if sites == 'ALL':
-                sites = hapi.s0.sites
-            hapi.cA.spad = 0 if args.spad == None else 1
-            uut[1]['SIT']['A'] = sites
-            hapi.cA.aggregator = "sites={} on".format(sites)
+            sitesA = ports['A']
+            if sitesA == 'ALL':
+                sitesA = uut.s0.sites
+            uut.cA.spad = 0 if args.spad is None else 1
+            site_map['A'] = sitesA
+            uut.cA.aggregator = f"sites={sitesA} on"
         else:
-            hapi.cA.spad = 0
-            hapi.cA.aggregator = "sites=none off"
+            uut.cA.spad = 0
+            uut.cA.aggregator = "sites=none off"
 
         if 'B' in ports:
-            sites = ports['B']
-            if sites == 'ALL':
-                sites = uut.s0.sites
-            hapi.cB.spad = 0 if args.spad == None else 1
-            uut[1]['SIT']['B'] = sites
-            hapi.cB.aggregator = "sites={} on".format(sites)         
+            sitesB = ports['B']
+            if sitesB == 'ALL':
+                sitesB = uut.s0.sites
+            uut.cB.spad = 0 if args.spad is None else 1
+            site_map['B'] = sitesB
+            uut.cB.aggregator = f"sites={sitesB} on"
         else:
-            hapi.cB.spad = 0
-            hapi.cB.aggregator = "sites=none off"
+            uut.cB.spad = 0
+            uut.cB.aggregator = "sites=none off"
 
-def configure_shot(uuts, args):
-    for uut in uuts.items():
-        hapi = uut[1]['API']
-        acq400_hapi.Acq400UI.exec_args(hapi, args)
-        hapi.s0.run0 = "{} {}".format(hapi.s0.sites, args.spad)
-        if args.decimate != None:
-            hapi.s0.decimate = args.decimate
+def configure_shot(uut_collection, args):
+    for uut_item in uut_collection.items():
+        uut = uut_item[1]['API']
+        acq400_hapi.Acq400UI.exec_args(uut, args)
+        uut.s0.run0 = f'{uut.s0.sites} {args.spad}'
+        if args.decimate is not None:
+            uut.s0.decimate = args.decimate
         if args.sig_gen:
-            hapi.s1.TRG_DX = 'd0'
+            uut.s1.TRG_DX = 'd0'
         else:
-            hapi.s1.TRG_DX = 'd1'
-
-def start_uuts(uuts):
-    for uid in uuts:
-        hapi = uuts[uid]['API']
-        state = get_uut_state(hapi)
+            uut.s1.TRG_DX = 'd1'
+            
+def start_uuts(uut_collection):
+    for uid in uut_collection:
+        uut = uut_collection[uid]['API']
+        state = get_uut_state(uut)
         if state != 'IDLE':
-            #hapi.s0.streamtonowhered = "stop"
-            hapi.s0.CONTINUOUS = '0'
-            time.sleep(4)
-        hapi.s0.CONTINUOUS = '1'
-        #hapi.s0.streamtonowhered = "start"
+            #uut.s0.CONTINUOUS = '0'
+            uut.s0.streamtonowhered = "stop"
+            #time.sleep(5)
+        #uut.s0.CONTINUOUS = '1'
+        uut.s0.streamtonowhered = "start"
         PR.Yellow(f"Started {uid}")
 
-def stop_uuts(uuts):
+def stop_uuts(uut_collection):
     streams = []
-    for uid in uuts:
-        hapi = uuts[uid]['API']
-        hapi.s0.CONTINUOUS = '0'
-        hapi.s0.streamtonowhered = "stop"
+    for uid in uut_collection:
+        uut = uut_collection[uid]['API']
+        #uut.s0.CONTINUOUS = '0'
+        uut.s0.streamtonowhered = "stop"
         PR.Yellow(f'Stopping {uid}')
-        for lport in uuts[uid]['SRM']:
+        for lport in uut_collection[uid]['SRM']:
             streams.append(lport)
     time.sleep(5)
     for lport in streams:    
         kill_stream_if_active(lport)
 
-def initialize_streams(uuts,args):
+def initialize_streams(uut_collection, args):
     nbuffers = args.nbuffers
     recycle = 1
     if not args.recycle:
         recycle = 0
-    for uut in uuts:
-        for stream in uuts[uut]['SRM']:
+    for uid in uut_collection:
+        for stream in uut_collection[uid]['SRM']:
             cmd = 'sudo ./scripts/run-stream-ramdisk {} {} {}'
+            if args.check:
+                cmd = 'sudo ./scripts/run-stream-ramdisk-ramp {} {} {}'
             cmd = cmd.format(stream, nbuffers, recycle).split()
-            process = subprocess.Popen(cmd,stdout = subprocess.PIPE,stderr = subprocess.PIPE)
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time_start = time.time()
             pid = get_stream_pid(stream)
             while True:
@@ -335,7 +346,7 @@ def initialize_streams(uuts,args):
                 pid = get_stream_pid(stream)
                 if pid != 0:
                     PR.Green(f"Started afhba.{stream} with PID {pid}")
-                    uuts[uut]['SRM'][stream][1] = process
+                    uut_collection[uid]['SRM'][stream][1] = process
                     break
                 time.sleep(0.5)
 
@@ -351,22 +362,26 @@ def get_stream_state(sid, args):
     arr['STATUS'] = arr['STATUS'] if arr['STATUS'] else 'OK'
     return int(arr['rx']) * args.buffer_len, int(arr['rx_rate']) * args.buffer_len, arr['STATUS']
 
-def run(uuts, args):
+def get_ramp_results(sid):
+    file = f"ramp_{sid}.log"
+    if os.path.exists(file):
+        f = open(file, "r").readline().strip()
+        return f
 
+def run(uut_collection, args):
     if args.secs:
         args.nbuffers = 99999999999
 
     t_mins, t_secs = divmod(args.secs, 60)
 
-    initialize_streams(uuts,args)
-    start_uuts(uuts)
-
+    initialize_streams(uut_collection, args)
+    start_uuts(uut_collection)
     
-
     count = 0
     cycle_max = 1
     all_running = False
     all_armed = False
+    farewell_tour = False
     time_start = time.time()
     print("")
     SCRN = DISPLAY()
@@ -386,22 +401,21 @@ def run(uuts, args):
                     time_start = time.time()
                 count = time.time() - time_start
                 if args.secs <= 60:
-                    SCRN.add("{0:.1f}/{1} secs ",count,args.secs)
+                    SCRN.add("{0:.1f}/{1} secs ", count, args.secs)
                 else:
                     c_mins, c_secs = divmod(count, 60)
-                    SCRN.add(f"{int(c_mins)}.{int(c_secs):02}/{int(t_mins)}.{int(t_secs):02} mins ")
-                SCRN.add("Max Buffers: {0} Buffer Length: {1}MB {RESET}",'N/A',args.buffer_len)
+                    SCRN.add(f"{int(c_mins)}:{int(c_secs):02}/{int(t_mins)}:{int(t_secs):02} mins ")
+                SCRN.add(f"Buffer Length: {args.buffer_len}MB {{RESET}}")
             else:
                 SCRN.add("{0:.0f} secs ",time.time() - time_start)
-                SCRN.add("Max Buffers: {0} Buffer Length: {1}MB {RESET}",args.nbuffers * args.buffer_len,args.buffer_len)
-
+                SCRN.add("Max: {0}MB Buffer Length: {1}MB {RESET}", args.nbuffers * args.buffer_len, args.buffer_len)
 
             if args.sig_gen:
                 if all_armed:
                     SCRN.add(f" Triggering{args.sig_gen}")
                     try:
                         acq400_hapi.Agilent33210A(args.sig_gen).trigger()
-                    except:
+                    except Exception:
                         PR.Red(f'Could not trigger {args.sig_gen}')
                         break
                     args.sig_gen = None
@@ -410,14 +424,16 @@ def run(uuts, args):
 
             SCRN.add_line('')
 
-            for uut in uuts.items():
-                uut_name = uut[0]
-                uut = uut[1]
-                status = uut['STA']
+            for uid in uut_collection.items():
+                uut_name = uid[0]
+                uut_item = uid[1]
+                status = uut_item['STA']
+                streams = uut_item['SRM']
+                uut = uut_item['API']
 
                 if time.time() - status['last_poll'] > status['poll_delay']:
                     status['last_poll'] = time.time()
-                    status["state"] = get_uut_state(uut['API'])
+                    status["state"] = get_uut_state(uut)
                 SCRN.add(f'{uut_name} ')
                 if status["state"] == 'RUN':
                     running_uuts += 1
@@ -432,42 +448,48 @@ def run(uuts, args):
                     SCRN.add(f'{{RED}}{status["state"]}{{RESET}}:')
                 SCRN.end()
 
-                for stream in uut['SRM']:
+                for stream in streams:
                     total_streams += 1
-                    rx, rx_rate, state = get_stream_state(stream,args)
-                    port = uut["SRM"][stream][0]
-                    sites = uut["SIT"][port]
+                    process = streams[stream][1]
+                    rx, rx_rate, state = get_stream_state(stream, args)
+                    port = streams[stream][0]
+                    sites = uut_item["SIT"][port]
                     SCRN.add(f'{{TAB}}{sites}:{port} -> afhba.{stream}')
                     SCRN.add(f'{{TAB}}{rx_rate}MB/s Total: {rx}MB Status: {state}')
+                    if args.check:
+                        SCRN.add(' Ramp {0}', get_ramp_results(stream))
                     SCRN.end()
+
                     if state == 'STOP_DONE':
                         status['poll_delay'] = 10
                         ended_streams += 1
+
                 SCRN.add_line('')
 
-            if running_uuts == len(uuts):
+            if running_uuts == len(uut_collection):
                 all_running = True
-            if armed_uut == len(uuts):
+            if armed_uut == len(uut_collection):
                 all_armed = True
-
 
             if count and time.time() - time_start > args.secs:
                 SCRN.add_line('{BOLD}Time Limit Reached{RESET}')
-                SCRN.render(False)
-                break
+                if farewell_tour:
+                    SCRN.render(False)
+                    break
+                farewell_tour = True
 
             if ended_streams == total_streams:
                 SCRN.add_line('{BOLD}Buffer limit Reached{RESET}')
-                SCRN.render(False)
-                break
+                if farewell_tour:
+                    SCRN.render(False)
+                    break
+                farewell_tour = True
 
-
-            cycle_length = time.time () - cycle_start
-            sleep_time =  0  if cycle_length > cycle_max else cycle_max - cycle_length
+            cycle_length = time.time() - cycle_start
+            sleep_time = 0 if cycle_length > cycle_max else cycle_max - cycle_length
 
             if sleep_time < 0.6:
-                SCRN.add_line('{RED}Cycle took {0:.2f}s{RESET}',cycle_length)
-
+                SCRN.add_line('{RED}Cycle took {0:.2f}s{RESET}', cycle_length)
 
             SCRN.render()
 
@@ -476,15 +498,13 @@ def run(uuts, args):
     except KeyboardInterrupt:
         SCRN.render_interrupted()
         PR.Red('Interrupt!')
-        pass
-    except:
+    except Exception:
         SCRN.render_interrupted()
         PR.Red('ERROR!')
-        pass
     print()
-    stop_uuts(uuts)
+    stop_uuts(uut_collection)
 
 # execution starts here
+
 if __name__ == '__main__':
     run_main(get_parser().parse_args())
-
