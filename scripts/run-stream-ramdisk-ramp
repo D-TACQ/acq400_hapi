@@ -1,0 +1,38 @@
+#!/bin/bash
+
+devnum=${1:-0} 
+nbuffers=${2:-1024}
+overwrite=${3:-1} # 1 = overwite 0 = dont
+
+if [ !  -e ../AFHBA404 ]; then
+	echo "ERROR: did not find ../AFHBA404"
+	exit 1
+fi
+
+file="ramp_${devnum}.log"
+total_ramps=0
+good_ramps=0
+bad_ramps=0
+ugly_ramps=0
+
+[ ! -e $file ] || rm $file
+
+while read line; do
+	if [[ ${line:0:1} == "/" ]] ; then
+		result=$(../AFHBA404/FUNCTIONAL_TESTS/checkramp480 < $line)
+		#echo -e "\033[93m $result \033[00m "
+		((total_ramps=total_ramps+1))
+		if [[ ${#result} -gt 10 && ${#result} -lt 50 ]]; then
+			((good_ramps=good_ramps+1))
+			#echo "Good:${total_ramps} ${result}" >> goodramps_${devnum}.log
+		else
+			((bad_ramps=bad_ramps+1))
+			#echo "BAD:${total_ramps} ${result}" >> badramps_${devnum}.log
+		fi
+		if (( $total_ramps % 300 == 0 )); then
+			echo "Total: ${total_ramps} Good: ${good_ramps} Bad: ${bad_ramps}" > $file
+		fi
+	fi
+done < <(cd ../AFHBA404; sudo ./scripts/stream-to-ramdisk-oneshot ${devnum} ${nbuffers} ${overwrite}) 2> /dev/null
+echo "Total: ${total_ramps} Good: ${good_ramps} Bad: ${bad_ramps}" > $file
+
