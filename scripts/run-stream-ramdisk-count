@@ -1,0 +1,32 @@
+#!/bin/bash
+
+devnum=${1:-0} 
+nbuffers=${2:-1024}
+overwrite=${3:-1} # 1 = overwite 0 = dont
+spad_start=${4:-4}
+spad=${5:-0}
+
+if [ !  -e ../AFHBA404 ]; then
+	echo "ERROR: did not find ../AFHBA404"
+	exit 1
+fi
+
+file="count_${devnum}.log"
+[ ! -e $file ] || rm $file
+
+rlength=$(($spad_start + $spad))
+total=0
+bad_spad=0
+
+echo "Checking spad" > $file
+while read line; do
+	if [[ ${line:0:1} == "/" ]] ; then
+		(( ++total ))
+		result=$(../AFHBA404/FUNCTIONAL_TESTS/isramp ${line} -m ${rlength} -c ${spad_start} -i 1)
+		if [[ -n $result ]]; then
+			(( ++bad_spad ))
+		fi
+	fi
+done < <(cd ../AFHBA404; sudo ./scripts/stream-to-ramdisk-oneshot ${devnum} ${nbuffers} ${overwrite})
+bad_per=$(echo "scale=2; 100/${total}*${bad_spad}" | bc -l)
+echo "Buffers checked: ${total} ${bad_per}% Bad" > $file
