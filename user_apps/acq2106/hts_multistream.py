@@ -87,7 +87,7 @@ def get_parser():
     parser.add_argument('--sig_gen', default=None, help='Signal gen to trigger when all uuts armed')
     parser.add_argument('--delete', default=1, type=int, help='delete stale data')
     parser.add_argument('--recycle', default=1, type=int, help='overwrite data')
-    parser.add_argument('--check', default=0, type=int, help='check ramp')
+    parser.add_argument('--check', default=0, type=int, help='check ramp 1 or count 2')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -119,6 +119,10 @@ def map_parser_and_validator(maps):
             exit(PR.Red(f'ERROR: Invalid port: {port}'))
         if uutname not in port_map:
             port_map[uutname] = {}
+        if port == 'BOTH':
+            port_map[uutname]['A'] = sites
+            port_map[uutname]['B'] = sites
+            continue
         port_map[uutname][port] = sites
     return port_map
 
@@ -127,11 +131,10 @@ def build_data_structure(uutnames, map):
     stream_conns = get_stream_idents()
     for uut in uutnames:
         new_obj = {}
-        new_obj['SIT'] = {}
         new_obj['API'] = attach_hapi(uut)
         uid = get_uid(new_obj)
         new_obj['UID'] = uid
-
+        
         if 'ALL' in map:
             new_obj['PRT'] = map['ALL']
         elif uid[0] in map:
@@ -152,6 +155,8 @@ def build_data_structure(uutnames, map):
         }
 
         world[uut] = new_obj
+    if not world:
+        exit(PR.Red("Error: No valid connections detected exiting"))
     return world
 
 def get_ramdisk_ready(uuts, args):
@@ -208,15 +213,20 @@ def read_knob(knob):
         return f.read().strip()
 
 def get_stream_idents():
-    local_ports = range(12)
+    local_ports = range(16)
     config = {}
     for lport in local_ports:
+        if not os.path.exists(f'/dev/rtm-t.{lport}.ctrl/'):
+            continue
         kill_stream_if_active(lport)
-        remote_port = read_knob('/dev/rtm-t.{}.ctrl/acq_port'.format(lport))
-        remote_name = read_knob('/dev/rtm-t.{}.ctrl/acq_ident'.format(lport))
+        remote_port = read_knob(f'/dev/rtm-t.{lport}.ctrl/acq_port')
+        remote_name = read_knob(f'/dev/rtm-t.{lport}.ctrl/acq_ident')
         if remote_name not in config:
             config[remote_name] = {}
-        config[remote_name][lport] = [remote_port, 'uninitialized']
+        config[remote_name][lport] = {}
+        config[remote_name][lport]['rport'] = remote_port
+        config[remote_name][lport]['process'] = 'uninitialized'
+        config[remote_name][lport]['mapped_sites'] = 'unknown'
     return config
 
 def kill_stream_if_active(lport):
@@ -239,55 +249,71 @@ def stream_exists(lport):
 def get_stream_pid(lport):
     return int(read_knob("/dev/rtm-t.{}.ctrl/streamer_pid".format(lport)))
 
+def get_site_data(uut):
+    input_sites=['dio']
+    sites = {}
+    for site in uut.s0.SITELIST.split(','):
+        site = site.split('=')
+        if len(site) != 2:
+            continue
+        if site[1] in input_sites:
+            continue
+        site_proxy = getattr(uut, f's{site[0]}')
+        sites[site[0]] = int(site_proxy.NCHAN)
+    return sites
+
+def map_sites_to_stream(rport, sites, streams):
+    for stream in streams.items():
+        if stream[1]['rport'] == rport:
+            stream[1]['mapped_sites'] = sites
+
 def setup_remote_sites(uut_collection, args):
     for uut_item in uut_collection.items():
         ports = uut_item[1]['PRT']
-        site_map = uut_item[1]['SIT']
-        uut = uut_item[1]['API']
-
+        uut =  uut_item[1]['API']
+        streams = uut_item[1]['SRM']
+        
+        all_sites = get_site_data(uut)
         if args.spad != None:
             uut.s0.spad = args.spad
-            # use spare spad elements as data markers
+            uut.cA.spad = 1
+            uut.cB.spad = 1
             for sp in ('1', '2', '3', '4' , '5', '6', '7'):
                 uut.s0.sr("spad{}={}".format(sp, sp*8))
-
-        if 'BOTH' in ports:
-            sitesA = sitesB = ports['BOTH']
-            if sitesA == 'ALL':
-                sitesA = sitesB = uut.s0.sites
-            if sitesA == 'SPLIT':
-                sitesA = sitesB = uut.s0.sites.split(',')
-                sitesA = ','.join(sitesA[:len(sitesA) - 1])
-                sitesB = ','.join(sitesB[len(sitesB) - 1:])
-            uut.cA.aggregator = "sites={} on".format(sitesA)
-            site_map['A'] = sitesA
-            time.sleep(1)
-            uut.cB.aggregator = "sites={} on".format(sitesB)
-            site_map['B'] = sitesB
-            continue
+        else:
+            uut.cA.spad = 0
+            uut.cB.spad = 0
 
         if 'A' in ports:
-            sitesA = ports['A']
-            if sitesA == 'ALL':
-                sitesA = uut.s0.sites
+            sites = ports['A']
+            if sites == 'ALL':
+                sites = all_sites
+            if sites == 'SPLIT':
+                sites = all_sites[:len(all_sites) - 1]
+            map_sites_to_stream('A', sites, streams)
+            sites = ','.join(sites.keys())
+            ports['A'] = sites
             uut.cA.spad = 0 if args.spad is None else 1
-            site_map['A'] = sitesA
-            uut.cA.aggregator = f"sites={sitesA} on"
+            uut.cA.aggregator = f"sites={sites} on"
         else:
             uut.cA.spad = 0
             uut.cA.aggregator = "sites=none off"
 
         if 'B' in ports:
-            sitesB = ports['B']
-            if sitesB == 'ALL':
-                sitesB = uut.s0.sites
+            sites = ports['B']
+            if sites == 'ALL':
+                sites = all_sites
+            if sites == 'SPLIT':
+                sites = all_sites[len(all_sites) - 1:]
+            map_sites_to_stream('B', sites, streams)
+            sites = ','.join(sites.keys())
+            ports['B'] = sites
             uut.cB.spad = 0 if args.spad is None else 1
-            site_map['B'] = sitesB
-            uut.cB.aggregator = f"sites={sitesB} on"
+            uut.cB.aggregator = f"sites={sites} on"
         else:
             uut.cB.spad = 0
             uut.cB.aggregator = "sites=none off"
-
+            
 def configure_shot(uut_collection, args):
     for uut_item in uut_collection.items():
         uut = uut_item[1]['API']
@@ -330,26 +356,37 @@ def initialize_streams(uut_collection, args):
     recycle = 1
     if not args.recycle:
         recycle = 0
-    for uid in uut_collection:
-        for stream in uut_collection[uid]['SRM']:
-            cmd = 'sudo ./scripts/run-stream-ramdisk {} {} {}'
-            if args.check:
+    for uut_item in uut_collection.items():
+        for stream in uut_item[1]['SRM'].items():
+            if not args.check:
+                cmd = 'sudo ./scripts/run-stream-ramdisk {} {} {}'
+                cmd = cmd.format(stream[0], nbuffers, recycle).split()
+            elif args.check == 1:
                 cmd = 'sudo ./scripts/run-stream-ramdisk-ramp {} {} {}'
-            cmd = cmd.format(stream, nbuffers, recycle).split()
+                cmd = cmd.format(stream[0], nbuffers, recycle).split()
+            elif args.check == 2:
+                ccolumn = 0
+                for site in stream[1]['mapped_sites'].items():
+                    ccolumn += site[1]
+                ccolumn = int(ccolumn / 2)
+                spadl = int(args.spad.split(',')[1])
+                cmd = 'sudo ./scripts/run-stream-ramdisk-count {} {} {} {} {}'
+                cmd = cmd.format(stream[0], nbuffers, recycle, ccolumn, spadl).split()
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time_start = time.time()
-            pid = get_stream_pid(stream)
+            pid = get_stream_pid(stream[0])
             while True:
                 if time.time() - time_start > 5:
-                    PR.Red(f"Error: afhba.{stream} failed to start")
+                    PR.Red(f"Error: afhba.{stream[0]} failed to start")
                     break
-                pid = get_stream_pid(stream)
+                pid = get_stream_pid(stream[0])
                 if pid != 0:
-                    PR.Green(f"Started afhba.{stream} with PID {pid}")
-                    uut_collection[uid]['SRM'][stream][1] = process
+                    PR.Green(f"Started afhba.{stream[0]} with PID {pid}")
+                    stream[1]['process'] = process
+                    stream[1]['pid'] = pid
                     break
                 time.sleep(0.5)
-
+                
 def get_uut_state(uut):
     return uut.s0.CONTINUOUS_STATE.split(' ')[1]
 
@@ -362,8 +399,7 @@ def get_stream_state(sid, args):
     arr['STATUS'] = arr['STATUS'] if arr['STATUS'] else 'OK'
     return int(arr['rx']) * args.buffer_len, int(arr['rx_rate']) * args.buffer_len, arr['STATUS']
 
-def get_ramp_results(sid):
-    file = f"ramp_{sid}.log"
+def get_results(file):
     if os.path.exists(file):
         f = open(file, "r").readline().strip()
         return f
@@ -450,14 +486,18 @@ def run(uut_collection, args):
 
                 for stream in streams:
                     total_streams += 1
-                    process = streams[stream][1]
+                    process = streams[stream]['process']
                     rx, rx_rate, state = get_stream_state(stream, args)
-                    port = streams[stream][0]
-                    sites = uut_item["SIT"][port]
+                    port = streams[stream]['rport']
+                    sites = uut_item["PRT"][port]
                     SCRN.add(f'{{TAB}}{sites}:{port} -> afhba.{stream}')
                     SCRN.add(f'{{TAB}}{rx_rate}MB/s Total: {rx}MB Status: {state}')
-                    if args.check:
-                        SCRN.add(' Ramp {0}', get_ramp_results(stream))
+                    if args.check == 1:
+                        file = f"ramp_{stream}.log"
+                        SCRN.add(' Ramp {0}', get_results(file))
+                    if args.check == 2:
+                        file = f"count_{stream}.log"
+                        SCRN.add(' Spad-{0}', get_results(file))
                     SCRN.end()
 
                     if state == 'STOP_DONE':

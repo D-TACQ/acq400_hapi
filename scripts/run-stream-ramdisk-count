@@ -1,0 +1,55 @@
+#!/bin/bash
+
+devnum=${1:-0} 
+nbuffers=${2:-1024}
+overwrite=${3:-1} # 1 = overwite 0 = dont
+spad_start=${4:-4}
+spad=${5:-0}
+
+if [ !  -e ../AFHBA404 ]; then
+	echo "ERROR: did not find ../AFHBA404"
+	exit 1
+fi
+
+file="count_${devnum}.log"
+[ ! -e $file ] || rm $file
+
+err_file="count_err_${devnum}.log"
+[ ! -e $err_file ] || rm $err_file
+
+rlength=$(($spad_start + $spad))
+(( ++spad_start ))
+
+total=0
+bad_spad=0
+files=0
+
+while read line; do
+	if [[ ${line:0:1} == "/" ]] ; then
+		(( ++files ))
+		if (( $files % 30 != 0 )); then
+			continue
+		fi
+		count=0
+		previous=0  
+		for i in $(hexdump -e "$rlength/4 \"%08x,\" \"\n\"" $line | cut -d, -f${spad_start}); do
+			(( ++count ))
+			if [[ $count -eq 1 ]]; then
+				previous=$i
+				continue
+			fi
+			diff=$((16#$i - 16#$previous))
+			if [[ $diff -ne 1 ]]; then
+				(( ++bad_spad ))
+				echo "File ${line} Line ${i} previous=${previous} diff=${diff}" >> $err_file
+			fi
+			previous=$i
+		done
+		total=$(($total + $count))  
+		if (( $files % 10 == 0 )); then
+			echo "Total: ${total} Bad: ${bad_spad}" > $file
+		fi
+		#echo "Total: ${total} Bad: ${bad_spad}" 
+	fi
+	
+done < <(cd ../AFHBA404; sudo ./scripts/stream-to-ramdisk-oneshot ${devnum} ${nbuffers} ${overwrite})
