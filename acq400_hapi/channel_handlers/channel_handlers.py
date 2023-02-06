@@ -139,9 +139,9 @@ class ch_egu(ch_raw):
         print(np.shape(raw_channels))
         yy, raw_fmt, step = super().__call__(raw_channels, pses)
 
+        if self.args.WSIZE == 4:
+            yy = yy/256
         try:
-            if self.args.WSIZE == 4:
-                yy = yy/256
             return self.args.the_uut.chan2volts(self.ch, yy), self.egu_fmt.format(self.ch), SMOO
         except:
             return yy, raw_fmt.format(self.ch), SMOO
