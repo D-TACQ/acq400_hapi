@@ -241,6 +241,24 @@ def read_data_file(args, NCHAN):
             raw_channels[ch] = data[ch::NCHAN]
     return raw_channels
 
+def save_dirfile(args, raw_channels):
+    uutname = args.uut
+    for enum, channel in enumerate(raw_channels):
+        data_file = open("{}/{}_{:02d}.dat".format(args.saveroot, uutname, enum+1), "wb+")
+        channel.tofile(data_file, '')
+
+    print("data saved to directory: {}".format(args.saveroot))
+    with open("{}/format".format(args.saveroot), 'w') as fmt:
+        fmt.write("# dirfile format file for {}\n".format(uutname))
+        for enum, channel in enumerate(raw_channels):
+            fmt.write("{}_{:02d}.dat RAW s 1\n".format(uutname, enum+1))
+
+def save_numpy(args, raw_channels):
+    npfile = "{}/{}.npy".format(args.saveroot, args.uut)
+    cooked = cook_data(args, raw_channels)
+    print("save_numpy {}  {}".format(npfile, cooked))
+    np.save(npfile, cooked)
+
 def save_data(args, raw_channels):
 
     if os.name == "nt": # if system is windows.
@@ -252,16 +270,10 @@ def save_data(args, raw_channels):
     else:
         subprocess.call(["mkdir", "-p", args.saveroot])
 
-    uutname = args.uut
-    for enum, channel in enumerate(raw_channels):
-        data_file = open("{}/{}_{:02d}.dat".format(args.saveroot, uutname, enum+1), "wb+")
-        channel.tofile(data_file, '')
-
-    print("data saved to directory: {}".format(args.saveroot))
-    with open("{}/format".format(args.saveroot), 'w') as fmt:
-        fmt.write("# dirfile format file for {}\n".format(uutname))
-        for enum, channel in enumerate(raw_channels):
-            fmt.write("{}_{:02d}.dat RAW s 1\n".format(uutname, enum+1))
+    if args.save == 'npy':
+        save_numpy(args, raw_channels)
+    else:
+        save_dirfile(args, raw_channels)
 
     return raw_channels
 
@@ -392,12 +404,14 @@ def stack_480_shuffle(args, raw_data):
 
     return r2
 
-def process_callback(args, raw_channels):
+def cook_data(args, raw_channels):
     clidata = {}
     for num, ch_handler in enumerate(args.pc_list):
         yy, ylabel, step = ch_handler(raw_channels, args.pses)
         clidata[ylabel] = yy
-    args.callback(clidata)
+
+    return clidata
+
 
 def process_data(args):
     NCHAN = args.nchan
@@ -414,7 +428,7 @@ def process_data(args):
         raw_data = stack_480_shuffle(args, raw_data)
 
     if args.callback:
-        process_callback(args, raw_data)
+        args.callback(cook_data(args, raw_data))
 
     if args.save != None:
         save_data(args, raw_data)
