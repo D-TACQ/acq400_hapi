@@ -656,12 +656,12 @@ class Acq400:
 
 
     def data_size(self):
-	    return 4 if self.s0.data32 == '1' else 2
+        return 4 if self.s0.data32 == '1' else 2
 
     def uut_demux_enabled(self):
         ts = self.s0.transient
         rc = bool(int(self.s0.transient.split("DEMUX=",1)[1][0]))
-#        print ("uut_demux_enabled(): transient {} decoded DEMUX={} rc={}".format(ts, ts.split("DEMUX=",1)[1][0], rc))
+        #print ("uut_demux_enabled(): transient {} decoded DEMUX={} rc={}".format(ts, ts.split("DEMUX=",1)[1][0], rc))
         return rc
 
 
@@ -1400,20 +1400,28 @@ class Acq2106(Acq400):
         self.mb_clk_min = 100000
         sn_map = ()
         if has_comms:
-            sn_map += (('cA', AcqSites.SITE_CA), ('cB', AcqSites.SITE_CB))
+            for mgt in s0_client.has_mgt.split(' '):
+                sn_map += ((self.get_mgt_site(mgt)),)
         if has_wr:
             sn_map += (('cC', AcqSites.SITE_CC), )
         if has_dsp:
             sn_map += (('s14', AcqSites.SITE_DSP),)
         if has_hudp:
             sn_map += (('s10', AcqSites.SITE_HUDP), )
-
         for ( service_name, site ) in sn_map:
             try:
                 self.svc[service_name] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
             except socket.error:
                 print("uut {} site {} not populated".format(_uut, site))
             self.mod_count += 1
+
+    def get_mgt_site(self, mgt):
+        comms_config = {
+            11 : ('cC', AcqSites.SITE_CC),
+            12 : ('cB', AcqSites.SITE_CB),
+            13 : ('cA', AcqSites.SITE_CA),
+        }
+        return comms_config[int(mgt)]
 
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
         print("set_mb_clk {} {} {}".format(hz, src, fin))
@@ -1545,8 +1553,7 @@ def factory(_uut):
         pass
 
     s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
-
-    if not s0.MODEL.startswith("acq2106"):
+    if not s0.MODEL.startswith("acq2106") and not s0.MODEL.startswith("z7io"):
         return Acq400(_uut, s0_client=s0)
 
     # here with acq2106
@@ -1561,8 +1568,6 @@ def factory(_uut):
         has_wr = s0.has_wr != "none"
         has_sfp = s0.has_mgt != "none"
         has_hudp = s0.has_hudp != "none"
-
-
         return Acq2106(_uut, s0_client=s0,  has_dsp=has_dsp, has_comms=has_sfp, has_wr=has_wr, has_hudp=has_hudp)
     except:
         ''' nothing special, make it a default class with existing s0
