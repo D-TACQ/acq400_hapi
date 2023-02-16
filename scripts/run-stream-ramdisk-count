@@ -1,38 +1,15 @@
 #!/bin/bash
 
-devnum=${1:-0} 
-nbuffers=${2:-1024}
-overwrite=${3:-1} # 1 = overwite 0 = dont
-spad_start=${4:-4}
-spad=${5:-0}
+DN=${1:-0}			#device number
+NB=${2:-1024}		#total buffers
+RCL=${3:-1}			#recycle 0 = No, >0 = how many cycles until recycle
+SPAD=${4:-8}		#total spad items
+SPAD_START=${5:-8}	#index of first spad item
+
 
 if [ !  -e ../AFHBA404 ]; then
 	echo "ERROR: did not find ../AFHBA404"
 	exit 1
 fi
 
-file="/mnt/afhba.${devnum}/count_${devnum}.log"
-[ ! -e $file ] || rm $file
-err_file="/mnt/afhba.${devnum}/err_${devnum}.log"
-[ ! -e $err_file ] || rm $err_file
-
-rlength=$(($spad_start + $spad))
-total=0
-bad_spad=0
-
-echo "Checking spad" > $file
-while read line; do
-	if [[ ${line:0:1} == "/" ]] ; then
-		(( ++total ))
-		result=$(../AFHBA404/FUNCTIONAL_TESTS/isramp ${line} -m ${rlength} -c ${spad_start} -i 1)
-		if [[ -n $result ]]; then
-			(( ++bad_spad ))
-			echo "${result}" >> $err_file
-		fi
-		if (( $total % 150 == 0 )); then
-			echo "Spad: total=${total} bad=${bad_spad}" > $file
-		fi
-	fi
-done < <(cd ../AFHBA404; sudo ./scripts/stream-to-ramdisk-oneshot ${devnum} ${nbuffers} ${overwrite}) 2> /dev/null
-bad_per=$(echo "scale=2; 100/${total}*${bad_spad}" | bc -l)
-echo "Spad: total=${total} bad=${bad_spad} ${bad_per}%" > $file
+cd ../AFHBA404; sudo ./scripts/stream-to-ramdisk-verify ${DN} ${NB} ${RCL} ${SPAD} ${SPAD_START}
