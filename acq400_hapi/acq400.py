@@ -1379,6 +1379,9 @@ def freq(sig):
 def freqpv(sig):
     return float(pv(sig))
 
+def floatpv(_pv):
+    return float(pv(_pv))
+
 def intpv(_pv):
     return int(pv(_pv))
 
