@@ -164,7 +164,7 @@ def wait_completion(uut, args):
 
 
 def run_shot(args): 
-    uut = acq400_hapi.Acq2106(args.uut[0])
+    uut = acq400_hapi.factory(args.uut[0])
     if args.datahandler != None:
         cmd = args.datahandler.format(args.lport, args.nbuffers)
         print("datahandler command {}".format(cmd))
