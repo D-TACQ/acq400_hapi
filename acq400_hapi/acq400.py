@@ -1403,7 +1403,7 @@ class Acq2106(Acq400):
         self.mb_clk_min = 100000
         sn_map = ()
         if has_comms:
-            for mgt in s0_client.has_mgt.split(' '):
+            for mgt in self.svc['s0'].has_mgt.split(' '):
                 sn_map += ((self.get_mgt_site(mgt)),)
         if has_wr:
             sn_map += (('cC', AcqSites.SITE_CC), )
