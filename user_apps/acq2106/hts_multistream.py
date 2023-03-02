@@ -63,16 +63,17 @@ If data rate exceeds bandwidth uut will stay in arm
             C is z7io exclusive
     --map=67:A:1/67:B:2/130:BOTH:ALL
 """
-
 import acq400_hapi
 from acq400_hapi import PR
 from acq400_hapi.acq400_print import DISPLAY
+from acq400_hapi import afhba404
 import argparse
 import time
 import os
 import re
 import subprocess
 import psutil
+import threading
 
 def get_parser():
     parser = argparse.ArgumentParser(description='High Throughput Stream from up to 16 UUTS')
@@ -87,6 +88,7 @@ def get_parser():
     parser.add_argument('--recycle', default=1, type=int, help='overwrite data')
     parser.add_argument('--check', default=0, type=int, help='run tests simulate ramp=1 or spad sequential=2')
     parser.add_argument('--dry_run', default=0, type=int, help='run setup but dont start streams or uuts')
+    parser.add_argument('--trg_src', default='d1', help='Trigger source to set on all uuts')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -97,21 +99,26 @@ class uut_class:
         self.name = name
         self.spad = args.spad
         self.args = args
-        self.last_poll = 0
-        self.poll_delay = 2
+        self.state = None
+        self.thread = None
+        self.ended = False
         self.__attach_api()
         self.__set_id()
         self.__data_builder(map, streams)
 
     def get_state(self):
-        if time.time() - self.last_poll > self.poll_delay:
-            self.last_poll = time.time()
-            self.state = acq400_hapi.pv(self.api.s0.CONTINUOUS_STATE)
-        return self.state
+        self.state =  acq400_hapi.pv(self.api.s0.CONTINUOUS_STATE)
+
+    def get_state_forever(self):
+        while True:
+            self.get_state()
+            time.sleep(1)
+            if self.ended:
+                return
 
     def start(self):
-        state = self.get_state()
-        if state != 'IDLE':
+        self.get_state()
+        if self.state != 'IDLE':
             #self.api.s0.CONTINUOUS = '0'
             self.api.s0.streamtonowhered = "stop"
             time.sleep(2)
@@ -121,6 +128,7 @@ class uut_class:
     def stop(self):
         #self.api.s0.CONTINUOUS = 0
         self.api.s0.streamtonowhered = "stop"
+        return
 
     def initialize(self):
         for stream in self.streams:
@@ -145,7 +153,7 @@ class uut_class:
             cmd = cmd.format(**args).split(" ")
             self.streams[stream]['process'] = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time_start = time.time()
-            pid = get_stream_pid(stream)
+            pid = afhba404.get_stream_pid(stream)
             while True:
                 if pid != 0:
                     PR.Green(f"Started afhba.{stream} with PID {pid}")
@@ -154,7 +162,7 @@ class uut_class:
                 if time.time() - time_start > 5:
                     PR.Red(f"Error: afhba.{stream} failed to start")
                     break
-                pid = get_stream_pid(stream)
+                pid = afhba404.get_stream_pid(stream)
                 time.sleep(0.5)
 
     def configure(self):
@@ -169,10 +177,8 @@ class uut_class:
         acq400_hapi.Acq400UI.exec_args(self.api, self.args)
         self.api.s0.run0 = f'{self.api.s0.sites} {self.spad}'
         self.api.s0.decimate = self.args.decimate
-        if self.args.sig_gen:
-            self.api.s1.TRG_DX = 'd0'
-        else:
-            self.api.s1.TRG_DX = 'd1'
+        if self.args.trg_src:
+            self.api.s1.TRG_DX = self.args.trg_src
 
     def __setup_aggregator(self):
         for stream in self.streams.items():
@@ -186,13 +192,7 @@ class uut_class:
                 comm_site.spad = 0
 
     def get_stream_state(self, lport):
-        arr = {}
-        job = read_knob("/proc/driver/afhba/afhba.{}/Job".format(lport))
-        for pp in job.split():
-            k, v = pp.split('=')
-            arr[k] = v
-        arr['STATUS'] = arr['STATUS'] if arr['STATUS'] else 'OK'
-        return int(arr['rx']) * self.args.buffer_len, int(arr['rx_rate']) * self.args.buffer_len, arr['STATUS']
+        return afhba404.get_stream_state(lport)
 
     def get_results(self, lport):
             tests = {
@@ -236,12 +236,13 @@ class uut_class:
         site_list = self.__get_sitelist()
         out = {}
         if 'ALL' in map:
-            map[self.id] = map['ALL']
+            map[self.id] = map['ALL'].copy()
         if self.id not in map:
             exit(PR.Red(f'Error: {self.name} has no valid map'))
         for port in map[self.id]:
             out[port] = {}
             map[self.id][port] = map[self.id][port].split(',')
+
             if map[self.id][port][0] == 'ALL':
                 out[port] = site_list
                 continue
@@ -265,10 +266,12 @@ class uut_class:
 
 def stop_uuts(uut_collection):
     for uut_item in uut_collection:
-        uut_item.stop()
+        uut_item.ended = True
+        t =  threading.Thread(target=uut_item.stop)
+        t.start()
 
 def object_builder(args):
-    stream_config = get_stream_conns()
+    stream_config = get_stream_conns(args)
     map = get_parsed_map(args.map)
     uut_collection = []
     for uut_name in args.uutnames:
@@ -276,19 +279,18 @@ def object_builder(args):
         uut_collection.append(new_uut)
     return uut_collection
 
-def get_stream_conns():
-    local_ports = range(16)
+def get_stream_conns(args):
     config = {}
-    for lport in local_ports:
-        if not os.path.exists(f'/dev/rtm-t.{lport}.ctrl/'):
-            continue
+    active_conns = acq400_hapi.afhba404.get_connections()
+    for conn in active_conns:
+        lport = active_conns[conn].dev
+        rport = active_conns[conn].cx
+        rhost = active_conns[conn].uut
         kill_stream_if_active(lport)
-        remote_port = read_knob(f'/dev/rtm-t.{lport}.ctrl/acq_port')
-        remote_name = read_knob(f'/dev/rtm-t.{lport}.ctrl/acq_ident')
-        if remote_name not in config:
-            config[remote_name] = {}
-        config[remote_name][lport] = {}
-        config[remote_name][lport]['rport'] = remote_port
+        if rhost not in config:
+            config[rhost] = {}
+        config[rhost][lport] = {}
+        config[rhost][lport]['rport'] = rport
     return config
 
 def get_parsed_map(maps):
@@ -311,23 +313,20 @@ def get_parsed_map(maps):
     return port_map
 
 def kill_stream_if_active(lport):
-    pid = get_stream_pid(lport)
+    pid = afhba404.get_stream_pid(lport)
     if pid == 0:
         return
     cmd = 'sudo kill -9 {}'.format(pid)
     result = os.system(cmd)
     PR.Yellow(f'Warning: Killing afhba.{lport} with pid: {pid}')
     time.sleep(4)
-    pid = get_stream_pid(lport)
+    pid = afhba404.get_stream_pid(lport)
     if pid != 0:
         exit(PR.Red(f'Fatal Error: Stream failed to die {lport}'))
 
 def read_knob(knob):
     with open(knob, 'r') as f:
         return f.read().strip()
-
-def get_stream_pid(lport):
-    return int(read_knob("/dev/rtm-t.{}.ctrl/streamer_pid".format(lport)))
 
 def setup_then_exit(uut_collection):
     for uut_item in uut_collection:
@@ -344,7 +343,7 @@ def configure_host(uut_collection, args):
         PR.Yellow(f"Erasing /mnt/afhba.*")
         time.sleep(4)
 
-    args.buffer_len = int(read_knob('/sys/module/afhba/parameters/buffer_len'))
+    args.buffer_len = afhba404.get_buffer_len()
     args.buffer_len = int(args.buffer_len / 1024 / 1024)
     PR.Yellow(f'Using {args.buffer_len}MB buffers')
 
@@ -374,14 +373,15 @@ def run_main(args):
     for uut_item in uut_collection:
         uut_item.configure()
         uut_item.initialize()
-        uut_item.start()
         total_streams += len(uut_item.streams)
-
+    for uut_item in uut_collection:
+        uut_item.thread =  threading.Thread(target=uut_item.get_state_forever)
+        uut_item.thread.daemon = True
+        uut_item.thread.start()
+        uut_item.start()
     count = 0
-    cycle_max = 1
     all_running = False
     all_armed = False
-    farewell_tour = False
     trigg_msg = ''
     time_start = time.time()
     SCRN = DISPLAY()
@@ -398,8 +398,6 @@ def run_main(args):
                 if not count:
                     time_start = time.time()
                 count = time.time() - time_start
-                if farewell_tour:
-                    count = args.secs
                 if args.secs <= 60:
                     SCRN.add("{0:.1f}/{1} secs ", count, args.secs)
                 else:
@@ -420,40 +418,36 @@ def run_main(args):
                         break
                     trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}{{RESET}}'
                     args.sig_gen = None
-            SCRN.add(trigg_msg)
+            SCRN.add(f'{trigg_msg}{{RESET}}')
 
             SCRN.add_line('')
 
             for uut_item in uut_collection:
-                state = uut_item.get_state()
                 SCRN.add(f'{uut_item.name} ')
-                if state == 'RUN':
+                if uut_item.state == 'RUN':
                     running_uuts += 1
                     uut_item.poll_delay = 5
-                    SCRN.add(f'{{GREEN}}{state}{{RESET}}:')
-                elif state == 'ARM':
+                    SCRN.add(f'{{GREEN}}{uut_item.state}{{RESET}}:')
+                elif uut_item.state == 'ARM':
                     armed_uuts += 1
-                    SCRN.add(f'{{ORANGE}}{state}{{RESET}}:')
-                    if not args.sig_gen:
-                        SCRN.add(f'{{RED}} Error{{RESET}}')
+                    SCRN.add(f'{{ORANGE}}{uut_item.state}{{RESET}}:')
                 else:
-                    SCRN.add(f'{{RED}}{state}{{RESET}}:')
+                    SCRN.add(f'{{RED}}{uut_item.state}{{RESET}}:')
                 SCRN.end()
 
                 for stream in uut_item.streams.items():
 
-                    rx, rx_rate, status = uut_item.get_stream_state(stream[0])
+                    sstate = uut_item.get_stream_state(stream[0])
                     sites = stream[1]['all_sites']
                     rport = stream[1]['rport']
-
                     SCRN.add(f'{{TAB}}{sites}:{rport} -> afhba.{stream[0]}')
-                    SCRN.add(f'{{TAB}}{{BOLD}}{rx_rate}MB/s Total: {rx:,}MB Status: {state}{{RESET}}')
+                    SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate}MB/s Total: {int(sstate.rx):,}MB Status: {sstate.STATUS}{{RESET}}')
                     SCRN.end()
                     if args.check:
                         name, result = uut_item.get_results(stream[0])
                         SCRN.add_line(f'{{TAB}}{{TAB}}{name} {result}')
 
-                    if status == 'STOP_DONE':
+                    if sstate.STATUS == 'STOP_DONE':
                         ended_streams += 1
 
             if running_uuts == len(uut_collection):
@@ -463,34 +457,30 @@ def run_main(args):
 
             if count and time.time() - time_start > args.secs:
                 SCRN.add_line('{BOLD}Time Limit Reached Stopping{RESET}')
-                if farewell_tour:
+                if running_uuts == 0:
                     SCRN.render(False)
                     break
                 stop_uuts(uut_collection)
-                farewell_tour = True
 
             if ended_streams == total_streams:
                 SCRN.add_line('{BOLD}Buffer limit Reached Stopping{RESET}')
-                if farewell_tour:
+                if running_uuts == 0:
                     SCRN.render(False)
                     break
                 stop_uuts(uut_collection)
-                farewell_tour = True
-
-            cycle_length = time.time() - cycle_start
-            sleep_time = 0 if cycle_length > cycle_max else cycle_max - cycle_length
 
             SCRN.render()
-            time.sleep(sleep_time)
+            time.sleep(0.5)
 
     except KeyboardInterrupt:
         SCRN.render_interrupted()
         PR.Red('Interrupt!')
         stop_uuts(uut_collection)
-    except Exception:
+    except Exception as e:
         SCRN.render_interrupted()
         PR.Red('Fatal Error')
         stop_uuts(uut_collection)
+        print(e)
     print('Done')
 
 if __name__ == '__main__':
