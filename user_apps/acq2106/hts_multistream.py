@@ -88,7 +88,7 @@ def get_parser():
     parser.add_argument('--recycle', default=1, type=int, help='overwrite data')
     parser.add_argument('--check', default=0, type=int, help='run tests simulate ramp=1 or spad sequential=2')
     parser.add_argument('--dry_run', default=0, type=int, help='run setup but dont start streams or uuts')
-    parser.add_argument('--trg_src', default='d1', help='Trigger source to set on all uuts')
+    parser.add_argument('--trg_src', default=None, help='Trigger source to set on all uuts')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -113,8 +113,6 @@ class uut_class:
         while True:
             self.get_state()
             time.sleep(1)
-            if self.ended:
-                return
 
     def start(self):
         self.get_state()
@@ -266,9 +264,10 @@ class uut_class:
 
 def stop_uuts(uut_collection):
     for uut_item in uut_collection:
-        uut_item.ended = True
-        t =  threading.Thread(target=uut_item.stop)
-        t.start()
+        if not uut_item.ended:
+            t = threading.Thread(target=uut_item.stop)
+            t.start()
+            uut_item.ended = True
 
 def object_builder(args):
     stream_config = get_stream_conns(args)
