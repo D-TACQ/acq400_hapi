@@ -89,6 +89,7 @@ def get_parser():
     parser.add_argument('--check', default=0, type=int, help='run tests simulate ramp=1 or spad sequential=2')
     parser.add_argument('--dry_run', default=0, type=int, help='run setup but dont start streams or uuts')
     parser.add_argument('--trg_src', default=None, help='Trigger source to set on all uuts')
+    parser.add_argument('--wrtd_txi', default=None, help='Command first box to send this trigger when all units are in ARM state')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -165,6 +166,7 @@ class uut_class:
 
     def configure(self):
         PR.Yellow(f'Configuring {self.name}')
+        print("check .. rtm_translen {}".format(self.api.s1.rtm_translen))
         self.__setup_aggregator()
         if self.spad:
             self.api.s0.spad = self.spad
@@ -366,7 +368,12 @@ def configure_host(uut_collection, args):
 def run_main(args):
     uut_collection = object_builder(args)
     configure_host(uut_collection, args)
+    top_uut = uut_collection[0].api
+
     if args.dry_run:
+        print("pgmwashere dry_run")
+        print(f'wrtd: {args.wrtd_txi}')
+        top_uut.cC.sr(args.wrtd_txi)
         setup_then_exit(uut_collection)
     total_streams = 0
     for uut_item in uut_collection:
@@ -383,6 +390,9 @@ def run_main(args):
     all_armed = False
     trigg_msg = ''
     time_start = time.time()
+
+
+
     SCRN = DISPLAY()
     try:
         while True:
@@ -417,8 +427,15 @@ def run_main(args):
                         break
                     trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}{{RESET}}'
                     args.sig_gen = None
-            SCRN.add(f'{trigg_msg}{{RESET}}')
 
+            if args.wrtd_txi:
+                trigg_msg = f"Waiting to trigger {args.sig_gen}"
+                if all_armed:
+                    trigg_msg = f'wrtd: {args.wrtd_txi}'
+                    top_uut.cC.sr(args.wrtd_txi)
+                    args.wrtd_txi = None
+
+            SCRN.add(f'{trigg_msg}{{RESET}}')
             SCRN.add_line('')
 
             for uut_item in uut_collection:
