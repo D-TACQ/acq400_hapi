@@ -24,8 +24,8 @@ def get_connections():
             conns[ii] = record
     return conns
 
-def get_buffer_len():
-    file = "/sys/module/afhba/parameters/buffer_len"
+def get_buffer_len(lport):
+    file = f"/dev/rtm-t.{lport}.ctrl/buffer_len"
     if os.path.exists(file):
         len = open(file, 'r').read().strip()
         if len.isdigit():

@@ -346,8 +346,8 @@ def configure_host(uut_collection, args):
         PR.Yellow(f"Erasing /mnt/afhba.*")
         time.sleep(4)
 
-    args.buffer_len = afhba404.get_buffer_len()
-    args.buffer_len = int(args.buffer_len / 1024 / 1024)
+    lport = list(uut_collection[0].streams.keys())[0]
+    args.buffer_len = int(afhba404.get_buffer_len(lport) / 1024 / 1024)
     PR.Yellow(f'Using {args.buffer_len}MB buffers')
 
     if not args.recycle:
