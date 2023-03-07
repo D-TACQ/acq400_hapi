@@ -149,7 +149,9 @@ class uut_class:
                 args['spad_len'] = int(self.spad.split(',')[1])
                 args['count_col'] = count_col
                 cmd = 'sudo ./scripts/run-stream-ramdisk-count {lport} {buffers} {recycle} {spad_len} {count_col}'
+
             cmd = cmd.format(**args).split(" ")
+#            print("cmd for sub: {}".format(cmd))
             self.streams[stream]['process'] = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time_start = time.time()
             pid = afhba404.get_stream_pid(stream)
