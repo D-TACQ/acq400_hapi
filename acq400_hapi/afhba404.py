@@ -40,10 +40,18 @@ def get_stream_pid(lport):
             return int(pid)
     return 0
 
-def get_stream_state(lport):
-    file = f"/proc/driver/afhba/afhba.{lport}/Job"
+def get_state(file, ntname):
     if os.path.exists(file):
-        job_state = open(file, 'r').read().strip()
-        states = dict(x.split("=") for x in job_state.split())
-        StreamState = namedtuple('StreamState', states)
+        state_def = open(file, 'r').read().strip()
+        states = dict(x.split("=") for x in state_def.split())
+        StreamState = namedtuple(ntname, states)
         return StreamState(**states)
+    else:
+        return None
+
+def get_stream_state(lport):
+    return get_state(f"/proc/driver/afhba/afhba.{lport}/Job", "StreamState")
+
+def get_link_state(lport):
+    return get_state(f"/dev/rtm-t.{lport}.ctrl/aurora", "LinkState")
+
