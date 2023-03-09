@@ -27,27 +27,29 @@ def get_connections():
 def get_buffer_len(lport):
     file = f"/dev/rtm-t.{lport}.ctrl/buffer_len"
     if os.path.exists(file):
-        len = open(file, 'r').read().strip()
-        if len.isdigit():
-            return int(len)
+        with open(file, 'r') as f:
+            len = f.read().strip()
+            if len.isdigit():
+                return int(len)
     return 0
 
 def get_stream_pid(lport):
     file = f"/dev/rtm-t.{lport}.ctrl/streamer_pid"
     if os.path.exists(file):
-        pid = open(file, 'r').read().strip()
-        if pid.isdigit():
-            return int(pid)
+        with open(file, 'r') as f:
+            pid = f.read().strip()
+            if pid.isdigit():
+                return int(pid)
     return 0
 
 def get_state(file, ntname):
-    if os.path.exists(file):
-        state_def = open(file, 'r').read().strip()
-        states = dict(x.split("=") for x in state_def.split())
+    if not os.path.exists(file):
+        return None
+    with open(file, 'r') as f:
+        state_def = f.read().strip().split()
+        states = dict((key, int(value)) if value.isdigit() else (key, value) for key,value in (item.split("=") for item in state_def))
         StreamState = namedtuple(ntname, states)
         return StreamState(**states)
-    else:
-        return None
 
 def get_stream_state(lport):
     return get_state(f"/proc/driver/afhba/afhba.{lport}/Job", "StreamState")

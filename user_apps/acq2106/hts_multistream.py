@@ -131,6 +131,7 @@ class uut_class:
 
     def initialize(self):
         for stream in self.streams:
+            self.check_lane_status(stream, self.streams[stream]["rport"])
             args = {}
             args['lport'] = stream
             args['buffers'] = self.args.nbuffers
@@ -151,7 +152,7 @@ class uut_class:
                 cmd = 'sudo ./scripts/run-stream-ramdisk-count {lport} {buffers} {recycle} {spad_len} {count_col}'
 
             cmd = cmd.format(**args).split(" ")
-#            print("cmd for sub: {}".format(cmd))
+            print("cmd for sub: {}".format(cmd))
             self.streams[stream]['process'] = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time_start = time.time()
             pid = afhba404.get_stream_pid(stream)
@@ -161,10 +162,29 @@ class uut_class:
                     self.streams[stream]['pid'] = pid
                     break
                 if time.time() - time_start > 5:
-                    PR.Red(f"Error: afhba.{stream} failed to start")
-                    break
+                    exit(PR.Red(f"Error: afhba.{stream} failed to start"))
                 pid = afhba404.get_stream_pid(stream)
+                print(pid)
                 time.sleep(0.5)
+
+    def check_lane_status(self, lport, rport):
+        link_state = afhba404.get_link_state(lport)
+        print(link_state.RPCIE_INIT)
+        print(link_state.LANE_UP)
+        if link_state.LANE_UP and link_state.RPCIE_INIT:
+            return
+        PR.Red('Link down: attempting to correct')
+        comms = getattr(self.api, f'c{rport}')
+        while True:
+            comms.TX_DISABLE = 1
+            time.sleep(1)
+            comms.TX_DISABLE = 0
+            time.sleep(1)
+            link_state = afhba404.get_link_state(lport)
+            if link_state.RPCIE_INIT:
+                PR.Green('Link Fixed')
+                return
+            exit(PR.Red('Link down: could not fix'))
 
     def configure(self):
         PR.Yellow(f'Configuring {self.name}')
@@ -284,7 +304,7 @@ def object_builder(args):
 
 def get_stream_conns(args):
     config = {}
-    active_conns = acq400_hapi.afhba404.get_connections()
+    active_conns = afhba404.get_connections()
     for conn in active_conns:
         lport = active_conns[conn].dev
         rport = active_conns[conn].cx
