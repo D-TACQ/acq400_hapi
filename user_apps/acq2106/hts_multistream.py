@@ -131,6 +131,7 @@ class uut_class:
 
     def initialize(self):
         for stream in self.streams:
+            self.check_lane_status(stream, self.streams[stream]["rport"])
             args = {}
             args['lport'] = stream
             args['buffers'] = self.args.nbuffers
@@ -149,10 +150,9 @@ class uut_class:
                 args['spad_len'] = int(self.spad.split(',')[1])
                 args['count_col'] = count_col
                 cmd = 'sudo ./scripts/run-stream-ramdisk-count {lport} {buffers} {recycle} {spad_len} {count_col}'
-
-            cmd = cmd.format(**args).split(" ")
-#            print("cmd for sub: {}".format(cmd))
-            self.streams[stream]['process'] = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            cmd = cmd.format(**args)
+            print(f"cmd for sub: {cmd}")
+            self.streams[stream]['process'] = subprocess.Popen(cmd.split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time_start = time.time()
             pid = afhba404.get_stream_pid(stream)
             while True:
@@ -161,21 +161,44 @@ class uut_class:
                     self.streams[stream]['pid'] = pid
                     break
                 if time.time() - time_start > 5:
-                    PR.Red(f"Error: afhba.{stream} failed to start")
-                    break
+                    exit(PR.Red(f"Error: afhba.{stream} failed to start"))
                 pid = afhba404.get_stream_pid(stream)
                 time.sleep(0.5)
 
+    def check_lane_status(self, lport, rport):
+        link_state = afhba404.get_link_state(lport)
+        message = f'{self.name} Link State LANE_UP={link_state.LANE_UP} RPCIE_INIT={link_state.RPCIE_INIT}'
+
+        if link_state.LANE_UP and link_state.RPCIE_INIT:
+            PR.Green(message)
+            return
+
+        PR.Yellow(message)
+        comms = getattr(self.api, f'c{rport}')
+        retry = 0
+
+        while retry < 3:
+            PR.Yellow(f'{self.name} Link down: attempting to correct {retry}/3')
+            comms.TX_DISABLE = 1
+            time.sleep(0.5)
+            comms.TX_DISABLE = 0
+            time.sleep(0.5)
+            link_state = afhba404.get_link_state(lport)
+            if link_state.RPCIE_INIT:
+                PR.Green(f'{self.name} Link Fixed {retry}')
+                return
+            retry += 1
+
+        exit(PR.Red('Link down: could not fix'))
+
     def configure(self):
-        PR.Yellow(f'Configuring {self.name}')
-        print("check .. rtm_translen {}".format(self.api.s1.rtm_translen))
+        PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
         self.__setup_aggregator()
         if self.spad:
             self.api.s0.spad = self.spad
             for sp in ('1', '2', '3', '4' , '5', '6', '7'):
                 self.api.s0.sr("spad{}={}".format(sp, sp*8))
-        else:
-            self.api.s0.spad = "0,0,0"
+
         acq400_hapi.Acq400UI.exec_args(self.api, self.args)
         self.api.s0.run0 = f'{self.api.s0.sites} {self.spad}'
         self.api.s0.decimate = self.args.decimate
@@ -284,7 +307,7 @@ def object_builder(args):
 
 def get_stream_conns(args):
     config = {}
-    active_conns = acq400_hapi.afhba404.get_connections()
+    active_conns = afhba404.get_connections()
     for conn in active_conns:
         lport = active_conns[conn].dev
         rport = active_conns[conn].cx
@@ -348,7 +371,6 @@ def configure_host(uut_collection, args):
 
     lport = list(uut_collection[0].streams.keys())[0]
     args.buffer_len = int(afhba404.get_buffer_len(lport) / 1024 / 1024)
-    PR.Yellow(f'Using {args.buffer_len}MB buffers')
 
     if not args.recycle:
         if args.secs:
@@ -387,14 +409,13 @@ def run_main(args):
         uut_item.thread.daemon = True
         uut_item.thread.start()
         uut_item.start()
+
     count = 0
     all_running = False
     all_armed = False
     trigg_msg = ''
+    cycle_max = 0.5
     time_start = time.time()
-
-
-
     SCRN = DISPLAY()
     try:
         while True:
@@ -414,10 +435,10 @@ def run_main(args):
                 else:
                     c_mins, c_secs = divmod(count, 60)
                     SCRN.add(f"{int(c_mins)}:{int(c_secs):02}/{int(args.t_mins)}:{int(args.t_secs):02} mins ")
-                SCRN.add(f"Buffer Length: {args.buffer_len}MB {{RESET}}")
+                SCRN.add(f"Buffer Length: {args.buffer_len}MB ")
             else:
                 SCRN.add("{0:.0f} secs ",time.time() - time_start)
-                SCRN.add("Max: {0}MB Buffer Length: {1}MB {RESET}", args.nbuffers * args.buffer_len, args.buffer_len)
+                SCRN.add("Max: {0}MB Buffer Length: {1}MB ", args.nbuffers * args.buffer_len, args.buffer_len)
 
             if args.sig_gen:
                 trigg_msg = f"Waiting to trigger {args.sig_gen}"
@@ -425,19 +446,19 @@ def run_main(args):
                     try:
                         acq400_hapi.Agilent33210A(args.sig_gen).trigger()
                     except Exception:
-                        PR.Red(f'Could not trigger {args.sig_gen}')
+                        trigg_msg = f'{{RED}}Could not trigger {args.sig_gen}'
                         break
-                    trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}{{RESET}}'
+                    trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}'
                     args.sig_gen = None
 
             if args.wrtd_txi:
-                trigg_msg = f"Waiting to trigger {args.sig_gen}"
+                trigg_msg = f"Waiting to trigger wrtd_txi"
                 if all_armed:
-                    trigg_msg = f'wrtd: {args.wrtd_txi}'
+                    trigg_msg = f'Triggered {args.wrtd_txi}'
                     top_uut.cC.sr(args.wrtd_txi)
                     args.wrtd_txi = None
 
-            SCRN.add(f'{trigg_msg}{{RESET}}')
+            SCRN.add(f'{trigg_msg} {{RESET}}')
             SCRN.add_line('')
 
             for uut_item in uut_collection:
@@ -480,7 +501,7 @@ def run_main(args):
                     break
                 stop_uuts(uut_collection)
 
-            if ended_streams == total_streams:
+            if not count and ended_streams == total_streams:
                 SCRN.add_line('{BOLD}Buffer limit Reached Stopping{RESET}')
                 if running_uuts == 0:
                     SCRN.render(False)
@@ -488,7 +509,9 @@ def run_main(args):
                 stop_uuts(uut_collection)
 
             SCRN.render()
-            time.sleep(0.5)
+            cycle_length = time.time() - cycle_start
+            sleep_time = 0 if cycle_length > cycle_max else cycle_max - cycle_length
+            time.sleep(sleep_time)
 
     except KeyboardInterrupt:
         SCRN.render_interrupted()
@@ -499,6 +522,7 @@ def run_main(args):
         PR.Red('Fatal Error')
         stop_uuts(uut_collection)
         print(e)
+    time.sleep(1)
     print('Done')
 
 if __name__ == '__main__':
