@@ -150,11 +150,12 @@ class ch_egu(ch_raw):
         channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_egu.def_fmt)
         if args[0] == 'ch_egu':
             for cn, ch in enumerate(channels):
-                channel_handler.handlers.append(ch_egu(ch-1, fmt=fmts[cn]))
+                channel_handler.handlers.append(
+                    ch_egu(ch-1, client_args, fmt=fmts[cn if cn<len(fmts) else 0]))
             return True
         return False
 
-channel_handler.builders.append(ch_raw)
+channel_handler.builders.append(ch_egu)
 
 
 class ch_tai_vernier(ch_raw):
