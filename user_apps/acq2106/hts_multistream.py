@@ -164,31 +164,37 @@ class uut_class:
                 if time.time() - time_start > 5:
                     exit(PR.Red(f"Error: afhba.{stream} failed to start"))
                 pid = afhba404.get_stream_pid(stream)
-                print(pid)
                 time.sleep(0.5)
 
     def check_lane_status(self, lport, rport):
         link_state = afhba404.get_link_state(lport)
-        print(link_state.RPCIE_INIT)
-        print(link_state.LANE_UP)
+        message = f' {self.name} Link State LANE_UP={link_state.LANE_UP} RPCIE_INIT={link_state.RPCIE_INIT}'
+      
         if link_state.LANE_UP and link_state.RPCIE_INIT:
+            PR.Green(message)
             return
-        PR.Red('Link down: attempting to correct')
-        comms = getattr(self.api, f'c{rport}')
-        while True:
+        
+        PR.Yellow(message)
+       
+        comms = getattr(self.api, f'c{rport}')       
+        retry = 0
+        
+        while retry < 3:
+            PR.Yellow(f'{self.name}  Link down: attempting to correct {retry}/3')            
             comms.TX_DISABLE = 1
-            time.sleep(1)
+            time.sleep(0.5)
             comms.TX_DISABLE = 0
-            time.sleep(1)
+            time.sleep(0.5)
             link_state = afhba404.get_link_state(lport)
             if link_state.RPCIE_INIT:
-                PR.Green('Link Fixed')
+                PR.Green(f'{self.name} Link Fixed {retry}')
                 return
-            exit(PR.Red('Link down: could not fix'))
+            retry += 1
+            
+        exit(PR.Red('Link down: could not fix'))
 
     def configure(self):
-        PR.Yellow(f'Configuring {self.name}')
-        print("check .. rtm_translen {}".format(self.api.s1.rtm_translen))
+        PR.Yellow(f'Configuring {self.name} .. rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb}  {self.args.buffer_len}MB buffers')       
         self.__setup_aggregator()
         if self.spad:
             self.api.s0.spad = self.spad
@@ -368,7 +374,6 @@ def configure_host(uut_collection, args):
 
     lport = list(uut_collection[0].streams.keys())[0]
     args.buffer_len = int(afhba404.get_buffer_len(lport) / 1024 / 1024)
-    PR.Yellow(f'Using {args.buffer_len}MB buffers')
 
     if not args.recycle:
         if args.secs:
