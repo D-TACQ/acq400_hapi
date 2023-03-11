@@ -191,9 +191,7 @@ class ShotController:
         return cmap
 
     def read_channels(self, channels=()):
-        print("read_channels()")
         self.cmap = self.map_channels(channels)
-        print("read_channels() after map")
         chx = [u.read_channels(self.cmap[iu]) for iu, u in enumerate(self.uuts)]
 
         if self.uuts[0].save_data:

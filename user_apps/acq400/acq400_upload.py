@@ -177,6 +177,14 @@ class TriggerCountLogger:
                 
         print("Trigger Check {} {}".format(results, "GOOD" if results[0]+results[1] == results[2] else "FAIL"))
 
+class TimedShotController(acq400_hapi.ShotControllerWithDataHandler):
+    @acq400_hapi.timing
+    def handle_data(self, args):
+        return super().handle_data(args)
+
+    def __init__(self, _uuts, args, shot=None):
+         super().__init__(_uuts, args, shot)
+         
 @acq400_hapi.timing
 def upload(args, shots, doClose=False):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
@@ -193,7 +201,7 @@ def upload(args, shots, doClose=False):
         while u.s0.TRANS_ACT_STATE.split(' ')[1] != 'IDLE':
             time.sleep(0.1)
           
-    shot_controller = acq400_hapi.ShotControllerWithDataHandler(uuts, args)
+    shot_controller = TimedShotController(uuts, args)
 
     if args.wrtd_tx != 0:
         trigger_action = WrtdAction(uuts[0], args.wrtd_tx)
