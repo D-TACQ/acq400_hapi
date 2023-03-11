@@ -150,7 +150,7 @@ class RawClient(netclient.Netclient):
         """
         _dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
 
-        buf = bytearray(nelems)
+        buf = bytearray(nelems*data_size)
         try:
             view = memoryview(buf).cast('B')
         except:
@@ -182,7 +182,7 @@ class MgtDramPullClient(RawClient):
 
 
 
-class ChannelClient(netclient.Netclient):
+class ChannelClient(RawClient):
     """handles post shot data for one channel.
 
     Args:
@@ -192,48 +192,8 @@ class ChannelClient(netclient.Netclient):
 
     """
     def __init__(self, addr, ch):
-        netclient.Netclient.__init__(self, addr, AcqPorts.DATA0+ch)
+        RawClient.__init__(self, addr, AcqPorts.DATA0+ch)
 
-# on Linux, recv returns on ~mtu
-# on Windows, it may buffer up, and it's very slow unless we use a larger buffer
-    def read(self, ndata, data_size=2, maxbuf=0x400000):
-        """read ndata from channel data server, return as np array.
-        Args:
-            ndata (int): number of elements
-
-            data_size : 2|4 short or int
-
-            maxbuf=4096 : max bytes to read per packet
-
-        Returns:
-            np: data array
-
-        * TODO buffer +=
-
-         this is probably horribly inefficient probably better::
-
-          retbuf = np.array(dtype, ndata)
-          retbuf[cursor].
-
-        """
-        _dtypes = { 1 : 'i1', 2: 'i2', 4: 'i4' }
-        _dtype = np.dtype(_dtypes[data_size])
-        total_buffer = buffer = self.sock.recv(maxbuf)
-
-        if int(ndata) == 0 or int(ndata) == -1:
-            while True:
-                buffer = self.sock.recv(maxbuf)
-                if not buffer:
-                    return np.frombuffer(total_buffer, dtype=_dtype, count=-1)
-                total_buffer += buffer
-
-        while len(buffer) < ndata*data_size:
-            buffer += self.sock.recv(maxbuf)
-
-        self.sock.shutdown(socket.SHUT_RDWR)
-        self.sock.close()
-
-        return np.frombuffer(buffer, dtype=_dtype, count=ndata)
 
 
 class ExitCommand(Exception):
@@ -608,10 +568,13 @@ class Acq400:
 
 
     def read_chan(self, chan, nsam = 0, data_size = None):
-        if chan != 0 and nsam == 0:
-            nsam = self.pre_samples()+self.post_samples()
         if data_size == None:
             data_size = 4 if self.s0.data32 == '1' else 2
+       
+        if chan == 0:
+            nsam = int(self.s0.raw_data_size) // data_size
+        if chan != 0 and nsam == 0:
+            nsam = self.pre_samples()+self.post_samples()
 
         cc = ChannelClient(self.uut, chan)
         ccraw = cc.read(nsam, data_size=data_size)
