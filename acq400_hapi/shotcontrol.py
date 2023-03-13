@@ -116,7 +116,7 @@ class ShotController:
 
 
     def arm_shot(self):
-        thx = [ threading.Thread(target=ShotController.arm_shot_action(u)) for u in self.uuts ]
+        thx = [ threading.Thread(target=ShotController.arm_shot_action(u)) for u in reversed(self.uuts) ]
         for t in thx:
             t.start()
         for t in thx:
