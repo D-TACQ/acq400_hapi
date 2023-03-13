@@ -154,12 +154,11 @@ page = """
         .ARM {
             color: orange;
         }
-        #container{
-            display: flex;
-            flex-flow: row wrap;
-        }
-		h1{
-			display: inline-block;
+		.header{
+			padding: 0px 10px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
 		}
 		.button{
 			border: 1px solid black;
@@ -169,28 +168,49 @@ page = """
 		#detailToggle{
 			display: none;
 		}
-		.title{
-			padding: 0px 10px;
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
+		#subtitle{
+			margin-left: 5px;
+			font-size: 16px;
 		}
-		.Simple .conn_box{
+		#container{
+            display: flex;
+            flex-flow: row wrap;
+        }
+		.summary .conn_box{
 			width: 100%;
 		}
-		.Simple .device{
+		.summary .device{
 			display: flex;
 			gap: 10px;
 		}
-		.Simple .state{
+		.summary .state{
 			display: none;
+		}
+		.summary .spi{
+			display: block;
 		}
         .conn_box{
             background-color: #8395a7;
             font-size: 20px;
             margin: 2px;
             padding: 5px;
+	    	color: #130f40;
         }
+		.device{
+			align-items: center;
+		}
+		.device a{
+			text-decoration: none;
+			color: #130f40;
+		}
+		.device a:hover{
+			color: #f9ca24;
+		}
+		.spi{
+			color: orange;
+			display: none;
+			text
+		}
         .state{
             background-color: #c8d6e5;
             box-sizing: border-box;
@@ -230,6 +250,7 @@ page = """
                     new_row = template.cloneNode(true);
                     new_row.id = "";
                     new_row.getElementsByClassName('uut_name')[0].innerText = key;
+		    		new_row.getElementsByClassName('uut_name')[0].href = `http://${key}`;
                     new_row.getElementsByClassName('uut_status')[0].innerText = value['uut_status'];
                     new_row.getElementsByClassName('uut_status')[0].className = value['uut_status'];
                     new_row.getElementsByClassName('rport')[0].innerText = lvalues['rport'];
@@ -249,10 +270,9 @@ page = """
             }
         }
 		function toggle_detail(event){
-			state = event.srcElement.checked ? 'Simple' : 'Detailed';
-			event.target.labels[0].textContent = state;
-			console.log(event);
-			document.getElementById('container').className = state;
+			event.target.labels[0].textContent = event.srcElement.checked ? 'Details..' : 'Summary..';
+			document.getElementById('subtitle').textContent = event.srcElement.checked ? 'summary' : 'details';
+			document.getElementById('container').className = event.srcElement.checked ? 'summary' : 'details';
 		}
         window.onload = main();
     </script>
@@ -261,19 +281,20 @@ page = """
     <div class="conn_box" id="template">
         <div class="device">
             <div>[<span class="uut_status">uut_status</span>]</div>
-            <div><span class="uut_name">uut_name</span>:<span class="rport">rport</span></div>
+            <div><a href="#" class="uut_name">uut_name</a>:<span class="rport">rport</span></div>
+	    	<span class="spi">---></span>
             <div><span class="hostname">hostname</span>:<span class="lport">lport</span></div>
         </div>
         <table class="state">
             <tr class="job_template"><td>key</td><td>value</td></tr>
         </table>
     </div>
-    <div class="title">
-    	<h1>afhba monitor</h1>
+    <div class="header">
+    	<h1>Afhba monitor<span id="subtitle">summary</span></h1>
 		<input type="checkbox" checked id="detailToggle" onchange="toggle_detail(event)"></input>
-		<label for="detailToggle" class="button">Simple</label>
+		<label for="detailToggle" class="button">Details...</label>
 	</div>
-    <div id="container" class="Simple">Loading...</div>
+    <div id="container" class="summary">Loading...</div>
 </body>
 </html>
 """
