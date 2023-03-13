@@ -88,8 +88,9 @@ def get_parser():
     parser.add_argument('--recycle', default=1, type=int, help='overwrite data')
     parser.add_argument('--check', default=0, type=int, help='run tests simulate ramp=1 or spad sequential=2')
     parser.add_argument('--dry_run', default=0, type=int, help='run setup but dont start streams or uuts')
-    parser.add_argument('--trg_src', default=None, help='Trigger source to set on all uuts')
     parser.add_argument('--wrtd_txi', default=None, help='Command first box to send this trigger when all units are in ARM state')
+    parser.add_argument('--d0', default=0, help='Set trigger d0 source')
+    parser.add_argument('--d1', default=0, help='Set trigger d1 source')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -207,8 +208,10 @@ class uut_class:
         acq400_hapi.Acq400UI.exec_args(self.api, self.args)
         self.api.s0.run0 = f'{self.api.s0.sites} {self.spad}'
         self.api.s0.decimate = self.args.decimate
-        if self.args.trg_src:
-            self.api.s1.TRG_DX = self.args.trg_src
+        self.api.s0.SIG_SRC_TRG_0 = self.args.d0
+        self.api.s0.SIG_SRC_TRG_1 = self.args.d1
+        if self.args.wrtd_txi:
+            self.api.s0.SIG_SRC_TRG_1 = 6 #WRTT1
 
     def __setup_aggregator(self):
         for stream in self.streams.items():
@@ -459,7 +462,7 @@ def run_main(args):
             if args.wrtd_txi:
                 trigg_msg = f"Waiting to trigger wrtd_txi"
                 if all_armed:
-                    trigg_msg = f'Triggered {args.wrtd_txi}'
+                    trigg_msg = f'Triggered wrtd_txi'
                     top_uut.cC.sr(args.wrtd_txi)
                     args.wrtd_txi = None
 
@@ -484,7 +487,7 @@ def run_main(args):
                     sstate = uut_item.get_stream_state(stream[0])
                     sites = stream[1]['all_sites']
                     rport = stream[1]['rport']
-                    SCRN.add(f'{{TAB}}{sites}:{rport} -> afhba.{stream[0]}')
+                    SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{stream[0]}')
                     SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate}MB/s Total: {int(sstate.rx):,}MB Status: {sstate.STATUS}{{RESET}}')
                     SCRN.end()
                     if args.check:

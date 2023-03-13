@@ -131,7 +131,7 @@ def run_webserver(args):
 		globals.lock.release()
 		return data
 
-	app.run(host="0.0.0.0", port=args.port, debug=True)
+	app.run(host="0.0.0.0", port=args.port, debug=False)
 
 if __name__ == '__main__':
 	run_main(get_parser().parse_args())
