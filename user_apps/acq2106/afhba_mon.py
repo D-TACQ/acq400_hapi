@@ -129,7 +129,7 @@ def run_webserver(args):
 		globals.lock.release()
 		return data
 
-	app.run(host="0.0.0.0", port=args.port, debug=False)
+	app.run(host="0.0.0.0", port=args.port, debug=True)
 
 page = """
 <!DOCTYPE html>
@@ -158,6 +158,33 @@ page = """
             display: flex;
             flex-flow: row wrap;
         }
+		h1{
+			display: inline-block;
+		}
+		.button{
+			border: 1px solid black;
+			padding: 4px;
+			cursor: pointer;
+		}
+		#detailToggle{
+			display: none;
+		}
+		.title{
+			padding: 0px 10px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+		.Simple .conn_box{
+			width: 100%;
+		}
+		.Simple .device{
+			display: flex;
+			gap: 10px;
+		}
+		.Simple .state{
+			display: none;
+		}
         .conn_box{
             background-color: #8395a7;
             font-size: 20px;
@@ -221,22 +248,32 @@ page = """
                 }
             }
         }
+		function toggle_detail(event){
+			state = event.srcElement.checked ? 'Simple' : 'Detailed';
+			event.target.labels[0].textContent = state;
+			console.log(event);
+			document.getElementById('container').className = state;
+		}
         window.onload = main();
     </script>
 </head>
 <body>
     <div class="conn_box" id="template">
         <div class="device">
-            [<span class="uut_status">uut_status</span>]<br>
-            <span class="uut_name">uut_name</span>:<span class="rport">rport</span><br>
-            <span class="hostname">hostname</span>:<span class="lport">lport</span>
+            <div>[<span class="uut_status">uut_status</span>]</div>
+            <div><span class="uut_name">uut_name</span>:<span class="rport">rport</span></div>
+            <div><span class="hostname">hostname</span>:<span class="lport">lport</span></div>
         </div>
         <table class="state">
             <tr class="job_template"><td>key</td><td>value</td></tr>
         </table>
     </div>
-    <h1>afhba monitor</h1>
-    <div id="container"></div>
+    <div class="title">
+    	<h1>afhba monitor</h1>
+		<input type="checkbox" checked id="detailToggle" onchange="toggle_detail(event)"></input>
+		<label for="detailToggle" class="button">Simple</label>
+	</div>
+    <div id="container" class="Simple">Loading...</div>
 </body>
 </html>
 """
