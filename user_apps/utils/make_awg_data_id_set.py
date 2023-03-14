@@ -41,9 +41,9 @@ def make_id_set(args):
     
     for ch in range(0, args.nchan):
         chv = basev
-        chv[:,ch] = cosv
-        cn = next(args,ch)
-        chv[:,cn] = basev[:,cn] - args.offset_c1*32767*(cn%4)/10/4
+        chv[:,ch] = np.zeros([args.len,])
+        id_len = args.len*((ch+1)%8)//8
+        chv[:id_len,ch] = cosv[:id_len]        
         fn = f"{args.fname[0]}-{args.nchan}-{args.len}-{ch+1}.dat"
         print(fn)
         chv.tofile(fn)
