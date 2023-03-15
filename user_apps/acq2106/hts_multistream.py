@@ -1,9 +1,41 @@
 #!/usr/bin/env python3
 
-""" hts_multistream High Throughput Streaming
+""" hts_multistream High Throughput Stream from up to 16 UUTS
 
     - data on local SFP/AFHBA
     - control on Ethernet
+
+usage: hts_multistream.py [-h] [--clk CLK] [--trg TRG] [--sim SIM] [--trace TRACE] [--auto_soft_trigger AUTO_SOFT_TRIGGER] [--clear_counters] [--spad SPAD] [--decimate DECIMATE] [--nbuffers NBUFFERS]
+                          [--secs SECS] [--map MAP] [--sig_gen SIG_GEN] [--delete DELETE] [--recycle RECYCLE] [--check CHECK] [--dry_run DRY_RUN] [--wrtd_txi WRTD_TXI] [--SIG_SRC_TRG_0 SIG_SRC_TRG_0]
+                          [--SIG_SRC_TRG_1 SIG_SRC_TRG_1]
+                          uutnames [uutnames ...]
+
+positional arguments:
+  uutnames              uuts
+
+options:
+  -h, --help            show this help message and exit
+  --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
+  --trg TRG             int|ext,rising|falling
+  --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
+  --trace TRACE         1 : enable command tracing
+  --auto_soft_trigger AUTO_SOFT_TRIGGER force soft trigger generation
+  --clear_counters      clear all counters SLOW
+  --spad SPAD           scratchpad, eg 1,16,0
+  --decimate DECIMATE   decimate amount
+  --nbuffers NBUFFERS   max capture in buffers
+  --secs SECS           max capture in seconds
+  --map MAP             uut:port:site ie --map=67:A:1/67:B:2/130:BOTH:ALL
+  --sig_gen SIG_GEN     Signal gen to trigger when all uuts armed
+  --delete DELETE       delete stale data
+  --recycle RECYCLE     overwrite data
+  --check CHECK         run tests simulate ramp=1 or spad sequential=2
+  --dry_run DRY_RUN     run setup but dont start streams or uuts
+  --wrtd_txi WRTD_TXI   Command first box to send this trigger when all units are in ARM state
+  --SIG_SRC_TRG_0 SIG_SRC_TRG_0     Set trigger d0 source
+  --SIG_SRC_TRG_1 SIG_SRC_TRG_1     Set trigger d1 source
+
+Recommendation: --secs is really a timeout, use --nbuffers for exact data length
 
 example usage::
     ./user_apps/acq2106/hts_multistream.py acq2106_133 acq2106_176
@@ -16,41 +48,7 @@ example usage::
 
     ./user_apps/acq2106/hts_multistream.py --spad=1,8,1 --map=11:C:2 --secs=3600 --check=2 z7io_011
 
-usage: hts_multistream.py [-h] [--clk CLK] [--trg TRG] [--sim SIM] [--trace TRACE]
-                            [--auto_soft_trigger AUTO_SOFT_TRIGGER] [--clear_counters] [--spad SPAD]
-                            [--decimate DECIMATE] [--nbuffers NBUFFERS] [--secs SECS] [--map MAP]
-                            [--sig_gen SIG_GEN] [--delete DELETE] [--recycle RECYCLE] [--check CHECK]
-                            [--dry_run DRY_RUN]
-                            uutnames [uutnames ...]
-
-High Throughput Stream for up to 16 UUTS
-
-positional arguments:
-  uutnames              uuts
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
-  --trg TRG             int|ext,rising|falling
-  --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
-  --trace TRACE         1 : enable command tracing
-  --auto_soft_trigger AUTO_SOFT_TRIGGER
-                        force soft trigger generation
-  --clear_counters      clear all counters SLOW
-  --spad SPAD           scratchpad, eg 1,16,0
-  --decimate DECIMATE   decimate amount
-  --nbuffers NBUFFERS   max capture in buffers
-  --secs SECS           max capture in seconds
-  --map MAP             uut:port:site ie --map=67:A:1/67:B:2/130:BOTH:ALL
-  --sig_gen SIG_GEN     Signal gen to trigger when all uuts armed
-  --delete DELETE       delete stale data
-  --recycle RECYCLE     overwrite data
-  --check CHECK         run tests simulate ramp=1 or spad sequential=2
-  --dry_run DRY_RUN     run setup but dont start streams or uuts
-
-Recommendation: --secs is really a timeout, use --nbuffers for exact data length
-
-If data rate exceeds bandwidth uut will stay in arm
+Warning: If data rate exceeds bandwidth uut will stay in arm
 
     --map=  uut:port:sites
         ex.
@@ -88,8 +86,9 @@ def get_parser():
     parser.add_argument('--recycle', default=1, type=int, help='overwrite data')
     parser.add_argument('--check', default=0, type=int, help='run tests simulate ramp=1 or spad sequential=2')
     parser.add_argument('--dry_run', default=0, type=int, help='run setup but dont start streams or uuts')
-    parser.add_argument('--trg_src', default=None, help='Trigger source to set on all uuts')
     parser.add_argument('--wrtd_txi', default=None, help='Command first box to send this trigger when all units are in ARM state')
+    parser.add_argument('--SIG_SRC_TRG_0', default=0, help='Set trigger d0 source')
+    parser.add_argument('--SIG_SRC_TRG_1', default=0, help='Set trigger d1 source')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -141,8 +140,8 @@ class uut_class:
             elif self.args.check == 1:
                 cmd = 'sudo ./scripts/run-stream-ramdisk-ramp {lport} {buffers} {recycle}'
             elif self.args.check == 2:
-                if not self.spad:
-                    exit(PR.Red(f'Error: Cannot check spad if no spad :/'))
+                if not self.spad_enabled:
+                    exit(PR.Red(f'Error: Cannot check spad if no spad: {self.spad}'))
                 count_col = 0
                 for site in self.streams[stream]['sites'].items():
                     count_col += int(site[1])
@@ -150,10 +149,9 @@ class uut_class:
                 args['spad_len'] = int(self.spad.split(',')[1])
                 args['count_col'] = count_col
                 cmd = 'sudo ./scripts/run-stream-ramdisk-count {lport} {buffers} {recycle} {spad_len} {count_col}'
-
-            cmd = cmd.format(**args).split(" ")
-            print("cmd for sub: {}".format(cmd))
-            self.streams[stream]['process'] = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            cmd = cmd.format(**args)
+            print(f"Cmd for stream:{stream} - {cmd}")
+            self.streams[stream]['process'] = subprocess.Popen(cmd.split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time_start = time.time()
             pid = afhba404.get_stream_pid(stream)
             while True:
@@ -168,19 +166,18 @@ class uut_class:
 
     def check_lane_status(self, lport, rport):
         link_state = afhba404.get_link_state(lport)
-        message = f' {self.name} Link State LANE_UP={link_state.LANE_UP} RPCIE_INIT={link_state.RPCIE_INIT}'
-      
+        message = f'{self.name} Link State LANE_UP={link_state.LANE_UP} RPCIE_INIT={link_state.RPCIE_INIT}'
+
         if link_state.LANE_UP and link_state.RPCIE_INIT:
             PR.Green(message)
             return
-        
+
         PR.Yellow(message)
-       
-        comms = getattr(self.api, f'c{rport}')       
+        comms = getattr(self.api, f'c{rport}')
         retry = 0
-        
+
         while retry < 3:
-            PR.Yellow(f'{self.name}  Link down: attempting to correct {retry}/3')            
+            PR.Yellow(f'{self.name} Link down: attempting to correct {retry}/3')
             comms.TX_DISABLE = 1
             time.sleep(0.5)
             comms.TX_DISABLE = 0
@@ -190,23 +187,29 @@ class uut_class:
                 PR.Green(f'{self.name} Link Fixed {retry}')
                 return
             retry += 1
-            
+
         exit(PR.Red('Link down: could not fix'))
 
     def configure(self):
-        PR.Yellow(f'Configuring {self.name} .. rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb}  {self.args.buffer_len}MB buffers')       
-        self.__setup_aggregator()
+        PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
         if self.spad:
             self.api.s0.spad = self.spad
+        else:
+            self.spad = self.api.s0.spad
+
+        self.spad_enabled = True if int(self.spad.split(',')[0]) else False
+        if self.spad_enabled:
             for sp in ('1', '2', '3', '4' , '5', '6', '7'):
                 self.api.s0.sr("spad{}={}".format(sp, sp*8))
-        else:
-            self.api.s0.spad = "0,0,0"
+        self.__setup_aggregator()
+
         acq400_hapi.Acq400UI.exec_args(self.api, self.args)
         self.api.s0.run0 = f'{self.api.s0.sites} {self.spad}'
         self.api.s0.decimate = self.args.decimate
-        if self.args.trg_src:
-            self.api.s1.TRG_DX = self.args.trg_src
+        self.api.s0.SIG_SRC_TRG_0 = self.args.SIG_SRC_TRG_0
+        self.api.s0.SIG_SRC_TRG_1 = self.args.SIG_SRC_TRG_1
+        if self.args.wrtd_txi:
+            self.api.s0.SIG_SRC_TRG_1 = 6 #WRTT1
 
     def __setup_aggregator(self):
         for stream in self.streams.items():
@@ -214,7 +217,7 @@ class uut_class:
             comm_site = getattr(self.api, method)
             agg_str = f'sites={",".join(stream[1]["sites"].keys())} on'
             comm_site.aggregator = agg_str
-            if self.spad:
+            if self.spad_enabled:
                 comm_site.spad = 1
             else:
                 comm_site.spad = 0
@@ -412,14 +415,13 @@ def run_main(args):
         uut_item.thread.daemon = True
         uut_item.thread.start()
         uut_item.start()
+
     count = 0
     all_running = False
     all_armed = False
     trigg_msg = ''
+    cycle_max = 0.5
     time_start = time.time()
-
-
-
     SCRN = DISPLAY()
     try:
         while True:
@@ -439,10 +441,10 @@ def run_main(args):
                 else:
                     c_mins, c_secs = divmod(count, 60)
                     SCRN.add(f"{int(c_mins)}:{int(c_secs):02}/{int(args.t_mins)}:{int(args.t_secs):02} mins ")
-                SCRN.add(f"Buffer Length: {args.buffer_len}MB {{RESET}}")
+                SCRN.add(f"Buffer Length: {args.buffer_len}MB ")
             else:
                 SCRN.add("{0:.0f} secs ",time.time() - time_start)
-                SCRN.add("Max: {0}MB Buffer Length: {1}MB {RESET}", args.nbuffers * args.buffer_len, args.buffer_len)
+                SCRN.add("Max: {0}MB Buffer Length: {1}MB ", args.nbuffers * args.buffer_len, args.buffer_len)
 
             if args.sig_gen:
                 trigg_msg = f"Waiting to trigger {args.sig_gen}"
@@ -450,19 +452,19 @@ def run_main(args):
                     try:
                         acq400_hapi.Agilent33210A(args.sig_gen).trigger()
                     except Exception:
-                        PR.Red(f'Could not trigger {args.sig_gen}')
+                        trigg_msg = f'{{RED}}Could not trigger {args.sig_gen}'
                         break
-                    trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}{{RESET}}'
+                    trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}'
                     args.sig_gen = None
 
             if args.wrtd_txi:
-                trigg_msg = f"Waiting to trigger {args.sig_gen}"
+                trigg_msg = f"Waiting to trigger wrtd_txi"
                 if all_armed:
-                    trigg_msg = f'wrtd: {args.wrtd_txi}'
+                    trigg_msg = f'Triggered wrtd_txi'
                     top_uut.cC.sr(args.wrtd_txi)
                     args.wrtd_txi = None
 
-            SCRN.add(f'{trigg_msg}{{RESET}}')
+            SCRN.add(f'{trigg_msg} {{RESET}}')
             SCRN.add_line('')
 
             for uut_item in uut_collection:
@@ -483,7 +485,7 @@ def run_main(args):
                     sstate = uut_item.get_stream_state(stream[0])
                     sites = stream[1]['all_sites']
                     rport = stream[1]['rport']
-                    SCRN.add(f'{{TAB}}{sites}:{rport} -> afhba.{stream[0]}')
+                    SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{stream[0]}')
                     SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate}MB/s Total: {int(sstate.rx):,}MB Status: {sstate.STATUS}{{RESET}}')
                     SCRN.end()
                     if args.check:
@@ -505,7 +507,7 @@ def run_main(args):
                     break
                 stop_uuts(uut_collection)
 
-            if ended_streams == total_streams:
+            if not count and ended_streams == total_streams:
                 SCRN.add_line('{BOLD}Buffer limit Reached Stopping{RESET}')
                 if running_uuts == 0:
                     SCRN.render(False)
@@ -513,7 +515,9 @@ def run_main(args):
                 stop_uuts(uut_collection)
 
             SCRN.render()
-            time.sleep(0.5)
+            cycle_length = time.time() - cycle_start
+            sleep_time = 0 if cycle_length > cycle_max else cycle_max - cycle_length
+            time.sleep(sleep_time)
 
     except KeyboardInterrupt:
         SCRN.render_interrupted()
@@ -524,6 +528,7 @@ def run_main(args):
         PR.Red('Fatal Error')
         stop_uuts(uut_collection)
         print(e)
+    time.sleep(1)
     print('Done')
 
 if __name__ == '__main__':
