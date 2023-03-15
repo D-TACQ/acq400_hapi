@@ -9,6 +9,7 @@ import json
 import acq400_hapi
 from acq400_hapi import afhba404
 import logging
+import psutil
 
 class globals:
 	lock = threading.RLock()
@@ -21,12 +22,13 @@ class globals:
 
 def get_parser():
 	parser = argparse.ArgumentParser(description='Stream monitor webserver')
-	parser.add_argument('--port', default=5000, help='Port to run webserver on')
+	parser.add_argument('--port', default=3000, help='Port to run webserver on')
 	return parser
 
 def run_main(args):
 	log = logging.getLogger('werkzeug')
 	log.setLevel(logging.ERROR)
+	#get_devices_states()
 	run_webserver(args)
 
 def get_devices_states():
@@ -53,9 +55,10 @@ def get_devices_states():
 def get_connected_uuts():
 	devs = afhba404.get_connections()
 	globals.lock.acquire()
-	for dev in devs.items():
-		lport = dev[0]
-		uut_name = dev[1].uut
+	for idx in devs:
+		dev = devs[idx]
+		lport = int(dev.dev)
+		uut_name = dev.uut
 		if uut_name not in globals.connected_uuts:
 			globals.connected_uuts[uut_name] = {}
 			globals.connected_uuts[uut_name]['uut_status'] = None
@@ -65,10 +68,10 @@ def get_connected_uuts():
 			globals.connected_uuts[uut_name]['ports'][lport] = {}
 			globals.connected_uuts[uut_name]['ports'][lport]['job_state'] = {}
 			globals.connected_uuts[uut_name]['ports'][lport]['connected'] = True
-			globals.connected_uuts[uut_name]['ports'][lport]['rport'] = dev[1].cx
+			globals.connected_uuts[uut_name]['ports'][lport]['rport'] = dev.cx
 		if uut_name not in globals.uuts:
 			try:
-				globals.uuts[uut_name] = acq400_hapi.factory(dev[1].uut)
+				globals.uuts[uut_name] = acq400_hapi.factory(dev.uut)
 			except Exception as e:
 				print(e)
 	globals.lock.release()
@@ -87,14 +90,18 @@ def get_remote_state(uut_name):
 def check_still_connected():
 	devs = afhba404.get_connections()
 	connections = {}
-	for dev in devs:
-		connections[devs[dev].uut] = []
-		connections[devs[dev].uut].append(int(devs[dev].dev))
+	for idx in devs:
+		dev = devs[idx]
+		if dev.uut not in connections:
+			connections[dev.uut] = []
+		connections[dev.uut].append(int(dev.dev))
 	globals.lock.acquire()
 	for uut_name in globals.connected_uuts.copy():
 		if uut_name not in connections:
 			print(f'removing {uut_name} as not connected')
 			del globals.connected_uuts[uut_name]
+			globals.uuts[uut_name].close()
+			del globals.uuts[uut_name]
 			continue
 		for lport in globals.connected_uuts[uut_name]['ports'].copy():
 			if lport not in connections[uut_name]:
@@ -125,11 +132,16 @@ def run_webserver(args):
 			globals.gatherer = threading.Thread(target=get_devices_states)
 			globals.gatherer.start()
 		globals.lock.acquire()
-		data = json.dumps(globals.connected_uuts)
+		load1, load5, load15 = psutil.getloadavg()
+		data = {
+			'cpu_usage' : round((load1 / os.cpu_count()) * 100, 1),
+			'num_cpu' : os.cpu_count(),
+			'state'		: globals.connected_uuts,
+		}
 		globals.lock.release()
-		return data
+		return json.dumps(data)
 
-	app.run(host="0.0.0.0", port=args.port, debug=True)
+	app.run(host="0.0.0.0", port=args.port, debug=False)
 
 page = """
 <!DOCTYPE html>
@@ -154,7 +166,7 @@ page = """
         .ARM {
             color: orange;
         }
-		.header{
+		header{
 			padding: 0px 10px;
 			display: flex;
 			align-items: center;
@@ -175,6 +187,7 @@ page = """
 		#container{
             display: flex;
             flex-flow: row wrap;
+	    	padding: 10px;
         }
 		.summary .conn_box{
 			width: 100%;
@@ -207,9 +220,26 @@ page = """
 			color: #f9ca24;
 		}
 		.spi{
-			color: orange;
+			color: #e67e22;
 			display: none;
-			text
+			line-height: 0px;
+		}
+		.speed{
+			font-size: 14px;
+			display: inline;
+			border: 1px solid;
+			border-color: inherit;
+			padding: 2px 5px;
+		}
+		#RUN .spi{
+			animation-name: pulse;
+			animation-duration: 0.5s;
+			animation-iteration-count: infinite;
+			animation-direction: alternate;
+		}
+		@keyframes pulse {
+  			from {color: #e67e22;border-color: #e67e22}
+  			to {color: #f1c40f;border-color: #f1c40f}
 		}
         .state{
             background-color: #c8d6e5;
@@ -221,6 +251,13 @@ page = """
         .rx, .rx_rate{
             font-weight: bold;
         }
+		footer{
+			padding: 10px;
+		}
+		#cpuInfo {
+			background-color: #c8d6e5;
+			padding: 5px;
+		}
     </style>
     <script>
         function main(){
@@ -242,13 +279,15 @@ page = """
             xhr.send();
         }
         function build_conn_boxes(data){
+			cpu_string = `Cpu: ${data['num_cpu']} cores ${data['cpu_usage']}\% usage`;
+			document.getElementById('cpuInfo').innerText = cpu_string;
             template = document.getElementById('template');
             container = document.getElementById('container');
             container.innerHTML = "";
-            for (const [key, value] of Object.entries(data)) {
+            for (const [key, value] of Object.entries(data['state'])) {
                 for (const [lport, lvalues] of Object.entries(value['ports'])) {
                     new_row = template.cloneNode(true);
-                    new_row.id = "";
+                    new_row.id = value['uut_status'];
                     new_row.getElementsByClassName('uut_name')[0].innerText = key;
 		    		new_row.getElementsByClassName('uut_name')[0].href = `http://${key}`;
                     new_row.getElementsByClassName('uut_status')[0].innerText = value['uut_status'];
@@ -259,6 +298,9 @@ page = """
                     state = "";
                     job_template = new_row.getElementsByClassName('job_template')[0]
                     for (const [job_key, job_value] of Object.entries(lvalues['job_state'])) {
+						if(job_key == 'rx_rate'){
+							new_row.getElementsByClassName('speed')[0].innerText = `${job_value}MB/s`;
+						}
                         new_state = job_template.cloneNode(true);
                         new_state.className = job_key
                         new_state.firstChild.innerHTML = job_key
@@ -282,19 +324,22 @@ page = """
         <div class="device">
             <div>[<span class="uut_status">uut_status</span>]</div>
             <div><a href="#" class="uut_name">uut_name</a>:<span class="rport">rport</span></div>
-	    	<span class="spi">---></span>
+	    	<span class="spi">――<span class="speed"></span>―⟶</span>
             <div><span class="hostname">hostname</span>:<span class="lport">lport</span></div>
         </div>
         <table class="state">
             <tr class="job_template"><td>key</td><td>value</td></tr>
         </table>
     </div>
-    <div class="header">
+    <header>
     	<h1>Afhba monitor<span id="subtitle">summary</span></h1>
 		<input type="checkbox" checked id="detailToggle" onchange="toggle_detail(event)"></input>
 		<label for="detailToggle" class="button">Details...</label>
-	</div>
+	</header>
     <div id="container" class="summary">Loading...</div>
+    <footer>
+		<span id="cpuInfo">No info</span>
+	</footer>
 </body>
 </html>
 """
