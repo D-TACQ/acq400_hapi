@@ -89,6 +89,7 @@ def get_parser():
     parser.add_argument('--wrtd_txi', default=None, help='Command first box to send this trigger when all units are in ARM state')
     parser.add_argument('--SIG_SRC_TRG_0', default=0, help='Set trigger d0 source')
     parser.add_argument('--SIG_SRC_TRG_1', default=0, help='Set trigger d1 source')
+    parser.add_argument('--RTM_TRANSLEN', default=None, help='Set rtm_translen for each uut')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -171,11 +172,11 @@ class uut_class:
         if link_state.LANE_UP and link_state.RPCIE_INIT:
             PR.Green(message)
             return
-
         PR.Yellow(message)
         comms = getattr(self.api, f'c{rport}')
+        if not hasattr(comms, 'TX_DISABLE'):
+            exit(PR.Red('Link down: could not fix (old firmware)'))
         retry = 0
-
         while retry < 3:
             PR.Yellow(f'{self.name} Link down: attempting to correct {retry}/3')
             comms.TX_DISABLE = 1
@@ -191,7 +192,6 @@ class uut_class:
         exit(PR.Red('Link down: could not fix'))
 
     def configure(self):
-        PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
         if self.spad:
             self.api.s0.spad = self.spad
         else:
@@ -210,6 +210,9 @@ class uut_class:
         self.api.s0.SIG_SRC_TRG_1 = self.args.SIG_SRC_TRG_1
         if self.args.wrtd_txi:
             self.api.s0.SIG_SRC_TRG_1 = 6 #WRTT1
+        if self.args.RTM_TRANSLEN:
+            self.api.s1.RTM_TRANSLEN = self.args.RTM_TRANSLEN
+        PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
 
     def __setup_aggregator(self):
         for stream in self.streams.items():
@@ -429,6 +432,7 @@ def run_main(args):
             running_uuts = 0
             armed_uuts = 0
             ended_streams = 0
+            stopping = False
 
             SCRN.add_line('')
             SCRN.add('{REVERSE} ')
@@ -486,7 +490,7 @@ def run_main(args):
                     sites = stream[1]['all_sites']
                     rport = stream[1]['rport']
                     SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{stream[0]}')
-                    SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate}MB/s Total: {int(sstate.rx):,}MB Status: {sstate.STATUS}{{RESET}}')
+                    SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate * args.buffer_len}MB/s Total Buffers: {int(sstate.rx) * args.buffer_len:,} Status: {sstate.STATUS}{{RESET}}')
                     SCRN.end()
                     if args.check:
                         name, result = uut_item.get_results(stream[0])
@@ -502,12 +506,13 @@ def run_main(args):
 
             if count and time.time() - time_start > args.secs:
                 SCRN.add_line('{BOLD}Time Limit Reached Stopping{RESET}')
+                stopping = True
                 if running_uuts == 0:
                     SCRN.render(False)
                     break
                 stop_uuts(uut_collection)
 
-            if not count and ended_streams == total_streams:
+            if not stopping and ended_streams == total_streams:
                 SCRN.add_line('{BOLD}Buffer limit Reached Stopping{RESET}')
                 if running_uuts == 0:
                     SCRN.render(False)
