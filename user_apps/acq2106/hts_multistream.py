@@ -87,8 +87,8 @@ def get_parser():
     parser.add_argument('--check', default=0, type=int, help='run tests simulate ramp=1 or spad sequential=2')
     parser.add_argument('--dry_run', default=0, type=int, help='run setup but dont start streams or uuts')
     parser.add_argument('--wrtd_txi', default=None, help='Command first box to send this trigger when all units are in ARM state')
-    parser.add_argument('--SIG_SRC_TRG_0', default=0, help='Set trigger d0 source')
-    parser.add_argument('--SIG_SRC_TRG_1', default=0, help='Set trigger d1 source')
+    parser.add_argument('--SIG_SRC_TRG_0', default=None, help='Set trigger d0 source')
+    parser.add_argument('--SIG_SRC_TRG_1', default=None, help='Set trigger d1 source')
     parser.add_argument('--RTM_TRANSLEN', default=None, help='Set rtm_translen for each uut')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
@@ -192,7 +192,7 @@ class uut_class:
         exit(PR.Red('Link down: could not fix'))
 
     def configure(self):
-        if self.spad:
+        if self.spad is not None:
             self.api.s0.spad = self.spad
         else:
             self.spad = self.api.s0.spad
@@ -206,11 +206,13 @@ class uut_class:
         acq400_hapi.Acq400UI.exec_args(self.api, self.args)
         self.api.s0.run0 = f'{self.api.s0.sites} {self.spad}'
         self.api.s0.decimate = self.args.decimate
-        self.api.s0.SIG_SRC_TRG_0 = self.args.SIG_SRC_TRG_0
-        self.api.s0.SIG_SRC_TRG_1 = self.args.SIG_SRC_TRG_1
-        if self.args.wrtd_txi:
+        if self.args.SIG_SRC_TRG_0 is not None:
+            self.api.s0.SIG_SRC_TRG_0 = self.args.SIG_SRC_TRG_0
+        if self.args.SIG_SRC_TRG_0 is not None:
+            self.api.s0.SIG_SRC_TRG_1 = self.args.SIG_SRC_TRG_1
+        if self.args.wrtd_txi is not None:
             self.api.s0.SIG_SRC_TRG_1 = 6 #WRTT1
-        if self.args.RTM_TRANSLEN:
+        if self.args.RTM_TRANSLEN is not None:
             self.api.s1.RTM_TRANSLEN = self.args.RTM_TRANSLEN
         PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
 
@@ -450,7 +452,7 @@ def run_main(args):
                 SCRN.add("{0:.0f} secs ",time.time() - time_start)
                 SCRN.add("Max: {0}MB Buffer Length: {1}MB ", args.nbuffers * args.buffer_len, args.buffer_len)
 
-            if args.sig_gen:
+            if args.sig_gen is not None:
                 trigg_msg = f"Waiting to trigger {args.sig_gen}"
                 if all_armed:
                     try:
