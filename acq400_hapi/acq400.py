@@ -570,7 +570,7 @@ class Acq400:
     def read_chan(self, chan, nsam = 0, data_size = None):
         if data_size == None:
             data_size = 4 if self.s0.data32 == '1' else 2
-       
+
         if chan == 0:
             nsam = int(self.s0.raw_data_size) // data_size
         if chan != 0 and nsam == 0:
@@ -1519,7 +1519,10 @@ def factory(_uut):
         pass
 
     s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
-    if not s0.MODEL.startswith("acq2106") and not s0.MODEL.startswith("z7io"):
+
+    advanced_models = ['acq2106sfp', 'acq2206sfp', 'z7io']
+
+    if s0.MODEL not in advanced_models:
         return Acq400(_uut, s0_client=s0)
 
     # here with acq2106
