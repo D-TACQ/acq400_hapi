@@ -34,6 +34,7 @@ options:
   --wrtd_txi WRTD_TXI   Command first box to send this trigger when all units are in ARM state
   --SIG_SRC_TRG_0 SIG_SRC_TRG_0     Set trigger d0 source
   --SIG_SRC_TRG_1 SIG_SRC_TRG_1     Set trigger d1 source
+  --mtrg  HDMI|EXT      Enables HDMI|EXT routing when ALL UUT's are armed, safe with free-running trigger          
 
 Recommendation: --secs is really a timeout, use --nbuffers for exact data length
 
@@ -95,7 +96,8 @@ def get_parser():
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
 
-class uut_class:
+class UutWrapper:
+    """ Encapsulates all information about one UUT """
 
     def __init__(self, name, args, map, streams):
         self.name = name
@@ -322,7 +324,7 @@ def object_builder(args):
     map = get_parsed_map(args.map)
     uut_collection = []
     for uut_name in args.uutnames:
-        new_uut = uut_class(uut_name, args, map, stream_config)
+        new_uut = UutWrapper(uut_name, args, map, stream_config)
         uut_collection.append(new_uut)
     return uut_collection
 
@@ -407,7 +409,8 @@ def configure_host(uut_collection, args):
 
 
 
-class release_trigger_when_ready_wrapper:
+class ReleasesTriggerWhenReady:
+    """ handles all trigger types from UI, enables them at the right time """
     def null_trg_action(self, all_armed):
         return 0
     
@@ -539,7 +542,8 @@ def dry_run(args, uut_collection):
     exit(PR.Yellow('Dry Run Complete'))    
 
 
-class rate_limiter_wrapper:
+class RateLimiter:
+    """ limits cycle rate """
     def __init__(self, _cycle_max):
         self.cycle_max = _cycle_max
         self.cycle_start = time.time()
@@ -552,14 +556,14 @@ class rate_limiter_wrapper:
 
 def hot_run(SCRN, args, uut_collection, configure_host):
     total_streams = hot_run_init(uut_collection)
-    release_trigger_when_ready = release_trigger_when_ready_wrapper(SCRN, args, uut_collection)
+    release_trigger_when_ready = ReleasesTriggerWhenReady(SCRN, args, uut_collection)
     hot_run_status_update = hot_run_status_update_wrapper(SCRN, args, uut_collection)
     hot_run_start(uut_collection)
     sec_count = 0
     all_running = False
     all_armed = False    
     time_start = time.time() 
-    rate_limiter = rate_limiter_wrapper(0.5)   
+    rate_limiter = RateLimiter(0.5)
     
     try:
         while True:            
@@ -601,18 +605,21 @@ def hot_run(SCRN, args, uut_collection, configure_host):
             rate_limiter()
 
         SCRN.render(False)                     # normal exit
-
+        time.sleep(1)
+        print('Normal Run Done')
+        return
+        
     except KeyboardInterrupt:
         SCRN.render_interrupted()
         PR.Red('Interrupt!')
-        stop_uuts(uut_collection)
     except Exception as e:
         SCRN.render_interrupted()
         PR.Red('Fatal Error')
-        stop_uuts(uut_collection)
         print(e)
+    stop_uuts(uut_collection)
     time.sleep(1)
-    print('Done')
+    print('Exception Run Done')           
+
         
 def run_main(args):
     uut_collection = object_builder(args)
