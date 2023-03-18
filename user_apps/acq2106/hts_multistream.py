@@ -201,7 +201,6 @@ class uut_class:
         if self.spad_enabled:
             for sp in ('1', '2', '3', '4' , '5', '6', '7'):
                 self.api.s0.sr("spad{}={}".format(sp, sp*8))
-        self.__setup_aggregator()
 
         acq400_hapi.Acq400UI.exec_args(self.api, self.args)
         self.api.s0.run0 = f'{self.api.s0.sites} {self.spad}'
@@ -214,9 +213,11 @@ class uut_class:
             self.api.s0.SIG_SRC_TRG_1 = 'WRTT1'
         if self.args.RTM_TRANSLEN is not None:
             self.api.s1.RTM_TRANSLEN = self.args.RTM_TRANSLEN
+            
+        self.__setup_comms_aggregators()
         PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
 
-    def __setup_aggregator(self):
+    def __setup_comms_aggregators(self):
         for stream in self.streams.items():
             method = f'c{stream[1]["rport"]}'
             comm_site = getattr(self.api, method)
