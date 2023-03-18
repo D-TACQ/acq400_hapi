@@ -211,7 +211,7 @@ class uut_class:
         if self.args.SIG_SRC_TRG_0 is not None:
             self.api.s0.SIG_SRC_TRG_1 = self.args.SIG_SRC_TRG_1
         if self.args.wrtd_txi is not None:
-            self.api.s0.SIG_SRC_TRG_1 = 6 #WRTT1
+            self.api.s0.SIG_SRC_TRG_1 = 'WRTT1'
         if self.args.RTM_TRANSLEN is not None:
             self.api.s1.RTM_TRANSLEN = self.args.RTM_TRANSLEN
         PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
