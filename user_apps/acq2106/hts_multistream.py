@@ -405,34 +405,36 @@ def configure_host(uut_collection, args):
 
 
 
-def release_trigger_when_ready_wrapper(SCRN, args, uut_collection):
-    trigg_msg = ''    
-    def release_trigger_when_ready(all_armed):
-        top_uut = uut_collection[0].api
-        global trigg_msg
+class release_trigger_when_ready_wrapper:
+    def __init__(self, SCRN, args, uut_collection):
+        self.SCRN = SCRN
+        self.args = args
+        self.uut_collection = uut_collection
+        self.trg_msg = ''    
+    def __call__(self, all_armed):
+        top_uut = self.uut_collection[0].api
         rc = 0
-        if args.sig_gen is not None:
-            trigg_msg = f"Waiting to trigger {args.sig_gen}"
+        if self.args.sig_gen is not None:
+            self.trg_msg = f"Waiting to trigger {self.args.sig_gen}"
             if all_armed:
                 try:
-                    acq400_hapi.Agilent33210A(args.sig_gen).trigger()
+                    acq400_hapi.Agilent33210A(self.args.sig_gen).trigger()
                 except Exception:
-                    trigg_msg = f'{{RED}}Could not trigger {args.sig_gen}'
+                    self.trg_msg = f'{{RED}}Could not trigger {self.args.sig_gen}'
                     rc = -1
-                trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}'
-                args.sig_gen = None
+                self.trg_msg = f'Triggered {{GREEN}}{self.args.sig_gen}'
+                self.args.sig_gen = None
     
-        if args.wrtd_txi:
-            trigg_msg = f"Waiting to trigger wrtd_txi"
+        if self.args.wrtd_txi:
+            self.trg_msg = f"Waiting to trigger wrtd_txi"
             if all_armed:
-                trigg_msg = f'Triggered wrtd_txi'
+                self.trg_msg = f'Triggered wrtd_txi'
                 top_uut.cC.sr(args.wrtd_txi)
-                args.wrtd_txi = None
+                self.args.wrtd_txi = None
     
-        SCRN.add(f'{trigg_msg} {{RESET}}')
-        SCRN.add_line('')
+        self.SCRN.add(f'{self.trg_msg} {{RESET}}')
+        self.SCRN.add_line('')
         return rc
-    return release_trigger_when_ready   
   
   
 def hot_run_init(uut_collection):
