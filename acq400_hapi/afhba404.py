@@ -17,9 +17,10 @@ def get_connections():
     output, errors = p.communicate()
     fields = "host", "dev", "uut", "cx"
     HostComms = namedtuple('HostComms', " ".join(fields))
+    
     for ii, ln in enumerate(output.split('\n')):
         lns = ln.split(' ')
-        if len(lns) == 4:
+        if len(lns) >= 4:
             record = HostComms(**dict(zip(fields, ln.split(' '))))
             conns[ii] = record
     return conns
