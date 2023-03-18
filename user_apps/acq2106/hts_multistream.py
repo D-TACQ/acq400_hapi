@@ -90,6 +90,7 @@ def get_parser():
     parser.add_argument('--SIG_SRC_TRG_0', default=None, help='Set trigger d0 source')
     parser.add_argument('--SIG_SRC_TRG_1', default=None, help='Set trigger d1 source')
     parser.add_argument('--RTM_TRANSLEN', default=None, help='Set rtm_translen for each uut')
+    parser.add_argument('--mtrg', default=None, help='value:HDMI|EXT, works with free-running master trigger')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -213,7 +214,7 @@ class uut_class:
             self.api.s0.SIG_SRC_TRG_1 = 'WRTT1'
         if self.args.RTM_TRANSLEN is not None:
             self.api.s1.RTM_TRANSLEN = self.args.RTM_TRANSLEN
-            
+
         self.__setup_comms_aggregators()
         PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
 
@@ -407,32 +408,70 @@ def configure_host(uut_collection, args):
 
 
 class release_trigger_when_ready_wrapper:
+    def null_trg_action(self, all_armed):
+        return 0
+    
+    def sig_gen_trg_action(self, all_armed):
+        rc = 0
+        self.trg_msg = f"Waiting to trigger {self.args.sig_gen}"
+        if all_armed:
+            try:
+                acq400_hapi.Agilent33210A(self.args.sig_gen).trigger()
+            except Exception:
+                self.trg_msg = f'{{RED}}Could not trigger {self.args.sig_gen}'
+                rc = -1
+            self.trg_msg = f'Triggered {{GREEN}}{self.args.sig_gen}'
+            self.args.sig_gen = None 
+        return rc
+            
+    def wrtd_txi_trg_action(self, all_armed):
+        self.trg_msg = f"Waiting to trigger wrtd_txi"
+        if all_armed:
+            self.trg_msg = f'Trigger wrtd_txi'
+            self.top_uut.cC.sr(args.wrtd_txi)
+            self.args.wrtd_txi = None
+        return 0
+            
+    def mtrg_trg_action(self, all_armed):
+        self.trg_msg = f"Waiting to trigger mtrg {self.args.mtrg}"
+        if all_armed:
+            self.trg_msg = f'Trigger mtrg {self.args.mtrg}'
+            self.top_uut.s0.SIG_SRC_TRG_0 = self.args.mtrg
+            self.args.mtrg = None
+        return 0
+    def prep_mtrg(self):
+        PR.Yellow(f'mtrg {self.args.mtrg} assume free-run , set source NONE')
+        self.top_uut.s0.SIG_SRC_TRG_0 = 'NONE'
+                                  
     def __init__(self, SCRN, args, uut_collection):
         self.SCRN = SCRN
         self.args = args
         self.uut_collection = uut_collection
-        self.trg_msg = ''    
-    def __call__(self, all_armed):
-        top_uut = self.uut_collection[0].api
-        rc = 0
+        self.top_uut = self.uut_collection[0].api
+        self.trg_msg = ''
+        self.trg_action = None
+        
         if self.args.sig_gen is not None:
-            self.trg_msg = f"Waiting to trigger {self.args.sig_gen}"
-            if all_armed:
-                try:
-                    acq400_hapi.Agilent33210A(self.args.sig_gen).trigger()
-                except Exception:
-                    self.trg_msg = f'{{RED}}Could not trigger {self.args.sig_gen}'
-                    rc = -1
-                self.trg_msg = f'Triggered {{GREEN}}{self.args.sig_gen}'
-                self.args.sig_gen = None
-    
-        if self.args.wrtd_txi:
-            self.trg_msg = f"Waiting to trigger wrtd_txi"
-            if all_armed:
-                self.trg_msg = f'Triggered wrtd_txi'
-                top_uut.cC.sr(args.wrtd_txi)
-                self.args.wrtd_txi = None
-    
+            if self.trg_action is None:
+                self.trg_action = self.sig_gen_trg_action
+            else:
+                exit(PR.Red('duplicate trg_action sig_gen'))
+        elif self.args.wrtd_txi is not None:
+            if self.trg_action is None:
+                self.trg_action = self.wrtd_txi_trg_action
+            else:
+                exit(PR.Red('duplicate trg_action wrtd_txi'))
+        elif self.args.mtrg is not None:
+            if self.trg_action is None:
+                self.trg_action = self.mtrg_trg_action 
+                self.prep_mtrg()
+            else:
+                exit(PR.Red('duplicate trg_action mtrg'))
+        else:
+            self.trg_action = self.null_trg_action
+      
+    def __call__(self, all_armed): 
+        rc = self.trg_action(all_armed)
         self.SCRN.add(f'{self.trg_msg} {{RESET}}')
         self.SCRN.add_line('')
         return rc
@@ -444,12 +483,14 @@ def hot_run_init(uut_collection):
         uut_item.configure()
         uut_item.initialize()
         total_streams += len(uut_item.streams)
+    return total_streams
+ 
+def hot_run_start(uut_collection):
     for uut_item in uut_collection:
         uut_item.thread =  threading.Thread(target=uut_item.get_state_forever)
         uut_item.thread.daemon = True
         uut_item.thread.start()
         uut_item.start()
-    return total_streams
 
 def hot_run_status_update_wrapper(SCRN, args, uut_collection):
     def hot_run_status_update():
@@ -500,13 +541,14 @@ def dry_run(args, uut_collection):
 
 def hot_run(SCRN, args, uut_collection, configure_host):
     total_streams = hot_run_init(uut_collection)
+    release_trigger_when_ready = release_trigger_when_ready_wrapper(SCRN, args, uut_collection)
+    hot_run_status_update = hot_run_status_update_wrapper(SCRN, args, uut_collection)
+    hot_run_start(uut_collection)
     sec_count = 0
     all_running = False
     all_armed = False
     cycle_max = 0.5
-    time_start = time.time()
-    release_trigger_when_ready = release_trigger_when_ready_wrapper(SCRN, args, uut_collection)
-    hot_run_status_update = hot_run_status_update_wrapper(SCRN, args, uut_collection)
+    time_start = time.time()    
     
     try:
         while True:
