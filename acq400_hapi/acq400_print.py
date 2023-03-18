@@ -43,7 +43,7 @@ class DISPLAY:
     }
     
     def __init__(self):
-        if int(os.getenv("HAPI_COLOUR", "0")):
+        if int(os.getenv("HAPI_COLOUR", "1")) != 1:
             for code in self.FORMAT_CODES:
                 self.FORMAT_CODES[code] = ''
             self.FORMAT_CODES['TAB'] = '\t'
