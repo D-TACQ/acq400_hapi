@@ -539,6 +539,17 @@ def dry_run(args, uut_collection):
     exit(PR.Yellow('Dry Run Complete'))    
 
 
+class rate_limiter_wrapper:
+    def __init__(self, _cycle_max):
+        self.cycle_max = _cycle_max
+        self.cycle_start = time.time()
+
+    def __call__(self):
+            cycle_length = time.time() - self.cycle_start
+            sleep_time = 0 if cycle_length > self.cycle_max else self.cycle_max - cycle_length
+            time.sleep(sleep_time)
+            self.cycle_start = time.time()
+
 def hot_run(SCRN, args, uut_collection, configure_host):
     total_streams = hot_run_init(uut_collection)
     release_trigger_when_ready = release_trigger_when_ready_wrapper(SCRN, args, uut_collection)
@@ -546,15 +557,12 @@ def hot_run(SCRN, args, uut_collection, configure_host):
     hot_run_start(uut_collection)
     sec_count = 0
     all_running = False
-    all_armed = False
-    cycle_max = 0.5
-    time_start = time.time()    
+    all_armed = False    
+    time_start = time.time() 
+    rate_limiter = rate_limiter_wrapper(0.5)   
     
     try:
-        while True:
-            cycle_start = time.time()
-            stopping = False
-
+        while True:            
             SCRN.add_line('')
             SCRN.add('{REVERSE} ')
             if args.secs and all_running:
@@ -578,23 +586,21 @@ def hot_run(SCRN, args, uut_collection, configure_host):
 
             if sec_count and time.time() - time_start > args.secs:
                 SCRN.add_line('{BOLD}Time Limit Reached Stopping{RESET}')
-                stopping = True
-                if running_uuts == 0:
-                    SCRN.render(False)
+                if running_uuts > 0:
+                    stop_uuts(uut_collection)
+                else:    
                     break
-                stop_uuts(uut_collection)
-
-            if not stopping and ended_streams == total_streams:
+            elif ended_streams == total_streams:
                 SCRN.add_line('{BOLD}Buffer limit Reached Stopping{RESET}')
-                if running_uuts == 0:
-                    SCRN.render(False)
+                if running_uuts > 0:
+                    stop_uuts(uut_collection)
+                else:
                     break
-                stop_uuts(uut_collection)
 
             SCRN.render()
-            cycle_length = time.time() - cycle_start
-            sleep_time = 0 if cycle_length > cycle_max else cycle_max - cycle_length
-            time.sleep(sleep_time)
+            rate_limiter()
+
+        SCRN.render(False)                     # normal exit
 
     except KeyboardInterrupt:
         SCRN.render_interrupted()
