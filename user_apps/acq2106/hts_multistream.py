@@ -269,7 +269,9 @@ class uut_class:
             self.streams[stream]['all_sites'] = ','.join(self.streams[stream]['sites'].keys())
 
     def __get_mapped_sites(self, map):
-        site_list = self.__get_sitelist()
+        # pgm: we ONLY want to look at sites already in the s0 aggregator.
+        #site_list = self.__get_sitelist()
+        site_list = self.__get_aggregator_sitelist()
         out = {}
         if 'ALL' in map:
             map[self.id] = map['ALL'].copy()
@@ -293,11 +295,17 @@ class uut_class:
                 exit(PR.Red(f'Error: {self.name} has no valid sites'))
         return out
 
+    def __get_aggregator_sitelist(self):
+        sites = {}
+        for site in self.api.get_aggregator_sites():
+            site_conn = getattr(self.api, f's{site}')
+            sites[str(site)] = site_conn.active_chan
+        return sites
     def __get_sitelist(self):
         sites = {}
         for site in self.api.get_site_types()['AISITES']:
             site_conn = getattr(self.api, f's{site}')
-            sites[str(site)] = site_conn.NCHAN
+            sites[str(site)] = site_conn.NCHAN               # not strictly correct. Should be active_chan
         return sites
 
 def stop_uuts(uut_collection):
@@ -395,33 +403,36 @@ def configure_host(uut_collection, args):
         args.t_mins, args.t_secs = divmod(args.secs, 60)
         args.nbuffers = 9999999999
 
-trigg_msg = ''
 
-def release_trigger_when_ready(SCRN, args, uut_collection, all_armed):
-    top_uut = uut_collection[0].api
-    global trigg_msg
-    rc = 0
-    if args.sig_gen is not None:
-        trigg_msg = f"Waiting to trigger {args.sig_gen}"
-        if all_armed:
-            try:
-                acq400_hapi.Agilent33210A(args.sig_gen).trigger()
-            except Exception:
-                trigg_msg = f'{{RED}}Could not trigger {args.sig_gen}'
-                rc = -1
-            trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}'
-            args.sig_gen = None
 
-    if args.wrtd_txi:
-        trigg_msg = f"Waiting to trigger wrtd_txi"
-        if all_armed:
-            trigg_msg = f'Triggered wrtd_txi'
-            top_uut.cC.sr(args.wrtd_txi)
-            args.wrtd_txi = None
-
-    SCRN.add(f'{trigg_msg} {{RESET}}')
-    SCRN.add_line('')
-    return rc    
+def release_trigger_when_ready_wrapper(SCRN, args, uut_collection):
+    trigg_msg = ''    
+    def release_trigger_when_ready(all_armed):
+        top_uut = uut_collection[0].api
+        global trigg_msg
+        rc = 0
+        if args.sig_gen is not None:
+            trigg_msg = f"Waiting to trigger {args.sig_gen}"
+            if all_armed:
+                try:
+                    acq400_hapi.Agilent33210A(args.sig_gen).trigger()
+                except Exception:
+                    trigg_msg = f'{{RED}}Could not trigger {args.sig_gen}'
+                    rc = -1
+                trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}'
+                args.sig_gen = None
+    
+        if args.wrtd_txi:
+            trigg_msg = f"Waiting to trigger wrtd_txi"
+            if all_armed:
+                trigg_msg = f'Triggered wrtd_txi'
+                top_uut.cC.sr(args.wrtd_txi)
+                args.wrtd_txi = None
+    
+        SCRN.add(f'{trigg_msg} {{RESET}}')
+        SCRN.add_line('')
+        return rc
+    return release_trigger_when_ready   
   
   
 def hot_run_init(uut_collection):
@@ -437,39 +448,41 @@ def hot_run_init(uut_collection):
         uut_item.start()
     return total_streams
 
-def hot_run_status_update(SCRN, args, uut_collection):
-    armed_uuts = 0
-    running_uuts = 0    
-    ended_streams = 0
-        
-    for uut_item in uut_collection:
-        SCRN.add(f'{uut_item.name} ')
-        if uut_item.state == 'RUN':
-            running_uuts += 1
-            uut_item.poll_delay = 5
-            SCRN.add(f'{{GREEN}}{uut_item.state}{{RESET}}:')
-        elif uut_item.state == 'ARM':
-            armed_uuts += 1
-            SCRN.add(f'{{ORANGE}}{uut_item.state}{{RESET}}:')
-        else:
-            SCRN.add(f'{{RED}}{uut_item.state}{{RESET}}:')
-        SCRN.end()
-
-        for stream in uut_item.streams.items():
-            sstate = uut_item.get_stream_state(stream[0])
-            sites = stream[1]['all_sites']
-            rport = stream[1]['rport']
-            SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{stream[0]}')
-            SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate * args.buffer_len}MB/s Total Buffers: {int(sstate.rx) * args.buffer_len:,} Status: {sstate.STATUS}{{RESET}}')
+def hot_run_status_update_wrapper(SCRN, args, uut_collection):
+    def hot_run_status_update():
+        armed_uuts = 0
+        running_uuts = 0    
+        ended_streams = 0
+            
+        for uut_item in uut_collection:
+            SCRN.add(f'{uut_item.name} ')
+            if uut_item.state == 'RUN':
+                running_uuts += 1
+                uut_item.poll_delay = 5
+                SCRN.add(f'{{GREEN}}{uut_item.state}{{RESET}}:')
+            elif uut_item.state == 'ARM':
+                armed_uuts += 1
+                SCRN.add(f'{{ORANGE}}{uut_item.state}{{RESET}}:')
+            else:
+                SCRN.add(f'{{RED}}{uut_item.state}{{RESET}}:')
             SCRN.end()
-            if args.check:
-                name, result = uut_item.get_results(stream[0])
-                SCRN.add_line(f'{{TAB}}{{TAB}}{name} {result}')
-
-            if sstate.STATUS == 'STOP_DONE':
-                ended_streams += 1
-               
-    return armed_uuts, running_uuts, ended_streams, armed_uuts == len(uut_collection), running_uuts == len(uut_collection)
+        
+            for stream in uut_item.streams.items():
+                sstate = uut_item.get_stream_state(stream[0])
+                sites = stream[1]['all_sites']
+                rport = stream[1]['rport']
+                SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{stream[0]}')
+                SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate * args.buffer_len}MB/s Total Buffers: {int(sstate.rx) * args.buffer_len:,} Status: {sstate.STATUS}{{RESET}}')
+                SCRN.end()
+                if args.check:
+                    name, result = uut_item.get_results(stream[0])
+                    SCRN.add_line(f'{{TAB}}{{TAB}}{name} {result}')
+        
+                if sstate.STATUS == 'STOP_DONE':
+                    ended_streams += 1
+                   
+        return armed_uuts, running_uuts, ended_streams, armed_uuts == len(uut_collection), running_uuts == len(uut_collection)
+    return hot_run_status_update
                    
 def dry_run(args, uut_collection):
     top_uut = uut_collection[0].api
@@ -489,6 +502,8 @@ def hot_run(SCRN, args, uut_collection, configure_host):
     all_armed = False
     cycle_max = 0.5
     time_start = time.time()
+    release_trigger_when_ready = release_trigger_when_ready_wrapper(SCRN, args, uut_collection)
+    hot_run_status_update = hot_run_status_update_wrapper(SCRN, args, uut_collection)
     
     try:
         while True:
@@ -511,10 +526,10 @@ def hot_run(SCRN, args, uut_collection, configure_host):
                 SCRN.add("{0:.0f} secs ",time.time() - time_start)
                 SCRN.add("Max: {0}MB Buffer Length: {1}MB ", args.nbuffers * args.buffer_len, args.buffer_len)
 
-            if release_trigger_when_ready(SCRN, args, uut_collection, all_armed) < 0:
+            if release_trigger_when_ready(all_armed) < 0:
                 break
             
-            armed_uuts, running_uuts, ended_streams, all_armed, all_running = hot_run_status_update(SCRN, args, uut_collection)
+            armed_uuts, running_uuts, ended_streams, all_armed, all_running = hot_run_status_update()
 
             if sec_count and time.time() - time_start > args.secs:
                 SCRN.add_line('{BOLD}Time Limit Reached Stopping{RESET}')
