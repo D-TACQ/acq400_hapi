@@ -365,11 +365,6 @@ def read_knob(knob):
     with open(knob, 'r') as f:
         return f.read().strip()
 
-def setup_then_exit(uut_collection):
-    for uut_item in uut_collection:
-        uut_item.configure()
-    exit(PR.Yellow('Dry Run Complete'))
-
 def configure_host(uut_collection, args):
     if not os.path.ismount("/mnt"):
         exit(PR.Red(f'Error: /mnt is not a ramdisk'))
@@ -400,16 +395,36 @@ def configure_host(uut_collection, args):
         args.t_mins, args.t_secs = divmod(args.secs, 60)
         args.nbuffers = 9999999999
 
-def run_main(args):
-    uut_collection = object_builder(args)
-    configure_host(uut_collection, args)
-    top_uut = uut_collection[0].api
+trigg_msg = ''
 
-    if args.dry_run:
-        print("pgmwashere dry_run")
-        print(f'wrtd: {args.wrtd_txi}')
-        top_uut.cC.sr(args.wrtd_txi)
-        setup_then_exit(uut_collection)
+def release_trigger_when_ready(SCRN, args, uut_collection, all_armed):
+    top_uut = uut_collection[0].api
+    global trigg_msg
+    rc = 0
+    if args.sig_gen is not None:
+        trigg_msg = f"Waiting to trigger {args.sig_gen}"
+        if all_armed:
+            try:
+                acq400_hapi.Agilent33210A(args.sig_gen).trigger()
+            except Exception:
+                trigg_msg = f'{{RED}}Could not trigger {args.sig_gen}'
+                rc = -1
+            trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}'
+            args.sig_gen = None
+
+    if args.wrtd_txi:
+        trigg_msg = f"Waiting to trigger wrtd_txi"
+        if all_armed:
+            trigg_msg = f'Triggered wrtd_txi'
+            top_uut.cC.sr(args.wrtd_txi)
+            args.wrtd_txi = None
+
+    SCRN.add(f'{trigg_msg} {{RESET}}')
+    SCRN.add_line('')
+    return rc    
+  
+  
+def hot_run_init(uut_collection):
     total_streams = 0
     for uut_item in uut_collection:
         uut_item.configure()
@@ -420,93 +435,88 @@ def run_main(args):
         uut_item.thread.daemon = True
         uut_item.thread.start()
         uut_item.start()
+    return total_streams
 
-    count = 0
+def hot_run_status_update(SCRN, args, uut_collection):
+    armed_uuts = 0
+    running_uuts = 0    
+    ended_streams = 0
+        
+    for uut_item in uut_collection:
+        SCRN.add(f'{uut_item.name} ')
+        if uut_item.state == 'RUN':
+            running_uuts += 1
+            uut_item.poll_delay = 5
+            SCRN.add(f'{{GREEN}}{uut_item.state}{{RESET}}:')
+        elif uut_item.state == 'ARM':
+            armed_uuts += 1
+            SCRN.add(f'{{ORANGE}}{uut_item.state}{{RESET}}:')
+        else:
+            SCRN.add(f'{{RED}}{uut_item.state}{{RESET}}:')
+        SCRN.end()
+
+        for stream in uut_item.streams.items():
+            sstate = uut_item.get_stream_state(stream[0])
+            sites = stream[1]['all_sites']
+            rport = stream[1]['rport']
+            SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{stream[0]}')
+            SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate * args.buffer_len}MB/s Total Buffers: {int(sstate.rx) * args.buffer_len:,} Status: {sstate.STATUS}{{RESET}}')
+            SCRN.end()
+            if args.check:
+                name, result = uut_item.get_results(stream[0])
+                SCRN.add_line(f'{{TAB}}{{TAB}}{name} {result}')
+
+            if sstate.STATUS == 'STOP_DONE':
+                ended_streams += 1
+               
+    return armed_uuts, running_uuts, ended_streams, armed_uuts == len(uut_collection), running_uuts == len(uut_collection)
+                   
+def dry_run(args, uut_collection):
+    top_uut = uut_collection[0].api
+    
+    for uut_item in uut_collection:
+        uut_item.configure()
+    if args.wrtd_txi is not None:        
+        print(f'wrtd: {args.wrtd_txi}')
+        top_uut.cC.sr(args.wrtd_txi) 
+    exit(PR.Yellow('Dry Run Complete'))    
+
+
+def hot_run(SCRN, args, uut_collection, configure_host):
+    total_streams = hot_run_init(uut_collection)
+    sec_count = 0
     all_running = False
     all_armed = False
-    trigg_msg = ''
     cycle_max = 0.5
     time_start = time.time()
-    SCRN = DISPLAY()
+    
     try:
         while True:
             cycle_start = time.time()
-            running_uuts = 0
-            armed_uuts = 0
-            ended_streams = 0
             stopping = False
 
             SCRN.add_line('')
             SCRN.add('{REVERSE} ')
             if args.secs and all_running:
-                if not count:
+                if not sec_count:
                     time_start = time.time()
-                count = time.time() - time_start
+                sec_count = time.time() - time_start
                 if args.secs <= 60:
-                    SCRN.add("{0:.1f}/{1} secs ", count, args.secs)
+                    SCRN.add("{0:.1f}/{1} secs ", sec_count, args.secs)
                 else:
-                    c_mins, c_secs = divmod(count, 60)
+                    c_mins, c_secs = divmod(sec_count, 60)
                     SCRN.add(f"{int(c_mins)}:{int(c_secs):02}/{int(args.t_mins)}:{int(args.t_secs):02} mins ")
                 SCRN.add(f"Buffer Length: {args.buffer_len}MB ")
             else:
                 SCRN.add("{0:.0f} secs ",time.time() - time_start)
                 SCRN.add("Max: {0}MB Buffer Length: {1}MB ", args.nbuffers * args.buffer_len, args.buffer_len)
 
-            if args.sig_gen is not None:
-                trigg_msg = f"Waiting to trigger {args.sig_gen}"
-                if all_armed:
-                    try:
-                        acq400_hapi.Agilent33210A(args.sig_gen).trigger()
-                    except Exception:
-                        trigg_msg = f'{{RED}}Could not trigger {args.sig_gen}'
-                        break
-                    trigg_msg = f'Triggered {{GREEN}}{args.sig_gen}'
-                    args.sig_gen = None
+            if release_trigger_when_ready(SCRN, args, uut_collection, all_armed) < 0:
+                break
+            
+            armed_uuts, running_uuts, ended_streams, all_armed, all_running = hot_run_status_update(SCRN, args, uut_collection)
 
-            if args.wrtd_txi:
-                trigg_msg = f"Waiting to trigger wrtd_txi"
-                if all_armed:
-                    trigg_msg = f'Triggered wrtd_txi'
-                    top_uut.cC.sr(args.wrtd_txi)
-                    args.wrtd_txi = None
-
-            SCRN.add(f'{trigg_msg} {{RESET}}')
-            SCRN.add_line('')
-
-            for uut_item in uut_collection:
-                SCRN.add(f'{uut_item.name} ')
-                if uut_item.state == 'RUN':
-                    running_uuts += 1
-                    uut_item.poll_delay = 5
-                    SCRN.add(f'{{GREEN}}{uut_item.state}{{RESET}}:')
-                elif uut_item.state == 'ARM':
-                    armed_uuts += 1
-                    SCRN.add(f'{{ORANGE}}{uut_item.state}{{RESET}}:')
-                else:
-                    SCRN.add(f'{{RED}}{uut_item.state}{{RESET}}:')
-                SCRN.end()
-
-                for stream in uut_item.streams.items():
-
-                    sstate = uut_item.get_stream_state(stream[0])
-                    sites = stream[1]['all_sites']
-                    rport = stream[1]['rport']
-                    SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{stream[0]}')
-                    SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate * args.buffer_len}MB/s Total Buffers: {int(sstate.rx) * args.buffer_len:,} Status: {sstate.STATUS}{{RESET}}')
-                    SCRN.end()
-                    if args.check:
-                        name, result = uut_item.get_results(stream[0])
-                        SCRN.add_line(f'{{TAB}}{{TAB}}{name} {result}')
-
-                    if sstate.STATUS == 'STOP_DONE':
-                        ended_streams += 1
-
-            if running_uuts == len(uut_collection):
-                all_running = True
-            if armed_uuts == len(uut_collection):
-                all_armed = True
-
-            if count and time.time() - time_start > args.secs:
+            if sec_count and time.time() - time_start > args.secs:
                 SCRN.add_line('{BOLD}Time Limit Reached Stopping{RESET}')
                 stopping = True
                 if running_uuts == 0:
@@ -537,6 +547,16 @@ def run_main(args):
         print(e)
     time.sleep(1)
     print('Done')
+        
+def run_main(args):
+    uut_collection = object_builder(args)
+    configure_host(uut_collection, args)
+
+    if args.dry_run:
+        dry_run(args, uut_collection)
+    else:
+        hot_run(DISPLAY(), args, uut_collection, configure_host)
+
 
 if __name__ == '__main__':
     run_main(get_parser().parse_args())
