@@ -15,7 +15,7 @@ def get_connections():
              stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
              universal_newlines=True) as p:
         output, errors = p.communicate()
-        
+
     fields = "host", "dev", "uut", "cx"
     HostComms = namedtuple('HostComms', " ".join(fields))
     

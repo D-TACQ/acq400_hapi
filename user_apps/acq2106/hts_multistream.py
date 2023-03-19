@@ -78,7 +78,7 @@ def get_parser():
     parser = argparse.ArgumentParser(description='High Throughput Stream from up to 16 UUTS')
     acq400_hapi.Acq400UI.add_args(parser, transient=False)
     parser.add_argument('--spad', default=None, help="scratchpad, eg 1,16,0")
-    parser.add_argument('--decimate', default=1, help='decimate amount')
+    parser.add_argument('--decimate', default=None, help='decimate amount')
     parser.add_argument('--nbuffers', type=int, default=5000, help='max capture in buffers')
     parser.add_argument('--secs', default=0, type=int, help="max capture in seconds")
     parser.add_argument('--map', default="ALL:BOTH:ALL", help='uut:port:site ie --map=67:A:1/67:B:2/130:BOTH:ALL ')
@@ -207,7 +207,8 @@ class UutWrapper:
 
         acq400_hapi.Acq400UI.exec_args(self.api, self.args)
         self.api.s0.run0 = f'{self.api.s0.sites} {self.spad}'
-        self.api.s0.decimate = self.args.decimate
+        if self.args.decimate is not None:
+            self.api.s0.decimate = self.args.decimate
         if self.args.SIG_SRC_TRG_0 is not None:
             self.api.s0.SIG_SRC_TRG_0 = self.args.SIG_SRC_TRG_0
         if self.args.SIG_SRC_TRG_0 is not None:
@@ -230,6 +231,8 @@ class UutWrapper:
                 comm_site.spad = 1
             else:
                 comm_site.spad = 0
+            if self.args.decimate is not None:
+                comm_site.decimate = self.args.decimate
 
     def get_stream_state(self, lport):
         return afhba404.get_stream_state(lport)
