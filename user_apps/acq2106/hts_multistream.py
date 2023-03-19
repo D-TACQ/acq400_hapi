@@ -92,6 +92,7 @@ def get_parser():
     parser.add_argument('--SIG_SRC_TRG_1', default=None, help='Set trigger d1 source')
     parser.add_argument('--RTM_TRANSLEN', default=None, help='Set rtm_translen for each uut')
     parser.add_argument('--mtrg', default=None, help='value:HDMI|EXT, works with free-running master trigger')
+    parser.add_argument('--verbose', default=0, type=int, help='increase verbosity')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -109,6 +110,12 @@ class UutWrapper:
         self.__attach_api()
         self.__set_id()
         self.__data_builder(map, streams)
+        if args.verbose > 1:
+            print("UutWrapper()")
+            print(" {}\nstreams:{}\nports:{}".format(self, self.streams, self.ports))
+            print(" self.streams.items():{}".format(self.streams.items()))
+        
+
 
     def get_state(self):
         self.state =  acq400_hapi.pv(self.api.s0.CONTINUOUS_STATE)
@@ -152,7 +159,9 @@ class UutWrapper:
                 count_col = int(count_col / 2)
                 args['spad_len'] = int(self.spad.split(',')[1])
                 args['count_col'] = count_col
-                cmd = 'sudo ./scripts/run-stream-ramdisk-count {lport} {buffers} {recycle} {spad_len} {count_col}'
+                args['step'] = 1 if self.args.decimate is None else self.args.decimate
+                
+                cmd = 'sudo ./scripts/run-stream-ramdisk-count {lport} {buffers} {recycle} {spad_len} {count_col} {step}'
             cmd = cmd.format(**args)
             print(f"Cmd for stream:{stream} - {cmd}")
             self.streams[stream]['process'] = subprocess.Popen(cmd.split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)

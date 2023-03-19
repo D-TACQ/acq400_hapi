@@ -5,6 +5,7 @@ NB=${2:-1024}		#total buffers
 RCL=${3:-1}			#recycle 0 = No, >0 = how many cycles until recycle
 SPAD=${4:-8}		#total spad items
 SPAD_START=${5:-8}	#index of first spad item
+STEP=${6:-1}
 
 
 if [ !  -e ../AFHBA404 ]; then
@@ -12,4 +13,5 @@ if [ !  -e ../AFHBA404 ]; then
 	exit 1
 fi
 
-cd ../AFHBA404; ./scripts/stream-to-ramdisk-verify ${DN} ${NB} ${RCL} ${SPAD} ${SPAD_START}
+cd ../AFHBA404; ./scripts/stream-to-ramdisk-verify ${DN} ${NB} ${RCL} ${SPAD} ${SPAD_START} ${STEP}
+
