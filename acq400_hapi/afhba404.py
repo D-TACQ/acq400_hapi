@@ -11,10 +11,11 @@ from collections import namedtuple
 
 def get_connections():
     conns = {}
-    p = subprocess.Popen(["get-ident-all", ""], \
+    with subprocess.Popen(["get-ident-all", ""], \
              stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
-             universal_newlines=True)
-    output, errors = p.communicate()
+             universal_newlines=True) as p:
+        output, errors = p.communicate()
+        
     fields = "host", "dev", "uut", "cx"
     HostComms = namedtuple('HostComms', " ".join(fields))
     
