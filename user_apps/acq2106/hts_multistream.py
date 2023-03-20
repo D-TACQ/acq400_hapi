@@ -97,6 +97,24 @@ def get_parser():
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
 
+""" what is in the streams object?. 
+[dt100@roger740 acq400_hapi]$ HAPI_COLOUR=0 ./user_apps/acq2106/hts_multistream.py --dry_run=1 --verbose=2  acq2206_002 acq2206_003
+UutWrapper()
+ <__main__.UutWrapper object at 0x7f221de0ed30>
+streams:{'4': {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}, '5': {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}}
+ports:{'A': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'B': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'C': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}}
+ self.streams.items()
+[0] ('4', {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
+[1] ('5', {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
+UutWrapper()
+ <__main__.UutWrapper object at 0x7f221de22160>
+streams:{'0': {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}, '1': {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}}
+ports:{'A': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'B': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'C': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}}
+ self.streams.items()
+[0] ('0', {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
+[1] ('1', {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
+
+"""
 class UutWrapper:
     """ Encapsulates all information about one UUT """
 
@@ -113,7 +131,9 @@ class UutWrapper:
         if args.verbose > 1:
             print("UutWrapper()")
             print(" {}\nstreams:{}\nports:{}".format(self, self.streams, self.ports))
-            print(" self.streams.items():{}".format(self.streams.items()))
+            print(" self.streams.items()")
+            for ii, item in enumerate(self.streams.items()):
+                print(f"[{ii}] {item}")
         
 
 
@@ -353,6 +373,26 @@ def get_stream_conns(args):
         config[rhost][lport] = {}
         config[rhost][lport]['rport'] = rport
     return config
+
+"""
+   the stream_config structure is a little hard to navigate. may be simpler as a class like this
+"""
+class Stream:
+    def __init__(self, lport, rport, rhost):
+        self.lport = lport
+        self.rport = rport
+        self.rhost = rhost
+        kill_stream_if_active(lport)
+        
+    @staticmethod
+    def get_stream_conns(args):
+        config = {}
+        for conn in afhba404.get_connections():
+            stream = Stream(conn.dev, conn.cx, conn.uut)
+            config[stream.host] = stream
+        return config
+
+
 
 def get_parsed_map(maps):
     valid_ports = ['A', 'B', 'C', 'BOTH']
