@@ -444,9 +444,10 @@ def configure_host(uut_collection, args):
         exit(PR.Red(f'Error: /mnt is not a ramdisk'))
 
     if args.delete:
-        cmd = 'sudo rm /mnt/afhba.* -rf'
-        os.system(cmd)
+        cmd = 'sudo rm  -rf /mnt/afhba.*'
         PR.Yellow(f"Erasing /mnt/afhba.*")
+        os.system(cmd)
+        
 
 
     lport = list(uut_collection[0].streams.keys())[0]
