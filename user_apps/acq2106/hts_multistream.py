@@ -427,13 +427,20 @@ def kill_stream_if_active(lport):
     pid = afhba404.get_stream_pid(lport)
     if pid == 0:
         return
+
+    PR.Yellow(f'Warning: Killing afhba.{lport} with pid: {pid}')
     cmd = 'sudo kill -9 {}'.format(pid)
     result = os.system(cmd)
-    PR.Yellow(f'Warning: Killing afhba.{lport} with pid: {pid}')
-    time.sleep(4)
-    pid = afhba404.get_stream_pid(lport)
-    if pid != 0:
-        exit(PR.Red(f'Fatal Error: Stream failed to die {lport}'))
+    # @todo check status
+
+    retry = 0
+    while retry < 4:
+        time.sleep(1)
+        if afhba404.get_stream_pid(lport) == 0:
+            return
+        retry += 1
+
+    exit(PR.Red(f'Fatal Error: Stream failed to die {lport}'))
 
 def read_knob(knob):
     with open(knob, 'r') as f:
