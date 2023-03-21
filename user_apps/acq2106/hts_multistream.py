@@ -397,9 +397,9 @@ class Stream:
     @staticmethod
     def get_stream_conns(args):
         config = {}
-        for conn in afhba404.get_connections():
+        for conn in afhba404.get_connections().values():
             stream = Stream(conn.dev, conn.cx, conn.uut)
-            config[stream.host] = stream
+            config[stream.rhost] = stream
         return config
 
 
@@ -602,6 +602,8 @@ def hot_run_status_update_wrapper(SCRN, args, uut_collection):
     return hot_run_status_update
                    
 def dry_run(args, uut_collection):
+    if args.verbose > 1:
+        print("new style Stream.get_stream_conns {}".format(Stream.get_stream_conns(args)))
     top_uut = uut_collection[0].api
     
     for uut_item in uut_collection:
