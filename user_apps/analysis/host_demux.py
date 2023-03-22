@@ -92,6 +92,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import logging
 
+# if default plot fails (eg r740), try this:
+#+matplotlib.use('TkAgg')
+
 has_pykst = False
 if os.name != "nt":
     try:

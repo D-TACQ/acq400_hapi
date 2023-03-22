@@ -157,6 +157,38 @@ class ch_egu(ch_raw):
 
 channel_handler.builders.append(ch_egu)
 
+class ch_db(ch_raw):
+    def_fmt = "CH{} dB"
+    def __init__ (self, ic, args, fmt=None):
+        super().__init__(ic)
+        _fmt = fmt if fmt else ch_egu.def_fmt
+        self.args = args
+        self.egu_fmt = _fmt
+        self.vmax = 0
+
+    def __call__(self, raw_channels, pses):
+        print(np.shape(raw_channels))
+        yy, raw_fmt, step = super().__call__(raw_channels, pses)
+
+        dbsq = 10 * np.log10(np.square(yy))
+        
+        if self.args.WSIZE == 4:
+            db0 = 10 * np.log10(7.0368e13)      # 2^23 * 2^23
+        else:
+            db0 = 10 * np.log10(32768*32768)
+        
+        return np.subtract(db0, dbsq), self.egu_fmt.format(self.ch), SMOO        
+
+    def build(nchan, defstr, client_args):
+        channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_egu.def_fmt)
+        if args[0] == 'ch_db':
+            for cn, ch in enumerate(channels):
+                channel_handler.handlers.append(
+                    ch_db(ch-1, client_args, fmt=fmts[cn if cn<len(fmts) else 0]))
+            return True
+        return False
+
+channel_handler.builders.append(ch_db)    
 
 class ch_tai_vernier(ch_raw):
     def_fmt = "CH{} TAIv"

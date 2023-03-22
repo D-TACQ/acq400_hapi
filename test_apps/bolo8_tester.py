@@ -11,6 +11,8 @@ import time
 from getpass import getpass
 from acq400_hapi.acq400_print import PR
 
+import datetime
+
 ##script will test bolo8 module then save results as json or post to remote server as json
 ##FORMAT:
 #{
@@ -47,8 +49,9 @@ def get_parser():
     parser.add_argument('--cycles', default=5, type=int, help="number tests on each channel")
     parser.add_argument('--start_chan', default=1, type=int, help="first channel to test per module")
     parser.add_argument('--end_chan', default=8, type=int, help="last channel to test per module")
-    parser.add_argument('--url', default='http://naboo/tests/bolo', help="send results to remote")
-    parser.add_argument('--file', default=0, type=int, help="save results to file")
+    parser.add_argument('--url', default=None, help="send results to remote")
+    parser.add_argument('--file', default=0, type=int, help="save results to file, one ,json per test")
+    parser.add_argument('--log_all', default=1, type=int, help="local all results in single json array")
     parser.add_argument('uut_name', help="uut name")
     return parser
 
@@ -200,10 +203,12 @@ def extract_values(data):
 
 def save_module_results(results, module, args):
     payload = build_payload(results, module)
-    if args.url:
+    if args.url is not None:
         send_to_remote(args.url, payload)
     if args.file:
         save_to_file(module, payload)
+    if args.logall:
+        logall(module, payload)
 
 def build_payload(results, module):
     state = globals.uut_state.copy()
@@ -226,9 +231,15 @@ def send_to_remote(url, payload):
 def save_to_file(module, results):
     filename = f'{module["serial"]}-{round(time.time())}.json'
     print(f'Saving results to {filename}')
-    f = open(filename, "w")
-    f.write(results)
-    f.close()
+    with open(filename, "w") as f:
+        f.write(results)
+
+def logall(module, results):
+    # append all of today's results to a single json. We'll have to prepend, postpend array delims in order to load it
+    today = datetime.datetime.now().datetime.datetime.now()
+    filename = f'bolo-test-{today}.json'
+    with open(filename, "a") as f:
+        f.write(results+",\n")
 
 # execution starts here
 
