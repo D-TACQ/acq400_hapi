@@ -11,8 +11,35 @@ import time
 from getpass import getpass
 from acq400_hapi.acq400_print import PR
 
+##script will test bolo8 module then save results as json or post to remote server as json
+##FORMAT:
+#{
+#   "uut_state": {
+#      "uut_name": "acq2106_191",
+#      "fpga": "ACQ2106_TOP_64_64_64_64_64_64_9815_9011_32B",
+#      "fpga_date": "2021/04/14",
+#      "firmware": "acq400-571-20230315162732",
+#      "modules": [
+#         {
+#         "model": "BOLO8BLF",
+#         "serial": "BE4010056",
+#         "nchan": "24",
+#         "full_model": "BOLO8BLF N=8 M=64",
+#         "location": "1"
+#         }
+#      ],
+#      "serial": "CE4160191",
+#      "model": "acq2106sfp"
+#    },
+#   "results": [
+#      ["1", "0.0018474", "-0.0021859", "1.1501", "0.046952", "PASS"],
+#      ["2", "-0.005299", "0.0057945", "1.1716", "0.04682", "PASS"]
+#   ]
+#}
 
-#./user_apps/special/bolo8_logger.py --excloc=4,5,6 --cycles=5 --start_chan=1 --end_chan=8 --file=1 --url=http://hostname/page acq2106_191
+#./user_apps/special/bolo8_logger.py --cycles=10 --url=http://naboo/tests/bolo acq2106_191
+
+
 
 def get_parser():
     parser = argparse.ArgumentParser(description='bolo8 auto tester')
@@ -20,7 +47,7 @@ def get_parser():
     parser.add_argument('--cycles', default=5, type=int, help="number tests on each channel")
     parser.add_argument('--start_chan', default=1, type=int, help="first channel to test per module")
     parser.add_argument('--end_chan', default=8, type=int, help="last channel to test per module")
-    parser.add_argument('--url', default=None, help="send results to remote")
+    parser.add_argument('--url', default='http://naboo/tests/bolo', help="send results to remote")
     parser.add_argument('--file', default=0, type=int, help="save results to file")
     parser.add_argument('uut_name', help="uut name")
     return parser
@@ -156,7 +183,6 @@ def test_channels(uut, channel, args):
     return results
 
 def run_service(uut):
-    return
     uut.run_service(acq400_hapi.AcqPorts.BOLO8_CAL, eof="END")
 
 def get_xml(args):
@@ -198,7 +224,7 @@ def send_to_remote(url, payload):
     PR.Green('Results received')
 
 def save_to_file(module, results):
-    filename = f'{module["serial"]}-{round(time.time())}.rslt'
+    filename = f'{module["serial"]}-{round(time.time())}.json'
     print(f'Saving results to {filename}')
     f = open(filename, "w")
     f.write(results)
@@ -208,4 +234,3 @@ def save_to_file(module, results):
 
 if __name__ == '__main__':
     run_main(get_parser().parse_args())
-
