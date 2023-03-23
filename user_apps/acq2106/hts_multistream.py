@@ -258,7 +258,7 @@ class UutWrapper:
             self.api.s1.RTM_TRANSLEN = self.args.RTM_TRANSLEN
 
         self.__setup_comms_aggregators()
-        PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.rtm_translen} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
+        PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.RTM_TRANSLEN} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
 
     def __setup_comms_aggregators(self):
         for stream in self.streams.items():
