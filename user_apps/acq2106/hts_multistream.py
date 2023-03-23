@@ -34,7 +34,7 @@ options:
   --wrtd_txi WRTD_TXI   Command first box to send this trigger when all units are in ARM state
   --SIG_SRC_TRG_0 SIG_SRC_TRG_0     Set trigger d0 source
   --SIG_SRC_TRG_1 SIG_SRC_TRG_1     Set trigger d1 source
-  --mtrg  HDMI|EXT      Enables HDMI|EXT routing when ALL UUT's are armed, safe with free-running trigger          
+  --mtrg  HDMI|EXT      Enables HDMI|EXT routing when ALL UUT's are armed, safe with free-running trigger
 
 Recommendation: --secs is really a timeout, use --nbuffers for exact data length
 
@@ -97,16 +97,16 @@ def get_parser():
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
 
-""" what is in the streams object?. 
+""" what is in the streams object?.
 [dt100@roger740 acq400_hapi]$ HAPI_COLOUR=0 ./user_apps/acq2106/hts_multistream.py --dry_run=1 --verbose=2  acq2206_002 acq2206_003
 UutWrapper()
  <__main__.UutWrapper object at 0x7f221de0ed30>
 streams:{
-'4': {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}, 
+'4': {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'},
 '5': {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}}
 ports:{
-'A': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 
-'B': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 
+'A': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
+'B': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
 'C': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}}
  self.streams.items()
 [0] ('4', {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
@@ -114,11 +114,11 @@ ports:{
 UutWrapper()
  <__main__.UutWrapper object at 0x7f221de22160>
 streams:{
-'0': {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}, 
+'0': {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'},
 '1': {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}}
 ports:{
-'A': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 
-'B': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 
+'A': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
+'B': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
 'C': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}}
  self.streams.items()
 [0] ('0', {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
@@ -144,7 +144,7 @@ class UutWrapper:
             print(" self.streams.items()")
             for ii, item in enumerate(self.streams.items()):
                 print(f"[{ii}] {item}")
-        
+
 
 
     def get_state(self):
@@ -190,7 +190,7 @@ class UutWrapper:
                 args['spad_len'] = int(self.spad.split(',')[1])
                 args['count_col'] = count_col
                 args['step'] = 1 if self.args.decimate is None else self.args.decimate
-                
+
                 cmd = 'sudo ./scripts/run-stream-ramdisk-count {lport} {buffers} {recycle} {spad_len} {count_col} {step}'
             cmd = cmd.format(**args)
             print(f"Cmd for stream:{stream} - {cmd}")
@@ -347,6 +347,7 @@ class UutWrapper:
             site_conn = getattr(self.api, f's{site}')
             sites[str(site)] = site_conn.active_chan
         return sites
+
     def __get_sitelist(self):
         sites = {}
         for site in self.api.get_site_types()['AISITES']:
@@ -393,7 +394,7 @@ class Stream:
         self.rport = rport
         self.rhost = rhost
         kill_stream_if_active(lport)
-        
+
     @staticmethod
     def get_stream_conns(args):
         config = {}
@@ -454,8 +455,6 @@ def configure_host(uut_collection, args):
         cmd = 'sudo rm  -rf /mnt/afhba.*'
         PR.Yellow(f"Erasing /mnt/afhba.*")
         os.system(cmd)
-        
-
 
     lport = list(uut_collection[0].streams.keys())[0]
     args.buffer_len = int(afhba404.get_buffer_len(lport) / 1024 / 1024)
@@ -483,39 +482,37 @@ class ReleasesTriggerWhenReady:
     """ handles all trigger types from UI, enables them at the right time """
     def null_trg_action(self, all_armed):
         return 0
-    
+
     def sig_gen_trg_action(self, all_armed):
         rc = 0
-        self.trg_msg = f"Waiting to trigger {self.args.sig_gen}"
-        if all_armed:
+        if all_armed and not self.triggered:
             try:
                 acq400_hapi.Agilent33210A(self.args.sig_gen).trigger()
+                self.trg_msg = f'Triggered {{GREEN}}{self.args.sig_gen}'
             except Exception:
-                self.trg_msg = f'{{RED}}Could not trigger {self.args.sig_gen}'
+                self.trg_msg = f'Could not trigger {{RED}}{self.args.sig_gen}'
                 rc = -1
-            self.trg_msg = f'Triggered {{GREEN}}{self.args.sig_gen}'
-            self.args.sig_gen = None 
+            self.triggered = True
         return rc
-            
+
     def wrtd_txi_trg_action(self, all_armed):
-        self.trg_msg = f"Waiting to trigger wrtd_txi"
-        if all_armed:
-            self.trg_msg = f'Trigger wrtd_txi'
-            self.top_uut.cC.sr(args.wrtd_txi)
-            self.args.wrtd_txi = None
+        if all_armed and not self.triggered:
+            self.trg_msg = f'Triggered wrtd_txi'
+            self.top_uut.cC.sr(self.args.wrtd_txi)
+            self.triggered = True
         return 0
-            
+
     def mtrg_trg_action(self, all_armed):
-        self.trg_msg = f"Waiting to trigger mtrg {self.args.mtrg}"
-        if all_armed:
+        if all_armed and not self.triggered:
             self.trg_msg = f'Trigger mtrg {self.args.mtrg}'
             self.top_uut.s0.SIG_SRC_TRG_0 = self.args.mtrg
-            self.args.mtrg = None
+            self.triggered = True
         return 0
+
     def prep_mtrg(self):
         PR.Yellow(f'mtrg {self.args.mtrg} assume free-run , set source NONE')
         self.top_uut.s0.SIG_SRC_TRG_0 = 'NONE'
-                                  
+
     def __init__(self, SCRN, args, uut_collection):
         self.SCRN = SCRN
         self.args = args
@@ -523,33 +520,39 @@ class ReleasesTriggerWhenReady:
         self.top_uut = self.uut_collection[0].api
         self.trg_msg = ''
         self.trg_action = None
-        
+        self.triggered = False
+
         if self.args.sig_gen is not None:
             if self.trg_action is None:
+                self.trg_msg = f"Waiting to trigger {self.args.sig_gen}"
                 self.trg_action = self.sig_gen_trg_action
             else:
                 exit(PR.Red('duplicate trg_action sig_gen'))
+
         elif self.args.wrtd_txi is not None:
             if self.trg_action is None:
+                self.trg_msg = f"Waiting to trigger wrtd_txi"
                 self.trg_action = self.wrtd_txi_trg_action
             else:
                 exit(PR.Red('duplicate trg_action wrtd_txi'))
+
         elif self.args.mtrg is not None:
             if self.trg_action is None:
-                self.trg_action = self.mtrg_trg_action 
+                self.trg_msg = f"Waiting to trigger mtrg {self.args.mtrg}"
+                self.trg_action = self.mtrg_trg_action
                 self.prep_mtrg()
             else:
                 exit(PR.Red('duplicate trg_action mtrg'))
+
         else:
             self.trg_action = self.null_trg_action
-      
-    def __call__(self, all_armed): 
+
+    def __call__(self, all_armed):
         rc = self.trg_action(all_armed)
         self.SCRN.add(f'{self.trg_msg} {{RESET}}')
         self.SCRN.add_line('')
         return rc
-  
-  
+
 def hot_run_init(uut_collection):
     total_streams = 0
     for uut_item in uut_collection:
@@ -557,7 +560,7 @@ def hot_run_init(uut_collection):
         uut_item.initialize()
         total_streams += len(uut_item.streams)
     return total_streams
- 
+
 def hot_run_start(uut_collection):
     for uut_item in uut_collection:
         uut_item.thread =  threading.Thread(target=uut_item.get_state_forever)
@@ -568,9 +571,9 @@ def hot_run_start(uut_collection):
 def hot_run_status_update_wrapper(SCRN, args, uut_collection):
     def hot_run_status_update():
         armed_uuts = 0
-        running_uuts = 0    
+        running_uuts = 0
         ended_streams = 0
-            
+
         for uut_item in uut_collection:
             SCRN.add(f'{uut_item.name} ')
             if uut_item.state == 'RUN':
@@ -583,7 +586,7 @@ def hot_run_status_update_wrapper(SCRN, args, uut_collection):
             else:
                 SCRN.add(f'{{RED}}{uut_item.state}{{RESET}}:')
             SCRN.end()
-        
+
             for stream in uut_item.streams.items():
                 sstate = uut_item.get_stream_state(stream[0])
                 sites = stream[1]['all_sites']
@@ -594,24 +597,24 @@ def hot_run_status_update_wrapper(SCRN, args, uut_collection):
                 if args.check:
                     name, result = uut_item.get_results(stream[0])
                     SCRN.add_line(f'{{TAB}}{{TAB}}{name} {result}')
-        
+
                 if sstate.STATUS == 'STOP_DONE':
                     ended_streams += 1
-                   
+
         return armed_uuts, running_uuts, ended_streams, armed_uuts == len(uut_collection), running_uuts == len(uut_collection)
     return hot_run_status_update
-                   
+
 def dry_run(args, uut_collection):
     if args.verbose > 1:
         print("new style Stream.get_stream_conns {}".format(Stream.get_stream_conns(args)))
     top_uut = uut_collection[0].api
-    
+
     for uut_item in uut_collection:
         uut_item.configure()
-    if args.wrtd_txi is not None:        
+    if args.wrtd_txi is not None:
         print(f'wrtd: {args.wrtd_txi}')
-        top_uut.cC.sr(args.wrtd_txi) 
-    exit(PR.Yellow('Dry Run Complete'))    
+        top_uut.cC.sr(args.wrtd_txi)
+    exit(PR.Yellow('Dry Run Complete'))
 
 
 class RateLimiter:
@@ -633,12 +636,12 @@ def hot_run(SCRN, args, uut_collection, configure_host):
     hot_run_start(uut_collection)
     sec_count = 0
     all_running = False
-    all_armed = False    
-    time_start = time.time() 
+    all_armed = False
+    time_start = time.time()
     rate_limiter = RateLimiter(0.5)
-    
+
     try:
-        while True:            
+        while True:
             SCRN.add_line('')
             SCRN.add('{REVERSE} ')
             if args.secs and all_running:
@@ -657,14 +660,14 @@ def hot_run(SCRN, args, uut_collection, configure_host):
 
             if release_trigger_when_ready(all_armed) < 0:
                 break
-            
+
             armed_uuts, running_uuts, ended_streams, all_armed, all_running = hot_run_status_update()
 
             if sec_count and time.time() - time_start > args.secs:
                 SCRN.add_line('{BOLD}Time Limit Reached Stopping{RESET}')
                 if running_uuts > 0:
                     stop_uuts(uut_collection)
-                else:    
+                else:
                     break
             elif ended_streams == total_streams:
                 SCRN.add_line('{BOLD}Buffer limit Reached Stopping{RESET}')
@@ -680,7 +683,7 @@ def hot_run(SCRN, args, uut_collection, configure_host):
         time.sleep(1)
         print('Normal Run Done')
         return
-        
+
     except KeyboardInterrupt:
         SCRN.render_interrupted()
         PR.Red('Interrupt!')
@@ -690,9 +693,9 @@ def hot_run(SCRN, args, uut_collection, configure_host):
         print(e)
     stop_uuts(uut_collection)
     time.sleep(1)
-    print('Exception Run Done')           
+    print('Exception Run Done')
 
-        
+
 def run_main(args):
     uut_collection = object_builder(args)
     configure_host(uut_collection, args)
