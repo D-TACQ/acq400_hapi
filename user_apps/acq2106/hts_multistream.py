@@ -486,32 +486,30 @@ class ReleasesTriggerWhenReady:
 
     def sig_gen_trg_action(self, all_armed):
         rc = 0
-        self.trg_msg = f"Waiting to trigger {self.args.sig_gen}"
-        if all_armed:
+        if all_armed and not self.triggered:
             try:
                 acq400_hapi.Agilent33210A(self.args.sig_gen).trigger()
+                self.trg_msg = f'Triggered {{GREEN}}{self.args.sig_gen}'
             except Exception:
-                self.trg_msg = f'{{RED}}Could not trigger {self.args.sig_gen}'
+                self.trg_msg = f'Could not trigger {{RED}}{self.args.sig_gen}'
                 rc = -1
-            self.trg_msg = f'Triggered {{GREEN}}{self.args.sig_gen}'
-            self.args.sig_gen = None
+            self.triggered = True
         return rc
 
     def wrtd_txi_trg_action(self, all_armed):
-        self.trg_msg = f"Waiting to trigger wrtd_txi"
-        if all_armed:
-            self.trg_msg = f'Trigger wrtd_txi'
-            self.top_uut.cC.sr(args.wrtd_txi)
-            self.args.wrtd_txi = None
+        if all_armed and not self.triggered:
+            self.trg_msg = f'Triggered wrtd_txi'
+            self.top_uut.cC.sr(self.args.wrtd_txi)
+            self.triggered = True
         return 0
 
     def mtrg_trg_action(self, all_armed):
-        self.trg_msg = f"Waiting to trigger mtrg {self.args.mtrg}"
-        if all_armed:
+        if all_armed and not self.triggered:
             self.trg_msg = f'Trigger mtrg {self.args.mtrg}'
             self.top_uut.s0.SIG_SRC_TRG_0 = self.args.mtrg
-            self.args.mtrg = None
+            self.triggered = True
         return 0
+
     def prep_mtrg(self):
         PR.Yellow(f'mtrg {self.args.mtrg} assume free-run , set source NONE')
         self.top_uut.s0.SIG_SRC_TRG_0 = 'NONE'
@@ -523,23 +521,30 @@ class ReleasesTriggerWhenReady:
         self.top_uut = self.uut_collection[0].api
         self.trg_msg = ''
         self.trg_action = None
+        self.triggered = False
 
         if self.args.sig_gen is not None:
             if self.trg_action is None:
+                self.trg_msg = f"Waiting to trigger {self.args.sig_gen}"
                 self.trg_action = self.sig_gen_trg_action
             else:
                 exit(PR.Red('duplicate trg_action sig_gen'))
+
         elif self.args.wrtd_txi is not None:
             if self.trg_action is None:
+                self.trg_msg = f"Waiting to trigger wrtd_txi"
                 self.trg_action = self.wrtd_txi_trg_action
             else:
                 exit(PR.Red('duplicate trg_action wrtd_txi'))
+
         elif self.args.mtrg is not None:
             if self.trg_action is None:
+                self.trg_msg = f"Waiting to trigger mtrg {self.args.mtrg}"
                 self.trg_action = self.mtrg_trg_action
                 self.prep_mtrg()
             else:
                 exit(PR.Red('duplicate trg_action mtrg'))
+
         else:
             self.trg_action = self.null_trg_action
 
