@@ -73,6 +73,7 @@ import re
 import subprocess
 import psutil
 import threading
+import traceback
 
 def get_parser():
     parser = argparse.ArgumentParser(description='High Throughput Stream from up to 16 UUTS')
@@ -167,6 +168,8 @@ class UutWrapper:
     def stop(self):
         #self.api.s0.CONTINUOUS = 0
         self.api.s0.streamtonowhered = "stop"
+        while self.state != 'IDLE':
+            time.sleep(1)
         return
 
     def initialize(self):
@@ -355,11 +358,16 @@ class UutWrapper:
         return sites
 
 def stop_uuts(uut_collection):
+    threads = []
     for uut_item in uut_collection:
         if not uut_item.ended:
             t = threading.Thread(target=uut_item.stop)
             t.start()
-            uut_item.ended = True
+            threads.append(t)
+
+    for ix, uut_item in enumerate(uut_collection):
+        threads[ix].join()
+        uut_item.ended = True
 
 def object_builder(args):
     stream_config = get_stream_conns(args)
@@ -693,6 +701,8 @@ def hot_run(SCRN, args, uut_collection, configure_host):
         SCRN.render_interrupted()
         PR.Red('Fatal Error')
         print(e)
+        print(traceback.format_exc())
+
     stop_uuts(uut_collection)
     time.sleep(1)
     print('Exception Run Done')
