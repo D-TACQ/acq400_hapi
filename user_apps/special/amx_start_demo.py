@@ -43,7 +43,7 @@ def wait_bist_ok(u, args):
                 print(f'ERROR {u.uut} BIST FAIL')
                 return False
         
-        time.sleep(1)
+        time.sleep(2.5)
         ii += 1
         if ii >= maxi:
             return False
