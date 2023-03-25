@@ -389,16 +389,18 @@ def object_builder(args):
 
 def get_stream_conns(args):
     config = {}
-    active_conns = afhba404.get_connections()
-    for conn in active_conns:
-        lport = active_conns[conn].dev
-        rport = active_conns[conn].cx
-        rhost = active_conns[conn].uut
+
+    for conn in acq400_hapi.afhba404.get_connections().values():
+        lport = conn.dev
+        rport = conn.cx
+        rhost = conn.uut
         kill_stream_if_active(lport)
         if rhost not in config:
             config[rhost] = {}
+        # else second port for rhost..
         config[rhost][lport] = {}
         config[rhost][lport]['rport'] = rport
+
     return config
 
 """

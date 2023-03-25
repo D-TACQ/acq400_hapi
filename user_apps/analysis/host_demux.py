@@ -93,7 +93,9 @@ import matplotlib.pyplot as plt
 import logging
 
 # if default plot fails (eg r740), try this:
-#+matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
+if os.getenv('HAPI_MATPLOTLIB') is not None:
+    matplotlib.use(os.getenv('HAPI_MATPLOTLIB'))
 
 has_pykst = False
 if os.name != "nt":
@@ -143,8 +145,8 @@ def make_cycle_list(args):
 def get_file_names(args):
     fnlist = list()
 # matches BOTH 0.?? for AFHBA an 0000 for FTP
-    datapat = re.compile('[.0-9]{4}$')
-    datapat_dat = re.compile('[.0-9]{4}.dat$')
+    datapat = re.compile('[.0-9]{4,5}$')
+    datapat_dat = re.compile('[.0-9]{4,5}.dat$')
     has_cycles = True
     for cycle in make_cycle_list(args):
         if cycle == "err.log":
@@ -481,6 +483,14 @@ def calc_stack_480(args):
 
     print("args.stack_480_cmap: {}".format(args.stack_480_cmap))
 
+def getRootFromAfhba404(args):
+    for conn in acq400_hapi.afhba404.get_connections().values():
+        if conn.uut == args.uut:
+            return f'/mnt/afhba.{conn.dev}/{args.uut}'
+
+    print(f'getRootFromAhfba404 ERROR no connection for {args.uut}')
+    exit(1)
+
 def run_main(args):
     args.uut = args.uuts[0]
     calc_stack_480(args)
@@ -505,7 +515,10 @@ def run_main(args):
         args.WSIZE = 4
 
     print("data_type {} np {}".format(args.data_type, args.np_data_type))
-    if os.name == "nt":  # do this if windows system.
+    if args.src == "@afhba404":
+        args.uutroot = getRootFromAfhba404(args)
+        print(f'found uutroot for {args.uut} on  {args.uutroot}')
+    elif os.name == "nt":  # do this if windows system.
         args.src  = args.src.replace("/","\\")
         if os.path.isdir(args.src):
             args.uutroot = args.src
