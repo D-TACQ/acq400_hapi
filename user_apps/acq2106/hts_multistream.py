@@ -168,8 +168,15 @@ class UutWrapper:
     def stop(self):
         #self.api.s0.CONTINUOUS = 0
         self.api.s0.streamtonowhered = "stop"
+        wc = 0
         while self.state != 'IDLE':
             time.sleep(1)
+            wc += 1
+            if wc > 10:
+                print("f{self.name} to base unable to stop, dropping out")
+                return
+        if self.args.verbose > 0:
+            print(f"{self.name} has stopped")
         return
 
     def initialize(self):
@@ -365,9 +372,11 @@ def stop_uuts(uut_collection):
             t.start()
             threads.append(t)
 
+    nt = len(threads)
     for ix, uut_item in enumerate(uut_collection):
         threads[ix].join()
         uut_item.ended = True
+    print(f"all {nt} threads joined")
 
 def object_builder(args):
     stream_config = get_stream_conns(args)
@@ -601,7 +610,7 @@ def hot_run_status_update_wrapper(SCRN, args, uut_collection):
                 sstate = uut_item.get_stream_state(stream[0])
                 sites = stream[1]['all_sites']
                 rport = stream[1]['rport']
-                SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{stream[0]}')
+                SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{stream[0]:2}')
                 SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate * args.buffer_len}MB/s Total Buffers: {int(sstate.rx) * args.buffer_len:,} Status: {sstate.STATUS}{{RESET}}')
                 SCRN.end()
                 if args.check:
