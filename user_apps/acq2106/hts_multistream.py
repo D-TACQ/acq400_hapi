@@ -144,7 +144,7 @@ class UutWrapper:
             print(" {}\nstreams:{}\nports:{}".format(self, self.streams, self.ports))
             print(" self.streams.items()")
             for ii, item in enumerate(self.streams.items()):
-                print(f"[{ii}] {item}")
+                print(f'[{ii}] {item}')
 
 
 
@@ -173,10 +173,10 @@ class UutWrapper:
             time.sleep(1)
             wc += 1
             if wc > 10:
-                print("f{self.name} to base unable to stop, dropping out")
+                print(f'{self.name} to base unable to stop, dropping out')
                 return
         if self.args.verbose > 0:
-            print(f"{self.name} has stopped")
+            print(f'{self.name} has stopped')
         return
 
     def initialize(self):
@@ -203,17 +203,17 @@ class UutWrapper:
 
                 cmd = 'sudo ./scripts/run-stream-ramdisk-count {lport} {buffers} {recycle} {spad_len} {count_col} {step}'
             cmd = cmd.format(**args)
-            print(f"Cmd for stream:{stream} - {cmd}")
+            print(f'Cmd for stream:{stream} - {cmd}')
             self.streams[stream]['process'] = subprocess.Popen(cmd.split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time_start = time.time()
             pid = afhba404.get_stream_pid(stream)
             while True:
                 if pid != 0:
-                    PR.Green(f"Started afhba.{stream} with PID {pid}")
+                    PR.Green(f'Started afhba.{stream} with PID {pid}')
                     self.streams[stream]['pid'] = pid
                     break
                 if time.time() - time_start > 5:
-                    exit(PR.Red(f"Error: afhba.{stream} failed to start"))
+                    exit(PR.Red(f'Error: afhba.{stream} failed to start'))
                 pid = afhba404.get_stream_pid(stream)
                 time.sleep(0.5)
 
@@ -291,7 +291,7 @@ class UutWrapper:
                 1 : 'Simulate',
                 2 : 'Spad Checker'
             }
-            file = f"/mnt/afhba.{lport}/ramp_{lport}.log"
+            file = f'/mnt/afhba.{lport}/ramp_{lport}.log'
             data = None
             if os.path.exists(file):
                 data = open(file, "r").readline().strip()
@@ -376,7 +376,7 @@ def stop_uuts(uut_collection):
     for ix, uut_item in enumerate(uut_collection):
         threads[ix].join()
         uut_item.ended = True
-    print(f"all {nt} threads joined")
+    print(f'all {nt} threads joined')
 
 def object_builder(args):
     stream_config = get_stream_conns(args)
@@ -471,7 +471,7 @@ def configure_host(uut_collection, args):
 
     if args.delete:
         cmd = 'sudo rm  -rf /mnt/afhba.*'
-        PR.Yellow(f"Erasing /mnt/afhba.*")
+        PR.Yellow(f'Erasing /mnt/afhba.*')
         os.system(cmd)
 
 
@@ -544,21 +544,21 @@ class ReleasesTriggerWhenReady:
 
         if self.args.sig_gen is not None:
             if self.trg_action is None:
-                self.trg_msg = f"Waiting to trigger {self.args.sig_gen}"
+                self.trg_msg = f'Waiting to trigger {self.args.sig_gen}'
                 self.trg_action = self.sig_gen_trg_action
             else:
                 exit(PR.Red('duplicate trg_action sig_gen'))
 
         elif self.args.wrtd_txi is not None:
             if self.trg_action is None:
-                self.trg_msg = f"Waiting to trigger wrtd_txi"
+                self.trg_msg = f'Waiting to trigger wrtd_txi'
                 self.trg_action = self.wrtd_txi_trg_action
             else:
                 exit(PR.Red('duplicate trg_action wrtd_txi'))
 
         elif self.args.mtrg is not None:
             if self.trg_action is None:
-                self.trg_msg = f"Waiting to trigger mtrg {self.args.mtrg}"
+                self.trg_msg = f'Waiting to trigger mtrg {self.args.mtrg}'
                 self.trg_action = self.mtrg_trg_action
                 self.prep_mtrg()
             else:
@@ -673,8 +673,8 @@ def hot_run(SCRN, args, uut_collection, configure_host):
                     SCRN.add("{0:.1f}/{1} secs ", sec_count, args.secs)
                 else:
                     c_mins, c_secs = divmod(sec_count, 60)
-                    SCRN.add(f"{int(c_mins)}:{int(c_secs):02}/{int(args.t_mins)}:{int(args.t_secs):02} mins ")
-                SCRN.add(f"Buffer Length: {args.buffer_len}MB ")
+                    SCRN.add(f'{int(c_mins)}:{int(c_secs):02}/{int(args.t_mins)}:{int(args.t_secs):02} mins ')
+                SCRN.add(f'Buffer Length: {args.buffer_len}MB ')
             else:
                 SCRN.add("{0:.0f} secs ",time.time() - time_start)
                 SCRN.add("Max: {0}MB Buffer Length: {1}MB ", args.nbuffers * args.buffer_len, args.buffer_len)
