@@ -525,12 +525,18 @@ def run_main(args):
         elif os.path.isfile(args.src):
             args.uutroot = os.path.dirname(args.src)
         else:
-            exit("file not found")
+            print(f'Error: unable to locate data, src {args.src}')
+            exit(1)
     elif os.path.isdir(args.src):
-        args.uutroot = r"{}/{}".format(args.src, args.uut)
-        print("uutroot {}".format(args.uutroot))
+        args.uutroot = os.path.join(args.src, args.uut)
+        if not os.path.isdir(args.uutroot):
+            args.uutroot = args.src
     elif os.path.isfile(args.src):
-        args.uutroot = "{}".format(os.path.dirname(args.src))
+        args.uutroot = os.path.dirname(args.src)
+    else:
+        print(f'Error: unable to locate data, src {args.src}')
+        exit(1)
+
     if args.save != None:
         if args.save.startswith("/"):
             args.saveroot = args.save
