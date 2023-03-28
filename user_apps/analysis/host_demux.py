@@ -503,7 +503,12 @@ def run_main(args):
     args.WSIZE = 2
     args.NSAM = 0
     if args.data_type == None or args.nchan == None or args.egu == 1:
-        args.the_uut = acq400_hapi.factory(args.uut)
+        try:
+            args.the_uut = acq400_hapi.factory(args.uut)
+        except:
+            print(f'ERROR: unable to instantiate UUT {args.uut}')
+            print("maybe it's not there and we wouldn't need if --data_type, --nchan are defined and egu=0")
+            exit(1)
 
     if args.data_type == None:
         args.data_type = 32 if int(args.the_uut.s0.data32) else 16
