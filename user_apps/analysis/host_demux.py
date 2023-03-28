@@ -286,22 +286,28 @@ def save_data(args, raw_channels):
 
 def plot_mpl(args, raw_channels):
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
+
     nplot = len(args.pc_list)
-    if nplot > 1:
-        fig, plots = plt.subplots(nplot, 1, sharex=True)
+    total_plots = int(nplot / args.traces_per_plot)
+    if nplot % args.traces_per_plot:
+        total_plots += 1
+
+    if total_plots > 1:
+        fig, plots = plt.subplots(total_plots, 1, sharex=True)
     else:
         fig, p1 = plt.subplots()
         plots = (p1,)
-
 
     fig.suptitle("{} src {}".format(args.uut, args.src))
     xx1 = np.array([ x for x in range(0, len(raw_channels[0])+1)][args.pses[0]:args.pses[1]:args.pses[2]], dtype=np.int32)
 
     for num, ch_handler in enumerate(args.pc_list):
-        yy, ylabel, step = ch_handler(raw_channels, args.pses)
+        num = int(num / args.traces_per_plot)
+        yy, meta, step = ch_handler(raw_channels, args.pses)
         xx = xx1[0:len(yy)]
-
-        plots[num].set_ylabel(ylabel)
+        channel, unit = meta.split(' ')
+        plots[num].set_ylabel(unit)
+        plots[num].set_title(plots[num].get_title() + f' {channel}')
         if step:
             plots[num].step(xx, yy, linewidth=0.75)
         else:
@@ -309,8 +315,8 @@ def plot_mpl(args, raw_channels):
         plots[num].grid("True", linewidth=0.2)
         plots[num].ticklabel_format(style='plain')    # to prevent scientific notation
 
-
     plots[num].set_xlabel("Samples")
+    plt.subplots_adjust(hspace=(total_plots - 1 ) * 0.15)
     plt.show()
     return None
 
@@ -570,6 +576,7 @@ def get_parser(parser=None):
     parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
     parser.add_argument('--pcfg', default=None, type=str, help="plot configuration file, overrides pchan")
     parser.add_argument('--callback', default=None, help="callback for external automation")
+    parser.add_argument('--traces_per_plot', default=1, type=int, help="traces_per_plot")
     if is_client:
         parser.add_argument('uuts', nargs='+',help='uut - for auto configuration data_type, nchan, egu or just a label')
     return parser
