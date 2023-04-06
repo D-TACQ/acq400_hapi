@@ -578,7 +578,7 @@ class Acq400:
 
         cc = ChannelClient(self.uut, chan)
         ccraw = cc.read(nsam, data_size=data_size)
-
+        cc.close()
         if self.save_data:
             try:
                 os.makedirs(self.save_data)
