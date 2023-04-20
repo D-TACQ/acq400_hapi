@@ -2,7 +2,7 @@
 
 devnum=${1:-0} 
 nbuffers=${2:-1024}
-overwrite=${3:-1} # 1 = overwite 0 = dont
+overwrite=${3:-0} # 1 = overwite 0 = dont
 
 if [ !  -e ../AFHBA404 ]; then
 	echo "ERROR: did not find ../AFHBA404"
