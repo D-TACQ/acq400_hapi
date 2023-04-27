@@ -9,7 +9,7 @@ python module to connect to remote hosts
 ## Installation
 
 ### Use Latest Github
-**Recommended** 
+**Recommended**
 ... and use PYTHONPATH to reference the library when used from anywhere
 ```bash
 mkdir PROJECTS; cd PROJECTS
@@ -27,7 +27,7 @@ on Windows, run: SETPYTHONPATH.BAT      # then start a new shell.
 
 PIP has the advantage of installing a system library, however it's not updated as frequently as the Github source, so some feature may be lacking.
 
-V2.0.0 : works with Python 2.7 and 3.x  
+V2.0.0 : works with Python 2.7 and 3.x
 
 Python 2.x needs the "future" feature:
 on linux:
@@ -60,10 +60,10 @@ http://www.d-tacq.com/resources/HAPI/user_apps/index.html
 ## How it works
 
 class Acq400 nails up a socket connection to all the site servers at 4220+s,
-as well as running a status monitor thread on 2235 and 
+as well as running a status monitor thread on 2235 and
 allowing access to post-shot data on 53000+ch
 
-each knob on the site is presented as a property of the connection, so that 
+each knob on the site is presented as a property of the connection, so that
 simple bash-script-like syntax can be used
 
 **NOTE** on Name Service:
@@ -88,7 +88,7 @@ uut.s0.set_arm=1
 
 Example: running a session interactively while a test loop is running:
 >>> import acq400_hapi
->>> uut = acq400_hapi.Acq400("10.12.132.22", monitor=False)
+>>> uut = acq400_hapi.factory("10.12.132.22")
 >>> uut.s1.shot
 '348'
 >>> uut.s1.shot
@@ -101,9 +101,9 @@ The goal is to make it easy to remote-script multiple uut's.
 
 Example:
 ```python
-from acq400_hapi import *
-uut1=acq400.Acq400("acq1001_144")
-uut2=acq400.Acq400("acq1001_145")
+import acq400_hapi
+uut1 = acq400_hapi.factory("acq1001_144")
+uut2 = acq400_hapi.factory("acq1001_145")
 
 for ii in range(0,10):
 	c1 = uut1.s1.SIG_SAMPLE_COUNT_COUNT.split(" ")[1]
@@ -139,10 +139,10 @@ uut.s0.help(*COUNT)
 
 Example:
 >>> import acq400_hapi
->>> uut = acq400_hapi.Acq400("10.12.132.22", monitor=False)
+>>> uut = acq400_hapi.factory("10.12.132.22")
 >>> for f in uut.s0.help('.*FREQ'):
 ...     uut.s0.get_knob(f)
-... 
+...
 'SIG:CLK_EXT:FREQ 25007219'
 'SIG:CLK_MB:FREQ 50012464'
 'SIG:CLK_S1:FREQ 50010624'
@@ -153,8 +153,8 @@ Example:
 ```
 
 The Acq400 class can be fairly slow to instantiate
-(imagine an ACQ2106 with 6 sites populated), but once the connections are 
-nailed up, then control links are fast. 
+(imagine an ACQ2106 with 6 sites populated), but once the connections are
+nailed up, then control links are fast.
 => The use case is: make the connection at the beginning, then operate over
 long periods.
 
