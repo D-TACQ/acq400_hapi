@@ -1520,9 +1520,9 @@ def factory(_uut):
 
     s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
 
-    advanced_models = ['acq2106sfp', 'acq2206sfp', 'z7io']
+    acq2106_models = ('acq2106', 'acq2206', 'z7io')
 
-    if s0.MODEL not in advanced_models:
+    if not s0.MODEL.startswith(acq2106_models):
         return Acq400(_uut, s0_client=s0)
 
     # here with acq2106
