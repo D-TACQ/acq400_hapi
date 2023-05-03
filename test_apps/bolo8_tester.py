@@ -8,12 +8,14 @@ import paramiko
 import json
 import argparse
 import time
+import csv
+import os
 from getpass import getpass
 from acq400_hapi.acq400_print import PR
 
 import datetime
 
-##script will test bolo8 module then save results as json or post to remote server as json
+##script will post results to remote server as json in this format
 ##FORMAT:
 #{
 #   "uut_state": {
@@ -39,19 +41,22 @@ import datetime
 #   ]
 #}
 
-#./user_apps/special/bolo8_logger.py --cycles=10 --url=http://naboo/tests/bolo acq2106_191
+
+#usage
+#./user_apps/special/bolo8_logger.py acq2106_191
+#./user_apps/special/bolo8_logger.py sites=2,3,4 start_chan=4 end_chan=8 acq2106_191
+#./user_apps/special/bolo8_logger.py --url=http://naboo/tests/bolo acq2106_191
 
 
 
 def get_parser():
     parser = argparse.ArgumentParser(description='bolo8 auto tester')
-    parser.add_argument('--excloc', default='', help="Excluded sites ie excloc=1,2,3 won't test those sites")
+    parser.add_argument('--sites', default=None, help="sites to test eg 1,2,3,4,5,6")
     parser.add_argument('--cycles', default=5, type=int, help="number tests on each channel")
     parser.add_argument('--start_chan', default=1, type=int, help="first channel to test per module")
     parser.add_argument('--end_chan', default=8, type=int, help="last channel to test per module")
-    parser.add_argument('--url', default=None, help="send results to remote")
-    parser.add_argument('--file', default=0, type=int, help="save results to file, one ,json per test")
-    parser.add_argument('--log_all', default=1, type=int, help="local all results in single json array")
+    parser.add_argument('--url', default=None, help="send results to remote url")
+    parser.add_argument('--log_all', default=0, type=int, help="log all results to same csb file")
     parser.add_argument('uut_name', help="uut name")
     return parser
 
@@ -69,7 +74,11 @@ class Remote_File():
         self.file = file
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh.connect(**params)
+        try:
+            self.ssh.connect(**params)
+        except Exception as e:
+            print(e)
+            exit(1)
         cmd = f'cat {file}'
         stdin, stdout, stderr = self.ssh.exec_command(cmd)
         self.original_file = stdout.read().decode("utf-8").strip()
@@ -90,10 +99,16 @@ def run_main(args):
     test_loop(args)
 
 def test_loop(args):
-    uut = acq400_hapi.factory(args.uut_name)
+    try:
+        uut = acq400_hapi.factory(args.uut_name)
+    except Exception as e:
+        print(e)
+        exit(1)
     globals.uut_state = get_uut_state(uut)
-    excluded_sites = args.excloc.split(',')
+
+    selected_sites = args.sites.split(',') if args.sites else ['1', '2', '3', '4', '5', '6']
     print(f'Connecting to {args.uut_name}')
+
     password = getpass()
     params = {
         'hostname': args.uut_name,
@@ -104,8 +119,9 @@ def test_loop(args):
     }
     filename = '/mnt/local/sysconfig/bolo.sh'
     file = Remote_File(filename, params)
+
     for module in globals.uut_state['modules']:
-        if module['location'] in excluded_sites:
+        if module['location'] not in selected_sites:
             print(f'Skipping site {module["location"]}')
             continue
         print(f'starting test for module: {module["serial"]}')
@@ -173,19 +189,21 @@ def set_active_channels(file, channel):
 def test_channels(uut, channel, args):
     results = []
     for i in range(args.cycles):
-        PR.Yellow(f'Test cycle {i}')
+        PR.Yellow(f'Test cycle {i + 1}')
         try:
             run_service(uut)
         except:
-            print()
-            response = input('Try again? y/n')
+            response = input('Test Failed try again? y/n')
             if response != 'y':
-                continue
+                exit()
             run_service(uut)
         results.extend(extract_values(get_xml(args)))
     return results
 
 def run_service(uut):
+    uut.s14.DSP_RESET = 1
+    time.sleep(0.1)
+    uut.s14.DSP_RESET = 0
     uut.run_service(acq400_hapi.AcqPorts.BOLO8_CAL, eof="END")
 
 def get_xml(args):
@@ -202,13 +220,12 @@ def extract_values(data):
     return matches
 
 def save_module_results(results, module, args):
-    payload = build_payload(results, module)
-    if args.url is not None:
+
+    if args.url:
+        payload = build_payload(results, module)
         send_to_remote(args.url, payload)
-    if args.file:
-        save_to_file(module, payload)
-    if args.logall:
-        logall(module, payload)
+
+    save_to_file(module, results, args)
 
 def build_payload(results, module):
     state = globals.uut_state.copy()
@@ -228,18 +245,26 @@ def send_to_remote(url, payload):
         return
     PR.Green('Results received')
 
-def save_to_file(module, results):
-    filename = f'{module["serial"]}-{round(time.time())}.json'
-    print(f'Saving results to {filename}')
-    with open(filename, "w") as f:
-        f.write(results)
+def save_to_file(module, results, args):
 
-def logall(module, results):
-    # append all of today's results to a single json. We'll have to prepend, postpend array delims in order to load it
-    today = datetime.datetime.now().datetime.datetime.now()
-    filename = f'bolo-test-{today}.json'
-    with open(filename, "a") as f:
-        f.write(results+",\n")
+    filename = f'bolo_result-{module["serial"]}-{round(time.time())}.csv'
+    if args.log_all:
+        filename = f'bolo_results-{datetime.date.today()}.csv'
+
+    header = ['module', 'channel', 'I0', 'Q0', 'sensitivity', 'cooling', 'result']
+
+    if not os.path.exists(filename):
+        with open(filename, 'w', encoding='UTF8') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+
+    with open(filename, 'a', encoding='UTF8') as f:
+        writer = csv.writer(f)
+        results = sorted(results)
+        for result in results:
+            writer.writerow([module['serial'], *result])
+
+    print(f"saving results to {filename}")
 
 # execution starts here
 
