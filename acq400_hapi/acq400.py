@@ -1303,6 +1303,7 @@ class Acq400:
         nchan = (ssb - spad_sz)//data_sz
         ch_dtype = np.dtype('i4' if data_sz == 4 else 'i2')
         sp_dtype = np.dtype('u4')
+        spad_off = nchan*data_sz//4
 
         self.slowmon_nc = netclient.Netclient(self.uut, AcqPorts.SLOWMON)
         buf = bytearray(ssb)
@@ -1322,7 +1323,7 @@ class Acq400:
                     view = view[nrx:]
                     ib += nrx
             chx = np.frombuffer(buf, ch_dtype)[:nchan]
-            spx = np.frombuffer(buf, sp_dtype)[spad_sz:]
+            spx = np.frombuffer(buf, sp_dtype)[spad_off:]
             yield(chx, spx)
 
     def slowmon_close(self):
