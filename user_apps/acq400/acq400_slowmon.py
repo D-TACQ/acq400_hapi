@@ -140,6 +140,7 @@ def run_stream(args, uut):
                 spx.tofile(data_file)
             
         if t_run >= args.runtime:
+            print("Time up captured {} samples in {} seconds. Approx SLOWMON_FS {} Hz". format(row, args.runtime, row//args.runtime))
             return
 
     
