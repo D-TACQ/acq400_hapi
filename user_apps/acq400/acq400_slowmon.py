@@ -104,6 +104,11 @@ def run_stream(args, uut):
         
     t_run = 0
     
+    if args.slowmon_fs:
+        if uut.s0.slowmon_hw == '0':
+            print("WARNING: slowmon with no hardware assist, slowmon_fs not the absolute rate and actual rate should be tested for each combination")
+        uut.s0.SLOWMON_FS = args.slowmon_fs
+
     for row, (chx, spx) in enumerate(uut.stream_slowmon()):
         
         if row == 0:
@@ -111,16 +116,20 @@ def run_stream(args, uut):
         else:
             t_run = time.time() - t0
         #print("{} len {},{} type {},{} shape {},{}\n{} {}".format(row, len(chx), len(spx), chx.dtype, spx.dtype, chx.shape, spx.shape, chx, spx))
-        if args.show_raw or csv_file:
+        if args.egu == 1:
+            txt_row = ("{}, {}".format(row, to_egu(uut, chx[:args.pchan])))
+        elif args.show_raw or csv_file:
             if args.show_raw == 'd':
                 txt_row = ("{} {} {}".format(row, str_dec(chx[:args.pchan]), str_dec(spx)))
             else:
                 txt_row = ("{} {} {}".format(row, str_hex(chx[:args.pchan]), str_hex(spx)))
-                
-        if args.egu == 1:
-            txt_row = ("{}, {}".format(row, to_egu(uut, chx[:args.pchan])))
+        else:
+            if args.show >= 1:
+                txt_row = "t_run {}/{}s sample: {}".format(int(t_run), args.runtime, row)
+            else:
+                txt_row = "{}".format(row)
             
-        if args.show == 1:
+        if args.show >= 1:
             print(txt_row)
             
         if args.save_file:
@@ -144,6 +153,7 @@ def run_main():
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
     parser.add_argument('--save_file', default=None, type=str, help="store binary output to file")
+    parser.add_argument('--slowmon_fs', default=None, help="set slowmon output rate if set")
     parser.add_argument('uuts', nargs=1, help="uuts")
     args = parser.parse_args()
      
