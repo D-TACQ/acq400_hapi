@@ -76,7 +76,7 @@ def str_hex(xarr):
     txt = "[ "
     for xx in uview[:-1]:
         txt += dfmt.format(xx)
-    
+        
     return txt + dfmte.format(uview[-1])
 
 def str_dec(xarr):    
@@ -104,13 +104,14 @@ def run_stream(args, uut):
         
     t_run = 0
     
+    _nspad = 4 if uut.s0.slowmon_hw == '1' else None
+        
     if args.slowmon_fs:
         if uut.s0.slowmon_hw == '0':
-            print("WARNING: slowmon with no hardware assist, slowmon_fs not the absolute rate and actual rate should be tested for each combination")
+            print("WARNING: slowmon with no hardware assist, slowmon_fs not the absolute rate and actual rate should be tested for each combination")           
         uut.s0.SLOWMON_FS = args.slowmon_fs
 
-    for row, (chx, spx) in enumerate(uut.stream_slowmon()):
-        
+    for row, (chx, spx) in enumerate(uut.stream_slowmon(nspad=_nspad)):
         if row == 0:
             t0 = time.time()
         else:

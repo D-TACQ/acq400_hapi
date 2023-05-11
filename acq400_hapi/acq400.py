@@ -1295,12 +1295,18 @@ class Acq400:
             else:
                 print("stream_close(), sorry not possible to close it down ..")
 
-    def stream_slowmon(self):
+    # if spad is set, it's a synthetic spad, not part of ssb
+    def stream_slowmon(self, nspad=None):
         ssb = int(self.s0.ssb)
         data_sz = 4 if int(self.s0.data32) else 2
-        nspad = int(self.s0.spad.split(',')[1])
-        spad_sz = nspad*4
-        nchan = (ssb - spad_sz)//data_sz
+        if not nspad:
+            nspad = int(self.s0.spad.split(',')[1])
+            spad_sz = nspad*4
+            nchan = (ssb - spad_sz)//data_sz
+        else:
+            main_nspad = int(self.s0.spad.split(',')[1])
+            nchan = (ssb - main_nspad*4)//data_sz
+            ssb = nchan*data_sz + nspad*4
         ch_dtype = np.dtype('i4' if data_sz == 4 else 'i2')
         sp_dtype = np.dtype('u4')
         spad_off = nchan*data_sz//4
