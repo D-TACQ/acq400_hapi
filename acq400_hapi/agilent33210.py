@@ -21,7 +21,7 @@ class Agilent33210A:
     def trigger(self):
         self.send("TRIG")
 
-    def beep(self, sleep = 0.5):
+    def beep(self, sleep=0.5):
         self.send("SYST:BEEP")
         time.sleep(sleep)
         self.send("SYST:BEEP")
