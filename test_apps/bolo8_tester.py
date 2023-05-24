@@ -166,8 +166,6 @@ def run_test(args):
             PR.Yellow(f'Testing channels {channel}-{channel + 1}')
 
             while not args.forever:
-                if args.beeper:
-                    beep_beeper(args)
 
                 value = input(f'Is bolometer connected to channels {channel}-{channel + 1} yes / no / stop: ')
                 if value == 'yes':
@@ -185,6 +183,8 @@ def run_test(args):
             result = test_channels(channel, args)
             results.extend(result)
             globals.file.reset()
+            if args.beeper:
+                    beep_beeper(args)
             print()
 
         PR.Green(f'Finished testing {module["serial"]} ')
@@ -264,7 +264,9 @@ def beep_beeper(args):
     try:
         acq400_hapi.Agilent33210A(args.beeper).beep(1)
     except Exception as e:
+        print(e)
         PR.Red('Beeper not found')
+    exit
 
 def extract_values(data):
     expr = re.compile('([\d]+)[ ]+([\d\.-]+)[ ]+([\d\.-]+)[ ]+([\d\.-]+)[ ]+([\d\.-]+)[ ]+([\w]+)')
