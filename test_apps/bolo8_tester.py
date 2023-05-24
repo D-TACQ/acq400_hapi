@@ -20,8 +20,8 @@ Usage:
     ./test_apps/bolo8_tester.py acq2106_191
 
     ./test_apps/bolo8_tester.py sites=2,3,4 start_chan=4 end_chan=8 acq2106_191
-    ./test_apps/bolo8_tester.py  --url=http://naboo/tests/bolo acq2106_191
-    ./test_apps/bolo8_tester.py --cycle=10 --url=http://eigg/home/dt100/bolo_endpoint acq2106_388
+    ./test_apps/bolo8_tester.py  --url=http://naboo/tests/bolo/ acq2106_191
+    ./test_apps/bolo8_tester.py --cycle=10 --url=http://eigg/home/dt100/bolo_endpoint/ acq2106_388
     ./test_apps/bolo8_tester.py --sites=1 --cycle=10 --start_chan=1 --end_chan=3 --url=http://eigg/home/dt100/bolo_endpoint/?plot=1 --forever=1 --sleep=7200 acq2106_388
 
 By default will save results to .csv named bolo_result-(serial)-(timestamp).csv in following format
@@ -167,10 +167,10 @@ def run_test(args):
 
             while not args.forever:
 
-                value = input(f'Is bolometer connected to channels {channel}-{channel + 1} yes / no / stop: ')
-                if value == 'yes':
+                value = input(f'Is bolometer connected to channels {channel}-{channel + 1} yes / no / finish: ')
+                if value.startswith('y'):
                     break
-                if value =='stop':
+                if value.startswith('f'):
                     globals.file.reset()
                     globals.file.close()
                     if results:
