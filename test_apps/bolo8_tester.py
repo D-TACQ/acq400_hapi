@@ -10,7 +10,6 @@ import argparse
 import time
 import csv
 import os
-from getpass import getpass
 from acq400_hapi.acq400_print import PR
 import datetime
 
@@ -80,7 +79,7 @@ def get_parser():
     parser.add_argument('--url', default=None, help="send results to remote url")
     parser.add_argument('--log_all', default=0, type=int, help="log all results to same csv file")
     parser.add_argument('--forever', default=0, type=int, help="Loop forever on 2 channels must set channels")
-    parser.add_argument('--sleep', default=0, type=int, help="sleep after module test use with forever")
+    parser.add_argument('--sleep', default=5, type=int, help="sleep after module test use with forever")
     parser.add_argument('--beeper', default="SG0761", help="Sig gen to beep when channel done")
     parser.add_argument('uut_name', help="uut name")
     return parser
@@ -89,6 +88,7 @@ class globals:
     uut_state = {}
     temps = []
     fails = 0
+    total_fails = 0
     file = None
 
 class Remote_File():
@@ -110,16 +110,20 @@ class Remote_File():
         cmd = f'cat {file}'
         stdin, stdout, stderr = self.ssh.exec_command(cmd)
         self.original_file = stdout.read().decode("utf-8").strip()
+        PR.Yellow(f"Archived {self.file}")
 
     def append(self, line):
         cmd = f"echo '{line}' >> {self.file}"
         stdin, stdout, stderr = self.ssh.exec_command(cmd)
+        PR.Yellow(f"Editing {self.file}")
 
     def reset(self):
         cmd = f"echo $'{self.original_file}' > {self.file}"
         stdin, stdout, stderr = self.ssh.exec_command(cmd)
+        PR.Yellow(f"Reseting {self.file}")
 
     def close(self):
+        PR.Yellow('Closing ssh')
         self.ssh.close()
         ssh = None
 
@@ -133,8 +137,9 @@ def run_main(args):
 
     globals.sites = args.sites.split(',') if args.sites else ['1', '2', '3', '4', '5', '6']
     print(f'Connecting to {args.uut_name}')
-
-    password = getpass()
+    password = input('Password: ')
+    LINEUP = '\033[F'
+    PR.Red(f"{LINEUP}REDACTED REDACTED REDACTED REDACTED")
     params = {
         'hostname': args.uut_name,
         'port': 22,
@@ -184,11 +189,16 @@ def run_test(args):
             results.extend(result)
             globals.file.reset()
             if args.beeper:
-                    beep_beeper(args)
+                beep_beeper(args, 1)
             print()
 
-        PR.Green(f'Finished testing {module["serial"]} ')
-        PR.Yellow(f'{globals.fails} fails')
+        PR.Green(f'Finished testing {module["serial"]}')
+        if globals.fails > 0:
+            PR.Red(f'{module["serial"]} had {globals.fails} fails')
+            globals.total_fails += globals.fails
+        else:
+            PR.Green(f'{module["serial"]} had {globals.fails} fails')
+        PR.Yellow(f'{globals.total_fails} in total')
         save_module_results(results, module, args)
         if args.sleep:
             print(f"sleeping for {args.sleep}s")
@@ -243,7 +253,7 @@ def test_channels(channel, args):
             if response == 'y':
                 exit()
         values = extract_values(get_xml(args))
-        check_for_fails(values)
+        check_for_fails(args, values)
         results.extend(values)
     return results
 
@@ -259,10 +269,10 @@ def get_xml(args):
     data = xmltodict.parse(response.content)['acqDataXML']['acqData']['v']
     return data
 
-def beep_beeper(args):
+def beep_beeper(args, interval):
     #beeps when its time to change bolometer port
     try:
-        acq400_hapi.Agilent33210A(args.beeper).beep(1)
+        acq400_hapi.Agilent33210A(args.beeper).beep(interval)
     except Exception as e:
         print(e)
         PR.Red('Beeper not found')
@@ -273,12 +283,14 @@ def extract_values(data):
     matches = expr.findall(data)
     return matches
 
-def check_for_fails(values):
+def check_for_fails(args, values):
     for value in values:
         PR.Yellow(value)
         if value[5] != 'PASS':
             globals.fails += 1
             PR.Red(f"Test failed for channel {value[0]}")
+            if args.beeper:
+                beep_beeper(args, 0.3)
 
 def save_module_results(results, module, args):
     globals.uut_state['temp'] = sum(globals.temps) / len(globals.temps)
