@@ -1535,15 +1535,28 @@ def factory(_uut):
     # here with acq2106
 
     try:
-        if s0.is_tiga != "none":
+        if hasattr(s0, 'is_tiga') and s0.is_tiga != "none":
             return Acq2106_TIGA(_uut, s0_client=s0)
-        if s0.has_mgt != "none" and s0.has_mgtdram != "none":
-            return Acq2106_Mgtdram8(_uut, s0_client=s0)
+        if hasattr(s0, 'has_mgt') and hasattr(s0, 'has_mgtdram'):
+            if s0.has_mgt != "none" and s0.has_mgtdram != "none":
+                return Acq2106_Mgtdram8(_uut, s0_client=s0)
 
-        has_dsp = s0.has_dsp != "none"
-        has_wr = s0.has_wr != "none"
-        has_sfp = s0.has_mgt != "none"
-        has_hudp = s0.has_hudp != "none"
+        has_dsp = False
+        if hasattr(s0, 'has_dsp'):
+            has_dsp = s0.has_dsp != "none"
+
+        has_wr = False
+        if hasattr(s0, 'has_wr'):
+            has_wr = s0.has_wr != "none"
+
+        has_sfp = False
+        if hasattr(s0, 'has_mgt'):
+            has_sfp = s0.has_mgt != "none"
+
+        has_hudp = False
+        if hasattr(s0, 'has_hudp'):
+            has_hudp = s0.has_hudp != "none"
+
         return Acq2106(_uut, s0_client=s0,  has_dsp=has_dsp, has_comms=has_sfp, has_wr=has_wr, has_hudp=has_hudp)
     except:
         ''' nothing special, make it a default class with existing s0
