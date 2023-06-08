@@ -305,9 +305,11 @@ def plot_mpl(args, raw_channels):
         pln = int(pln / args.traces_per_plot)
         yy, meta, step = ch_handler(raw_channels, args.pses)
         xx = xx1[0:len(yy)]
-        channel, unit = meta.split(' ')
-        plots[pln].set_ylabel(unit)
-        plots[pln].set_title(plots[pln].get_title() + f' {channel}')
+
+        meta = meta.split(' ')
+
+        plots[pln].set_ylabel(meta[0])
+        plots[pln].set_title(plots[pln].get_title() + f' {meta[-1]}')
         if step:
             plots[pln].step(xx, yy, linewidth=0.75)
         else:
