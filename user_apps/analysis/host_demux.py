@@ -299,15 +299,18 @@ def plot_mpl(args, raw_channels):
         plots = (p1,)
 
     fig.suptitle("{} src {}".format(args.uut, args.src))
-    xx1 = np.array([ x for x in range(0, len(raw_channels[0])+1)][args.pses[0]:args.pses[1]:args.pses[2]], dtype=np.int32)
+    xx = None
 
     for pln, ch_handler in enumerate(args.pc_list):
         pln = int(pln / args.traces_per_plot)
         yy, meta, step = ch_handler(raw_channels, args.pses)
-        xx = xx1[0:len(yy)]
-        channel, unit = meta.split(' ')
-        plots[pln].set_ylabel(unit)
-        plots[pln].set_title(plots[pln].get_title() + f' {channel}')
+        if xx is None:
+            xx = np.array([ (x+args.pses[0])*args.pses[2] for x in range(0, len(yy))])
+
+        meta = meta.split(' ')
+
+        plots[pln].set_ylabel(meta[0])
+        plots[pln].set_title(plots[pln].get_title() + f' {meta[-1]}')
         if step:
             plots[pln].step(xx, yy, linewidth=0.75)
         else:
