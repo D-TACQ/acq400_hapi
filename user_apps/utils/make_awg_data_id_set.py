@@ -55,7 +55,7 @@ def run_main():
     parser = argparse.ArgumentParser(description='make_awg_data')
     parser.add_argument('--nchan',  default=16,     type=int,   help="number of channels in set")
     parser.add_argument('--len',    default=100000, type=int,   help="number of samples in set")
-    parser.add_argument('--amp',    default=0.5,                help="amplitude in volts")
+    parser.add_argument('--amp',    default=0.5, type=float,    help="amplitude in volts")
     parser.add_argument('--ncycles', default=8,     type=int,   help="number of waveform cycles in set")
     parser.add_argument('--offset_by_channel', default=0.0, type=float,     help="offset in volts *ch")
     parser.add_argument('--offset', default=1.0, type=float,     help="global offset in volts ")
