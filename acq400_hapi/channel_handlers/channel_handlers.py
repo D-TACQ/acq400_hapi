@@ -136,7 +136,6 @@ class ch_egu(ch_raw):
         self.egu_fmt = _fmt
 
     def __call__(self, raw_channels, pses):
-        print(np.shape(raw_channels))
         yy, raw_fmt, step = super().__call__(raw_channels, pses)
 
         if self.args.WSIZE == 4:
