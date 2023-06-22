@@ -64,6 +64,7 @@ import sys
 import shutil
 
 import multiprocessing
+import threading
 
 def make_data_dir(directory, verbose):
     if verbose > 2:
@@ -89,6 +90,19 @@ def remove_stale_data(args):
                 print("removing {}".format(path))
             shutil.rmtree(path)
 
+def self_burst_trigger_callback(uut):
+    def cb():
+        uut.s0.soft_trigger = 1
+    return cb
+
+def self_start_trigger_callback(uut):
+    def cb():
+        print("self_start_trigger_callback")
+        while uut.s0.state.split(' ')[0] != '1':
+            time.sleep(0.5)
+        uut.s0.soft_trigger = 1
+    return cb
+
 class StreamsOne:
     def __init__ (self, args, uut_name):
         self.args = args
@@ -109,8 +123,14 @@ class StreamsOne:
         if callback is None:
             callback = lambda : False
 
-        if self.args.filesamples:
-            self.args.filesize = self.args.filesamples*int(uut.s0.ssb)
+        if self.args.burst_on_demand:
+            uut.s1.rgm='3,1,1'
+            uut.s1.RTM_TRANSLEN = self.args.burst_on_demand
+            self.args.filesamples = self.args.burst_on_demand
+            if self.args.trigger_from_here != 0:
+                callback = self_burst_trigger_callback(uut)
+                self.thread = threading.Thread(target=self_start_trigger_callback(uut))
+                self.thread.start()
 
         try:
             if int(uut.s0.data32):
@@ -124,8 +144,18 @@ class StreamsOne:
             wordsizetype = "<i2"  # 16 bit little endian
             data_size = 2
 
+        netssb = int(uut.s0.ssb)
+        if self.args.subset:
+            c1,clen = [ int(x) for x in self.args.subset.split(',')]
+            netssb = clen * data_size
+
+        if self.args.filesamples:
+            self.args.filesize = self.args.filesamples*netssb
+
         blen = self.args.filesize//data_size
 
+        if self.args.burst_on_demand and self.args.verbose:
+            print(f'burst_on_demand RTM_TRANSLEN={self.args.burst_on_demand} netssb={netssb} filesize={self.args.filesize} blen={blen}')
 
         self.log_file = open("{}_times.log".format(self.uut_name), "w")
         t_run = 0
@@ -154,6 +184,8 @@ class StreamsOne:
                 data_file = open(fn, "wb")
                 buf.tofile(data_file, '')
                 files += 1
+                if self.args.verbose > 3:
+                    print(f'wrote file: {fn}')
 
             if self.args.verbose == 0:
                 pass
@@ -221,6 +253,9 @@ def get_parser(parser=None):
         
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
+    parser.add_argument('--burst_on_demand', default=None, action=acq400_hapi.intSIAction, decimal=False, help="Burst Size in Samples [binary M]")
+    parser.add_argument('--trigger_from_here', default=0, type=int, help="action soft trigger from this application")
+    parser.add_argument('--subset', default=None, help='subset command if present eg 1,5 :: strips first 5 channels')
     parser.add_argument('--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False, help="file size in bytes")
     parser.add_argument('--filesamples', default=None, action=acq400_hapi.intSIAction, decimal=False, help="file size in samples (overrides filesize)")
     parser.add_argument('--files_per_cycle', default=100, type=int, help="files per cycle (directory)")
