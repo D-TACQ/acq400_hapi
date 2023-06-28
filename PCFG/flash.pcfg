@@ -1,0 +1,4 @@
+1,2,3,4,5=ch_egu
+#9=ch_bf,0xffffffff,fmt=SAMPLE
+#11=ch_bf,0xffffffff,fmt=USEC
+

@@ -61,6 +61,7 @@ import os
 import time
 import argparse
 import sys
+import signal
 import shutil
 
 import multiprocessing
@@ -90,8 +91,17 @@ def remove_stale_data(args):
                 print("removing {}".format(path))
             shutil.rmtree(path)
 
-def self_burst_trigger_callback(uut):
-    def cb():
+def self_burst_trigger_callback(uut, job):
+    def cb(fn):
+        if job:
+            os.system(f'{job} {fn}')
+            for line in sys.stdin:
+                if line.startswith('q'):
+                    uut.s0.set_abort = 1
+                    uut.close()
+                    sys.exit(0)
+                else:
+                    break
         uut.s0.soft_trigger = 1
     return cb
 
@@ -102,6 +112,14 @@ def self_start_trigger_callback(uut):
             time.sleep(0.5)
         uut.s0.soft_trigger = 1
     return cb
+
+def sig_int_handler(uut):
+    def _cb(sig, frame):
+        print("SIGINT:shutdown")
+        uut.s0.set_abort = 1
+        uut.close()
+        sys.exit(0)
+    return _cb
 
 class StreamsOne:
     def __init__ (self, args, uut_name):
@@ -120,17 +138,25 @@ class StreamsOne:
         data_bytes = 0
         files = 0
 
+        signal.signal(signal.SIGINT, sig_int_handler(uut))
+
         if callback is None:
             callback = lambda : False
 
         if self.args.burst_on_demand:
             uut.s1.rgm='3,1,1'
-            uut.s1.RTM_TRANSLEN = self.args.burst_on_demand
-            self.args.filesamples = self.args.burst_on_demand
+            bod_def = self.args.burst_on_demand.split(',')
+            bod_len = int(bod_def[0])
+            bod_job = None
+            if len(bod_def) == 2:
+                bod_job = bod_def[1]
+            uut.s1.RTM_TRANSLEN = bod_len
+            self.args.filesamples = bod_len
             if self.args.trigger_from_here != 0:
-                callback = self_burst_trigger_callback(uut)
+                callback = self_burst_trigger_callback(uut, bod_job)
                 self.thread = threading.Thread(target=self_start_trigger_callback(uut))
                 self.thread.start()
+
 
         try:
             if int(uut.s0.data32):
@@ -196,7 +222,7 @@ class StreamsOne:
                           format(t_run, fn, files, int(data_bytes), data_bytes/t_run/0x100000))
             fnum += 1
 
-            if callback() or t_run >= self.args.runtime or data_bytes > self.args.totaldata:
+            if callback(fn) or t_run >= self.args.runtime or data_bytes > self.args.totaldata:
                 break
         
         uut.stream_close()
@@ -253,7 +279,7 @@ def get_parser(parser=None):
         
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
-    parser.add_argument('--burst_on_demand', default=None, action=acq400_hapi.intSIAction, decimal=False, help="Burst Size in Samples [binary M]")
+    parser.add_argument('--burst_on_demand', default=None, type=str, help="Burst Size in Samples[,./plotjob]")
     parser.add_argument('--trigger_from_here', default=0, type=int, help="action soft trigger from this application")
     parser.add_argument('--subset', default=None, help='subset command if present eg 1,5 :: strips first 5 channels')
     parser.add_argument('--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False, help="file size in bytes")
