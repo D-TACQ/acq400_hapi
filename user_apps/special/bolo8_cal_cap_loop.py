@@ -91,10 +91,36 @@ def run_cal1(uut, shot):
             log.write(txt)
 
 
+# Singleton
+class FPGPIO_Strobe:
+    _instance = None
 
+    def __init__(self, _uut):
+        self.uut = _uut
+        self.connect()
+
+    def connect(self):
+        self.uut.s0.SIG_EVENT_SRC_1 = 'HDMI_GPIO'
+        self.uut.s0.SIG_FP_GPIO = 'EVT1'
+        print("connect @@TODO gpg")
+        pass
+
+    def set_value(self, value):
+        if value > 1:
+            self.uut.s0.SIG_EVENT_SRC_1 = 'GPG'
+        else:
+            self.uut.s0.SIG_SYNC_BUS_OUT_GPIO = value
+
+    def instance(_uut):
+        if FPGPIO_Strobe._instance is None:
+            FPGPIO_Strobe._instance = FPGPIO_Strobe(_uut)
+        return FPGPIO_Strobe._instance
 
 def run_cal(args):
     uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
+    if args.fpgpio_strobe is not None:
+        FPGPIO_Strobe.instance(uuts[0]).set_value(0)
+
     for u in uuts:
         # trg=1,1,1 external d1 RISING
         u.old_trg = u.s1.trg.split(' ')[0].split('=')[1]
@@ -115,6 +141,9 @@ def run_cal(args):
 def run_capture(args):
     uuts = [acq400_hapi.Acq2106(u, has_dsp=True) for u in args.uuts]
     shot = set_next_shot(args, even, "Cap")
+
+    if args.fpgpio_strobe is not None:
+        FPGPIO_Strobe.instance(uuts[0]).set_value(args.fpgpio_strobe)
 
     for u in uuts:
         u.s0.transient = "POST={} SOFT_TRIGGER=0".format(args.post)
@@ -163,6 +192,7 @@ def run_main():
     parser.add_argument('--clk', default="int 1000000", help='clk "int|ext SR [CR]"')
     parser.add_argument('--trg', default="int", help='trg "int|ext rising|falling"')
     parser.add_argument('--shots', default=1, type=int, help='set number of shots [1]')
+    parser.add_argument('--fpgpio_strobe', default=None, type=int, help='custom lamp control: 0: OFF, 1:ON >1: flash at N Hz')
     parser.add_argument('uuts', nargs='+', help="uut list")
     args = parser.parse_args()
     if args.single_calibration_only == 1:
@@ -170,6 +200,7 @@ def run_main():
         args.cap = 0
         args.cal = 1
         args.shots = 1
+
 
     run_shots(args)
 
