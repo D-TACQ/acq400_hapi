@@ -103,11 +103,13 @@ class FPGPIO_Strobe:
         self.uut.s0.SIG_EVENT_SRC_1 = 'HDMI_GPIO'
         self.uut.s0.SIG_FP_GPIO = 'EVT1'
         print("connect @@TODO gpg")
+        self.uut.s0.GPG_ENABLE = '0'
         pass
 
     def set_value(self, value):
         if value > 1:
             self.uut.s0.SIG_EVENT_SRC_1 = 'GPG'
+            self.uut.s0.GPG_ENABLE = '1'
         else:
             self.uut.s0.SIG_SYNC_BUS_OUT_GPIO = value
 
@@ -117,7 +119,8 @@ class FPGPIO_Strobe:
         return FPGPIO_Strobe._instance
 
 def run_cal(args):
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
+    uuts = args.uut_instances
+
     if args.fpgpio_strobe is not None:
         FPGPIO_Strobe.instance(uuts[0]).set_value(0)
 
@@ -139,7 +142,7 @@ def run_cal(args):
 
 
 def run_capture(args):
-    uuts = [acq400_hapi.Acq2106(u, has_dsp=True) for u in args.uuts]
+    uuts = args.uut_instances
     shot = set_next_shot(args, even, "Cap")
 
     if args.fpgpio_strobe is not None:
@@ -187,6 +190,7 @@ def run_main():
     parser = argparse.ArgumentParser(description='bolo8_cal_cap_loop')
     parser.add_argument('--cap', default=1, type=int, help="capture")
     parser.add_argument('--cal', default=1, type=int, help="calibrate")
+    parser.add_argument('--cc', default=None, type=int, help="--cc=1 sets cap=1,cal=0; --cc=2 => cap=0,cal=1; --cc=3 => cal=1,cap=1")
     parser.add_argument('--single_calibration_only', default=0, type=int, help="run one calibration shot only")
     parser.add_argument('--post', default=100000, help="post trigger length")
     parser.add_argument('--clk', default="int 1000000", help='clk "int|ext SR [CR]"')
@@ -195,12 +199,15 @@ def run_main():
     parser.add_argument('--fpgpio_strobe', default=None, type=int, help='custom lamp control: 0: OFF, 1:ON >1: flash at N Hz')
     parser.add_argument('uuts', nargs='+', help="uut list")
     args = parser.parse_args()
+    if args.cc is not None:
+        args.cap = 1 if args.cc&0x1 == 0x1 else 0
+        args.cal = 1 if args.cc&0x2 == 0x2 else 0
     if args.single_calibration_only == 1:
         print("setting single calibration mode, overwrites other settings")
         args.cap = 0
         args.cal = 1
         args.shots = 1
-
+    args.uut_instances = [acq400_hapi.factory(u) for u in args.uuts]
 
     run_shots(args)
 
