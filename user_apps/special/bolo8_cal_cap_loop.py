@@ -94,6 +94,7 @@ def run_cal1(uut, shot):
 # Singleton
 class FPGPIO_Strobe:
     _instance = None
+    _old_value = None
 
     def __init__(self, _uut):
         self.uut = _uut
@@ -111,7 +112,10 @@ class FPGPIO_Strobe:
             self.uut.s0.SIG_EVENT_SRC_1 = 'GPG'
             self.uut.s0.GPG_ENABLE = '1'
         else:
+            if self._old_value is not None and self._old_value > 1:
+                self.uut.s0.GPG_ENABLE = '0'
             self.uut.s0.SIG_SYNC_BUS_OUT_GPIO = value
+        self._old_value = value
 
     def instance(_uut):
         if FPGPIO_Strobe._instance is None:
@@ -169,6 +173,9 @@ def run_capture(args):
 
     for u in uuts:
         u.statmon.wait_stopped()
+
+    if args.fpgpio_strobe is not None:
+        FPGPIO_Strobe.instance(uuts[0]).set_value(0)
 
     for u in uuts:
         u.s14.DSP_RESET = 1
