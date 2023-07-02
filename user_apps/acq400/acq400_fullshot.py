@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 """
+
+acq400_fullshot.py (formerly acq400_upload.py)
+
 capture upload test
 acq1001_capplot UUT1 [UUT2 ..]
 where UUT1 is the ip-address or host name of first uut
