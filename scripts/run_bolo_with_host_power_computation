@@ -1,0 +1,30 @@
+#!/bin/bash
+UUT=${1}
+
+[ -z $UUT ] && (echo usage: run_bolo_with_host_power_computation UUT [cal] [cap];exit 1)
+
+shift
+if [ -z $1 ]; then 
+	commands="cap"
+else
+	commands="$*"
+fi
+
+BCC=./user_apps/special/bolo8_cal_cap_loop.py
+UPLOAD=./user_apps/acq400/acq400_upload.py
+PB=./user_apps/special/plot_acq2106_123.py
+
+for cmd in $commands; do
+	echo UUT: $UUT Command $cmd
+	case $cmd in
+	cal)
+		$BCC --fpgpio_strobe=2 --cc=2 --shots=1 $UUT;;
+	cap)
+		$BCC --fpgpio_strobe=2 --cc=1 --shots=1 $UUT
+		$UPLOAD --save_data DATA $UUT
+		$PB $UUT;;
+	*)
+		echo cmd $cmd not supported;;
+	esac
+done
+
