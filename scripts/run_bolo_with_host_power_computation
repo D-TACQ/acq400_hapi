@@ -20,6 +20,8 @@ for cmd in $commands; do
 	cal)
 		$BCC --fpgpio_strobe=2 --cc=2 --shots=1 $UUT;;
 	cap)
+		$BCC --fpgpio_strobe=2 --cc=1 --shots=1 $UUT;;
+	fullcap)
 		$BCC --fpgpio_strobe=2 --cc=1 --shots=1 $UUT
 		$UPLOAD --save_data DATA $UUT
 		$PB $UUT;;

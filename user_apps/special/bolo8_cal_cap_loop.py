@@ -153,7 +153,7 @@ def run_capture(args):
         FPGPIO_Strobe.instance(uuts[0]).set_value(args.fpgpio_strobe)
 
     for u in uuts:
-        u.s0.transient = "POST={} SOFT_TRIGGER=0".format(args.post)
+        u.s0.transient = "POST={} SOFT_TRIGGER=0 DEMUX=0".format(args.post)
         if args.trg == "ext rising" or args.trg == "ext":
             u.s1.trg = "1,0,1"
         elif  args.trg == "ext falling":
