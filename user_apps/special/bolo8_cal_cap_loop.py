@@ -185,6 +185,11 @@ def run_capture(args):
 
 def run_shots(args):
 
+    if args.active_chan is not None:
+        ac_list = args.active_chan.split(';')
+        for ii, u in enumerate(args.uut_instances):
+            u.s14.BOLO_ACTIVE_CHAN = ac_list[ii if ii < len(ac_list) else 0]
+
     for shot in range(1, args.shots+1):
         print("Cycle {}".format(shot))
         if args.cal:
@@ -203,6 +208,7 @@ def run_main():
     parser.add_argument('--clk', default="int 1000000", help='clk "int|ext SR [CR]"')
     parser.add_argument('--trg', default="int", help='trg "int|ext rising|falling"')
     parser.add_argument('--shots', default=1, type=int, help='set number of shots [1]')
+    parser.add_argument('--active_chan', default=None, help='comma separated list of active channels, ; to split between uuts (because not all channels have foils)')
     parser.add_argument('--fpgpio_strobe', default=None, type=int, help='custom lamp control: 0: OFF, 1:ON >1: flash at N Hz')
     parser.add_argument('uuts', nargs='+', help="uut list")
     args = parser.parse_args()

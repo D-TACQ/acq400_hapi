@@ -1,6 +1,8 @@
 #!/bin/bash
 UUT=${1}
 
+ACTIVE_CHAN=${ACTIVE_CHAN:-9,10,11}
+
 [ -z $UUT ] && (echo usage: run_bolo_with_host_power_computation UUT [cal] [cap];exit 1)
 
 shift
@@ -12,17 +14,18 @@ fi
 
 BCC=./user_apps/special/bolo8_cal_cap_loop.py
 UPLOAD=./user_apps/acq400/acq400_upload.py
-PB=./user_apps/special/plot_acq2106_123.py
+#PB=./user_apps/special/plot_acq2106_123.py
+PB=./plot_acq123_sos.py
 
 for cmd in $commands; do
 	echo UUT: $UUT Command $cmd
 	case $cmd in
 	cal)
-		$BCC --fpgpio_strobe=2 --cc=2 --shots=1 $UUT;;
+		$BCC --active_chan=${ACTIVE_CHAN} --fpgpio_strobe=2 --cc=2 --shots=1 $UUT;;
 	cap)
-		$BCC --fpgpio_strobe=2 --cc=1 --shots=1 $UUT;;
+		$BCC --active_chan=${ACTIVE_CHAN} --fpgpio_strobe=2 --cc=1 --shots=1 $UUT;;
 	fullcap)
-		$BCC --fpgpio_strobe=2 --cc=1 --shots=1 $UUT
+		$BCC --active_chan=${ACTIVE_CHAN} --fpgpio_strobe=2 --cc=1 --shots=1 $UUT
 		$UPLOAD --save_data DATA $UUT
 		$PB $UUT;;
 	*)

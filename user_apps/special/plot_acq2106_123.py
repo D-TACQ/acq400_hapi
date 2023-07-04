@@ -31,7 +31,7 @@ time_vector = np.arange(mag.shape[-1]) / FS
 # Plot the magnitude to verify we've read the correct data.
 ########################################################################
 plt.figure()
-plt.plot(time_vector[20:], A[[9-1, 10-1], 20:].T)
+plt.plot(time_vector[20:], A[[9-1, 10-1, 11-1], 20:].T)
 plt.ylabel('Magnitude [V]')
 plt.xlabel('Time [s]')
 
@@ -45,9 +45,9 @@ dAdt = dA / dt
 # Could also do dAdt = np.gradient(A, FS, axis=-1) if not concerned with noise.
 
 sens = np.full(NPHYSICAL, np.nan)
-sens[[9-1, 10-1]] = [3.72, 4.22]
+sens[[9-1, 10-1, 11-1]] = [3.74, 4.24, 4.19]    # copy from today's cal
 tau = np.full(NPHYSICAL, np.nan)
-tau[[9-1, 10-1]] = [0.046, 0.046]
+tau[[9-1, 10-1, 11-1]] = [0.046, 0.046, 0.046]
 
 # Give sens and tau the right broadcasting behaviour.
 sens = sens[:, None]
@@ -59,7 +59,7 @@ Pcalc = 1/sens * (A + tau * dAdt)
 Pcalc[:, :20] = np.nan
 
 plt.figure()
-plt.plot(time_vector, Pcalc[[9-1, 10-1]].T)
+plt.plot(time_vector, Pcalc[[9-1, 10-1, 11-1]].T)
 plt.ylabel('Absorbed power [W]')
 plt.xlabel('Time [s]')
 
@@ -71,7 +71,7 @@ plt.xlabel('Time [s]')
 # is why we don't get a perfect square wave. If offset correction was perfect
 # the phase would be constant, but it varies slightly with the magnitude.
 plt.figure()
-plt.plot(time_vector[20:], phi[[9-1, 10-1], 20:].T)
+plt.plot(time_vector[20:], phi[[9-1, 10-1, 11-1], 20:].T)
 plt.ylabel('Phase [radians]')
 plt.xlabel('Time [s]')
 
@@ -83,8 +83,8 @@ plt.xlabel('Time [s]')
 V = A * np.exp(-1j * phi)
 I0 = np.zeros(NPHYSICAL)
 Q0 = np.zeros(NPHYSICAL)
-I0[[9-1, 10-1]] = [-7e-4, 4.3e-3]
-Q0[[9-1, 10-1]] = [2e-4, -5.5e-3]
+I0[[9-1, 10-1, 11-1]] = [-7e-4, 4.3e-3, 4.3e-3]
+Q0[[9-1, 10-1, 11-1]] = [2e-4, -5.5e-3, -5.5e-3]
 
 offsets = I0 - 1j * Q0
 offsets = offsets[:, None]
@@ -93,7 +93,7 @@ Vcorr = V - offsets
 # If the offset correction is accurate, the phase should be more constant.
 # At least, it shouldn't vary significantly with the amplitude.
 plt.figure()
-plt.plot(time_vector[20:], np.angle(Vcorr)[[9-1, 10-1], 20:].T)
+plt.plot(time_vector[20:], np.angle(Vcorr)[[9-1, 10-1, 11-1], 20:].T)
 plt.ylabel('Phase with offset correction [radians]')
 plt.xlabel('Time [s]')
 
@@ -111,7 +111,7 @@ Pccorr[:, :20] = np.nan + 1j * np.nan
 Pcorr = abs(Pccorr)
 
 plt.figure()
-plt.plot(time_vector, Pcorr[[9-1, 10-1]].T)
+plt.plot(time_vector, Pcorr[[9-1, 10-1, 11-1]].T)
 plt.ylabel('Absorbed power, offset corrected [W]')
 plt.xlabel('Time [s]')
 
