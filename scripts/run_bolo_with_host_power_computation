@@ -17,17 +17,32 @@ UPLOAD=./user_apps/acq400/acq400_upload.py
 #PB=./user_apps/special/plot_acq2106_123.py
 PB=./plot_acq123_sos.py
 
+do_cal() {
+$BCC --active_chan=${ACTIVE_CHAN} --fpgpio_strobe=2 --cc=2 --shots=1 $UUT
+}
+
+do_cap() {
+$BCC --active_chan=${ACTIVE_CHAN} --fpgpio_strobe=2 --cc=1 --shots=1 $UUT
+}
+
+do_hostplot() {
+$PB $UUT
+}
+
+
 for cmd in $commands; do
 	echo UUT: $UUT Command $cmd
 	case $cmd in
 	cal)
-		$BCC --active_chan=${ACTIVE_CHAN} --fpgpio_strobe=2 --cc=2 --shots=1 $UUT;;
+		do_cal;;
 	cap)
-		$BCC --active_chan=${ACTIVE_CHAN} --fpgpio_strobe=2 --cc=1 --shots=1 $UUT;;
+		do_cap;;
+	hostplot)
+		do_hostplot;;
 	fullcap)
-		$BCC --active_chan=${ACTIVE_CHAN} --fpgpio_strobe=2 --cc=1 --shots=1 $UUT
+		do_cap
 		$UPLOAD --save_data DATA $UUT
-		$PB $UUT;;
+		do_hostplot;;
 	*)
 		echo cmd $cmd not supported;;
 	esac
