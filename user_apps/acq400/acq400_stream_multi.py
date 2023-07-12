@@ -141,7 +141,7 @@ class StreamsOne:
         signal.signal(signal.SIGINT, sig_int_handler(uut))
 
         if callback is None:
-            callback = lambda : False
+            callback = lambda(_clidata) : False
 
         if self.args.burst_on_demand:
             uut.s1.rgm='3,1,1'
