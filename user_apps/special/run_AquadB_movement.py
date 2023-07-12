@@ -47,7 +47,7 @@ class AquadB_callback:
 
     BUFFERS_PER_EPICS_CB = 20
     COUNT_DEADBAND = 100
-    def __call__(self):
+    def __call__(self, _clidat):
         newcount = AquadB_callback.aqb_count
         if newcount == self.count:
             self.count_unchanged += 1
@@ -63,6 +63,7 @@ class AquadB_callback:
                 self.state = AquadB_callback.State.Finished
 
         print("AquadB_callback {} {}".format(self.state.name, newcount))
+        print(f"pgmwashere {_clidat}")
         
         return self.state == AquadB_callback.State.Finished
 
