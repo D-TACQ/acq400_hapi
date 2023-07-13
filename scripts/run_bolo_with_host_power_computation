@@ -29,7 +29,8 @@ do_hostplot() {
 $PB $UUT
 }
 
-
+LOOPMAX=${LOOPMAX:-100}
+shot=0
 for cmd in $commands; do
 	echo UUT: $UUT Command $cmd
 	case $cmd in
@@ -37,6 +38,16 @@ for cmd in $commands; do
 		do_cal;;
 	cap)
 		do_cap;;
+	testloop)
+		while [ $shot -lt $LOOPMAX ]; do
+			echo SHOT $shot / $LOOPMAX
+			do_cal
+			do_cap
+			$UPLOAD --save_data DATA $UUT
+			./monitor_acq123_sos.py
+			shot=$((shot+1))
+			echo -----------------------
+		done;;
 	hostplot)
 		do_hostplot;;
 	fullcap)
