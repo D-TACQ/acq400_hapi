@@ -10,6 +10,7 @@ import sys
 # Read and reshape the data.
 ########################################################################
 #SOURCE = './DATA/acq2106_123_CH00'
+
 SOURCE = f'./DATA/{sys.argv[1]}_CH00'
 NBOLO = 2
 NPHYSICAL = NBOLO * 8
@@ -102,11 +103,22 @@ offsets = V[:, 100:1000].mean(axis=-1)
 offsets = offsets[:, None]
 Vcorr = V - offsets
 
+print(offsets.shape)
+for ch in active1:
+    print(f'CH{ch:02d}  OFFSET_I{np.real(offsets[ch-1])} OFFSET_Q{np.imag(offsets[ch-1])}')
+
 # If the offset correction is accurate, the phase should be more constant.
 # At least, it shouldn't vary significantly with the amplitude.
 plt.figure()
 plt.plot(time_vector[20:], np.angle(Vcorr)[active, 20:].T)
 plt.ylabel('Phase with offset correction [radians]')
+plt.xlabel('Time [s]')
+
+plt.figure()
+#plt.plot(time_vector[20:], np.angle(Vcorr)[active, 20:].T)
+#plt.plot(time_vector[20:], np.sqrt(np.real(Vcorr)*np.real(Vcorr) + np.imag(Vcorr)*np.imag(Vcorr))[active, 20:].T)
+plt.plot(time_vector[20:], np.abs(Vcorr)[active, 20:].T)
+plt.ylabel('Offset corrected Magnitude')
 plt.xlabel('Time [s]')
 
 ########################################################################
