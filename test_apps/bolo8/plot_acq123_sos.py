@@ -104,8 +104,27 @@ offsets = offsets[:, None]
 Vcorr = V - offsets
 
 print(offsets.shape)
-for ch in active1:
-    print(f'CH{ch:02d}  OFFSET_I{np.real(offsets[ch-1])} OFFSET_Q{np.imag(offsets[ch-1])}')
+
+
+def configure_offset_channels(kk):
+# puts "Usage: $argv0 <channel> <i0> <q0> <sens>"
+    for ch in active1:        
+        SNS = calib.sns(ch)    
+        I0 = calib.I0(ch)
+        Q0 = calib.Q0(ch)
+        ch0 = ch-1
+        dI0 = np.real(offsets[ch0]).item()
+        dQ0 = np.imag(offsets[ch0]).item()
+        print(f'load_offset_channel.tcl {ch} {I0+kk*dI0} {Q0+kk*dQ0} {SNS}')
+    
+print("original offsets")
+configure_offset_channels(0)
+
+print("offsets + delta")
+configure_offset_channels(1)
+
+print("offsets - delta")
+configure_offset_channels(-1)
 
 # If the offset correction is accurate, the phase should be more constant.
 # At least, it shouldn't vary significantly with the amplitude.
