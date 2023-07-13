@@ -9,7 +9,8 @@ import get_calibfit
 ########################################################################
 # Read and reshape the data.
 ########################################################################
-SOURCE = './DATA/acq2106_123_CH00'
+#SOURCE = './DATA/acq2106_123_CH00'
+SOURCE = f'./DATA/{sys.argv[1]}_CH00'
 NBOLO = 2
 NPHYSICAL = NBOLO * 8
 NLOGICAL = NPHYSICAL * 3

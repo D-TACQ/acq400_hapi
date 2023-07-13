@@ -12,8 +12,10 @@ else
 	commands="$*"
 fi
 
-BCC=./user_apps/special/bolo8_cal_cap_loop.py
-UPLOAD=./user_apps/acq400/acq400_upload.py
+UA=../../user_apps
+
+BCC=$UA/special/bolo8_cal_cap_loop.py
+UPLOAD=$UA/acq400/acq400_upload.py
 #PB=./user_apps/special/plot_acq2106_123.py
 PB=./plot_acq123_sos.py
 
@@ -44,7 +46,8 @@ for cmd in $commands; do
 			do_cal
 			do_cap
 			$UPLOAD --save_data DATA $UUT
-			./monitor_acq123_sos.py
+			sha1sum DATA/${UUT}_CH00
+			./monitor_acq123_sos.py $UUT
 			shot=$((shot+1))
 			echo -----------------------
 		done;;
