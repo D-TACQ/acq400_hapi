@@ -38,7 +38,7 @@ class AquadB_callback:
 
     def __init__(self, args):
         self.state = AquadB_callback.State.WaitCountActive
-        self.monitor = epics.PV("{}:1:QEN:COUNT".format(args.uuts[0]), auto_monitor=True)
+        self.monitor = epics.PV("{}:{}:QEN:COUNT".format(args.uuts[0],args.aqbsite), auto_monitor=True)
         self.monitor.add_callback(AquadB_callback.onChanges)
         self.args = args
         self.count_unchanged = 0
@@ -86,6 +86,7 @@ def main(args):
         load_stim(args.uut_stim, args.dwg)
 
     args.callback = AquadB_callback(args)
+    args.filesamples = 30000
     acq400_stream_multi.run_stream(args)
 #    while args.callback() == False:
 #        time.sleep(1)
