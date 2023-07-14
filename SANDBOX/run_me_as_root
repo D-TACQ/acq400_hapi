@@ -1,0 +1,10 @@
+#!/bin/sh
+
+echo "EUID:$EUID UUT:$UUT"
+if [ $EUID -ne 0 ]; then
+	echo "ERROR: not running as root"
+	exit 1
+fi
+echo NOW run the main event
+exit 0
+
