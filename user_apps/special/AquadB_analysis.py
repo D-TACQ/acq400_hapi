@@ -60,7 +60,7 @@ def host_demux_args(parser):
     parser = DEMUX.get_parser(parser)
     default_args = {
         'src' : '/home/dt100/DATA',
-        'pcfg': 'PCFG/ansto_qen_and_di.pcfg',
+        'pcfg': '../AquadB_FAT/PCFG/ansto_XY_and_di.pcfg',
         'pses': '1:-1:1',
         'plot': 0
     }
