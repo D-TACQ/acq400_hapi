@@ -103,9 +103,6 @@ offsets = V[:, 100:1000].mean(axis=-1)
 offsets = offsets[:, None]
 Vcorr = V - offsets
 
-print(offsets.shape)
-
-
 def configure_offset_channels(kk):
 # puts "Usage: $argv0 <channel> <i0> <q0> <sens>"
     for ch in active1:        
