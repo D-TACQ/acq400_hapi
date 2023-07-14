@@ -29,7 +29,7 @@ def main(args):
     global wrapper_args
 
     PR.Yellow("Running Host_Demux: pses={} pcfg={}".format(args.pses, args.pcfg))
-    PR.Yellow("Running Host_Demux: stim={} dwg={}".format(args.stim, args.dwg))
+    PR.Yellow("Running Move      : stim={} dwg={}".format(args.stim, args.dwg))
 
     wrapper_args = args
     if args.run_test.upper() == 'YES':
@@ -144,6 +144,7 @@ def get_parser():
     parser.add_argument('--run_test', default='YES', help="whether or not to run the test")
     parser.add_argument('--ecolumn', default=None, help="Event column")
     parser.add_argument('--silence', default='YES', help='Hide subordinate script output')
+    parser.add_argument('--aqbsite', default='1', help='Active AquadB site with STIM loopback')
     parser.add_argument('uuts', nargs='+', help='uuts - for auto configuration data_type, nchan, egu or just a label')
     aquadb_move_args(parser)
     host_demux_args(parser)
