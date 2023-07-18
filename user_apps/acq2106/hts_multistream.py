@@ -86,7 +86,7 @@ def get_parser():
     parser.add_argument('--sig_gen', default=None, help='Signal gen to trigger when all uuts armed')
     parser.add_argument('--delete', default=1, type=int, help='delete stale data')
     parser.add_argument('--recycle', default=1, type=int, help='overwrite data')
-    parser.add_argument('--check', default=0, type=int, help='run tests simulate ramp=1 or spad sequential=2')
+    parser.add_argument('--check_spad', default=0, type=int, help='check spad is sequential')
     parser.add_argument('--dry_run', default=0, type=int, help='run setup but dont start streams or uuts')
     parser.add_argument('--wrtd_txi', default=None, help='Command first box to send this trigger when all units are in ARM state')
     parser.add_argument('--SIG_SRC_TRG_0', default=None, help='Set trigger d0 source')
@@ -136,6 +136,7 @@ class UutWrapper:
         self.state = None
         self.thread = None
         self.ended = False
+        self.streams = {}
         self.__attach_api()
         self.__set_id()
         self.__data_builder(map, streams)
@@ -180,42 +181,22 @@ class UutWrapper:
         return
 
     def initialize(self):
-        for stream in self.streams:
-            self.check_lane_status(stream, self.streams[stream]["rport"])
-            args = {}
-            args['lport'] = stream
-            args['buffers'] = self.args.nbuffers
-            args['recycle'] = self.args.recycle
-            if not self.args.check:
-                cmd = 'sudo ./scripts/run-stream-ramdisk {lport} {buffers} {recycle}'
-            elif self.args.check == 1:
-                cmd = 'sudo ./scripts/run-stream-ramdisk-ramp {lport} {buffers} {recycle}'
-            elif self.args.check == 2:
+        for lport, stream in self.streams.items():
+            self.check_lane_status(lport, stream.rport)
+            if self.args.check_spad > 0:
                 if not self.spad_enabled:
                     exit(PR.Red(f'Error: Cannot check spad if no spad: {self.spad}'))
-                count_col = 0
-                for site in self.streams[stream]['sites'].items():
-                    count_col += int(site[1])
-                count_col = int(count_col / 2)
-                args['spad_len'] = int(self.spad.split(',')[1])
-                args['count_col'] = count_col
-                args['step'] = 1 if self.args.decimate is None else self.args.decimate
 
-                cmd = 'sudo ./scripts/run-stream-ramdisk-count {lport} {buffers} {recycle} {spad_len} {count_col} {step}'
-            cmd = cmd.format(**args)
-            print(f'Cmd for stream:{stream} - {cmd}')
-            self.streams[stream]['process'] = subprocess.Popen(cmd.split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            time_start = time.time()
-            pid = afhba404.get_stream_pid(stream)
-            while True:
-                if pid != 0:
-                    PR.Green(f'Started afhba.{stream} with PID {pid}')
-                    self.streams[stream]['pid'] = pid
-                    break
-                if time.time() - time_start > 5:
-                    exit(PR.Red(f'Error: afhba.{stream} failed to start'))
-                pid = afhba404.get_stream_pid(stream)
-                time.sleep(0.5)
+                data_columns = int(sum(stream.sites.values()) / 2)
+                spad_len = int(self.spad.split(',')[1])
+                step = 1 if self.args.decimate is None else self.args.decimate
+
+                cmd = stream.get_checker_cmd(self.args, spad_len, data_columns, step)
+            else:
+                cmd = stream.get_cmd(self.args)
+            if self.args.verbose > 0:
+                print(f"Cmd: {cmd}")
+            stream.run(cmd)
 
     def check_lane_status(self, lport, rport):
         link_state = afhba404.get_link_state(lport)
@@ -271,10 +252,9 @@ class UutWrapper:
         PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.RTM_TRANSLEN} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
 
     def __setup_comms_aggregators(self):
-        for stream in self.streams.items():
-            method = f'c{stream[1]["rport"]}'
-            comm_site = getattr(self.api, method)
-            agg_str = f'sites={",".join(stream[1]["sites"].keys())} on'
+        for lport, stream in self.streams.items():
+            comm_site = getattr(self.api, f'c{stream.rport}')
+            agg_str = f'sites={stream.sites_str} on'
             comm_site.aggregator = agg_str
             if self.spad_enabled:
                 comm_site.spad = 1
@@ -315,14 +295,12 @@ class UutWrapper:
         if self.name not in streams:
             exit(PR.Red(f'Error: {self.name} has no connections'))
 
-        self.streams = streams[self.name]
         self.ports = self.__get_mapped_sites(map)
-        for stream in self.streams.copy():
-            if self.streams[stream]['rport'] not in self.ports:
-                del self.streams[stream]
-                continue
-            self.streams[stream]['sites'] = self.ports[self.streams[stream]['rport']]
-            self.streams[stream]['all_sites'] = ','.join(self.streams[stream]['sites'].keys())
+        
+        for lport in streams[self.name]:
+            rport = streams[self.name][lport]['rport']
+            if rport in self.ports:
+                self.streams[lport] = Stream(lport, rport, self.name, self.ports[rport])
 
     def __get_mapped_sites(self, map):
         # pgm: we ONLY want to look at sites already in the s0 aggregator.
@@ -355,14 +333,82 @@ class UutWrapper:
         sites = {}
         for site in self.api.get_aggregator_sites():
             site_conn = getattr(self.api, f's{site}')
-            sites[str(site)] = site_conn.active_chan
+            sites[str(site)] = int(site_conn.active_chan)
         return sites
-    def __get_sitelist(self):
-        sites = {}
-        for site in self.api.get_site_types()['AISITES']:
-            site_conn = getattr(self.api, f's{site}')
-            sites[str(site)] = site_conn.NCHAN               # not strictly correct. Should be active_chan
-        return sites
+
+class Stream:
+    def __init__(self, lport, rport, rhost, sites):
+        self.lport = lport
+        self.rport = rport
+        self.rhost = rhost
+        self.sites = sites
+        self.sites_str = ','.join(self.sites.keys())
+        self.outroot = f"/mnt/afhba.{self.lport}/{self.rhost}"
+        self.logfile = f"{self.outroot}/checker.log"
+        Stream.kill_if_active(lport)
+
+    def get_cmd(self, args):
+        os.system(f"sudo mkdir -p {self.outroot} -m 0777")
+        cmd = f"sudo RTM_DEVNUM={self.lport} NBUFS={args.nbuffers} CONCAT=0 RECYCLE={args.recycle} OUTROOT={self.outroot} ../AFHBA404/STREAM/rtm-t-stream-disk"
+        return cmd
+        
+    def get_checker_cmd(self, args, spad_len, data_columns, step):
+        total_columns = data_columns + spad_len
+        cmd = self.get_cmd(args)
+        cmd += f' | ../AFHBA404/FUNCTIONAL_TESTS/isramp -N1 -m {total_columns} -c {data_columns} -s {step} -i 1 -L {self.logfile}'
+        os.system(f"umask 000 ; touch {self.logfile}")
+        return cmd
+        
+    def run(self, cmd):
+        self.process = subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time_start = time.time()
+        pid = afhba404.get_stream_pid(self.lport)
+        while True:
+            if pid != 0:
+                PR.Green(f'Started afhba.{self.lport} with PID {pid}')
+                self.pid = pid
+                break
+            if time.time() - time_start > 5:
+                exit(PR.Red(f'Error: afhba.{self.lport} failed to start'))
+            pid = afhba404.get_stream_pid(self.lport)
+            time.sleep(0.5)
+
+    def read_state(self):
+        return afhba404.get_stream_state(self.lport)
+    
+    def read_results(self):
+        if os.path.exists(self.logfile):
+            return open(self.logfile, "r").readline().strip()
+        return None
+
+    @staticmethod
+    def get_config():
+        #returns dict with host AFHBA connections
+        config = {}
+        for conn in afhba404.get_connections().values():
+            if conn.uut not in config:
+                config[conn.uut] = {}
+            config[conn.uut][conn.dev] = {}
+            config[conn.uut][conn.dev]['rport'] = conn.cx
+        return config
+    
+    @staticmethod
+    def kill_if_active(lport):
+        pid = afhba404.get_stream_pid(lport)
+        if pid == 0:
+            return
+
+        PR.Yellow(f'Warning: Killing afhba.{lport} with pid: {pid}')
+        cmd = 'sudo kill -9 {}'.format(pid)
+        result = os.system(cmd)
+        retry = 0
+        while retry < 4:
+            time.sleep(1)
+            if afhba404.get_stream_pid(lport) == 0:
+                return
+            retry += 1
+
+        exit(PR.Red(f'Fatal Error: Stream failed to die {lport}'))
 
 def stop_uuts(uut_collection):
     threads = []
@@ -379,7 +425,7 @@ def stop_uuts(uut_collection):
     print(f'all {nt} threads joined')
 
 def object_builder(args):
-    stream_config = get_stream_conns(args)
+    stream_config = Stream.get_config()
     map = get_parsed_map(args.map)
     uut_collection = []
     for uut_name in args.uutnames:
@@ -387,14 +433,13 @@ def object_builder(args):
         uut_collection.append(new_uut)
     return uut_collection
 
-def get_stream_conns(args):
+def get_stream_config(args):
     config = {}
-
     for conn in acq400_hapi.afhba404.get_connections().values():
         lport = conn.dev
         rport = conn.cx
         rhost = conn.uut
-        kill_stream_if_active(lport)
+        Stream.kill_if_active(lport)
         if rhost not in config:
             config[rhost] = {}
         # else second port for rhost..
@@ -402,26 +447,6 @@ def get_stream_conns(args):
         config[rhost][lport]['rport'] = rport
 
     return config
-
-"""
-   the stream_config structure is a little hard to navigate. may be simpler as a class like this
-"""
-class Stream:
-    def __init__(self, lport, rport, rhost):
-        self.lport = lport
-        self.rport = rport
-        self.rhost = rhost
-        kill_stream_if_active(lport)
-
-    @staticmethod
-    def get_stream_conns(args):
-        config = {}
-        for conn in afhba404.get_connections().values():
-            stream = Stream(conn.dev, conn.cx, conn.uut)
-            config[stream.rhost] = stream
-        return config
-
-
 
 def get_parsed_map(maps):
     valid_ports = ['A', 'B', 'C', 'BOTH']
@@ -441,25 +466,6 @@ def get_parsed_map(maps):
             continue
         port_map[uutname][port] = sites
     return port_map
-
-def kill_stream_if_active(lport):
-    pid = afhba404.get_stream_pid(lport)
-    if pid == 0:
-        return
-
-    PR.Yellow(f'Warning: Killing afhba.{lport} with pid: {pid}')
-    cmd = 'sudo kill -9 {}'.format(pid)
-    result = os.system(cmd)
-    # @todo check status
-
-    retry = 0
-    while retry < 4:
-        time.sleep(1)
-        if afhba404.get_stream_pid(lport) == 0:
-            return
-        retry += 1
-
-    exit(PR.Red(f'Fatal Error: Stream failed to die {lport}'))
 
 def read_knob(knob):
     with open(knob, 'r') as f:
@@ -608,16 +614,15 @@ def hot_run_status_update_wrapper(SCRN, args, uut_collection):
                 SCRN.add(f'{{RED}}{uut_item.state}{{RESET}}:')
             SCRN.end()
 
-            for stream in uut_item.streams.items():
-                sstate = uut_item.get_stream_state(stream[0])
-                sites = stream[1]['all_sites']
-                rport = stream[1]['rport']
-                SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{stream[0]:2}')
+            for lport, stream in uut_item.streams.items():
+                sstate = stream.read_state()
+                sites = stream.sites_str
+                rport = stream.rport
+                SCRN.add(f'{{TAB}}{sites}:{rport}{{ORANGE}} --> {{RESET}}afhba.{lport:2}')
                 SCRN.add(f'{{TAB}}{{BOLD}}{sstate.rx_rate * args.buffer_len}MB/s Total Buffers: {int(sstate.rx) * args.buffer_len:,} Status: {sstate.STATUS}{{RESET}}')
                 SCRN.end()
-                if args.check:
-                    name, result = uut_item.get_results(stream[0])
-                    SCRN.add_line(f'{{TAB}}{{TAB}}{name} {result}')
+                if args.check_spad:
+                    SCRN.add_line(f'{{TAB}}{{TAB}}Spad Checking {stream.read_results()}')
 
                 if sstate.STATUS == 'STOP_DONE':
                     ended_streams += 1
