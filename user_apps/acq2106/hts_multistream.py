@@ -38,30 +38,32 @@ options:
 
 Recommendation: --secs is really a timeout, use --nbuffers for exact data length
 
-example usage::
+Usage:
+
+Stream from 2 uuts:
+
     ./user_apps/acq2106/hts_multistream.py acq2106_133 acq2106_176
+
+Stream from 2 uuts for 2000 buffers
 
     ./user_apps/acq2106/hts_multistream.py --nbuffers=2000 acq2106_133 acq2106_176
 
-    ./user_apps/acq2106/hts_multistream.py ---map=133:A:1/133:B:2 --secs=30 acq2106_133
+Stream each site different port:
 
-    ./user_apps/acq2106/hts_multistream.py --map=643:A:ALL/124:BOTH:3,4 --nbuffers=1000 acq2106_067
+    ./user_apps/acq2106/hts_multistream.py ---map=133:A:1/133:B:2 acq2106_133
 
-    ./user_apps/acq2106/hts_multistream.py --spad=1,8,1 --map=11:C:2 --secs=3600 --check=2 z7io_011
+Stream for 1hr while checking spad:
+
+    ./user_apps/acq2106/hts_multistream.py --spad=1,8,1 --secs=3600 --check=1 acq2206_009
 
 Warning: If data rate exceeds bandwidth uut will stay in arm
 
-    --map=  uut:port:sites
+    --map=  uut:rport:sites
         ex.
             ALL:BOTH:ALL
-            ALL:BOTH:SPLIT - SPLIT must be used with BOTH ports
-            067:A:1,2
-            067:B:2
-            999:BOTH:3,4
-            11:C:1,2
-            C is z7io exclusive
-    --map=67:A:1/67:B:2/130:BOTH:ALL
+            067:A:1,2,3/067:B:4,5,6
 """
+
 import acq400_hapi
 from acq400_hapi import PR
 from acq400_hapi.acq400_print import DISPLAY
@@ -98,34 +100,6 @@ def get_parser():
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
 
-""" what is in the streams object?.
-[dt100@roger740 acq400_hapi]$ HAPI_COLOUR=0 ./user_apps/acq2106/hts_multistream.py --dry_run=1 --verbose=2  acq2206_002 acq2206_003
-UutWrapper()
- <__main__.UutWrapper object at 0x7f221de0ed30>
-streams:{
-'4': {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'},
-'5': {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}}
-ports:{
-'A': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
-'B': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
-'C': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}}
- self.streams.items()
-[0] ('4', {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
-[1] ('5', {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
-UutWrapper()
- <__main__.UutWrapper object at 0x7f221de22160>
-streams:{
-'0': {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'},
-'1': {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}}
-ports:{
-'A': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
-'B': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
-'C': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}}
- self.streams.items()
-[0] ('0', {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
-[1] ('1', {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
-
-"""
 class UutWrapper:
     """ Encapsulates all information about one UUT """
 
@@ -140,14 +114,13 @@ class UutWrapper:
         self.__attach_api()
         self.__set_id()
         self.__data_builder(map, streams)
-        if args.verbose > 1:
-            print("UutWrapper()")
-            print(" {}\nstreams:{}\nports:{}".format(self, self.streams, self.ports))
-            print(" self.streams.items()")
-            for ii, item in enumerate(self.streams.items()):
-                print(f'[{ii}] {item}')
 
-
+        if args.verbose > 0:
+            print()
+            print(f"UUT {self.name}")
+            print(f"Spad {self.spad}")
+            for lport, stream in self.streams.items():
+                print(f'[{lport}] <-- {stream.rhost}:{stream.rport} {stream.sites_str}')
 
     def get_state(self):
         self.state =  acq400_hapi.pv(self.api.s0.CONTINUOUS_STATE)
@@ -160,10 +133,8 @@ class UutWrapper:
     def start(self):
         self.get_state()
         if self.state != 'IDLE':
-            #self.api.s0.CONTINUOUS = '0'
             self.api.s0.streamtonowhered = "stop"
             time.sleep(2)
-        #self.api.s0.CONTINUOUS = '1'
         self.api.s0.streamtonowhered = "start"
 
     def stop(self):
@@ -174,7 +145,7 @@ class UutWrapper:
             time.sleep(1)
             wc += 1
             if wc > 10:
-                print(f'{self.name} to base unable to stop, dropping out')
+                print(f'{self.name} unable to stop, dropping out')
                 return
         if self.args.verbose > 0:
             print(f'{self.name} has stopped')
@@ -200,12 +171,11 @@ class UutWrapper:
 
     def check_lane_status(self, lport, rport):
         link_state = afhba404.get_link_state(lport)
-        message = f'{self.name} Link State LANE_UP={link_state.LANE_UP} RPCIE_INIT={link_state.RPCIE_INIT}'
-
         if link_state.LANE_UP and link_state.RPCIE_INIT:
-            PR.Green(message)
+            if self.args.verbose > 0:
+                PR.Green(f'{self.name} LANE_UP={link_state.LANE_UP} RPCIE_INIT={link_state.RPCIE_INIT}')
             return
-        PR.Yellow(message)
+        PR.Yellow(f'Warning: {self.name} LANE_UP={link_state.LANE_UP} RPCIE_INIT={link_state.RPCIE_INIT}')
         comms = getattr(self.api, f'c{rport}')
         if not hasattr(comms, 'TX_DISABLE'):
             exit(PR.Red('Link down: could not fix (old firmware)'))
@@ -218,11 +188,11 @@ class UutWrapper:
             time.sleep(0.5)
             link_state = afhba404.get_link_state(lport)
             if link_state.RPCIE_INIT:
-                PR.Green(f'{self.name} Link Fixed {retry}')
+                PR.Green(f'{self.name} Link Fixed {retry}/3')
                 return
             retry += 1
 
-        exit(PR.Red('Link down: could not fix'))
+        exit(PR.Red('Link down: unable to fix'))
 
     def configure(self):
         if self.spad is not None:
@@ -249,7 +219,8 @@ class UutWrapper:
             self.api.s1.RTM_TRANSLEN = self.args.RTM_TRANSLEN
 
         self.__setup_comms_aggregators()
-        PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.RTM_TRANSLEN} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
+        if self.args.verbose > 0:
+            PR.Yellow(f'Configuring {self.name}: rtm_translen {self.api.s1.RTM_TRANSLEN} ssb {self.api.s0.ssb} {self.args.buffer_len}MB buffers')
 
     def __setup_comms_aggregators(self):
         for lport, stream in self.streams.items():
@@ -262,20 +233,6 @@ class UutWrapper:
                 comm_site.spad = 0
             if self.args.decimate is not None:
                 comm_site.decimate = self.args.decimate
-
-    def get_stream_state(self, lport):
-        return afhba404.get_stream_state(lport)
-
-    def get_results(self, lport):
-            tests = {
-                1 : 'Simulate',
-                2 : 'Spad Checker'
-            }
-            file = f'/mnt/afhba.{lport}/ramp_{lport}.log'
-            data = None
-            if os.path.exists(file):
-                data = open(file, "r").readline().strip()
-            return tests[self.args.check], data
 
     def __attach_api(self):
         try:
@@ -417,12 +374,7 @@ def stop_uuts(uut_collection):
             t = threading.Thread(target=uut_item.stop)
             t.start()
             threads.append(t)
-
-    nt = len(threads)
-    for ix, uut_item in enumerate(uut_collection):
-        threads[ix].join()
-        uut_item.ended = True
-    print(f'all {nt} threads joined')
+            uut_item.ended = True
 
 def object_builder(args):
     stream_config = Stream.get_config()
@@ -465,6 +417,7 @@ def get_parsed_map(maps):
             port_map[uutname]['C'] = sites
             continue
         port_map[uutname][port] = sites
+
     return port_map
 
 def read_knob(knob):
@@ -479,8 +432,6 @@ def configure_host(uut_collection, args):
         cmd = 'sudo rm  -rf /mnt/afhba.*'
         PR.Yellow(f'Erasing /mnt/afhba.*')
         os.system(cmd)
-
-
 
     lport = list(uut_collection[0].streams.keys())[0]
     args.buffer_len = int(afhba404.get_buffer_len(lport) / 1024 / 1024)
@@ -501,8 +452,6 @@ def configure_host(uut_collection, args):
     if args.secs:
         args.t_mins, args.t_secs = divmod(args.secs, 60)
         args.nbuffers = 9999999999
-
-
 
 class ReleasesTriggerWhenReady:
     """ handles all trigger types from UI, enables them at the right time """
@@ -631,8 +580,8 @@ def hot_run_status_update_wrapper(SCRN, args, uut_collection):
     return hot_run_status_update
 
 def dry_run(args, uut_collection):
-    if args.verbose > 1:
-        print("new style Stream.get_stream_conns {}".format(Stream.get_stream_conns(args)))
+    if args.verbose > 0:
+        print("new style Stream.get_stream_conns {}".format(Stream.get_config()))
     top_uut = uut_collection[0].api
 
     for uut_item in uut_collection:
@@ -655,7 +604,8 @@ class RateLimiter:
             time.sleep(sleep_time)
             self.cycle_start = time.time()
 
-def hot_run(SCRN, args, uut_collection, configure_host):
+def hot_run(args, uut_collection):
+    SCRN = DISPLAY()
     total_streams = hot_run_init(uut_collection)
     release_trigger_when_ready = ReleasesTriggerWhenReady(SCRN, args, uut_collection)
     hot_run_status_update = hot_run_status_update_wrapper(SCRN, args, uut_collection)
@@ -706,23 +656,20 @@ def hot_run(SCRN, args, uut_collection, configure_host):
             rate_limiter()
 
         SCRN.render(False)                     # normal exit
-        time.sleep(1)
-        print('Normal Run Done')
-        return
 
     except KeyboardInterrupt:
         SCRN.render_interrupted()
         PR.Red('Interrupt!')
+        stop_uuts(uut_collection)
     except Exception as e:
         SCRN.render_interrupted()
         PR.Red('Fatal Error')
+        stop_uuts(uut_collection)
         print(e)
         print(traceback.format_exc())
 
-    stop_uuts(uut_collection)
+    print('Run Done')
     time.sleep(1)
-    print('Exception Run Done')
-
 
 def run_main(args):
     uut_collection = object_builder(args)
@@ -731,7 +678,7 @@ def run_main(args):
     if args.dry_run:
         dry_run(args, uut_collection)
     else:
-        hot_run(DISPLAY(), args, uut_collection, configure_host)
+        hot_run(args, uut_collection)
 
 
 if __name__ == '__main__':
