@@ -26,7 +26,7 @@ GPG provides BURST pulses on EVT.d0 to both ADC system and output on AUX2
 
 import acq400_hapi
 import argparse
-import acq400_upload
+import acq400_fullshot
         
 def get_stl(stl):
     with open (stl, "r") as stl_file:
@@ -35,10 +35,11 @@ def get_stl(stl):
 
 def set_gpg(args, uut):
     uut.s0.gpg_enable = 0
-    uut.s0.GPG_TRG = 'external'
-    uut.s0.GPG_TRG_DX = 'd0'
-    uut.s0.GPG_TRG_SENSE = 'rising'
+#    uut.s0.GPG_TRG = 'external'
+#    uut.s0.GPG_TRG_DX = 'd0'
+#    uut.s0.GPG_TRG_SENSE = 'rising'
     uut.s0.GPG_MODE = 'LOOPWAIT'
+    uut.s0.gpg_trg = '1,0,1'
     stl = get_stl(args.stl)
     uut.load_gpg(stl)    
     uut.s0.gpg_enable = 1
@@ -60,10 +61,10 @@ def main(args):
         set_rgm(args, uut)
         set_gpg(args, uut)
 
-    acq400_upload.run_main(args)
+    acq400_fullshot.run_main(args)
     
 def get_parser():
-    parser = acq400_upload.get_parser()    
+    parser = acq400_fullshot.get_parser()    
     parser.add_argument('--stl', default='./test.stl', type=str, help="GPG pulse pattern STL") 
     parser.add_argument('--es_enable', default=None, help="enable/disable Event Signature (default: no touch)")
     return parser
