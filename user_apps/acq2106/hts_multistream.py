@@ -96,6 +96,7 @@ def get_parser():
     parser.add_argument('--RTM_TRANSLEN', default=None, help='Set rtm_translen for each uut')
     parser.add_argument('--mtrg', default=None, help='value:HDMI|EXT, works with free-running master trigger')
     parser.add_argument('--verbose', default=0, type=int, help='increase verbosity')
+    parser.add_argument('--hex_str', default=0, type=int, help='generate hexdump cmd')
 
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
@@ -150,18 +151,24 @@ class UutWrapper:
         if self.args.verbose > 0:
             print(f'{self.name} has stopped')
         return
-
+    
     def initialize(self):
         for lport, stream in self.streams.items():
+
             self.check_lane_status(lport, stream.rport)
+
+            data_columns = int(sum(stream.sites.values()) / 2)
+            spad_len = int(self.spad.split(',')[1])
+
+            if self.args.hex_str:
+                hex_cmd = f"""Hex Cmd: hexdump -e '{data_columns + spad_len}/4 "%08x," "\\n"' /mnt/afhba.{lport}/{stream.rhost}/000000/{lport}.00"""
+                PR.Cyan(hex_cmd)
+
             if self.args.check_spad > 0:
                 if not self.spad_enabled:
                     exit(PR.Red(f'Error: Cannot check spad if no spad: {self.spad}'))
 
-                data_columns = int(sum(stream.sites.values()) / 2)
-                spad_len = int(self.spad.split(',')[1])
                 step = 1 if self.args.decimate is None else self.args.decimate
-
                 cmd = stream.get_checker_cmd(self.args, spad_len, data_columns, step)
             else:
                 cmd = stream.get_cmd(self.args)
@@ -211,7 +218,7 @@ class UutWrapper:
             self.api.s0.decimate = self.args.decimate
         if self.args.SIG_SRC_TRG_0 is not None:
             self.api.s0.SIG_SRC_TRG_0 = self.args.SIG_SRC_TRG_0
-        if self.args.SIG_SRC_TRG_0 is not None:
+        if self.args.SIG_SRC_TRG_1 is not None:
             self.api.s0.SIG_SRC_TRG_1 = self.args.SIG_SRC_TRG_1
         if self.args.wrtd_txi is not None:
             self.api.s0.SIG_SRC_TRG_1 = 'WRTT1'
@@ -384,21 +391,6 @@ def object_builder(args):
         new_uut = UutWrapper(uut_name, args, map, stream_config)
         uut_collection.append(new_uut)
     return uut_collection
-
-def get_stream_config(args):
-    config = {}
-    for conn in acq400_hapi.afhba404.get_connections().values():
-        lport = conn.dev
-        rport = conn.cx
-        rhost = conn.uut
-        Stream.kill_if_active(lport)
-        if rhost not in config:
-            config[rhost] = {}
-        # else second port for rhost..
-        config[rhost][lport] = {}
-        config[rhost][lport]['rport'] = rport
-
-    return config
 
 def get_parsed_map(maps):
     valid_ports = ['A', 'B', 'C', 'BOTH']
