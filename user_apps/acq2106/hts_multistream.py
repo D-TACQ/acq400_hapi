@@ -74,7 +74,7 @@ import os
 import re
 import subprocess
 import psutil
-import threading
+from threading import Thread
 import traceback
 
 def get_parser():
@@ -378,7 +378,7 @@ def stop_uuts(uut_collection):
     threads = []
     for uut_item in uut_collection:
         if not uut_item.ended:
-            t = threading.Thread(target=uut_item.stop)
+            t = Thread(target=uut_item.stop)
             t.start()
             threads.append(t)
             uut_item.ended = True
@@ -522,19 +522,32 @@ class ReleasesTriggerWhenReady:
 
 
 def hot_run_init(uut_collection):
-    total_streams = 0
-    for uut_item in uut_collection:
+    def thread_wrapper(uut_item):
         uut_item.configure()
         uut_item.initialize()
+
+    total_streams = 0
+    threads = []
+    for uut_item in uut_collection:
+        new_thread = Thread(target=thread_wrapper, args=(uut_item, ))
+        new_thread.start()
+        threads.append(new_thread)
         total_streams += len(uut_item.streams)
+
+    for thread in threads:
+        thread.join()
+
     return total_streams
 
 def hot_run_start(uut_collection):
-    for uut_item in uut_collection:
-        uut_item.thread =  threading.Thread(target=uut_item.get_state_forever)
+    def thread_wrapper(uut_item):
+        uut_item.thread = Thread(target=uut_item.get_state_forever)
         uut_item.thread.daemon = True
         uut_item.thread.start()
         uut_item.start()
+
+    for uut_item in uut_collection:
+        Thread(target=thread_wrapper, args=(uut_item, )).start()
 
 def hot_run_status_update_wrapper(SCRN, args, uut_collection):
     def hot_run_status_update():
