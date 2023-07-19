@@ -6,10 +6,18 @@ from scipy import signal
 
 import get_calibfit
 import sys
+import os
+
 ########################################################################
 # Read and reshape the data.
 ########################################################################
 #SOURCE = './DATA/acq2106_123_CH00'
+
+
+if os.getenv("NOPLOT", "0") == "0":
+    PLOT = 1
+else:
+    PLOT = 0
 
 SOURCE = f'./DATA/{sys.argv[1]}_CH00'
 NBOLO = 2
@@ -40,10 +48,11 @@ calib = get_calibfit.Calibfit('acq2106_123')
 ########################################################################
 # Plot the magnitude to verify we've read the correct data.
 ########################################################################
-plt.figure()
-plt.plot(time_vector[20:], A[active, 20:].T)
-plt.ylabel('Magnitude [V]')
-plt.xlabel('Time [s]')
+if PLOT:
+    plt.figure()
+    plt.plot(time_vector[20:], A[active, 20:].T)
+    plt.ylabel('Magnitude [V]')
+    plt.xlabel('Time [s]')
 
 ########################################################################
 # Calculate the incident power using the bolometer equation.
@@ -74,10 +83,11 @@ Pcalc = 1/sens * (A + tau * dAdt)
 # First 20 samples are contaminated by the filter warm up.
 Pcalc[:, :20] = np.nan
 
-plt.figure()
-plt.plot(time_vector, Pcalc[active].T)
-plt.ylabel('Absorbed power [W]')
-plt.xlabel('Time [s]')
+if PLOT:
+    plt.figure()
+    plt.plot(time_vector, Pcalc[active].T)
+    plt.ylabel('Absorbed power [W]')
+    plt.xlabel('Time [s]')
 
 ########################################################################
 # Fix the offset correction.
@@ -86,10 +96,12 @@ plt.xlabel('Time [s]')
 # Offset correction is not quite right, particularly for channel 10, which
 # is why we don't get a perfect square wave. If offset correction was perfect
 # the phase would be constant, but it varies slightly with the magnitude.
-plt.figure()
-plt.plot(time_vector[20:], phi[active, 20:].T)
-plt.ylabel('Phase [radians]')
-plt.xlabel('Time [s]')
+
+if PLOT:
+    plt.figure()
+    plt.plot(time_vector[20:], phi[active, 20:].T)
+    plt.ylabel('Phase [radians]')
+    plt.xlabel('Time [s]')
 
 # Try improving the offset correction in post-processing. We have a period
 # at the start of the capture with zero power: use this to work out the
@@ -103,39 +115,39 @@ offsets = V[:, 100:1000].mean(axis=-1)
 offsets = offsets[:, None]
 Vcorr = V - offsets
 
-def configure_offset_channels(kk):
+def pct_error(xx, yy):
+    return round((abs(yy-xx))/abs(xx) * 100, 2)
+
+def configure_offset_channels():
 # puts "Usage: $argv0 <channel> <i0> <q0> <sens>"
     for ch in active1:        
         SNS = calib.sns(ch)    
         I0 = calib.I0(ch)
         Q0 = calib.Q0(ch)
         ch0 = ch-1
-        dI0 = np.real(offsets[ch0]).item()
-        dQ0 = np.imag(offsets[ch0]).item()
-        print(f'load_offset_channel.tcl {ch} {I0+kk*dI0} {Q0+kk*dQ0} {SNS}')
-    
-print("original offsets")
-configure_offset_channels(0)
+        hI0 = np.real(offsets[ch0]).item()/2
+        hQ0 = np.imag(offsets[ch0]).item()/2
+        print(f'load_offset_channel.tcl {ch} {I0} {Q0} {SNS} # host {hI0} {hQ0}')
+        #print(f'load_offset_channel.tcl {ch} {I0} {Q0} {SNS} # host {hI0} {hQ0} error {pct_error(hI0, I0)} % {pct_error(hQ0, Q0)} %')
 
-print("offsets + delta")
-configure_offset_channels(1)
+configure_offset_channels()
 
-print("offsets - delta")
-configure_offset_channels(-1)
 
 # If the offset correction is accurate, the phase should be more constant.
 # At least, it shouldn't vary significantly with the amplitude.
-plt.figure()
-plt.plot(time_vector[20:], np.angle(Vcorr)[active, 20:].T)
-plt.ylabel('Phase with offset correction [radians]')
-plt.xlabel('Time [s]')
+if PLOT:
+    plt.figure()
+    plt.plot(time_vector[20:], np.angle(Vcorr)[active, 20:].T)
+    plt.ylabel('Phase with offset correction [radians]')
+    plt.xlabel('Time [s]')
 
-plt.figure()
+if PLOT:
 #plt.plot(time_vector[20:], np.angle(Vcorr)[active, 20:].T)
 #plt.plot(time_vector[20:], np.sqrt(np.real(Vcorr)*np.real(Vcorr) + np.imag(Vcorr)*np.imag(Vcorr))[active, 20:].T)
-plt.plot(time_vector[20:], np.abs(Vcorr)[active, 20:].T)
-plt.ylabel('Offset corrected Magnitude')
-plt.xlabel('Time [s]')
+    plt.figure()
+    plt.plot(time_vector[20:], np.abs(Vcorr)[active, 20:].T)
+    plt.ylabel('Offset corrected Magnitude')
+    plt.xlabel('Time [s]')
 
 ########################################################################
 # Recalculate the power with the offset correction done more accurately.
@@ -151,9 +163,11 @@ Pccorr.imag = (1/sens) * (Vcorr.imag + tau * signal.savgol_filter(Vcorr.imag, 20
 Pccorr[:, :25] = np.nan + 1j * np.nan
 Pcorr = abs(Pccorr)
 
-plt.figure()
-plt.plot(time_vector, Pcorr[active].T)
-plt.ylabel('Absorbed power, offset corrected [W]')
-plt.xlabel('Time [s]')
+if PLOT:
+    plt.figure()
+    plt.plot(time_vector, Pcorr[active].T)
+    plt.ylabel('Absorbed power, offset corrected [W]')
+    plt.xlabel('Time [s]')
 
-plt.show()
+    plt.show()
+
