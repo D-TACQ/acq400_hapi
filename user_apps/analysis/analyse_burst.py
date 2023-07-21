@@ -175,9 +175,10 @@ def plot_timeseries(raw_adc, ch, label):
     plt.title(f'{label} Time-series plot of CH{ch}')    
     plt.ylabel('ADC codes')
     plt.xlabel('sample') 
-    y =raw_adc[:,ch]
-    x = range(0, len(y))
-    plt.plot(x, y, label=f'CH{ch}')
+    yraw = raw_adc[:,ch]
+    y_no_es = np.delete(yraw, ES_STATS.get_raw_ix())
+    x = range(0, len(y_no_es))
+    plt.plot(x, y_no_es, label=f'CH{ch}')
 
 def analyse(args):
     global STACKOFF
