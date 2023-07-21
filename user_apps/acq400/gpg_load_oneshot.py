@@ -38,8 +38,9 @@ def set_gpg(args, uut):
 #    uut.s0.GPG_TRG = 'external'
 #    uut.s0.GPG_TRG_DX = 'd0'
 #    uut.s0.GPG_TRG_SENSE = 'rising'
-    uut.s0.GPG_MODE = 'LOOPWAIT'
     uut.s0.gpg_trg = '1,0,1'
+    
+    uut.s0.GPG_MODE = 'LOOPWAIT'
     stl = get_stl(args.stl)
     uut.load_gpg(stl)    
     uut.s0.gpg_enable = 1
