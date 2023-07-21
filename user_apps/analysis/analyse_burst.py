@@ -26,6 +26,9 @@ ES_MAGIC1_FIELDS = (16, 17, 18, 19, 24, 25, 26, 27,
 
 class ES_STATS:
     the_stats = []
+    the_raw_ix = []
+    the_sample_counts = []
+    the_clk_counts = []
     
     def __init__(self, _es_fields):
         self.iraw = _es_fields[0]
@@ -68,6 +71,25 @@ class ES_STATS:
                 clk_fail_count += 1
                 
         return (sample_fail_count == 0 and clk_fail_count == 0, ii, sample_fail_count, clk_fail_count)
+
+    def get_raw_ix():
+        if len(ES_STATS.the_raw_ix) < len(ES_STATS.the_stats):
+            ES_STATS.the_raw_ix = [ es.iraw for es in ES_STATS.the_stats]
+        return ES_STATS.the_raw_ix
+
+    def get_sample_counts():
+        if len(ES_STATS.the_sample_counts) < len(ES_STATS.the_stats):
+            ES_STATS.the_sample_counts = [ es.sample for es in ES_STATS.the_stats]
+        return ES_STATS.the_sample_counts 
+
+    def get_clk_counts():
+        if len(ES_STATS.the_clk_counts) < len(ES_STATS.the_stats):
+            ES_STATS.the_clk_counts = [ es.clk for es in ES_STATS.the_stats]
+        return ES_STATS.the_clk_counts    
+
+    def get_blen():
+        return ES_STATS.the_stats[1].d_sample
+
             
 def is_valid_es(iraw, es):
 # return if this is an ES, load it and return True FAIL fast!  
@@ -118,9 +140,47 @@ def analyse_es(args, raw_es):
     else:
         print(f'ES Analysis: {es_valid[1]} PASS {es_valid[2]} sample FAIL {es_valid[3]} clk FAIL')
 
+STACKOFF=0
+
+
+def timing_plot():
+    plt.figure()
+    plt.title(f'Plot of burst start time in sample clocks')
+    plt.ylabel('clocks')
+    plt.xlabel('burst number')
+    print(ES_STATS.get_clk_counts())
+    plt.plot(ES_STATS.get_clk_counts())
+
     
+def stack_plot(raw_adc, raw_ix, ch, label=''):
+    print(raw_ix)
+    blen = ES_STATS.get_blen()
+    nburst = len(raw_ix)
+    print(f'PLOT nburst {len(raw_ix)} burst_len {blen} ch {ch}')
     
+    x = range(1, blen)
+
+    plt.figure()
+    plt.title(f'{label} Stack plot of {nburst} bursts')
+    plt.ylabel('ADC codes')
+    plt.xlabel('samples in burst')
+
+    for ii, brst in enumerate(raw_ix):
+        y = raw_adc[brst+1:brst+blen,ch]+ STACKOFF*ii
+        if len(x) == len(y):
+            plt.plot(x, y, label=f'{ii}')
+
+def plot_timeseries(raw_adc, ch, label):
+    plt.figure()
+    plt.title(f'{label} Time-series plot of CH{ch}')    
+    plt.ylabel('ADC codes')
+    plt.xlabel('sample') 
+    y =raw_adc[:,ch]
+    x = range(0, len(y))
+    plt.plot(x, y, label=f'CH{ch}')
+
 def analyse(args):
+    global STACKOFF
     fname = args.data[0]
     raw_adc = np.fromfile(fname, dtype=args.np_data_type)
     ll = len(raw_adc)//args.nchan
@@ -133,6 +193,18 @@ def analyse(args):
     print(f"raw_adc {raw_adc.shape}")
     print(f"raw_es  {raw_es.shape}")
     analyse_es(args, raw_es)
+
+
+    if args.stack_plot > 0:
+        timing_plot()
+        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, 'signal')
+        if args.fiducial_plot:
+            plot_timeseries(raw_adc, args.fiducial_plot-1, 'fiducial')
+            stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.fiducial_plot-1, 'fiducial')
+
+        STACKOFF=20
+        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, 'offset signal')
+        plt.show()
     return (raw_adc, raw_es)
 
 def get_parser():
@@ -140,6 +212,9 @@ def get_parser():
     parser.add_argument('--nchan', type=int, default=32)
     parser.add_argument('--data_type', type=int, default=None, help='Use int16 or int32 for data demux.')
     parser.add_argument('--verbose', type=int, default=0, help='increase verbosity')
+    parser.add_argument('--stack_plot', type=int, default=0, help='if non zero, make a stack plot of selected channel')
+    parser.add_argument('--fiducial_plot', type=int, default=0, help='if non zero, make a stack plot of selected channel')
+    parser.add_argument('--uut', help='uut for title')
     parser.add_argument('data', nargs=1, help="data ")
     return parser
  
