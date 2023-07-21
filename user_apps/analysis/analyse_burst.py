@@ -9,15 +9,93 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 
-ES_MAGIC    = 0xaa55f154
+from prettytable import PrettyTable
+
+ES_MAGIC0   = 0xaa55f154
+ES_MAGIC1   = 0xaa55f15f
 ES_SAMPLE   = 4
 ES_CLK      = 5
 ES_SAMPLE2  = 6
 ES_CLK2     = 7
 
+ES_MAGIC0_FIELDS = ( 0,  1,  2,  3,  8,  9, 10, 11)
+ES_MAGIC1_FIELDS = (16, 17, 18, 19, 24, 25, 26, 27, 
+                    32, 33, 34, 35, 40, 41, 42, 43,
+                    48, 49, 50, 51, 56, 57, 58, 59)
+
+
+class ES_STATS:
+    the_stats = []
+    
+    def __init__(self, _es_fields):
+        self.iraw = _es_fields[0]
+        self.sample = _es_fields[1]
+        self.clk = self.clk = _es_fields[2]
+        self.my_id = len(ES_STATS.the_stats)
+        
+        
+        if self.my_id == 0:
+            self.d_iraw = 0
+            self.d_sample = 0
+            self.d_clk = 0
+        else:
+            es1 = ES_STATS.the_stats[-1]
+            self.d_iraw = self.iraw - es1.iraw
+            self.d_sample = self.sample - es1.sample
+            self.d_clk = self.clk - es1.clk
+        ES_STATS.the_stats.append(self)
+        
+    def print(self):
+        print(f'ES_STATS {self.my_id} {self.iraw} {self.sample} {self.clk}')
+        
+    def print_all():
+        t = PrettyTable(['ii', 'iraw', 'sample', 'clk', 'delta_iraw', 'delta_sample', 'delta_clk'], border=False)
+        for ii, ess in enumerate(ES_STATS.the_stats):
+            t.add_row((ii, ess.iraw, ess.sample, ess.clk, ess.d_iraw, ess.d_sample, ess.d_clk))
+        print(t)
+        
+    def is_valid():
+        model_d_sample = ES_STATS.the_stats[1].d_sample
+        model_d_clk = ES_STATS.the_stats[1].d_clk
+        sample_fail_count = 0
+        clk_fail_count = 0
+        for ii, es in enumerate(ES_STATS.the_stats[2:]):
+            if es.d_sample != model_d_sample:
+                print(f'ERROR: ES fail at {ii} NSAM: expected{model_nsam} got {es.d_sample}')
+                sample_fail_count += 1
+            if abs(es.d_clk - model_d_clk) > 1:
+                print(f'ERROR: ES fail at {ii}  CLK: expected{model_dclk} got {es.d_clk}')
+                clk_fail_count += 1
+                
+        return (sample_fail_count == 0 and clk_fail_count == 0, ii, sample_fail_count, clk_fail_count)
+            
+def is_valid_es(iraw, es):
+# return if this is an ES, load it and return True FAIL fast!  
+# we pre-filtered es[0] == ES_MAGIC0, so we expect all PASS
+    for ii in ES_MAGIC0_FIELDS[1:]:
+        if es[ii] != ES_MAGIC0:
+            print(f'ES match fail at {iraw},{ii} expect:{ES_MAGIC0:08x} got:{es[ii]:08x}')
+            return False
+    for ii in ES_MAGIC1_FIELDS:
+        if es[ii] != ES_MAGIC1:
+            print(f'ES match fail at {iraw},{ii} expect:{ES_MAGIC1:08x} got:{es[ii]:08x}')
+            return False
+    if es[ES_SAMPLE] != es[ES_SAMPLE2]:
+        print(f'ES match fail at {iraw},{ii} SAMPLE changed {es[ES_SAMPLE]} {es[ES_SAMPLE2]}')
+        return False
+    if es[ES_CLK] != es[ES_CLK2]:
+        print(f'ES match fail at {iraw},{ii} CLK changed {es[ES_CLK]} {es[ES_CLK2]}')
+        return False
+    
+    ES_STATS((iraw, es[ES_SAMPLE], es[ES_CLK]))
+    return True           
+            
+    
+           
+        
 def analyse_es(args, raw_es):
     print(f'raw_es.shape:{raw_es.shape}')
-    esx = np.nonzero(raw_es[:,0] == ES_MAGIC)
+    esx = np.nonzero(raw_es[:,0] == ES_MAGIC0)
     print(f'type esx {type(esx)}')
     
     valid_es = []
@@ -25,29 +103,21 @@ def analyse_es(args, raw_es):
 #        print(f'ix={ix}')
         es = raw_es[ix,:]
 #        print(f'es.shape:{es.shape}')
-        with np.printoptions(formatter={'int':hex}):
-            print(es)        
-        if es[0] == ES_MAGIC and es[1] == ES_MAGIC and es[2] == ES_MAGIC and es[3] == ES_MAGIC:
-            if es[ES_SAMPLE] == es[ES_SAMPLE2] and es[ES_CLK] == es[ES_CLK2]:
-                valid_es.append((ix, es[ES_SAMPLE], es[ES_CLK]))
-                continue
-            
-        print(f"Warning: invalid es at {ix}")
-        
-    delta_es = 0
-    delta_sample = 0
-    delta_clk = 0
-       
-    print(f'{"index":>10},{"sample":>10},{"clockcount":>10},{"d_index":>10},{"d_sample":>10},{"d_clockcount":>10}')
-    es = valid_es[0]
-    print(f'{es[0]:>10},{es[1]:>10},{es[2]:>10},{delta_es:>10},{delta_sample:>10},{delta_clk:>10}')
-    es1 = es
-    for es in valid_es[1:]: 
-        delta_es = es[0] - es1[0]
-        delta_sample = es[1] - es1[1]
-        delta_clk = es[2] - es1[2]
-        print(f'{es[0]:>10},{es[1]:>10},{es[2]:>10},{delta_es:>10},{delta_sample:>10},{delta_clk:>10}')
-        es1 = es
+        if args.verbose > 1:
+            with np.printoptions(formatter={'int':hex}):
+                print(es)
+ 
+        if not is_valid_es(ix, es):
+            print(f"Warning: invalid es at {ix}")
+    
+    if args.verbose:
+        ES_STATS.print_all()
+    es_valid = ES_STATS.is_valid()
+    if es_valid[0]:
+        print(f'ES Analysis: {es_valid[1]} PASS')
+    else:
+        print(f'ES Analysis: {es_valid[1]} PASS {es_valid[2]} sample FAIL {es_valid[3]} clk FAIL')
+
     
     
 def analyse(args):
@@ -69,6 +139,7 @@ def get_parser():
     parser = argparse.ArgumentParser(description='rgm plot demo')
     parser.add_argument('--nchan', type=int, default=32)
     parser.add_argument('--data_type', type=int, default=None, help='Use int16 or int32 for data demux.')
+    parser.add_argument('--verbose', type=int, default=0, help='increase verbosity')
     parser.add_argument('data', nargs=1, help="data ")
     return parser
  
