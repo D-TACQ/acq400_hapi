@@ -24,6 +24,8 @@ ES_MAGIC1_FIELDS = (16, 17, 18, 19, 24, 25, 26, 27,
                     48, 49, 50, 51, 56, 57, 58, 59)
 
 
+
+
 class ES_STATS:
     the_stats = []
     the_raw_ix = []
@@ -144,40 +146,48 @@ STACKOFF=0
 
 
 
-def timing_plot():
-    plt.figure()
-    plt.title(f'Plot of burst start time in sample clocks\n{DATA}')
-    plt.ylabel('clocks')
-    plt.xlabel('burst number')
-    plt.plot(ES_STATS.get_clk_counts())
+def sample_count_plot(ax):
+    ax.set_title(f'Plot of burst first sample count\n{DATA}')
+    ax.plot(ES_STATS.get_sample_counts())
+    
+def timing_plot(ax):
+    #ax1.figure()
+    #ax1.title(f'Plot of burst start time in sample clocks\n{DATA}')
+    #ax1.ylabel('clocks')
+    #ax1.xlabel('burst number')
+    ax.set_title(f'Plot of burst start time in sample clocks\n{DATA}')
+    ax.plot(ES_STATS.get_clk_counts())
 
     
-def stack_plot(raw_adc, raw_ix, ch, label=''):
+def stack_plot(raw_adc, raw_ix, ch, ax, label=''):
+    print(f'stack_plot {ax}')
     blen = ES_STATS.get_blen()
     nburst = len(raw_ix)
     print(f'PLOT nburst {len(raw_ix)} burst_len {blen} ch {ch}')
     
     x = range(1, blen)
 
-    plt.figure()
-    plt.title(f'{label} Stack plot of {nburst} bursts\n{DATA}')
-    plt.ylabel('ADC codes')
-    plt.xlabel('samples in burst')
+    #plt.figure()
+    #plt.title(f'{label} Stack plot of {nburst} bursts\n{DATA}')
+    ax.set_title(f'{label} Stack plot of {nburst} bursts\n{DATA}')
+    #plt.ylabel('ADC codes')
+    #plt.xlabel('samples in burst')
 
     for ii, brst in enumerate(raw_ix):
         y = raw_adc[brst+1:brst+blen,ch]+ STACKOFF*ii
         if len(x) == len(y):
-            plt.plot(x, y, label=f'{ii}')
+            ax.plot(x, y, label=f'{ii}')
 
-def plot_timeseries(raw_adc, ch, label):
-    plt.figure()
-    plt.title(f'{label} Time-series plot of CH{ch}\n{DATA}')    
-    plt.ylabel('ADC codes')
-    plt.xlabel('sample') 
+def plot_timeseries(raw_adc, ch, ax, label):
+    #plt.figure()
+    #plt.title(f'{label} Time-series plot of CH{ch}\n{DATA}')    
+    #plt.ylabel('ADC codes')
+    #plt.xlabel('sample') 
     yraw = raw_adc[:,ch]
     y_no_es = np.delete(yraw, ES_STATS.get_raw_ix())
     x = range(0, len(y_no_es))
-    plt.plot(x, y_no_es, label=f'CH{ch}')
+    ax.set_title(f'{label} Time-series plot of CH{ch}\n{DATA}') 
+    ax.plot(x, y_no_es, label=f'CH{ch}')
 
 def analyse(args):
     global STACKOFF
@@ -196,14 +206,18 @@ def analyse(args):
 
 
     if args.stack_plot > 0:
-        timing_plot()
-        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, 'signal')
+        fig, axx = plt.subplots(3, 2)
+        sample_count_plot(axx[0][0])
+        timing_plot(axx[1][0])
+        
+        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, axx[0][1], 'signal')
+        
         if args.fiducial_plot:
-            plot_timeseries(raw_adc, args.fiducial_plot-1, 'fiducial')
-            stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.fiducial_plot-1, 'fiducial')
+            plot_timeseries(raw_adc, args.fiducial_plot-1, axx[2][0], 'fiducial')
+            stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.fiducial_plot-1, axx[2][1], 'fiducial')
 
         STACKOFF=20
-        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, 'offset signal')
+        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, axx[1][1], 'offset signal')
         plt.show()
     return (raw_adc, raw_es)
 
