@@ -149,12 +149,10 @@ def timing_plot():
     plt.title(f'Plot of burst start time in sample clocks\n{DATA}')
     plt.ylabel('clocks')
     plt.xlabel('burst number')
-    print(ES_STATS.get_clk_counts())
     plt.plot(ES_STATS.get_clk_counts())
 
     
 def stack_plot(raw_adc, raw_ix, ch, label=''):
-    print(raw_ix)
     blen = ES_STATS.get_blen()
     nburst = len(raw_ix)
     print(f'PLOT nburst {len(raw_ix)} burst_len {blen} ch {ch}')
