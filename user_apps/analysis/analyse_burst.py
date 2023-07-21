@@ -113,7 +113,7 @@ def is_valid_es(iraw, es):
     return True           
             
     
-           
+DATA='nodata'          
         
 def analyse_es(args, raw_es):
     print(f'raw_es.shape:{raw_es.shape}')
@@ -136,16 +136,17 @@ def analyse_es(args, raw_es):
         ES_STATS.print_all()
     es_valid = ES_STATS.is_valid()
     if es_valid[0]:
-        print(f'ES Analysis: {es_valid[1]} PASS')
+        print(f'{DATA} ES Analysis: {es_valid[1]} PASS')
     else:
-        print(f'ES Analysis: {es_valid[1]} PASS {es_valid[2]} sample FAIL {es_valid[3]} clk FAIL')
+        print(f'{DATA} ES Analysis: {es_valid[1]} PASS {es_valid[2]} sample FAIL {es_valid[3]} clk FAIL')
 
 STACKOFF=0
 
 
+
 def timing_plot():
     plt.figure()
-    plt.title(f'Plot of burst start time in sample clocks')
+    plt.title(f'Plot of burst start time in sample clocks\n{DATA}')
     plt.ylabel('clocks')
     plt.xlabel('burst number')
     print(ES_STATS.get_clk_counts())
@@ -161,7 +162,7 @@ def stack_plot(raw_adc, raw_ix, ch, label=''):
     x = range(1, blen)
 
     plt.figure()
-    plt.title(f'{label} Stack plot of {nburst} bursts')
+    plt.title(f'{label} Stack plot of {nburst} bursts\n{DATA}')
     plt.ylabel('ADC codes')
     plt.xlabel('samples in burst')
 
@@ -172,7 +173,7 @@ def stack_plot(raw_adc, raw_ix, ch, label=''):
 
 def plot_timeseries(raw_adc, ch, label):
     plt.figure()
-    plt.title(f'{label} Time-series plot of CH{ch}')    
+    plt.title(f'{label} Time-series plot of CH{ch}\n{DATA}')    
     plt.ylabel('ADC codes')
     plt.xlabel('sample') 
     yraw = raw_adc[:,ch]
@@ -220,6 +221,7 @@ def get_parser():
     return parser
  
 def fix_args(args):
+    global DATA
     if args.data_type == 16:
         args.np_data_type = np.int16
         args.WSIZE = 2
@@ -233,6 +235,8 @@ def fix_args(args):
         args.WSIZE = 4
         args.ess = args.nchan
     args.ssb = args.nchan * args.WSIZE
+    DATA = args.data
+    print(f'processing {DATA}')
     return args
 
    
