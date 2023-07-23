@@ -66,11 +66,14 @@ class ES_STATS:
         clk_fail_count = 0
         for ii, es in enumerate(ES_STATS.the_stats[2:]):
             if es.d_sample != model_d_sample:
-                print(f'ERROR: ES fail at {ii} NSAM: expected{model_nsam} got {es.d_sample}')
+                print(f'ERROR: ES fail at {ii} NSAM: expected{model_d_sample} got {es.d_sample}')
                 sample_fail_count += 1
-            if abs(es.d_clk - model_d_clk) > 1:
-                print(f'ERROR: ES fail at {ii}  CLK: expected{model_dclk} got {es.d_clk}')
+            if es.d_clk > model_d_clk and (es.d_clk - model_d_clk) > 1:
+                print(f'ERROR: ES fail > at {ii} diff: {es.d_clk - model_d_clk} CLK: expected{model_d_clk} got {es.d_clk}')
                 clk_fail_count += 1
+            if es.d_clk < model_d_clk and (model_d_clk - es.d_clk) > 1:
+                print(f'ERROR: ES fail < at {ii} diff: {model_d_clk - es.d_clk} CLK: expected{model_d_clk} got {es.d_clk}')
+                clk_fail_count += 1                
                 
         return (sample_fail_count == 0 and clk_fail_count == 0, ii, sample_fail_count, clk_fail_count)
 
@@ -142,10 +145,6 @@ def analyse_es(args, raw_es):
     else:
         print(f'{DATA} ES Analysis: {es_valid[1]} PASS {es_valid[2]} sample FAIL {es_valid[3]} clk FAIL')
 
-STACKOFF=0
-
-
-
 def sample_count_plot(ax):
     ax.set_title(f'Plot of burst first sample count ES[{ES_SAMPLE}]')
     ax.plot(ES_STATS.get_sample_counts())
@@ -159,7 +158,7 @@ def timing_plot(ax):
     ax.plot(ES_STATS.get_clk_counts())
 
     
-def stack_plot(raw_adc, raw_ix, ch, ax, label=''):
+def stack_plot(raw_adc, raw_ix, ch, ax, label='', delta=False, stackoff=0):
     print(f'stack_plot {ax}')
     blen = ES_STATS.get_blen()
     nburst = len(raw_ix)
@@ -174,9 +173,46 @@ def stack_plot(raw_adc, raw_ix, ch, ax, label=''):
     #plt.xlabel('samples in burst')
 
     for ii, brst in enumerate(raw_ix):
-        y = raw_adc[brst+1:brst+blen,ch]+ STACKOFF*ii
-        if len(x) == len(y):
-            ax.plot(x, y, label=f'{ii}')
+        try:
+            y = raw_adc[brst+1:brst+blen,ch]+ stackoff*ii
+            if delta:
+                if ii == 0:
+                    y0 = y
+                y = y - y0
+
+            if len(x) == len(y):
+                ax.plot(x, y, label=f'{ii}')
+        except ValueError:
+           pass
+
+def correlate(raw_adc, raw_ix, ch):
+    ch0 = [ _ch-1 for _ch in ch ]
+    ref = ch0[0]
+    matches = {}
+    ref = {}
+    blen = ES_STATS.get_blen()
+
+    for ic in ch0:
+        matches[ic] = []
+
+    for ib, brst in enumerate(raw_ix):
+        for icn, ic in enumerate(ch0):
+#            print(f'{ib},{icn} ch:{ic+1} brst:{brst}')
+            try:
+                y = raw_adc[brst+1:brst+blen, ic]
+                if ib==0:
+                    ref[ic] = y
+                match = np.allclose(y, ref[ic], atol=250, rtol=1)
+#                print(f'[{ib}],[{ic}] : {match}')
+                matches[ic].append(match)
+            except ValueError:
+                print(f'{ib},{ic} ValueError')
+
+    for ic in ch0:
+        print(ic)
+
+    for ic in ch0:
+        print(f'ch:{ic+1}\n{matches[ic]}')
 
 def plot_timeseries(raw_adc, ch, ax, label):
     #plt.figure()
@@ -191,6 +227,7 @@ def plot_timeseries(raw_adc, ch, ax, label):
 
 def analyse(args):
     global STACKOFF
+    STACKOFF = args.stack_off
     fname = args.data[0]
     raw_adc = np.fromfile(fname, dtype=args.np_data_type)
     ll = len(raw_adc)//args.nchan
@@ -204,21 +241,21 @@ def analyse(args):
     print(f"raw_es  {raw_es.shape}")
     analyse_es(args, raw_es)
 
-
+    correlate(raw_adc, ES_STATS.get_raw_ix(), (1,))
+#    correlate(raw_adc, ES_STATS.get_raw_ix(), (1,2,3,4,5,6,7,8,33,34))
     if args.stack_plot > 0:
         fig, axx = plt.subplots(3, 2, figsize=(12,10))
         fig.suptitle(f'Burst Mode Test: {DATA}')
         sample_count_plot(axx[0][0])
         timing_plot(axx[1][0])
         
-        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, axx[0][1], f'signal CH{args.stack_plot}')
+        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, axx[0][1], f'signal CH{args.stack_plot}', stackoff=args.stack_off)
+        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, axx[1][1], f'diff signal CH{args.stack_plot}', delta=True, stackoff=args.stack_off)
         
         if args.fiducial_plot:
             plot_timeseries(raw_adc, args.fiducial_plot-1, axx[2][0], f'fiducial CH{args.fiducial_plot}')
             stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.fiducial_plot-1, axx[2][1], f'fiducial CH{args.fiducial_plot}')
 
-        STACKOFF=20
-        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, axx[1][1], f'offset signal CH{args.stack_plot}')
         plt.show()
     return (raw_adc, raw_es)
 
@@ -228,6 +265,7 @@ def get_parser():
     parser.add_argument('--data_type', type=int, default=None, help='Use int16 or int32 for data demux.')
     parser.add_argument('--verbose', type=int, default=0, help='increase verbosity')
     parser.add_argument('--stack_plot', type=int, default=0, help='if non zero, make a stack plot of selected channel')
+    parser.add_argument('--stack_off', type=int, default=0, help='offset each element in stack to make a waterfall chart')
     parser.add_argument('--fiducial_plot', type=int, default=0, help='if non zero, make a stack plot of selected channel')
     parser.add_argument('--uut', help='uut for title')
     parser.add_argument('data', nargs=1, help="data ")
