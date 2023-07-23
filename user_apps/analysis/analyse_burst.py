@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 
+import hashlib
+
 from prettytable import PrettyTable
 
 ES_MAGIC0   = 0xaa55f154
@@ -238,6 +240,12 @@ def analyse(args):
     
     print(f"raw_adc {raw_adc.shape}")
     print(f"raw_es  {raw_es.shape}")
+
+    if args.print_hash:
+        m = hashlib.sha1()
+        m.update(raw_adc)
+        print(f'fname {fname} sha1:{m.hexdigest()}')
+
     analyse_es(args, raw_es)
     
     c1, c2, _atol, _rtol = args.check_range
@@ -268,6 +276,7 @@ def get_parser():
     parser.add_argument('--stack_plot', type=int, default=0, help='if non zero, make a stack plot of selected channel')
     parser.add_argument('--stack_off', type=int, default=0, help='offset each element in stack to make a waterfall chart')
     parser.add_argument('--check_range', type=str, default='1,1', help='c0,c1,[atol,rtol] : range of channels to check, atol, rtol: see numpy.rclose')
+    parser.add_argument('--print_hash', type=int, default=0, help='print sha1 of the file (protect against possibility of duplicate data')
     parser.add_argument('--fiducial_plot', type=int, default=0, help='if non zero, make a stack plot of selected channel')
     parser.add_argument('--uut', help='uut for title')
     parser.add_argument('data', nargs=1, help="data ")
