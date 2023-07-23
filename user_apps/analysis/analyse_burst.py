@@ -185,8 +185,7 @@ def stack_plot(raw_adc, raw_ix, ch, ax, label='', delta=False, stackoff=0):
         except ValueError:
            pass
 
-def correlate(raw_adc, raw_ix, ch):
-    ch0 = [ _ch-1 for _ch in ch ]
+def correlate(raw_adc, raw_ix, ch0, _atol, _rtol):
     ref = ch0[0]
     matches = {}
     ref = {}
@@ -202,17 +201,17 @@ def correlate(raw_adc, raw_ix, ch):
                 y = raw_adc[brst+1:brst+blen, ic]
                 if ib==0:
                     ref[ic] = y
-                match = np.allclose(y, ref[ic], atol=250, rtol=1)
+                match = np.allclose(y, ref[ic], atol=_atol, rtol=_rtol)
 #                print(f'[{ib}],[{ic}] : {match}')
                 matches[ic].append(match)
             except ValueError:
-                print(f'{ib},{ic} ValueError')
+                pass 
 
-    for ic in ch0:
-        print(ic)
-
-    for ic in ch0:
-        print(f'ch:{ic+1}\n{matches[ic]}')
+    all_good = all([all(matches[ic]) for ic in ch0])
+    print('CORRELATE {}'.format('PASS: All Channels Match' if all_good else 'FAIL: Not all channels match'))
+    t = PrettyTable([f'{ch+1:02d}' for ch in ch0], border=False)
+    t.add_row(['T' if all(matches[ic]) else 'F' for ic in ch0])
+    print(t)
 
 def plot_timeseries(raw_adc, ch, ax, label):
     #plt.figure()
@@ -240,8 +239,10 @@ def analyse(args):
     print(f"raw_adc {raw_adc.shape}")
     print(f"raw_es  {raw_es.shape}")
     analyse_es(args, raw_es)
+    
+    c1, c2, _atol, _rtol = args.check_range
+    correlate(raw_adc, ES_STATS.get_raw_ix(), [ch-1 for ch in range(c1, c2+1) ], _atol, _rtol)
 
-    correlate(raw_adc, ES_STATS.get_raw_ix(), (1,))
 #    correlate(raw_adc, ES_STATS.get_raw_ix(), (1,2,3,4,5,6,7,8,33,34))
     if args.stack_plot > 0:
         fig, axx = plt.subplots(3, 2, figsize=(12,10))
@@ -266,6 +267,7 @@ def get_parser():
     parser.add_argument('--verbose', type=int, default=0, help='increase verbosity')
     parser.add_argument('--stack_plot', type=int, default=0, help='if non zero, make a stack plot of selected channel')
     parser.add_argument('--stack_off', type=int, default=0, help='offset each element in stack to make a waterfall chart')
+    parser.add_argument('--check_range', type=str, default='1,1', help='c0,c1,[atol,rtol] : range of channels to check, atol, rtol: see numpy.rclose')
     parser.add_argument('--fiducial_plot', type=int, default=0, help='if non zero, make a stack plot of selected channel')
     parser.add_argument('--uut', help='uut for title')
     parser.add_argument('data', nargs=1, help="data ")
@@ -287,6 +289,12 @@ def fix_args(args):
         args.ess = args.nchan
     args.ssb = args.nchan * args.WSIZE
     DATA = args.data[0]
+
+    _check_range = [ int(ii) for ii in args.check_range.split(',')]
+    args.check_range = [ 1, 1, 250, 1 ]
+    for ix, val in enumerate(_check_range):
+       args.check_range[ix] = val
+  
     print(f'processing {DATA}')
     return args
 
