@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 
+import hashlib
+
 from prettytable import PrettyTable
 
 ES_MAGIC0   = 0xaa55f154
@@ -66,27 +68,31 @@ class ES_STATS:
         clk_fail_count = 0
         for ii, es in enumerate(ES_STATS.the_stats[2:]):
             if es.d_sample != model_d_sample:
-                print(f'ERROR: ES fail at {ii} NSAM: expected{model_nsam} got {es.d_sample}')
+                print(f'ERROR: ES fail at {ii} NSAM: expected{model_d_sample} got {es.d_sample}')
                 sample_fail_count += 1
-            if abs(es.d_clk - model_d_clk) > 1:
-                print(f'ERROR: ES fail at {ii}  CLK: expected{model_dclk} got {es.d_clk}')
+            if es.d_clk > model_d_clk and (es.d_clk - model_d_clk) > 1:
+                print(f'ERROR: ES fail > at {ii} diff: {es.d_clk - model_d_clk} CLK: expected{model_d_clk} got {es.d_clk}')
                 clk_fail_count += 1
+            if es.d_clk < model_d_clk and (model_d_clk - es.d_clk) > 1:
+                print(f'ERROR: ES fail < at {ii} diff: {model_d_clk - es.d_clk} CLK: expected{model_d_clk} got {es.d_clk}')
+                clk_fail_count += 1                
                 
         return (sample_fail_count == 0 and clk_fail_count == 0, ii, sample_fail_count, clk_fail_count)
 
+    # ES_STATS.the_stats[:-1] final burst may not be complete, ignore it.
     def get_raw_ix():
         if len(ES_STATS.the_raw_ix) < len(ES_STATS.the_stats):
-            ES_STATS.the_raw_ix = [ es.iraw for es in ES_STATS.the_stats]
+            ES_STATS.the_raw_ix = [ es.iraw for es in ES_STATS.the_stats[:-1]]
         return ES_STATS.the_raw_ix
 
     def get_sample_counts():
         if len(ES_STATS.the_sample_counts) < len(ES_STATS.the_stats):
-            ES_STATS.the_sample_counts = [ es.sample for es in ES_STATS.the_stats]
+            ES_STATS.the_sample_counts = [ es.sample for es in ES_STATS.the_stats[:-1]]
         return ES_STATS.the_sample_counts 
 
     def get_clk_counts():
         if len(ES_STATS.the_clk_counts) < len(ES_STATS.the_stats):
-            ES_STATS.the_clk_counts = [ es.clk for es in ES_STATS.the_stats]
+            ES_STATS.the_clk_counts = [ es.clk for es in ES_STATS.the_stats[:-1]]
         return ES_STATS.the_clk_counts    
 
     def get_blen():
@@ -142,10 +148,6 @@ def analyse_es(args, raw_es):
     else:
         print(f'{DATA} ES Analysis: {es_valid[1]} PASS {es_valid[2]} sample FAIL {es_valid[3]} clk FAIL')
 
-STACKOFF=0
-
-
-
 def sample_count_plot(ax):
     ax.set_title(f'Plot of burst first sample count ES[{ES_SAMPLE}]')
     ax.plot(ES_STATS.get_sample_counts())
@@ -159,9 +161,10 @@ def timing_plot(ax):
     ax.plot(ES_STATS.get_clk_counts())
 
     
-def stack_plot(raw_adc, raw_ix, ch, ax, label=''):
+def stack_plot(raw_adc, ch, ax, label='', delta=False, stackoff=0):
     print(f'stack_plot {ax}')
     blen = ES_STATS.get_blen()
+    raw_ix = ES_STATS.get_raw_ix()
     nburst = len(raw_ix)
     print(f'PLOT nburst {len(raw_ix)} burst_len {blen} ch {ch}')
     
@@ -174,9 +177,75 @@ def stack_plot(raw_adc, raw_ix, ch, ax, label=''):
     #plt.xlabel('samples in burst')
 
     for ii, brst in enumerate(raw_ix):
-        y = raw_adc[brst+1:brst+blen,ch]+ STACKOFF*ii
-        if len(x) == len(y):
-            ax.plot(x, y, label=f'{ii}')
+        try:
+            y = raw_adc[brst+1:brst+blen,ch]+ stackoff*ii
+            if delta:
+                if ii == 0:
+                    y0 = y
+                y = y - y0
+
+            if len(x) == len(y):
+                ax.plot(x, y, label=f'{ii}')
+        except ValueError:
+           pass
+
+def correlate(raw_adc, ch0, _atol, _rtol):
+    ref = ch0[0]
+    matches = {}
+    ref = {}
+    blen = ES_STATS.get_blen()
+    raw_ix = ES_STATS.get_raw_ix()
+
+    for ic in ch0:
+        matches[ic] = []
+
+    for ib, brst in enumerate(raw_ix):
+        for icn, ic in enumerate(ch0):
+#            print(f'{ib},{icn} ch:{ic+1} brst:{brst}')
+            try:
+                y = raw_adc[brst+1:brst+blen, ic]
+                if ib==0:
+                    ref[ic] = y
+                _match = np.allclose(y, ref[ic], atol=_atol, rtol=_rtol)
+                if not _match:
+                    print(f' {ib},{icn} MATCH FAIL {ic}\n{_match}')
+#                print(f'[{ib}],[{ic}] : {match}')
+                matches[ic].append(_match)
+            except ValueError:
+                pass 
+
+    all_good = all([all(matches[ic]) for ic in ch0])
+    print('CORRELATE {}'.format('PASS: All Channels Match' if all_good else 'FAIL: Not all channels match'))
+    t = PrettyTable([f'{ch+1:02d}' for ch in ch0], border=False)
+    t.add_row(['T' if all(matches[ic]) else 'F' for ic in ch0])
+    print(t)
+
+MAX_FALLING_FIDUCIALS=2         # our FG falling edge is really quite .. slow
+
+def analyse_fiducial(args, raw_adc):
+    f0 = args.fiducial_plot-1
+    blen = ES_STATS.get_blen()
+    raw_ix = ES_STATS.get_raw_ix()
+    means = []
+    falling_value_count = 0
+
+    for ib, brst in enumerate(raw_ix):
+#        print(f'{ib},{brst} {f0}')
+        means.append(np.mean(raw_adc[brst+1:brst+blen, f0]))
+        if ib > 0 and means[ib] < means[ib-1]:
+            print(f'WARNING: fiducial {args.fiducial_plot} mean goes down at burst {ib}')
+            falling_value_count += 1
+
+    if args.verbose > 0:
+        t = PrettyTable(['burst', f'mean for fiducial CH{args.fiducial_plot:0d}'], border=False)
+        for ib, mean in enumerate(means):
+            t.add_row([ib, f'{mean:.2f}'])
+        print(t)
+
+    if falling_value_count > MAX_FALLING_FIDUCIALS:
+        print(f'WARNING: fiducial recorded a falling value in {falling_value_count} instances. acceptable: 0 .. {MAX_FALLING_FIDUCIALS}')
+    return falling_value_count
+
 
 def plot_timeseries(raw_adc, ch, ax, label):
     #plt.figure()
@@ -189,8 +258,10 @@ def plot_timeseries(raw_adc, ch, ax, label):
     ax.set_title(f'{label} Time-series plot of CH{ch}') 
     ax.plot(x, y_no_es, label=f'CH{ch}')
 
+
 def analyse(args):
     global STACKOFF
+    STACKOFF = args.stack_off
     fname = args.data[0]
     raw_adc = np.fromfile(fname, dtype=args.np_data_type)
     ll = len(raw_adc)//args.nchan
@@ -202,8 +273,21 @@ def analyse(args):
     
     print(f"raw_adc {raw_adc.shape}")
     print(f"raw_es  {raw_es.shape}")
-    analyse_es(args, raw_es)
 
+    if args.print_hash:
+        m = hashlib.sha1()
+        m.update(raw_adc)
+        print(f'fname {fname} sha1:{m.hexdigest()}')
+
+    analyse_es(args, raw_es)
+    
+    if args.fiducial_plot:
+        ok = analyse_fiducial(args, raw_adc)
+        if not ok:
+            print("WARNING: fiducial fail")
+
+    c1, c2, _atol, _rtol = args.check_range
+    correlate(raw_adc, [ch-1 for ch in range(c1, c2+1) ], _atol, _rtol)
 
     if args.stack_plot > 0:
         fig, axx = plt.subplots(3, 2, figsize=(12,10))
@@ -211,14 +295,13 @@ def analyse(args):
         sample_count_plot(axx[0][0])
         timing_plot(axx[1][0])
         
-        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, axx[0][1], f'signal CH{args.stack_plot}')
+        stack_plot(raw_adc, args.stack_plot-1, axx[0][1], f'signal CH{args.stack_plot}', stackoff=args.stack_off)
+        stack_plot(raw_adc, args.stack_plot-1, axx[1][1], f'diff signal CH{args.stack_plot}', delta=True, stackoff=args.stack_off)
         
         if args.fiducial_plot:
             plot_timeseries(raw_adc, args.fiducial_plot-1, axx[2][0], f'fiducial CH{args.fiducial_plot}')
-            stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.fiducial_plot-1, axx[2][1], f'fiducial CH{args.fiducial_plot}')
+            stack_plot(raw_adc, args.fiducial_plot-1, axx[2][1], f'fiducial CH{args.fiducial_plot}')
 
-        STACKOFF=20
-        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, axx[1][1], f'offset signal CH{args.stack_plot}')
         plt.show()
     return (raw_adc, raw_es)
 
@@ -228,6 +311,9 @@ def get_parser():
     parser.add_argument('--data_type', type=int, default=None, help='Use int16 or int32 for data demux.')
     parser.add_argument('--verbose', type=int, default=0, help='increase verbosity')
     parser.add_argument('--stack_plot', type=int, default=0, help='if non zero, make a stack plot of selected channel')
+    parser.add_argument('--stack_off', type=int, default=0, help='offset each element in stack to make a waterfall chart')
+    parser.add_argument('--check_range', type=str, default='1,1', help='c0,c1,[atol,rtol] : range of channels to check, atol, rtol: see numpy.rclose')
+    parser.add_argument('--print_hash', type=int, default=0, help='print sha1 of the file (protect against possibility of duplicate data')
     parser.add_argument('--fiducial_plot', type=int, default=0, help='if non zero, make a stack plot of selected channel')
     parser.add_argument('--uut', help='uut for title')
     parser.add_argument('data', nargs=1, help="data ")
@@ -249,6 +335,12 @@ def fix_args(args):
         args.ess = args.nchan
     args.ssb = args.nchan * args.WSIZE
     DATA = args.data[0]
+
+    _check_range = [ int(ii) for ii in args.check_range.split(',')]
+    args.check_range = [ 1, 1, 500, 10 ]
+    for ix, val in enumerate(_check_range):
+       args.check_range[ix] = val
+  
     print(f'processing {DATA}')
     return args
 
