@@ -79,19 +79,20 @@ class ES_STATS:
                 
         return (sample_fail_count == 0 and clk_fail_count == 0, ii, sample_fail_count, clk_fail_count)
 
+    # ES_STATS.the_stats[:-1] final burst may not be complete, ignore it.
     def get_raw_ix():
         if len(ES_STATS.the_raw_ix) < len(ES_STATS.the_stats):
-            ES_STATS.the_raw_ix = [ es.iraw for es in ES_STATS.the_stats]
+            ES_STATS.the_raw_ix = [ es.iraw for es in ES_STATS.the_stats[:-1]]
         return ES_STATS.the_raw_ix
 
     def get_sample_counts():
         if len(ES_STATS.the_sample_counts) < len(ES_STATS.the_stats):
-            ES_STATS.the_sample_counts = [ es.sample for es in ES_STATS.the_stats]
+            ES_STATS.the_sample_counts = [ es.sample for es in ES_STATS.the_stats[:-1]]
         return ES_STATS.the_sample_counts 
 
     def get_clk_counts():
         if len(ES_STATS.the_clk_counts) < len(ES_STATS.the_stats):
-            ES_STATS.the_clk_counts = [ es.clk for es in ES_STATS.the_stats]
+            ES_STATS.the_clk_counts = [ es.clk for es in ES_STATS.the_stats[:-1]]
         return ES_STATS.the_clk_counts    
 
     def get_blen():
@@ -215,6 +216,32 @@ def correlate(raw_adc, raw_ix, ch0, _atol, _rtol):
     t.add_row(['T' if all(matches[ic]) else 'F' for ic in ch0])
     print(t)
 
+MAX_FALLING_FIDUCIALS=2         # our FG falling edge is really quite .. slow
+
+def analyse_fiducial(args, raw_ix, raw_adc):
+    f0 = args.fiducial_plot-1
+    blen = ES_STATS.get_blen()
+    means = []
+    falling_value_count = 0
+
+    for ib, brst in enumerate(raw_ix):
+        print(f'{ib},{brst} {f0}')
+        means.append(np.mean(raw_adc[brst+1:brst+blen, f0]))
+        if ib > 0 and means[ib] < means[ib-1]:
+            print(f'WARNING: fiducial {args.fiducial_plot} mean goes down at burst {ib}')
+            falling_value_count += 1
+
+    if args.verbose > 0:
+        t = PrettyTable(['burst', f'mean for fiducial CH{args.fiducial_plot:0d}'], border=False)
+        for ib, mean in enumerate(means):
+            t.add_row([ib, f'{mean:.2f}'])
+            print(t)
+
+    if falling_value_count > MAX_FALLING_FIDUCIALS:
+        print(f'WARNING: fiducial recorded a falling value in {falling_value_count} instances. acceptable: 0 .. {MAX_FALLING_FIDUCIALS}')
+    return falling_value_count
+
+
 def plot_timeseries(raw_adc, ch, ax, label):
     #plt.figure()
     #plt.title(f'{label} Time-series plot of CH{ch}\n{DATA}')    
@@ -225,6 +252,7 @@ def plot_timeseries(raw_adc, ch, ax, label):
     x = range(0, len(y_no_es))
     ax.set_title(f'{label} Time-series plot of CH{ch}') 
     ax.plot(x, y_no_es, label=f'CH{ch}')
+
 
 def analyse(args):
     global STACKOFF
@@ -248,6 +276,11 @@ def analyse(args):
 
     analyse_es(args, raw_es)
     
+    if args.fiducial_plot:
+        ok = analyse_fiducial(args, ES_STATS.get_raw_ix(), raw_adc)
+        if not ok:
+            print("WARNING: fiducial fail")
+
     c1, c2, _atol, _rtol = args.check_range
     correlate(raw_adc, ES_STATS.get_raw_ix(), [ch-1 for ch in range(c1, c2+1) ], _atol, _rtol)
 
