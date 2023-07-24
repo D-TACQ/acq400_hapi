@@ -161,9 +161,10 @@ def timing_plot(ax):
     ax.plot(ES_STATS.get_clk_counts())
 
     
-def stack_plot(raw_adc, raw_ix, ch, ax, label='', delta=False, stackoff=0):
+def stack_plot(raw_adc, ch, ax, label='', delta=False, stackoff=0):
     print(f'stack_plot {ax}')
     blen = ES_STATS.get_blen()
+    raw_ix = ES_STATS.get_raw_ix()
     nburst = len(raw_ix)
     print(f'PLOT nburst {len(raw_ix)} burst_len {blen} ch {ch}')
     
@@ -188,11 +189,12 @@ def stack_plot(raw_adc, raw_ix, ch, ax, label='', delta=False, stackoff=0):
         except ValueError:
            pass
 
-def correlate(raw_adc, raw_ix, ch0, _atol, _rtol):
+def correlate(raw_adc, ch0, _atol, _rtol):
     ref = ch0[0]
     matches = {}
     ref = {}
     blen = ES_STATS.get_blen()
+    raw_ix = ES_STATS.get_raw_ix()
 
     for ic in ch0:
         matches[ic] = []
@@ -218,14 +220,15 @@ def correlate(raw_adc, raw_ix, ch0, _atol, _rtol):
 
 MAX_FALLING_FIDUCIALS=2         # our FG falling edge is really quite .. slow
 
-def analyse_fiducial(args, raw_ix, raw_adc):
+def analyse_fiducial(args, raw_adc):
     f0 = args.fiducial_plot-1
     blen = ES_STATS.get_blen()
+    raw_ix = ES_STATS.get_raw_ix()
     means = []
     falling_value_count = 0
 
     for ib, brst in enumerate(raw_ix):
-        print(f'{ib},{brst} {f0}')
+#        print(f'{ib},{brst} {f0}')
         means.append(np.mean(raw_adc[brst+1:brst+blen, f0]))
         if ib > 0 and means[ib] < means[ib-1]:
             print(f'WARNING: fiducial {args.fiducial_plot} mean goes down at burst {ib}')
@@ -277,26 +280,25 @@ def analyse(args):
     analyse_es(args, raw_es)
     
     if args.fiducial_plot:
-        ok = analyse_fiducial(args, ES_STATS.get_raw_ix(), raw_adc)
+        ok = analyse_fiducial(args, raw_adc)
         if not ok:
             print("WARNING: fiducial fail")
 
     c1, c2, _atol, _rtol = args.check_range
-    correlate(raw_adc, ES_STATS.get_raw_ix(), [ch-1 for ch in range(c1, c2+1) ], _atol, _rtol)
+    correlate(raw_adc, [ch-1 for ch in range(c1, c2+1) ], _atol, _rtol)
 
-#    correlate(raw_adc, ES_STATS.get_raw_ix(), (1,2,3,4,5,6,7,8,33,34))
     if args.stack_plot > 0:
         fig, axx = plt.subplots(3, 2, figsize=(12,10))
         fig.suptitle(f'Burst Mode Test: {DATA}')
         sample_count_plot(axx[0][0])
         timing_plot(axx[1][0])
         
-        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, axx[0][1], f'signal CH{args.stack_plot}', stackoff=args.stack_off)
-        stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.stack_plot-1, axx[1][1], f'diff signal CH{args.stack_plot}', delta=True, stackoff=args.stack_off)
+        stack_plot(raw_adc, args.stack_plot-1, axx[0][1], f'signal CH{args.stack_plot}', stackoff=args.stack_off)
+        stack_plot(raw_adc, args.stack_plot-1, axx[1][1], f'diff signal CH{args.stack_plot}', delta=True, stackoff=args.stack_off)
         
         if args.fiducial_plot:
             plot_timeseries(raw_adc, args.fiducial_plot-1, axx[2][0], f'fiducial CH{args.fiducial_plot}')
-            stack_plot(raw_adc, ES_STATS.get_raw_ix(), args.fiducial_plot-1, axx[2][1], f'fiducial CH{args.fiducial_plot}')
+            stack_plot(raw_adc, args.fiducial_plot-1, axx[2][1], f'fiducial CH{args.fiducial_plot}')
 
         plt.show()
     return (raw_adc, raw_es)
