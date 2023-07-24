@@ -206,9 +206,11 @@ def correlate(raw_adc, ch0, _atol, _rtol):
                 y = raw_adc[brst+1:brst+blen, ic]
                 if ib==0:
                     ref[ic] = y
-                match = np.allclose(y, ref[ic], atol=_atol, rtol=_rtol)
+                _match = np.allclose(y, ref[ic], atol=_atol, rtol=_rtol)
+                if not _match:
+                    print(f' {ib},{icn} MATCH FAIL {ic}\n{_match}')
 #                print(f'[{ib}],[{ic}] : {match}')
-                matches[ic].append(match)
+                matches[ic].append(_match)
             except ValueError:
                 pass 
 
@@ -238,7 +240,7 @@ def analyse_fiducial(args, raw_adc):
         t = PrettyTable(['burst', f'mean for fiducial CH{args.fiducial_plot:0d}'], border=False)
         for ib, mean in enumerate(means):
             t.add_row([ib, f'{mean:.2f}'])
-            print(t)
+        print(t)
 
     if falling_value_count > MAX_FALLING_FIDUCIALS:
         print(f'WARNING: fiducial recorded a falling value in {falling_value_count} instances. acceptable: 0 .. {MAX_FALLING_FIDUCIALS}')
@@ -335,7 +337,7 @@ def fix_args(args):
     DATA = args.data[0]
 
     _check_range = [ int(ii) for ii in args.check_range.split(',')]
-    args.check_range = [ 1, 1, 250, 1 ]
+    args.check_range = [ 1, 1, 500, 10 ]
     for ix, val in enumerate(_check_range):
        args.check_range[ix] = val
   
