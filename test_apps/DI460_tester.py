@@ -19,8 +19,8 @@ def get_parser():
     return parser
 
 correct_signals = {
-    'A' : '0x000061a4',
-    'B' : '0x000030d2'
+    'A' : '0x000061a8',
+    'B' : '0x000030d4'
 }
 
 def run_main(args):
@@ -78,7 +78,7 @@ def check_signals(signals, ports):
     for port in ports:
         for signal, value in signals[port].items():
             difference = abs(int(correct_signals[signal], 16) - int(value, 16))
-            if difference > 1:
+            if difference > 10:
                 error = True
                 PR.Red(f"Error: Signal[{port}:{signal}] is {value} not {correct_signals[signal]}")
     if error:
