@@ -887,7 +887,11 @@ class Acq400:
 
     def run_livetop(self):
         with netclient.Netclient(self.uut, AcqPorts.LIVETOP) as nc:
-            print(nc.receive_message(self.NL, 256))
+            while True:
+                rx = nc.receive_message(self.NL, 256)
+                print(rx)
+                if rx.startswith("TIMED_OUT"):
+                    break
             nc.sock.shutdown(socket.SHUT_RDWR)
             nc.sock.close()
 
