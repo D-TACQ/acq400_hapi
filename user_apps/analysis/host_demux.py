@@ -250,7 +250,7 @@ def save_dirfile(args, raw_channels):
     uutname = args.uut
     for enum, channel in enumerate(raw_channels):
         if args.schan:
-            if enum not in args.schan:
+            if enum + 1 not in args.schan:
                 continue
         data_file = open("{}/{}_{:02d}.dat".format(args.saveroot, uutname, enum+1), "wb+")
         channel.tofile(data_file, '')
