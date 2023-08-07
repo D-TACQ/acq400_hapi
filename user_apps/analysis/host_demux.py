@@ -249,6 +249,9 @@ def read_data_file(args, NCHAN):
 def save_dirfile(args, raw_channels):
     uutname = args.uut
     for enum, channel in enumerate(raw_channels):
+        if args.schan:
+            if enum + 1 not in args.schan:
+                continue
         data_file = open("{}/{}_{:02d}.dat".format(args.saveroot, uutname, enum+1), "wb+")
         channel.tofile(data_file, '')
 
@@ -566,6 +569,9 @@ def run_main(args):
 
     process_data(args)
 
+def list_of_ints(string):
+    return list(map(int, string.split(',')))
+
 def get_parser(parser=None):
     if not parser:
         is_client = True
@@ -591,6 +597,7 @@ def get_parser(parser=None):
     parser.add_argument('--pcfg', default=None, type=str, help="plot configuration file, overrides pchan")
     parser.add_argument('--callback', default=None, help="callback for external automation")
     parser.add_argument('--traces_per_plot', default=1, type=int, help="traces_per_plot")
+    parser.add_argument('--schan', default=None, type=list_of_ints, help="channels to save ie 1,49,50")
     if is_client:
         parser.add_argument('uuts', nargs='+',help='uut - for auto configuration data_type, nchan, egu or just a label')
     return parser
