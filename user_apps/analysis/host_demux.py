@@ -248,11 +248,12 @@ def read_data_file(args, NCHAN):
 
 def save_dirfile(args, raw_channels):
     uutname = args.uut
-    for enum, channel in enumerate(raw_channels):
+    for ch0, channel in enumerate(raw_channels):
+        ch1 = ch0+1
         if args.schan:
-            if enum + 1 not in args.schan:
+            if ch1 not in args.schan:
                 continue
-        data_file = open("{}/{}_{:02d}.dat".format(args.saveroot, uutname, enum+1), "wb+")
+        data_file = open("{}/{}_{:02d}.dat".format(args.saveroot, uutname, ch1), "wb+")
         channel.tofile(data_file, '')
 
     print("data saved to directory: {}".format(args.saveroot))
