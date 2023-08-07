@@ -3,6 +3,7 @@
 import acq400_hapi
 import argparse
 import threading
+import time
 
 """
 Usage:
@@ -47,8 +48,9 @@ def config_uuts(uuts, args):
             if uut.is_master:
                 role = args.toprole
             cmd = f"{role} {args.fclk} {args.fin}"
-            print(f"sync_role: {uutname} {cmd}")
+            print(f"Sync_role: {uutname} {cmd}")
             uut.s0.sync_role = cmd
+            time.sleep(5)
 
         if args.clk_route in routing:
             print(f"CLK routing: {uutname} {args.clk_route}")
@@ -58,8 +60,16 @@ def config_uuts(uuts, args):
             print(f"TRG routing: {uutname} {args.trg_route}")
             routing[args.trg_route]['trg_func'](uut)
 
-        if args.gpio_to_d1:
+        if args.gpio_to_trg:
+            print(f"GPIO to TRG: {uutname} {args.gpio_to_trg}")
             route_hdmi_to_d1(uut)
+
+        if args.rtm:
+            print(f"Enable RTM: {uutname} rtm_translen{args.rtm_translen}")
+            setup_rtm(uut, args)
+
+        if args.TRG_DX:
+            uut.s1.TRG_DX = args.TRG_DX
 
     threads = []
     for uut_item in uuts:
@@ -73,7 +83,6 @@ def config_uuts(uuts, args):
 def route_MASTER_clk(uut):
     if not uut.is_master:
         uut.s0.SIG_SRC_CLK_0 = 'HDMI'
-        uut.s0.SYS_CLK_BYPASS = 'ON'
         uut.s0.SYS_CLK_FPMUX = 'ZCLK'
         uut.s0.SIG_ZCLK_SRC = 'CLK.d0'
     if uut.is_master:
@@ -82,14 +91,12 @@ def route_MASTER_clk(uut):
 
 def route_HDMI_clk(uut):
     uut.s0.SIG_SRC_CLK_0 = 'HDMI'
-    uut.s0.SYS_CLK_BYPASS = 'ON'
     uut.s0.SYS_CLK_FPMUX = 'ZCLK'
     uut.s0.SIG_ZCLK_SRC = 'CLK.d0'
     if uut.is_master:
         uut.s0.SIG_SYNC_OUT_CLK_DX = 'd0'
 
 def route_FP_clk(uut):
-    uut.s0.SYS_CLK_BYPASS = 'ON'
     if not uut.is_master:
         uut.s0.SYS_CLK_FPMUX = 'ZCLK'
         uut.s0.SIG_ZCLK_SRC = 'CLK.d0'
@@ -115,10 +122,18 @@ def route_FP_trg(uut):
 
 def route_hdmi_to_d1(uut):
     uut.s0.SIG_SRC_TRG_1 = 'HDMI_GPIO'
+    uut.s1.TRG_DX = 'd1'
     if uut.is_master:
         uut.s0.SIG_EVENT_SRC_1 = 'HDMI_GPIO'
         uut.s0.SIG_SYNC_OUT_GPIO = 'EVNT'
         uut.s0.SIG_SYNC_OUT_GPIO_DX = 'd1'
+
+def setup_rtm(uut, args):
+    uut.s1.RGM = 'RTM'
+    uut.s1.RGM_DX = args.rtm
+    uut.s1.RGM_SENSE = 'rising'
+    if args.rtm_translen:
+        uut.s1.RTM_TRANSLEN = args.rtm_translen
 
 routing = {
     'MASTER' : {
@@ -160,7 +175,10 @@ def get_parser():
     parser.add_argument('--fin',  default='1M', help="external clock rate")
     parser.add_argument('--clk_route', help="clock routing MASTER, HDMI or FP")
     parser.add_argument('--trg_route', help="trigger routing HDMI or FP")
-    parser.add_argument('--gpio_to_d1', type=int, help="Routes hdmi_gpio to trg d1 on all boxes")
+    parser.add_argument('--rtm', default=None, help="Enable rtm and set TRG to passed value ie d0")
+    parser.add_argument('--rtm_translen', default=None, type=int, help="rtm_translen value to set")
+    parser.add_argument('--gpio_to_trg', default=None, help="Routes hdmi_gpio to passed trg ie d1")#TRG:DX
+    parser.add_argument('--TRG_DX', default=None, help="Set 1:TRG:DX source")
     parser.add_argument('--toprole', default=None, help="role to use for the masters")
     parser.add_argument('--masters', required=True, type=list_of_strings, help="master uuts")
     parser.add_argument('--slaves', required=True, type=list_of_strings, help="slave uuts")
