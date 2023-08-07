@@ -1,0 +1,6 @@
+#!/bin/bash
+# set python path from somewhere else
+# example use:
+# source ~/PROJECTS/acq400_hapi/setpath2
+export PYTHONPATH=$(dirname $(realpath "${BASH_SOURCE[0]}" ))
+
