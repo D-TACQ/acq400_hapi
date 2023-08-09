@@ -6,6 +6,7 @@ import os
 import re
 import numpy as np
 import matplotlib.pyplot as plt
+#from pprint import pprint
 
 import acq400_hapi
 from acq400_hapi import PR
@@ -13,7 +14,11 @@ from acq400_hapi import PR
 """
 Usage:
 
-./user_apps/analysis/cluster_plotter.py --src=/mnt/afhba.?/acq2206_0??/000001/???? --grouping=2 --chans=1 acq2206_010 acq2206_009 acq2206_008 acq2206_007 acq2206_006 acq2206_005
+./user_apps/analysis/cluster_plotter.py --chans=1 --cycles=1:2 --secs=1 --clk=2M \
+    acq2206_010 acq2206_009 acq2206_008 acq2206_007 acq2206_006 acq2206_005
+
+./user_apps/analysis/cluster_plotter.py --chans=1 --cycles=1:2 --secs=1 --clk=2M --nchan=64 --data_type=16\
+    acq2206_010 acq2206_009 acq2206_008 acq2206_007 acq2206_006 acq2206_005
 """
 
 type_map = {
@@ -31,67 +36,67 @@ type_map = {
     },
 }
 
-class globals:
-    uuts = {}
-
-
 def run_main(args):
-    file_dict = get_files(**vars(args))
-    groups = grouper(list(file_dict.keys()), args.grouping)
-    file_dict = demux_data(file_dict, args)
-    if args.multi:
-        plot_data_multi(file_dict, groups, args.combine, args)
-    else:
-        plot_data(file_dict, groups, args.combine, args)
+    scaffold = build_scaffold(**vars(args))
+    #pprint(scaffold)
+    demux_and_plot(scaffold, **vars(args))
 
+def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, **kwargs):
+    print('setup')
+    scaffold = {}
+    
+    src = '/mnt/afhba.*/acq2?06_???'
+    uut_dirs = sorted(glob.glob(src))
+    cycles = list(map(int, cycles.split(':')))
+    for uut_dir in uut_dirs:
+        uutname = identify_uut(uut_dir)
+        if uutname not in uuts:
+            continue
 
-def get_files(src, uuts, nchan, data_type, **kwargs):
-    print('Finding Files')
-    file_dict = {}
-    for glob_str in src:
-        files = glob.glob(glob_str)
-        files.sort()
+        scaffold[uutname] = {}
+        scaffold[uutname]['path'] = uut_dir
+        dat_files, total_files, filesize = get_files(uut_dir, cycles[0], cycles[-1])
 
-        for filepath in files:
-            dirname = os.path.dirname(filepath)
-            filename = os.path.basename(filepath)
-            if dirname not in file_dict:
-                filesize = os.path.getsize(filepath)
-                uut = conn_uut(dirname, uuts)
-                if not nchan:
-                    nchan = int(uut.s0.NCHAN)
-                if not data_type:
-                    if uut.s0.data32 == 0:
-                        data_type = 32
-                    else:
-                        data_type = 16
-                wsize = type_map[data_type]['wsize']
-                file_dict[dirname] = {}
-                file_dict[dirname]['uut'] = uut
-                file_dict[dirname]['chan_len'] = int(filesize / nchan / wsize)
-                file_dict[dirname]['total_files'] = 0
-                file_dict[dirname]['channels'] = {}
-                file_dict[dirname]['files'] = []
-                file_dict[dirname]['filesize'] = filesize
-                file_dict[dirname]['channels'] = {}
-                file_dict[dirname]['data_type'] = type_map[data_type]['type']
-                file_dict[dirname]['wsize'] = wsize
-                file_dict[dirname]['nchan'] = nchan
+        if offline:
+            uut = None
+        else:
+            uut = attach_api(uutname)
 
-            file_dict[dirname]['total_files'] += 1
-            file_dict[dirname]['files'].append(filename)
+        _nchan = nchan
+        if not nchan:
+            if not uut:
+                exit('--nchan required')
+            _nchan = int(uut.s0.NCHAN)
 
-    return file_dict
+        _data_type = data_type
+        if not data_type:
+            if not uut:
+                exit('--data_type required')
+            if uut.s0.data32 == 0:
+                _data_type = 32
+            else:
+                _data_type = 16
 
-def conn_uut(path, uuts):
-    uutname = identify_uut(path)
-    if not uutname:
-        uutname = uuts[0]
-    if uutname not in globals.uuts:
-        PR.Green(f"Connecting to {uutname}")
-        globals.uuts[uutname] = acq400_hapi.factory(uutname)
-        globals.uuts[uutname].name = uutname
-    return globals.uuts[uutname]
+        _clk = clk
+        if not clk and secs:
+            if not uut:
+                exit('--secs needs --clk')
+            _clk = int(acq400_hapi.pv(uut.s0.SIG_CLK_MB_SET))
+            _clk = int(_clk / int(uut.s0.decimate))
+        
+        scaffold[uutname]['api'] = uut
+        scaffold[uutname]['nchan'] = _nchan
+        scaffold[uutname]['clk'] = _clk
+        scaffold[uutname]['data_type'] = type_map[_data_type]['type']
+        scaffold[uutname]['wsize'] = type_map[_data_type]['wsize']
+        scaffold[uutname]['cycle_start'] = cycles[0]
+        scaffold[uutname]['cycle_end'] = cycles[-1]
+        scaffold[uutname]['dat_files'] = dat_files
+        scaffold[uutname]['total_files'] = total_files
+        scaffold[uutname]['file_size'] = filesize
+        scaffold[uutname]['chan_len'] = int(filesize / _nchan / type_map[_data_type]['wsize'])
+        scaffold[uutname]['data'] = {}
+    return scaffold
 
 def identify_uut(path):
     match =  re.search("(acq[0-9]{4}_[0-9]{3})", path)
@@ -99,143 +104,105 @@ def identify_uut(path):
         return match.group(0)
     return match
 
-def grouper(arr, grouping):
-    groups = []
-    i = 0
-    if not grouping:
-        for loc in arr:
-            group = {}
-            group['loc'] = loc
-            group['group'] = [loc]
-            groups.append(group)
-        return groups
-    while arr:
-        loc1 =  arr.pop(0)
-        loc1_group = loc1.split('/')[-abs(grouping)]
-        if not grouping:
-            loc1_group = loc1
-        current = [loc1]
-        i = 0
-        while i < len(arr):
-            loc2 = arr[i]
-            loc2_group = loc2.split('/')[-abs(grouping)]
-            if not grouping:
-                loc2_group = loc2
-            if loc1_group == loc2_group:
-                popped = arr.pop(i)
-                current.append(popped)
-                i -= 1
-            i += 1
-        group = {}
-        group['loc'] = loc1_group
-        group['group'] = current
-        groups.append(group)
-    return groups
+def attach_api(uutname):
+    try:
+        return acq400_hapi.factory(uutname)
+    except:
+        print(f"unable to connect to {uutname}")
+        return None
+    
+def get_files(path, start, end):
+    file_list = []
+    total_files = 0
+    size = None
+    for cycle in range(start, end + 1):
+        file_glob = os.path.join(path, f"{cycle:06d}", "?.??")
+        files = glob.glob(file_glob)
+        if not files:
+            continue
+        files.sort()
+        total_files += len(files)
+        file_list.extend(files)
+    size = os.path.getsize(file_list[0])
+    return file_list, total_files, size
 
-def demux_data(file_dict, args):
-    print('Demuxing')
-    for dirname, item in file_dict.items():
+def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
+    print('demuxing data')
+    title = ''
+    x_arr = []
+    for uut, item in scaffold.items():
+
         i0 = 0
         nchan = item['nchan']
         data_type = item['data_type']
-        for file in item['files']:
+        total_files = item['total_files']
+        chan_len = item['chan_len']
+        cycle_start = item['cycle_start']
+        cycle_end = item['cycle_end']
+        title = f"{cycle_start:06d} - {cycle_end:06d}"
 
-            filepath = os.path.join(dirname, file)
-            data = np.fromfile(filepath, dtype=data_type)
-
+        for filepath in item['dat_files']:
             i1 = i0 + item['chan_len']
-
-            for chan in args.chans:
-
-                if chan not in item['channels']:
-                    total_files = item['total_files']
-                    zero_arr = np.zeros(item['chan_len'] * total_files, dtype=data_type)
-                    item['channels'][chan] = zero_arr
-
+            data = np.fromfile(filepath, dtype=data_type)
+            for chan in chans:
+                if chan not in item['data']:
+                    item['data'][chan] = np.zeros(chan_len * total_files, dtype=data_type)
                 ichan = chan - 1
-                item['channels'][chan][i0:i1] = (data[ichan::nchan])
+                item['data'][chan][i0:i1] = (data[ichan::nchan])
             i0 = i1
-        if args.egu:
-            args.ylabel = 'volts'
-            for chan, data in item['channels'].items():
-                item['channels'][chan] = item['uut'].chan2volts(chan, data)
 
-    return file_dict
+        if egu:
+            if not item['api']:
+                exit('no calibration unable to plot by volts')
+            for chan in item['data']:
+                item['data'][chan] = item['api'].chan2volts(chan, item['data'][chan])
+        print(f"{uut} Plotted")
+        if secs:
+            if len(x_arr) == 0:
+                offset = 0
+                if cycle_start > 1:
+                    offset = chan_len * 66 * (cycle_start - 1)
+                x_arr = np.arange(offset, len(item['data'][1]) + offset)
+                x_arr = x_arr / item['clk']
+            plt.plot(x_arr, item['data'][1], label=uut)
+            continue
+        plt.plot(item['data'][1], label=uut)
 
-def plot_data(file_dict, groups, combine, args):
-    print('Plotting')
-    title = ''
-    for i, item in enumerate(groups):
-
-        group = item['group']
-        title += f"{group[0]} " 
-        group_arrs = {}
-        for ii, dirname in enumerate(group):
-            for chan, data in file_dict[dirname]['channels'].items():
-                if not combine:
-                    plt.plot(data, label=item['loc'])
-                    continue
-                if ii == 0:
-                    group_arrs[chan] = []
-                group_arrs[chan].append(data)
-        if combine:
-            for chan, arrs in group_arrs.items():
-                plt.plot(np.concatenate(arrs), label=item['loc'])
-
-    plt.title(title)
-    plt.ylabel(args.ylabel)
-    plt.xlabel(args.xlabel)
+    print('Showing plot')
     plt.legend(loc='upper right')
-    plt.show()
-
-def plot_data_multi(file_dict, groups, combine, args):
-    print('Plotting multi')
-    fig, axs = plt.subplots(len(groups))
-    if len(groups) == 1:
-        axs = [axs]
-    title = ''
-    for i, item in enumerate(groups):
-        group = item['group']
-        title += f"{group[0]} "
-        groupdata = {}
-        for ii, dirname in enumerate(group):
-            for chan, data in file_dict[dirname]['channels'].items():
-                if not combine:
-                    axs[i].set_title(item['loc'])
-                    axs[i].plot(data)
-                if ii == 0:
-                    groupdata[chan] = []
-                groupdata[chan] = np.append(groupdata[chan], data)
-            
-        if combine:
-            axs[i].set_title(item['loc'])
-            for chan, data in groupdata.items():
-                axs[i].plot(data)
-
+    plt.xlabel('Seconds')
+    plt.ylabel('raw ADC codes')
+    if egu:
+        plt.ylabel('Volts')
     plt.title(title)
-    plt.ylabel(args.ylabel)
-    plt.xlabel(args.xlabel)
-    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.57, hspace=None)
     plt.show()
-
-def list_of_strings(string):
-    return string.split(',')
 
 def list_of_ints(string):
     return list(map(int, string.split(',')))
 
+def prefix_number(value):
+    prefixes = {
+        'K': 1000,
+        'M': 1000000,
+    }
+    if value[-1] in prefixes:
+        num, mag = value[:-1], value[-1]
+        return int(float(num) * prefixes[mag])
+    else:
+        return int(value)
+
+
 def get_parser():
     parser = argparse.ArgumentParser(description='Cluster plotter')
-    parser.add_argument('--src', default=None, type=list_of_strings, help="glob file source ie /mnt/folder1/*,/mnt/folder2/*")
-    parser.add_argument('--grouping', default=0, type=int, help="which path part to group by")
+    parser.add_argument('--src', default='/mnt/afhba.*/acq2?06_???', help="src dir")
     parser.add_argument('--chans', default=1, type=list_of_ints, help="channels to plot 1,2,3")
-    parser.add_argument('--data_type', default=None, type=int, help="Data type to use")
-    parser.add_argument('--nchan', default=None, type=int, help="Number of chan")
     parser.add_argument('--egu', default=0, type=int, help="Plot volts")
-    parser.add_argument('--combine', default=0, type=int, help="Combine grouped data into single data arr")
-    parser.add_argument('--multi', default=0, type=int, help="Plot per group")
-    parser.add_argument('--ylabel', default='raw ADC codes', help="Y label to use")
-    parser.add_argument('--xlabel', default='Samples', help="X label to use")
+    parser.add_argument('--secs',  default=0, type=int, help="Plot secs")
+    parser.add_argument('--cycles', default=1, help="single cycle 1 or start end 3:7 to plot")
+    parser.add_argument('--nchan', default=None, type=int, help="Number of chan")
+    parser.add_argument('--data_type', default=None, type=int, help=f"Data type to use {type_map}")
+    parser.add_argument('--clk', default=None, type=prefix_number, help="clk speed")
+    parser.add_argument('--offline', default=0, type=int, help="Don't try to connect to uuts")
     parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
 
