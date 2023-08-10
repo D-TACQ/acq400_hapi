@@ -6,6 +6,7 @@ import os
 import re
 import numpy as np
 import matplotlib.pyplot as plt
+import threading
 #from pprint import pprint
 
 import acq400_hapi
@@ -41,11 +42,10 @@ def run_main(args):
     #pprint(scaffold)
     demux_and_plot(scaffold, **vars(args))
 
-def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, **kwargs):
+def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,**kwargs):
     print('setup')
     scaffold = {}
-    
-    src = '/mnt/afhba.*/acq2?06_???'
+    threads = []
     uut_dirs = sorted(glob.glob(src))
     cycles = list(map(int, cycles.split(':')))
     for uut_dir in uut_dirs:
@@ -85,6 +85,11 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, **kw
             if hasattr(uut.s1, 'ACQ480_FPGA_DECIM'):
                 decim = int(acq400_hapi.pv(uut.s1.ACQ480_FPGA_DECIM))
                 _clk = int(_clk / decim)
+
+        if egu:
+            thread = threading.Thread(target=uut.fetch_all_calibration)
+            thread.start()
+            threads.append(thread)
         
         scaffold[uutname]['api'] = uut
         scaffold[uutname]['nchan'] = _nchan
@@ -98,6 +103,14 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, **kw
         scaffold[uutname]['file_size'] = filesize
         scaffold[uutname]['chan_len'] = int(filesize / _nchan / type_map[_data_type]['wsize'])
         scaffold[uutname]['data'] = {}
+
+    if not scaffold:
+        exit('No valid uuts found')
+    
+    if len(threads) > 0:
+        for thread in threads:
+            thread.join()
+
 
     print(f"Clk: {_clk}")
     print(f"Nchan: {_nchan}")
@@ -154,7 +167,10 @@ def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
                 if chan not in item['data']:
                     item['data'][chan] = np.zeros(chan_len * total_files, dtype=data_type)
                 ichan = chan - 1
-                item['data'][chan][i0:i1] = (data[ichan::nchan])
+                try:
+                    item['data'][chan][i0:i1] = (data[ichan::nchan])
+                except:
+                    exit('Bad nchan value')
             i0 = i1
 
         if egu:
@@ -176,10 +192,12 @@ def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
 
     print('Showing plot')
     plt.legend(loc='upper right')
-    plt.xlabel('Seconds')
+    plt.xlabel('Samples')
     plt.ylabel('raw ADC codes')
     if egu:
         plt.ylabel('Volts')
+    if secs:
+        plt.xlabel('Seconds')
     plt.title(title)
     plt.show()
 
