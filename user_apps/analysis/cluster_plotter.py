@@ -82,7 +82,9 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, **kw
             if not uut:
                 exit('--secs needs --clk')
             _clk = int(acq400_hapi.pv(uut.s0.SIG_CLK_MB_SET))
-            _clk = int(_clk / int(uut.s0.decimate))
+            if hasattr(uut.s1, 'ACQ480_FPGA_DECIM'):
+                decim = int(acq400_hapi.pv(uut.s1.ACQ480_FPGA_DECIM))
+                _clk = int(_clk / decim)
         
         scaffold[uutname]['api'] = uut
         scaffold[uutname]['nchan'] = _nchan
@@ -96,6 +98,10 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, **kw
         scaffold[uutname]['file_size'] = filesize
         scaffold[uutname]['chan_len'] = int(filesize / _nchan / type_map[_data_type]['wsize'])
         scaffold[uutname]['data'] = {}
+
+    print(f"Clk: {_clk}")
+    print(f"Nchan: {_nchan}")
+    print(f"Data type: {_data_type}")
     return scaffold
 
 def identify_uut(path):
