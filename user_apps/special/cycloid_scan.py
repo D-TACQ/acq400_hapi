@@ -91,6 +91,13 @@ if __name__ == '__main__':
     parser.add_argument('--alpha', default=alpha, type=int, help='alpha: distance covered to deceleration end point')
     args = parser.parse_args()
     plt.title(f'Tramp:{args.nramp} A0:{args.A0} A1:{args.A1} nrs:{args.nrs} alpha:{args.alpha}')
-    plt.plot(cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha))
+    data = cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha)
+    plt.plot(data)
     plt.show()
-    pass
+    fn = f'cycloid-{args.nramp}-{args.A0}-{args.A1}-{args.nrs}-{args.alpha}.dat'
+    data.astype(np.int16).tofile(fn)
+    print(f'saved as {fn}')
+    
+
+
+
