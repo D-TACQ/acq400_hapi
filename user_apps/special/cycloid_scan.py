@@ -8,6 +8,8 @@ Created on 14 Aug 2023
 import numpy as np
 import matplotlib.pyplot as plt
 
+import argparse
+
 '''
 1. ramp north from A0 to A1 in Tramp
 2. decelerate north to 0 from ww
@@ -17,6 +19,7 @@ import matplotlib.pyplot as plt
 6. accelerate north from 0 to ww
 '''
 def cycloid_scan(nramp, A0, A1, nrs, alpha):
+    print(f'cycloid scan {nramp} {A0} {A1} {nrs} {alpha}')
     nfull = nramp + nrs + nramp + nrs
     print(f'nfull {nfull}')
     data = np.zeros(nfull)
@@ -36,7 +39,7 @@ def cycloid_scan(nramp, A0, A1, nrs, alpha):
     s0 = data[ii-1]
     for ii2 in range(0, nrs//2):        
         data[ii] = s0 + uu - acc*(1*1)/2
-        print(f's0:{s0} uu:{uu} data[ii]:{data[ii]}')
+        #print(f's0:{s0} uu:{uu} data[ii]:{data[ii]}')
         if uu > 0:
             uu -= acc
         else:
@@ -74,6 +77,20 @@ def cycloid_scan(nramp, A0, A1, nrs, alpha):
     return data    
     
 if __name__ == '__main__':
-    plt.plot(cycloid_scan(512, 1000, 11000, 256, 1200))
+    nramp = 512
+    A0 =  1000
+    A1 = 11000
+    nrs = 256
+    alpha = 1200
+    
+    parser = argparse.ArgumentParser(description="cycloid scan")
+    parser.add_argument('--nramp', default=nramp, type=int, help='nramp: proxy for Tramp')
+    parser.add_argument('--A0', default=A0, type=int, help='A0: start position')
+    parser.add_argument('--A1', default=A1, type=int, help='A1: end position')
+    parser.add_argument('--nrs', default=nrs, type=int, help='nrs: proxy for Trs')
+    parser.add_argument('--alpha', default=alpha, type=int, help='alpha: distance covered to deceleration end point')
+    args = parser.parse_args()
+    plt.title(f'Tramp:{args.nramp} A0:{args.A0} A1:{args.A1} nrs:{args.nrs} alpha:{args.alpha}')
+    plt.plot(cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha))
     plt.show()
     pass

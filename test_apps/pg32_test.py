@@ -3,11 +3,12 @@
 import acq400_hapi
 import subprocess
 import time
+import os
 
 UUT='acq2206_017'
 PGSITE = 3
 TOP='acq1001_594'
-MAXSHOTS=10
+MAXSHOTS=int(os.getenv("PG32_MAXSHOTS", "10"))
 
 
 def run_main():
@@ -16,7 +17,7 @@ def run_main():
 
     for ii in range(0, MAXSHOTS):
         print('-'*80)
-        print(f'SHOT={ii}')
+        print(f'SHOT={ii} / {MAXSHOTS}')
         top_result = subprocess.Popen(['./user_apps/acq1001/run_livetop.py', TOP], stdout=subprocess.PIPE, text=True)
         while acq400_hapi.pv(top.s0.CONTINUOUS_STATE) != "ARM":
             time.sleep(1)
