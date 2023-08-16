@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import argparse
+import os
 
 '''
 1. ramp north from A0 to A1 in Tramp
@@ -105,12 +106,16 @@ def ui(cmd_args=None):
     parser.add_argument('--A1', default=A1, type=int, help='A1: end position')
     parser.add_argument('--nrs', default=nrs, type=int, help='nrs: proxy for Trs')
     parser.add_argument('--alpha', default=alpha, type=int, help='alpha: distance covered to deceleration end point')
+    parser.add_argument('--root', default="./", help='root directory, default ./')
+    parser.add_argument('--ch', default='1', help='channel number')
     return parser.parse_args(cmd_args)
 
 def cycloid_from_cmd(cmd_args):
     args = ui(cmd_args)
     data = cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha)
-    fn = f'cycloid-{args.nramp}-{args.A0}-{args.A1}-{args.nrs}-{args.alpha}.dat'
+    if args.root != './':
+        os.makedirs(args.root, exist_ok=True)
+    fn = f'{args.root}/cycloid-{args.nramp}-{args.A0}-{args.A1}-{args.nrs}-{args.alpha}_{args.ch}.dat'
     data.astype(np.int16).tofile(fn)
     print(f'saved as {fn}')
     return data
