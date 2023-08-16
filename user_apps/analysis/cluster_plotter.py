@@ -196,11 +196,16 @@ def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
                 offset = 0
                 if cycle_start > 1:
                     offset = chan_len * 66 * (cycle_start - 1)
-                x_arr = np.arange(offset, len(item['data'][1]) + offset)
+                length = len(list(item['data'].values())[0])
+                x_arr = np.arange(offset, length + offset)
                 x_arr = x_arr / item['clk']
-            plt.plot(x_arr, item['data'][1], label=uut)
-            continue
-        plt.plot(item['data'][1], label=uut)
+
+        for chan in chans:
+            label = f"{uut} CH{chan}"
+            if len(x_arr) == 0:
+                plt.plot(item['data'][chan], label=label)
+                continue
+            plt.plot(x_arr, item['data'][chan], label=label)
 
     print('Showing plot')
     plt.legend(loc='upper right')
