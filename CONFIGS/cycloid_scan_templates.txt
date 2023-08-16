@@ -1,0 +1,10 @@
+# ./waves/build_templates.py < CONFIGS/cycloid_scan_templates.txt
+AA/1 cycloid_scan
+AA/2 parabola
+AA/3 dc --offset 0
+AA/4 pulse --pre 511 --post 512
+BB/4 pulse --pre 10 --post 0
+#ZZ/9 badone
+
+
+
