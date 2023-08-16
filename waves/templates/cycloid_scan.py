@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import argparse
 import os
 
+import common
+
+
 '''
 1. ramp north from A0 to A1 in Tramp
 2. decelerate north to 0 from ww
@@ -100,25 +103,28 @@ def ui(cmd_args=None):
     nrs = 256
     alpha = 1200
     
-    parser = argparse.ArgumentParser(description="cycloid scan")
-    parser.add_argument('--nramp', default=nramp, type=int, help='nramp: proxy for Tramp')
-    parser.add_argument('--A0', default=A0, type=int, help='A0: start position')
+    parser = argparse.ArgumentParser(description="cycloid scan", prog="cycloid scan", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--nramp', default=nramp, type=int, help='nramp proxy for Tramp')
+    parser.add_argument('--A0', default=A0, type=int, help='AO: start position')
     parser.add_argument('--A1', default=A1, type=int, help='A1: end position')
     parser.add_argument('--nrs', default=nrs, type=int, help='nrs: proxy for Trs')
     parser.add_argument('--alpha', default=alpha, type=int, help='alpha: distance covered to deceleration end point')
-    parser.add_argument('--root', default="./", help='root directory, default ./')
-    parser.add_argument('--ch', default='1', help='channel number')
-    return parser.parse_args(cmd_args)
+    return common.ui(parser, cmd_args)
 
 def cycloid_from_cmd(cmd_args):
     args = ui(cmd_args)
+    if not args:
+        return None, None    
     data = cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha)
     if args.root != './':
         os.makedirs(args.root, exist_ok=True)
-    fn = f'{args.root}/cycloid-{args.nramp}-{args.A0}-{args.A1}-{args.nrs}-{args.alpha}_{args.ch}.dat'
+    root = args.root
+    if root[-1] == '/':
+        root = root[:-1]        
+    fn = f'{root}/cycloid-{args.nramp}-{args.A0}-{args.A1}-{args.nrs}-{args.alpha}_{args.ch}.dat'
     data.astype(np.int16).tofile(fn)
     print(f'saved as {fn}')
-    return data
+    return data, fn
 
 # common interface
 def cmd(cmd_args):
@@ -126,10 +132,10 @@ def cmd(cmd_args):
  
 # unit test: plots the data  
 if __name__ == '__main__':
-    data = cycloid_from_cmd(None)
-    plt.plot(data)
-    plt.show()
-    
+    data, fn = cycloid_from_cmd(None)
+    common.plot(data, fn)
+else:
+    common.WAVE_CMDS['cycloid_scan'] = cmd   
 
 
 
