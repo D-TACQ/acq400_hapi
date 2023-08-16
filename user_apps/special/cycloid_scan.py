@@ -18,6 +18,22 @@ import argparse
 5. decelerate south from ww to 0
 6. accelerate north from 0 to ww
 '''
+
+
+'''
+parabola:
+>>> import matplotlib.pyplot as plt
+>>> import numpy as np
+>>> x  = np.linspace(-50,50,100)
+>>> y = x**2
+>>> plt.plot(x,y)
+
+(python:160122): Gtk-WARNING **: 20:54:28.290: Theme parsing error: gtk.css:11:22: The :focused pseudo-class is deprecated. Use :focus instead.
+[<matplotlib.lines.Line2D object at 0x7fc00ad17010>]
+>>> plt.show()
+
+'''
+
 def cycloid_scan(nramp, A0, A1, nrs, alpha):
     print(f'cycloid scan {nramp} {A0} {A1} {nrs} {alpha}')
     nfull = nramp + nrs + nramp + nrs
@@ -76,7 +92,7 @@ def cycloid_scan(nramp, A0, A1, nrs, alpha):
         
     return data    
     
-if __name__ == '__main__':
+def ui(cmd_args=None):
     nramp = 512
     A0 =  1000
     A1 = 11000
@@ -89,14 +105,25 @@ if __name__ == '__main__':
     parser.add_argument('--A1', default=A1, type=int, help='A1: end position')
     parser.add_argument('--nrs', default=nrs, type=int, help='nrs: proxy for Trs')
     parser.add_argument('--alpha', default=alpha, type=int, help='alpha: distance covered to deceleration end point')
-    args = parser.parse_args()
-    plt.title(f'Tramp:{args.nramp} A0:{args.A0} A1:{args.A1} nrs:{args.nrs} alpha:{args.alpha}')
+    return parser.parse_args(cmd_args)
+
+def cycloid_from_cmd(cmd_args):
+    args = ui(cmd_args)
     data = cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha)
-    plt.plot(data)
-    plt.show()
     fn = f'cycloid-{args.nramp}-{args.A0}-{args.A1}-{args.nrs}-{args.alpha}.dat'
     data.astype(np.int16).tofile(fn)
     print(f'saved as {fn}')
+    return data
+
+# common interface
+def cmd(cmd_args):
+    return cycloid_from_cmd(cmd_args)
+ 
+# unit test: plots the data  
+if __name__ == '__main__':
+    data = cycloid_from_cmd(None)
+    plt.plot(data)
+    plt.show()
     
 
 
