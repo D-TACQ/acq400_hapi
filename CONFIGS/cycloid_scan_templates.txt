@@ -1,14 +1,16 @@
 # ./waves/build_templates.py < CONFIGS/cycloid_scan_templates.txt
 # cycloid defines two lines
-AA/1 cycloid_scan --reps 1 --nramp 512 --nrs 256 
+AA/1 cycloid_scan --reps 1 --nramp 512 --nrs 256 --A0 1000 --A1 11000
 # repeat parabola for each line 
 AA/2 parabola --reps 2 --nsam 512 --post 256
 AA/3 dc --offset 0
 # repeat frame pulse for each line
 AA/4 pulse --reps 2 --pre 511 --post 256
+# make 1 and 2 continue at last AA value
+BB/1 dc --offset 1000
+BB/2 dc --offset 16000
 # repeat flyback for each line
-BB/4 pulse --reps 2 --amp -1 --pre 10 --post 1
-#ZZ/9 badone
+ZZ/4 pulse --reps 2 --amp -10 --pre 10 --post 1
 
 
 
