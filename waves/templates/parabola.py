@@ -33,7 +33,7 @@ parabola:
 
 def parabola(nsamples, post, amplitude, offset):
     xx = np.linspace(-nsamples//2,nsamples//2,nsamples)
-    yy = offset + amplitude/(nsamples**2) * xx**2
+    yy = offset + amplitude/((nsamples/2)**2) * xx**2
     
     return np.pad(yy, (0, post),'constant', constant_values=(0, yy[-1]))
 
