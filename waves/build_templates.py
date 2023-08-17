@@ -47,7 +47,7 @@ def process(cmd):
 def main():
     global files
     
-    while process(input(">").split(" ")) >= 0:
+    while process(input(">").split()) >= 0:
         pass
 
     with open(f'{root_prefix}/MANIFEST', "w") as fp:
