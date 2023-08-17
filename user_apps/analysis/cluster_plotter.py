@@ -6,6 +6,7 @@ import os
 import re
 import numpy as np
 import matplotlib.pyplot as plt
+import threading
 #from pprint import pprint
 
 import acq400_hapi
@@ -19,6 +20,9 @@ Usage:
 
 ./user_apps/analysis/cluster_plotter.py --chans=1 --cycles=1:2 --secs=1 --clk=2M --nchan=64 --data_type=16\
     acq2206_010 acq2206_009 acq2206_008 acq2206_007 acq2206_006 acq2206_005
+
+./user_apps/analysis/cluster_plotter.py --chans=1 --src=acq2106_41?_VI.dat \
+    acq2106_413 acq2106_414 acq2106_415
 """
 
 type_map = {
@@ -41,21 +45,26 @@ def run_main(args):
     #pprint(scaffold)
     demux_and_plot(scaffold, **vars(args))
 
-def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, **kwargs):
+def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,**kwargs):
     print('setup')
     scaffold = {}
-    
-    src = '/mnt/afhba.*/acq2?06_???'
-    uut_dirs = sorted(glob.glob(src))
+    threads = []
+    globbed_src = sorted(glob.glob(src))
     cycles = list(map(int, cycles.split(':')))
-    for uut_dir in uut_dirs:
-        uutname = identify_uut(uut_dir)
+    for file_src in globbed_src:
+        uutname = identify_uut(file_src)
         if uutname not in uuts:
             continue
 
         scaffold[uutname] = {}
-        scaffold[uutname]['path'] = uut_dir
-        dat_files, total_files, filesize = get_files(uut_dir, cycles[0], cycles[-1])
+        scaffold[uutname]['path'] = file_src
+        if os.path.isdir(file_src):
+            dat_files, total_files, filesize = get_files(file_src, cycles[0], cycles[-1])
+        else:
+            dat_files = [file_src]
+            total_files = 1
+            filesize = os.path.getsize(file_src)
+            scaffold[uutname]['filename'] = file_src
 
         if offline:
             uut = None
@@ -72,7 +81,7 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, **kw
         if not data_type:
             if not uut:
                 exit('--data_type required')
-            if uut.s0.data32 == 0:
+            if int(uut.s0.data32):
                 _data_type = 32
             else:
                 _data_type = 16
@@ -82,7 +91,14 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, **kw
             if not uut:
                 exit('--secs needs --clk')
             _clk = int(acq400_hapi.pv(uut.s0.SIG_CLK_MB_SET))
-            _clk = int(_clk / int(uut.s0.decimate))
+            if hasattr(uut.s1, 'ACQ480_FPGA_DECIM'):
+                decim = int(acq400_hapi.pv(uut.s1.ACQ480_FPGA_DECIM))
+                _clk = int(_clk / decim)
+
+        if egu:
+            thread = threading.Thread(target=uut.fetch_all_calibration)
+            thread.start()
+            threads.append(thread)
         
         scaffold[uutname]['api'] = uut
         scaffold[uutname]['nchan'] = _nchan
@@ -96,6 +112,18 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, **kw
         scaffold[uutname]['file_size'] = filesize
         scaffold[uutname]['chan_len'] = int(filesize / _nchan / type_map[_data_type]['wsize'])
         scaffold[uutname]['data'] = {}
+
+    if not scaffold:
+        exit('No valid uuts found')
+    
+    if len(threads) > 0:
+        for thread in threads:
+            thread.join()
+
+
+    print(f"Clk: {_clk}")
+    print(f"Nchan: {_nchan}")
+    print(f"Data type: {_data_type}")
     return scaffold
 
 def identify_uut(path):
@@ -139,7 +167,10 @@ def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
         chan_len = item['chan_len']
         cycle_start = item['cycle_start']
         cycle_end = item['cycle_end']
-        title = f"{cycle_start:06d} - {cycle_end:06d}"
+        if 'filename' in item:
+            title += f"{item['filename']} "
+        else:
+            title = f"{cycle_start:06d} - {cycle_end:06d}"
 
         for filepath in item['dat_files']:
             i1 = i0 + item['chan_len']
@@ -148,7 +179,10 @@ def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
                 if chan not in item['data']:
                     item['data'][chan] = np.zeros(chan_len * total_files, dtype=data_type)
                 ichan = chan - 1
-                item['data'][chan][i0:i1] = (data[ichan::nchan])
+                try:
+                    item['data'][chan][i0:i1] = (data[ichan::nchan])
+                except:
+                    exit('Bad nchan value')
             i0 = i1
 
         if egu:
@@ -170,10 +204,12 @@ def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
 
     print('Showing plot')
     plt.legend(loc='upper right')
-    plt.xlabel('Seconds')
+    plt.xlabel('Samples')
     plt.ylabel('raw ADC codes')
     if egu:
         plt.ylabel('Volts')
+    if secs:
+        plt.xlabel('Seconds')
     plt.title(title)
     plt.show()
 
@@ -198,7 +234,7 @@ def get_parser():
     parser.add_argument('--chans', default=1, type=list_of_ints, help="channels to plot 1,2,3")
     parser.add_argument('--egu', default=0, type=int, help="Plot volts")
     parser.add_argument('--secs',  default=0, type=int, help="Plot secs")
-    parser.add_argument('--cycles', default=1, help="single cycle 1 or start end 3:7 to plot")
+    parser.add_argument('--cycles', default='1', help="single cycle 1 or start end 3:7 to plot")
     parser.add_argument('--nchan', default=None, type=int, help="Number of chan")
     parser.add_argument('--data_type', default=None, type=int, help=f"Data type to use {type_map}")
     parser.add_argument('--clk', default=None, type=prefix_number, help="clk speed")

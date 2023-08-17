@@ -556,7 +556,8 @@ def run_main(args):
         exit(1)
 
     if args.save != None:
-        if args.save.startswith("/"):
+        path_prefixes = ('/', './', '../')
+        if args.save.startswith(path_prefixes):
             args.saveroot = args.save
         else:
             if os.name != "nt":
