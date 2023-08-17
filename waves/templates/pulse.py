@@ -43,13 +43,17 @@ def pulse_from_cmd(cmd_args):
     args = ui(cmd_args)
     if not args:
         return None, None    
-    data = pulse(args.pre, args.width, args.post, args.amp)
+    pat = pulse(args.pre, args.width, args.post, args.amp)
+    data = np.zeros(0)
+    for rep in range(0, args.reps):
+        data = np.append(data, pat)
+
     if args.root != './':
         os.makedirs(args.root, exist_ok=True)
     root = args.root
     if root[-1] == '/':
         root = root[:-1]
-    fn = f'{root}/pulse-{args.pre}-{args.width}-{args.post}-{args.amp}_{args.ch}.dat'
+    fn = f'{root}/pulse-x{args.reps}-{args.pre}-{args.width}-{args.post}-{args.amp}_{args.ch}.dat'
     data.astype(np.int16).tofile(fn)
     print(f'saved as {fn}')
     return data, fn

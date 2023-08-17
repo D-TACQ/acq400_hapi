@@ -55,13 +55,18 @@ def parabola_from_cmd(cmd_args):
     args = ui(cmd_args)
     if not args:
         return None, None      
-    data = parabola(args.nsam, args.post, args.amp, args.offset)
+    
+    pat = parabola(args.nsam, args.post, args.amp, args.offset)
+    data = np.zeros(0)
+    for rep in range(0, args.reps):
+        data = np.append(data, pat)
+
     if args.root != './':
         os.makedirs(args.root, exist_ok=True)
     root = args.root
     if root[-1] == '/':
         root = root[:-1] 
-    fn = f'{root}/parabola-{args.nsam}-{args.post}-{args.amp}-{args.offset}_{args.ch}.dat'
+    fn = f'{root}/parabola-x{args.reps}-{args.nsam}-{args.post}-{args.amp}-{args.offset}_{args.ch}.dat'
     data.astype(np.int16).tofile(fn)
     print(f'saved as {fn}')
     return data, fn

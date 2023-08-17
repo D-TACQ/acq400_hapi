@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 
+print("hello this is common")
 WAVE_CMDS = {}
 
 def ui(parser, cmd_args=None):
-    parser.add_argument('--root', default="./", help='root directory, default ./')
+    parser.add_argument('--reps', type=int, default=1, help='repeat pattern')
+    parser.add_argument('--root', default="./", help='root directory')
     parser.add_argument('--ch', default='1', help='channel number')
     if cmd_args is not None and len(cmd_args) != 0 and cmd_args[0] == '--help':
         parser.print_help()

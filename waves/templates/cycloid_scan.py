@@ -115,7 +115,11 @@ def cycloid_from_cmd(cmd_args):
     args = ui(cmd_args)
     if not args:
         return None, None    
-    data = cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha)
+    pat = cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha)
+    data = np.zeros(0)
+    for rep in range(0, args.reps):
+        data = np.append(data, pat)
+    
     if args.root != './':
         os.makedirs(args.root, exist_ok=True)
     root = args.root
