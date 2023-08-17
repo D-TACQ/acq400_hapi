@@ -7,8 +7,6 @@ Created on 14 Aug 2023
 
 import numpy as np
 import argparse
-import os
-
 import common
 
 

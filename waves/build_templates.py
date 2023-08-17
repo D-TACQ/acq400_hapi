@@ -20,14 +20,11 @@ files = []
 def process(cmd):
     global line
     global files
-    print(f"process {line}")
     line += 1
     if not cmd or len(cmd[0]) == 0:
         return -1
     elif cmd[0] == '#':
         return 0
-    
-    print(f"process {cmd}")
 
     match = re.search(r'([A-Za-z0-9_-]+)/([0-9]+)', cmd[0])
     if match:
@@ -40,10 +37,8 @@ def process(cmd):
     wave_commands = templates.all_templates.get_wave_commands()
     for key in sorted(wave_commands.keys()):
         if cmd[0] == key:
-            print(f"DEBUG: {key} {cmd}")
             data, fn = wave_commands[key](cmd[1:])
             if data is not None and fn is not None:
-                print(f'DEBUG: fn:{fn} data_len:{len(data)}')
                 files.append((fn, len(data)))
             return 0
         
