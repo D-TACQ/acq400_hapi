@@ -22,7 +22,7 @@ def dc(nsamples, offset):
     return data
         
 def ui(cmd_args=None):
-    nsam=512
+    nsam=1
     offset=1
     
     parser = argparse.ArgumentParser(description='dc', prog='dc', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
