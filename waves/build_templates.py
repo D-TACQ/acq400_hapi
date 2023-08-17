@@ -15,9 +15,11 @@ import templates.all_templates
 root_prefix = os.getenv("AWG_TEMPLATE_ROOT", "/tmp/AWG")
 
 line = 0
+files = []
 
 def process(cmd):
     global line
+    global files
     line += 1
     if len(cmd[0]) == 0:
         return -1
@@ -35,15 +37,27 @@ def process(cmd):
     wave_commands = templates.all_templates.get_wave_commands()
     for key in sorted(wave_commands.keys()):
         if cmd[0] == key:
-            wave_commands[key](cmd[1:])
+            data, fn = wave_commands[key](cmd[1:])
+            files.append((fn, len(data)))
             return 0
         
-    print(f'[{line}] ERROR cmd {" ".join(cmd)} not found')
+    print(f'[{line}] ERROR cmd {" ".join(cmd)} cmd not found')
     return 0
 
 def main():
-     while process(input(">").split(" ")) >= 0:
-         pass
+    global files
+    
+    while process(input(">").split(" ")) >= 0:
+        pass
+
+    with open(f'{root_prefix}/MANIFEST', "w") as fp:
+        for ii, fnl in enumerate(files):
+            fn, fl = fnl
+            seg, fn_base = fn[len(root_prefix)+1:].split('/')
+            ch, ext = fn_base.split('_')[-1].split('.')
+        
+            fp.write(f'{ii} {fn} {fl} {seg} {ch} {fn_base}\n')
+
          
 
 if __name__ == "__main__":
