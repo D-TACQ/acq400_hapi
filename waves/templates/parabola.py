@@ -51,36 +51,23 @@ def ui(cmd_args=None):
     parser.add_argument('--offset',  default=offset, type=int, help='Offset negative values accepted')
     return common.ui(parser, cmd_args)
 
+class ParabolaWrapper:
+    def __call__(self, args):
+        self.args = args
+        return parabola(args.nsam, args.post, args.amp, args.offset)
+    def __str__(self):
+        args = self.args
+        return f'{args.root}/parabola-x{args.reps}-{args.nsam}-{args.post}-{args.amp}-{args.offset}_{args.ch}.dat'
+
 def parabola_from_cmd(cmd_args):
-    args = ui(cmd_args)
-    if not args:
-        return None, None      
-    
-    pat = parabola(args.nsam, args.post, args.amp, args.offset)
-    data = np.zeros(0)
-    for rep in range(0, args.reps):
-        data = np.append(data, pat)
-
-    if args.root != './':
-        os.makedirs(args.root, exist_ok=True)
-    root = args.root
-    if root[-1] == '/':
-        root = root[:-1] 
-    fn = f'{root}/parabola-x{args.reps}-{args.nsam}-{args.post}-{args.amp}-{args.offset}_{args.ch}.dat'
-    data.astype(np.int16).tofile(fn)
-    print(f'saved as {fn}')
-    return data, fn
-
-# common interface
-def cmd(cmd_args):
-    return parabola_from_cmd(cmd_args)
+    return common.exec_command(ui(cmd_args), ParabolaWrapper())
  
 # unit test: plots the data  
 if __name__ == '__main__':
     data, fn = parabola_from_cmd(None)
     common.plot(data, fn)
 else:
-    common.WAVE_CMDS['parabola'] = cmd
+    common.WAVE_CMDS['parabola'] = parabola_from_cmd
     
 
 

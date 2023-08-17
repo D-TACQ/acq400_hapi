@@ -16,12 +16,13 @@ def help(unused):
         if key not in ("help", "usage") :
             get_wave_commands()[key](('--help',))
             print()
+    return None, None
             
 def usage(unused):
     for key in sorted(get_wave_commands().keys()):
         if key not in ("help", "usage") :
             get_wave_commands()[key](('--usage',))
-            
+    return None, None        
             
 def quit(cmd):
     if cmd == "quit":

@@ -39,35 +39,23 @@ def ui(cmd_args=None):
     parser.add_argument('--width', default=width, type=int, help='Pulse Width')
     return common.ui(parser, cmd_args)
 
+class PulseWrapper:
+    def __call__(self, args):
+        self.args = args
+        return pulse(args.pre, args.width, args.post, args.amp)
+    def __str__(self):
+        args = self.args
+        return f'{args.root}/pulse-x{args.reps}-{args.pre}-{args.width}-{args.post}-{args.amp}_{args.ch}.dat'
+
 def pulse_from_cmd(cmd_args):
-    args = ui(cmd_args)
-    if not args:
-        return None, None    
-    pat = pulse(args.pre, args.width, args.post, args.amp)
-    data = np.zeros(0)
-    for rep in range(0, args.reps):
-        data = np.append(data, pat)
-
-    if args.root != './':
-        os.makedirs(args.root, exist_ok=True)
-    root = args.root
-    if root[-1] == '/':
-        root = root[:-1]
-    fn = f'{root}/pulse-x{args.reps}-{args.pre}-{args.width}-{args.post}-{args.amp}_{args.ch}.dat'
-    data.astype(np.int16).tofile(fn)
-    print(f'saved as {fn}')
-    return data, fn
-
-# common interface
-def cmd(cmd_args):
-    return pulse_from_cmd(cmd_args)
+    return common.exec_command(ui(cmd_args), PulseWrapper())
  
 # unit test: plots the data  
 if __name__ == '__main__':
     data, fn = pulse_from_cmd(None)
     common.plot(data, fn)
 else:
-    common.WAVE_CMDS['pulse'] = cmd    
+    common.WAVE_CMDS['pulse'] = pulse_from_cmd    
 
 
 

@@ -6,8 +6,6 @@ Created on 14 Aug 2023
 '''
 
 import numpy as np
-import matplotlib.pyplot as plt
-
 import argparse
 import os
 
@@ -22,22 +20,6 @@ import common
 5. decelerate south from ww to 0
 6. accelerate north from 0 to ww
 '''
-
-
-'''
-parabola:
->>> import matplotlib.pyplot as plt
->>> import numpy as np
->>> x  = np.linspace(-50,50,100)
->>> y = x**2
->>> plt.plot(x,y)
-
-(python:160122): Gtk-WARNING **: 20:54:28.290: Theme parsing error: gtk.css:11:22: The :focused pseudo-class is deprecated. Use :focus instead.
-[<matplotlib.lines.Line2D object at 0x7fc00ad17010>]
->>> plt.show()
-
-'''
-
 def cycloid_scan(nramp, A0, A1, nrs, alpha):
     print(f'cycloid scan {nramp} {A0} {A1} {nrs} {alpha}')
     nfull = nramp + nrs + nramp + nrs
@@ -103,7 +85,7 @@ def ui(cmd_args=None):
     nrs = 256
     alpha = 1200
     
-    parser = argparse.ArgumentParser(description="cycloid scan", prog="cycloid scan", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description="cycloid_scan", prog="cycloid_scan", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--nramp', default=nramp, type=int, help='nramp proxy for Tramp')
     parser.add_argument('--A0', default=A0, type=int, help='AO: start position')
     parser.add_argument('--A1', default=A1, type=int, help='A1: end position')
@@ -111,35 +93,23 @@ def ui(cmd_args=None):
     parser.add_argument('--alpha', default=alpha, type=int, help='alpha: distance covered to deceleration end point')
     return common.ui(parser, cmd_args)
 
+class CycloidWrapper:
+    def __call__(self, args):
+        self.args = args
+        return cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha)
+    def __str__(self):
+        args = self.args
+        return f'{args.root}/cycloid-{args.nramp}-{args.A0}-{args.A1}-{args.nrs}-{args.alpha}_{args.ch}.dat'
+        
 def cycloid_from_cmd(cmd_args):
-    args = ui(cmd_args)
-    if not args:
-        return None, None    
-    pat = cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha)
-    data = np.zeros(0)
-    for rep in range(0, args.reps):
-        data = np.append(data, pat)
-    
-    if args.root != './':
-        os.makedirs(args.root, exist_ok=True)
-    root = args.root
-    if root[-1] == '/':
-        root = root[:-1]        
-    fn = f'{root}/cycloid-{args.nramp}-{args.A0}-{args.A1}-{args.nrs}-{args.alpha}_{args.ch}.dat'
-    data.astype(np.int16).tofile(fn)
-    print(f'saved as {fn}')
-    return data, fn
+    return common.exec_command(ui(cmd_args), CycloidWrapper())
 
-# common interface
-def cmd(cmd_args):
-    return cycloid_from_cmd(cmd_args)
- 
 # unit test: plots the data  
 if __name__ == '__main__':
     data, fn = cycloid_from_cmd(None)
     common.plot(data, fn)
 else:
-    common.WAVE_CMDS['cycloid_scan'] = cmd   
+    common.WAVE_CMDS['cycloid_scan'] = cycloid_from_cmd 
 
 
 

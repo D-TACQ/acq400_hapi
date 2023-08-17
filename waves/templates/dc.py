@@ -30,31 +30,23 @@ def ui(cmd_args=None):
     parser.add_argument('--offset',  default=offset, type=int, help='Offset negative values accepted')
     return common.ui(parser, cmd_args)
 
-def dc_from_cmd(cmd_args):
-    args = ui(cmd_args)
-    if not args:
-        return None, None
-    data = dc(args.nsam, args.offset)
-    if args.root != './':
-        os.makedirs(args.root, exist_ok=True)
-    root = args.root
-    if root[-1] == '/':
-        root = root[:-1]
-    fn = f'{root}/dc-{args.nsam}-{args.offset}_{args.ch}.dat'
-    data.astype(np.int16).tofile(fn)
-    print(f'saved as {fn}')
-    return data, fn
+class DCWrapper:
+    def __call__(self, args):
+        self.args = args
+        return dc(args.nsam, args.offset)
+    def __str__(self):
+        args = self.args
+        return f'{args.root}/dc-{args.nsam}-{args.offset}_{args.ch}.dat'
 
-# common interface
-def cmd(cmd_args):    
-    return dc_from_cmd(cmd_args)
- 
+def dc_from_cmd(cmd_args):
+    return common.exec_command(ui(cmd_args), DCWrapper())
+
 # unit test: plots the data  
 if __name__ == '__main__':
     data, fn = dc_from_cmd(None)
     common.plot(data, fn)
 else:
-    common.WAVE_CMDS['dc'] = cmd
+    common.WAVE_CMDS['dc'] = dc_from_cmd
     
 
 
