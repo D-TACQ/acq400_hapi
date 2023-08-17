@@ -21,7 +21,7 @@ def process(cmd):
     global line
     global files
     line += 1
-    if len(cmd[0]) == 0:
+    if not cmd or len(cmd[0]) == 0:
         return -1
     elif cmd[0] == '#':
         return 0
@@ -50,13 +50,15 @@ def main():
     while process(input(">").split()) >= 0:
         pass
 
-    with open(f'{root_prefix}/MANIFEST', "w") as fp:
+    manifest = f'{root_prefix}/MANIFEST'
+    with open(manifest, "w") as fp:
         for ii, fnl in enumerate(files):
             fn, fl = fnl
             seg, fn_base = fn[len(root_prefix)+1:].split('/')
             ch, ext = fn_base.split('_')[-1].split('.')
         
             fp.write(f'{ii} {fn} {fl} {seg} {ch} {fn_base}\n')
+    print(f'FINISHED {manifest}')
 
          
 
