@@ -6,9 +6,9 @@ Created on 14 Aug 2023
 '''
 
 import numpy as np
-import matplotlib.pyplot as plt
-
 import argparse
+import common
+
 
 '''
 1. ramp north from A0 to A1 in Tramp
@@ -76,28 +76,38 @@ def cycloid_scan(nramp, A0, A1, nrs, alpha):
         
     return data    
     
-if __name__ == '__main__':
+def ui(cmd_args=None):
     nramp = 512
     A0 =  1000
     A1 = 11000
     nrs = 256
     alpha = 1200
     
-    parser = argparse.ArgumentParser(description="cycloid scan")
-    parser.add_argument('--nramp', default=nramp, type=int, help='nramp: proxy for Tramp')
-    parser.add_argument('--A0', default=A0, type=int, help='A0: start position')
+    parser = argparse.ArgumentParser(description="cycloid_scan", prog="cycloid_scan", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--nramp', default=nramp, type=int, help='nramp proxy for Tramp')
+    parser.add_argument('--A0', default=A0, type=int, help='AO: start position')
     parser.add_argument('--A1', default=A1, type=int, help='A1: end position')
     parser.add_argument('--nrs', default=nrs, type=int, help='nrs: proxy for Trs')
     parser.add_argument('--alpha', default=alpha, type=int, help='alpha: distance covered to deceleration end point')
-    args = parser.parse_args()
-    plt.title(f'Tramp:{args.nramp} A0:{args.A0} A1:{args.A1} nrs:{args.nrs} alpha:{args.alpha}')
-    data = cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha)
-    plt.plot(data)
-    plt.show()
-    fn = f'cycloid-{args.nramp}-{args.A0}-{args.A1}-{args.nrs}-{args.alpha}.dat'
-    data.astype(np.int16).tofile(fn)
-    print(f'saved as {fn}')
-    
+    return common.ui(parser, cmd_args)
+
+class CycloidWrapper:
+    def __call__(self, args):
+        self.args = args
+        return cycloid_scan(args.nramp, args.A0, args.A1, args.nrs, args.alpha)
+    def __str__(self):
+        args = self.args
+        return f'{args.root}/cycloid-{args.nramp}-{args.A0}-{args.A1}-{args.nrs}-{args.alpha}_{args.ch}.dat'
+        
+def cycloid_from_cmd(cmd_args):
+    return common.exec_command(ui(cmd_args), CycloidWrapper())
+
+# unit test: plots the data  
+if __name__ == '__main__':
+    data, fn = cycloid_from_cmd(None)
+    common.plot(data, fn)
+else:
+    common.WAVE_CMDS['cycloid_scan'] = cycloid_from_cmd 
 
 
 
