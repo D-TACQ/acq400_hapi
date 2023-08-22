@@ -61,7 +61,7 @@ def handle_run_composer(output, pattern, nrep=None, **kwargs):
     if nrep:
         cmd += f"--nreps {escape_input(nrep)} "
     cmd += f"{escape_input(pattern)} "
-    return_value = 0 #os.system(cmd)
+    return_value = os.system(cmd)
     print(f"Running cmd {cmd}")
     if return_value > 0:
         return False, f"Compose Failure {cmd}"
