@@ -154,7 +154,8 @@ class StreamsOne:
             self.args.filesamples = bod_len
             if self.args.trigger_from_here != 0:
                 callback = self_burst_trigger_callback(uut, bod_job)
-                self.thread = threading.Thread(target=self_start_trigger_callback(uut))
+                self.thread = threading.Thread(target=self_start_trigger_callback, args=(uut,))
+                self.thread.daemon = True
                 self.thread.start()
 
 
