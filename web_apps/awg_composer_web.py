@@ -13,43 +13,31 @@ def run_main(args):
     web_server(args)
 
 def web_server(args):
-    """
-        / - index
-        /endpoint - json endpoint
-        /manifest - current manifest 
-    """
+    print('Starting webserver')
     @route('/')
     def handle_root():
+        #return static_file('temp.html', root='web_apps/')
         response.content_type = 'text/html'
         return root_html
     
     @route('/endpoint', method='POST')
     def handle_endpoint():
         result = False
-        msg = 'NULL'
-        data = request.json
-        print(data)
-        if not data or 'action' not in data:
-            response.status = 405
-            response.body = 'Bad Json'
-            print('Bad Json')
-            return response
-        
-        action = data['action']
-        
-        if action == 'build_template':
-            result, msg = handle_build_template(data['lines'])
-            print(result)
-            print(msg)
+        action_map = {
+            'build_template': handle_build_template,
+            'awg_compose': handle_run_composer,
+        }
 
-        if action == 'awg_compose':
-            result, msg = handle_run_composer(data['filename'], data['cmd_args'])
-            print(result)
-            print(msg)
+        try:
+            action = action_map[request.json['action']]
+            data = request.json['data']
+            result, body = action(**data)
+        except Exception as e:
+            body = f"Error {e}"
 
         code = 200 if result else 400
         response.status = code
-        response.body = msg
+        response.body = body
 
         return response
     
@@ -57,23 +45,31 @@ def web_server(args):
     def handle_manifest():
         return static_file('MANIFEST', root='/tmp/AWG', mimetype='text/plain')
     
-    run(host='0.0.0.0', port=args.web_port, quiet=False)
+    run(host='0.0.0.0', port=args.web_port, quiet=True)
 
-def handle_build_template(lines):
+def handle_build_template(lines, **kwargs):
+    print("Building Template")
     return build_templates.from_array(lines)
 
-def handle_run_composer(filename, cmd_args):
-    filename = escape_input(filename)
-    cmd_args = escape_input(cmd_args)
-    cmd = f"/mnt/local/awg_composer -o /tmp/{filename}.dat {cmd_args}"
+def handle_run_composer(output, pattern, nrep=None, **kwargs):
+    cmd = f"/mnt/local/awg_composer "
+    awg_outputs = ['oneshot_rearm', 'oneshot', 'continuous']
+    if output in awg_outputs:
+        cmd += f"--awg_mode {output} "
+    else:
+        cmd += f"-o /tmp/{escape_input(output)} "
+    if nrep:
+        cmd += f"--nreps {escape_input(nrep)} "
+    cmd += f"{escape_input(pattern)} "
     return_value = os.system(cmd)
+    print(f"Running cmd {cmd}")
     if return_value > 0:
         return False, f"Compose Failure {cmd}"
     return True, f"Compose success {cmd}"
 
 def escape_input(user_input):
-    periods_colons_slashes = r"[.;:\/]*"
-    return re.sub(periods_colons_slashes, '', user_input)
+    colons_slashes = r"[;:\/]*"
+    return re.sub(colons_slashes, '', user_input)
 
 def get_parser():
     parser = argparse.ArgumentParser(description='awg_composer_web')
@@ -202,6 +198,30 @@ root_html = """
             padding: 5px;
             border: 2px solid transparent
         }
+
+
+        .compose_option{
+            padding: 10px 0px;
+            display: inline-block;
+        }
+        .compose_option h3{
+            margin: 0;
+            margin-bottom: 10px;
+        }
+        .compose_option span{
+            width: 100px;
+            display: inline-block;
+            text-align: right;
+        }
+        .live_option{
+            appearance: none;
+            outline: none;
+            border: 0px;
+            font-size: 1rem;
+            border-bottom: 1px solid var(--accent);
+            min-width: 250px;
+            box-sizing: border-box;
+        }
         .cmd_input{
             background-color: var(--code_grey);
             padding: 10px 20px;
@@ -209,15 +229,7 @@ root_html = """
             border: 2px solid transparent;
         }
         .cmd_input span{
-            outline: none;
-            border: none;
-            background-color: #fff;
-            min-width: 20px;
             display: inline-block;
-            border-bottom: 1px solid var(--accent);
-            -webkit-box-sizing: border-box;
-                    box-sizing: border-box;
-            word-break: break-all;
         }
         #compose_input{
             cursor: pointer;
@@ -270,7 +282,9 @@ root_html = """
             reader.addEventListener("load", () => {
                 let payload = {
                     'action' : 'build_template',
-                    'lines' : reader.result.split("\\n")
+                    'data': {
+                        'lines' : reader.result.split("\\n")
+                    }
                 }
                 let url = new URL(`${url_base.href}endpoint`);
                 var manifest_contents = document.getElementById('manifest_contents');
@@ -302,13 +316,17 @@ root_html = """
         }
         function send_compose(e){
             cmd_input = e.target.parentNode.querySelector('.cmd_input');
-            filename = document.querySelector('#filename_input').innerText;
-            cmd_args = document.querySelector('#args_input').innerText;
+            output = document.querySelector('#compose_output').dataset.value;
+            pattern = document.querySelector('#compose_pattern').dataset.value;
+            nrep = document.querySelector('#compose_nrep').dataset.value;
             cmd_input.classList = 'cmd_input';
             let payload = {
                 'action' : 'awg_compose',
-                'filename' : filename,
-                'cmd_args' : cmd_args
+                'data' : {
+                    'output' : output,
+                    'pattern' : pattern,
+                    'nrep' : nrep
+                }
             }
             let url = new URL(`${url_base.href}endpoint`);
             send_request(url.toString(), 'POST', (code, response) => {
@@ -333,6 +351,22 @@ root_html = """
             }
             xhr.send(payload);
         }
+        function live_updater(e){
+            elem = e.target
+            value = elem.value
+            pre = elem.dataset.pre ? elem.dataset.pre : ''
+            if(elem.tagName == 'SELECT'){
+                option = elem.options[elem.selectedIndex]
+                pre = option.dataset.pre ? option.dataset.pre : ''
+            }
+            target_elem = document.getElementById(elem.dataset.target)
+            target_elem.innerText = `${pre}${value}`
+            target_elem.dataset.value = value
+            if(value.length == 0){
+                target_elem.innerText = ''
+                target_elem.dataset.value = ''
+            }
+        }
         window.onload = ()=>{
             console.log('Page Loaded');
             document.querySelector('#upload_input').addEventListener('change', (e) => {
@@ -341,10 +375,14 @@ root_html = """
             document.querySelector('#compose_input').addEventListener('click', (e) => {
                 send_compose(e);
             }, false);
+            document.querySelectorAll(".live_option").forEach((elem) => {
+                elem.addEventListener('input', (e) => {
+                    live_updater(e);
+                }, false);
+            });
             update_manifest();
         }
         </script>
-
 </head>
 <body>
     <div class="wrapper">
@@ -364,11 +402,28 @@ root_html = """
             <div class="box">
                 <h2 class="title">:Compose</h2>
                 <div class="contents">
-                    <h4 class="cmd_input">/mnt/local/awg_composer -o /tmp/<span id="filename_input" role="textbox" contenteditable>flash_scan</span>.dat <span id="args_input" role="textbox" contenteditable>5*AA 5*BB</span></h4>
+                    <div class="compose_option">
+                        <span>Output: </span>
+                        <select class="live_option" data-target="compose_output">
+                            <option data-pre="--awg_mode  ">oneshot_rearm</option>
+                            <option data-pre="--awg_mode ">oneshot</option>
+                            <option data-pre="--awg_mode ">continuous</option>
+                            <option data-pre="-o /tmp/">composed.dat</option>
+                        </select><br>
+                        <span>Pattern: </span>
+                        <input class="live_option" data-target="compose_pattern" type="text" value="5*AA 5*BB"><br>
+                        <span>Nrep: </span>
+                        <input class="live_option" data-target="compose_nrep" type="number" data-pre="--nreps "><br>
+                    </div>
+                    <h4 class="cmd_input">
+                        <span>/mnt/local/awg_composer</span> 
+                        <span id="compose_output" data-value="oneshot_rearm">--awg_mode oneshot_rearm</span> 
+                        <span id="compose_nrep" data-value=""></span> 
+                        <span id="compose_pattern" data-value="5*AA 5*BB">5*AA 5*BB</span> 
+                    </h4>
                     <button id="compose_input">Compose</button>
                 </div>
             </div>
-
             <div class="box">
                 <h2 class="title">:Manifest</h2>
                 <div class="contents">
