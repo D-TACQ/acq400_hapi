@@ -7,6 +7,10 @@ import re
 import bottle
 from bottle import route, run, response, request, static_file
 import waves.build_templates as build_templates
+import threading
+
+class globals:
+    composing = False
 
 def run_main(args):
     print('run main')
@@ -43,7 +47,15 @@ def web_server(args):
     
     @route('/manifest')
     def handle_manifest():
-        return static_file('MANIFEST', root='/tmp/AWG', mimetype='text/plain')
+        manifest = get_mainfest()
+        if manifest:
+            response.content_type = 'text/plain'
+            return manifest
+        return 'None'
+    
+    @route('/composing')
+    def handle_composing():
+        return {'composing': globals.composing}
     
     run(host='0.0.0.0', port=args.web_port, quiet=True)
 
@@ -51,25 +63,44 @@ def handle_build_template(lines, **kwargs):
     print("Building Template")
     return build_templates.from_array(lines)
 
-def handle_run_composer(output, pattern, nrep=None, **kwargs):
-    cmd = f"/mnt/local/awg_composer "
+def handle_run_composer(output, pattern, nrep='', **kwargs):
+    if globals.composing:
+        return False, f"Compose Running"
+    if not get_mainfest:
+        return False, f"No Mainfest"
+    
     awg_outputs = ['oneshot_rearm', 'oneshot', 'continuous']
+
     if output in awg_outputs:
-        cmd += f"--awg_mode {output} "
+        output = f"--awg_mode {output}"
     else:
-        cmd += f"-o /tmp/{escape_input(output)} "
+        output = f"-o /tmp/{escape_input(output)}"
     if nrep:
-        cmd += f"--nreps {escape_input(nrep)} "
-    cmd += f"{escape_input(pattern)} "
-    return_value = os.system(cmd)
-    print(f"Running cmd {cmd}")
-    if return_value > 0:
-        return False, f"Compose Failure {cmd}"
-    return True, f"Compose success {cmd}"
+        nrep = f"--nreps {escape_input(nrep)}"
+
+    pattern = escape_input(pattern)
+    cmd = f"/mnt/local/awg_composer {output} {nrep} {pattern}"
+    threading.Thread(target=run_compose, args=(cmd,)).start()
+    return True, f"Compose started {cmd}"
+
+def run_compose(cmd):
+    globals.composing = True
+    print(f"[COMPOSER] Running {cmd}")
+    os.system(cmd)
+    print(f"[COMPOSER] Finished")
+    globals.composing = False
+
 
 def escape_input(user_input):
     colons_slashes = r"[;:\/]*"
     return re.sub(colons_slashes, '', user_input)
+
+def get_mainfest():
+    filepath = '/tmp/AWG/MANIFEST'
+    if not os.path.isfile(filepath) :
+        return False
+    with open(filepath) as f:
+       return f.read()
 
 def get_parser():
     parser = argparse.ArgumentParser(description='awg_composer_web')
@@ -192,14 +223,11 @@ root_html = """
             border-color: var(--accent);
             color: var(--accent);
         }
-
         #manifest_contents{
             background-color: var(--code_grey);
             padding: 5px;
             border: 2px solid transparent
         }
-
-
         .compose_option{
             padding: 10px 0px;
             display: inline-block;
@@ -238,20 +266,23 @@ root_html = """
             color: #fff;
             padding: 10px 20px;
             background-color: var(--accent);
-            margin-top: 10px;
-            
+            margin-top: 10px;   
+        }
+        #compose_status{
+            padding: 5px 10px;
+            border-bottom: 2px solid transparent;
         }
         .response_good{
             -webkit-animation-name: to_green;
                     animation-name: to_green;
-            -webkit-animation-duration: 5s;
-                    animation-duration: 5s;
+            -webkit-animation-duration: 2s;
+                    animation-duration: 2s;
         }
         .response_bad{
             -webkit-animation-name: to_red;
                     animation-name: to_red;
-            -webkit-animation-duration: 5s;
-                    animation-duration: 5s;
+            -webkit-animation-duration: 2s;
+                    animation-duration: 2s;
         }
         @-webkit-keyframes to_green {
             0% {}
@@ -315,6 +346,7 @@ root_html = """
             });
         }
         function send_compose(e){
+            compose_status = document.querySelector('#compose_status');
             cmd_input = e.target.parentNode.querySelector('.cmd_input');
             output = document.querySelector('#compose_output').dataset.value;
             pattern = document.querySelector('#compose_pattern').dataset.value;
@@ -329,9 +361,25 @@ root_html = """
                 }
             }
             let url = new URL(`${url_base.href}endpoint`);
+            function poll_until_complete(){
+                let url = new URL(`${url_base.href}composing`);
+                send_request(url.toString(), 'GET', function (code, response){
+                    compose_status.classList = '';
+                    composing =  JSON.parse(response)['composing'];
+                    if(!composing){
+                        console.log('compose complete');
+                        compose_status.innerText = 'Done';
+                        compose_status.classList.add('response_good');
+                        return;
+                    }
+                    compose_status.innerText = 'Composing';
+                    setTimeout(poll_until_complete, 1000);
+                });
+            }
             send_request(url.toString(), 'POST', (code, response) => {
                 if(code >= 200 && code < 300){
                     cmd_input.classList.add('response_good');
+                    poll_until_complete();
                     return;
                 }
                 cmd_input.classList.add('response_bad');
@@ -422,6 +470,7 @@ root_html = """
                         <span id="compose_pattern" data-value="5*AA 5*BB">5*AA 5*BB</span> 
                     </h4>
                     <button id="compose_input">Compose</button>
+                    <span id="compose_status"></span>
                 </div>
             </div>
             <div class="box">
