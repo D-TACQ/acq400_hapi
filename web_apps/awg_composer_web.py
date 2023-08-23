@@ -4,10 +4,15 @@ import argparse
 import os
 import re
 
-import bottle
 from bottle import route, run, response, request, static_file
 import waves.build_templates as build_templates
 import threading
+
+"""
+Usage:
+    ./web_apps/awg_composer_web.py --web_port=5000
+    (&>/dev/null ./web_apps/awg_composer_web.py &)
+"""
 
 class globals:
     composing = False
@@ -66,8 +71,8 @@ def handle_build_template(lines, **kwargs):
 def handle_run_composer(output, pattern, nrep='', **kwargs):
     if globals.composing:
         return False, f"Compose Running"
-    if not get_mainfest:
-        return False, f"No Mainfest"
+    if not get_mainfest():
+        return False, f"No Manifest"
     
     awg_outputs = ['oneshot_rearm', 'oneshot', 'continuous']
 
