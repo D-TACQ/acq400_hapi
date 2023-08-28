@@ -267,13 +267,13 @@ root_html = """
             color: #fff;
             padding: 10px 20px;
             background-color: var(--accent);
-            margin-top: 10px;   
+            margin-top: 10px;
+            user-select: none;
         }
         .cmd_input{
             background-color: var(--code_grey);
             padding: 10px 20px;
             margin: 0;
-            border: 2px solid transparent;
         }
         .cmd_input span{
             display: inline-block;
@@ -295,27 +295,38 @@ root_html = """
             padding: 5px;
             border: 2px solid transparent
         }
+        label.refresh_mainfest{
+            font-size: 12px;
+            display: inline-block;
+            margin: 0;
+            vertical-align: middle;
+            user-select: none;
+        }
+        input.refresh_mainfest{
+            margin: 0 3px;
+            vertical-align: middle;
+        }
         #template_erase{
             display: none;
         }
         .has_manifest + #template_erase{
-            display: block;
+            display: inline-block;
         }
         .update_elem{
             -webkit-animation-name: update;
                     animation-name: update;
-            -webkit-animation-duration: 2s;
-                    animation-duration: 2s;
+            -webkit-animation-duration: 1s;
+                    animation-duration: 1s;
         }
         @keyframes update {
             0% {}
-            5% {color: var(--accent)}
-            5% {color: var(--accent)}
+            5% {color: red}
+            50% {color: var(--accent)}
         }
         @-webkit-keyframes update {
             0% {}
-            5% {color: var(--accent)}
-            5% {color: var(--accent)}
+            5% {color: red}
+            50% {color: var(--accent)}
         }
     </style>
     <script>
@@ -362,9 +373,10 @@ root_html = """
         function update_manifest(){
             let url = new URL(`${url_base.href}manifest`);
             var manifest_contents = document.getElementById('manifest_contents');
-            manifest_contents.classList = '';
             send_request(url.toString(), 'GET', function (code, response){
                 manifest_contents.innerText = response;
+                manifest_contents.classList = '';
+                manifest_contents.offsetWidth; //gross
                 if(code >= 400){
                     manifest_contents.classList = 'update_elem';
                     return;
@@ -454,7 +466,14 @@ root_html = """
                     live_updater(e);
                 }, false);
             });
-            update_manifest();
+            function poll_manifest(){
+                checkbox = document.querySelector('#refresh_input')
+                if(checkbox.checked && document.visibilityState == 'visible'){
+                    update_manifest();
+                }
+                setTimeout(poll_manifest, 5000);
+            }
+            poll_manifest();
         }
         </script>
 </head>
@@ -503,7 +522,8 @@ root_html = """
                 <h2 class="title">:Manifest</h2>
                 <div class="contents">
                     <div id="manifest_contents">None</div>
-                    <button id="template_erase" class="med_button">Erase</button>
+                    <button id="template_erase" class="med_button">Erase All</button>
+                    <label class="refresh_mainfest">Refresh?<input id="refresh_input" class="refresh_mainfest" autocomplete="off" type="checkbox" checked="true"></label>
                 </div>
             </div>
         </div>
