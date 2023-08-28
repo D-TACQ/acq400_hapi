@@ -15,7 +15,8 @@ Usage:
 """
 
 class globals:
-    composing = False
+    compose_status = (False, None)
+    root_dir = '/tmp/AWG/'
 
 def run_main(args):
     print('run main')
@@ -25,7 +26,7 @@ def web_server(args):
     print('Starting webserver')
     @route('/')
     def handle_root():
-        #return static_file('temp.html', root='web_apps/')
+        #return static_file('temp.html', root='web_apps/') # testing
         response.content_type = 'text/html'
         return root_html
     
@@ -35,6 +36,7 @@ def web_server(args):
         action_map = {
             'build_template': handle_build_template,
             'awg_compose': handle_run_composer,
+            'erase_templates': handle_erase_templates,
         }
 
         try:
@@ -52,15 +54,16 @@ def web_server(args):
     
     @route('/manifest')
     def handle_manifest():
-        manifest = get_mainfest()
+        manifest = get_manifest()
         if manifest:
             response.content_type = 'text/plain'
             return manifest
+        response.status = 404
         return 'None'
     
-    @route('/composing')
+    @route('/compose_status')
     def handle_composing():
-        return {'composing': globals.composing}
+        return {'compose_status': globals.compose_status}
     
     run(host='0.0.0.0', port=args.web_port, quiet=True)
 
@@ -69,9 +72,9 @@ def handle_build_template(lines, **kwargs):
     return build_templates.from_array(lines)
 
 def handle_run_composer(output, pattern, nrep='', **kwargs):
-    if globals.composing:
+    if globals.compose_status[0]:
         return False, f"Compose Running"
-    if not get_mainfest():
+    if not get_manifest():
         return False, f"No Manifest"
     
     awg_outputs = ['oneshot_rearm', 'oneshot', 'continuous']
@@ -88,19 +91,26 @@ def handle_run_composer(output, pattern, nrep='', **kwargs):
     threading.Thread(target=run_compose, args=(cmd,)).start()
     return True, f"Compose started {cmd}"
 
-def run_compose(cmd):
-    globals.composing = True
-    print(f"[COMPOSER] Running {cmd}")
-    os.system(cmd)
-    print(f"[COMPOSER] Finished")
-    globals.composing = False
+def handle_erase_templates(**kwargs):
+    os.system(f"rm -rf {globals.root_dir}")
+    return True, 'templates erased'
 
+def run_compose(cmd):
+    globals.compose_status = (True, 'Composing')
+    print(f"[COMPOSER] Running {cmd}")
+    return_code = os.system(cmd)
+    print(f"[COMPOSER] Finished")
+    if return_code > 0:
+        print(f"Errored {return_code}")
+        globals.compose_status = (False, 'Errored')
+        return
+    globals.compose_status = (False, 'Done')
 
 def escape_input(user_input):
     colons_slashes = r"[;:\/]*"
     return re.sub(colons_slashes, '', user_input)
 
-def get_mainfest():
+def get_manifest():
     filepath = '/tmp/AWG/MANIFEST'
     if not os.path.isfile(filepath) :
         return False
@@ -180,7 +190,7 @@ root_html = """
             vertical-align: top;
             margin-top: 20px;
         }
-        .box .title{
+        .box > .title{
             background-color: #fff;
             margin: 0;
             border-bottom: 2px solid black;
@@ -228,11 +238,6 @@ root_html = """
             border-color: var(--accent);
             color: var(--accent);
         }
-        #manifest_contents{
-            background-color: var(--code_grey);
-            padding: 5px;
-            border: 2px solid transparent
-        }
         .compose_option{
             padding: 10px 0px;
             display: inline-block;
@@ -255,6 +260,15 @@ root_html = """
             min-width: 250px;
             box-sizing: border-box;
         }
+        .med_button{
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+            color: #fff;
+            padding: 10px 20px;
+            background-color: var(--accent);
+            margin-top: 10px;   
+        }
         .cmd_input{
             background-color: var(--code_grey);
             padding: 10px 20px;
@@ -275,63 +289,55 @@ root_html = """
         }
         #compose_status{
             padding: 5px 10px;
-            border-bottom: 2px solid transparent;
         }
-        .response_good{
-            -webkit-animation-name: to_green;
-                    animation-name: to_green;
+        #manifest_contents{
+            background-color: var(--code_grey);
+            padding: 5px;
+            border: 2px solid transparent
+        }
+        #template_erase{
+            display: none;
+        }
+        .has_manifest + #template_erase{
+            display: block;
+        }
+        .update_elem{
+            -webkit-animation-name: update;
+                    animation-name: update;
             -webkit-animation-duration: 2s;
                     animation-duration: 2s;
         }
-        .response_bad{
-            -webkit-animation-name: to_red;
-                    animation-name: to_red;
-            -webkit-animation-duration: 2s;
-                    animation-duration: 2s;
-        }
-        @-webkit-keyframes to_green {
+        @keyframes update {
             0% {}
-            5% {border-color: var(--success)}
-            100% {border-color: var(--success)}
+            5% {color: var(--accent)}
+            5% {color: var(--accent)}
         }
-        @keyframes to_green {
+        @-webkit-keyframes update {
             0% {}
-            5% {border-color: var(--success)}
-            100% {border-color: var(--success)}
-        }
-        @-webkit-keyframes to_red {
-            0% {}
-            5% {border-color: var(--failure)}
-            100% {border-color: var(--failure)}
-        }
-        @keyframes to_red {
-            0% {}
-            5% {border-color: var(--failure)}
-            100% {border-color: var(--failure)}
+            5% {color: var(--accent)}
+            5% {color: var(--accent)}
         }
     </style>
     <script>
         const url_base = new URL(window.location.pathname, window.location.origin);
         function upload_lines(e){
+            const NEWLINE = '\\n';
             file = e.target.files[0];
             const reader = new FileReader();
             reader.addEventListener("load", () => {
                 let payload = {
                     'action' : 'build_template',
                     'data': {
-                        'lines' : reader.result.split("\\n")
+                        'lines' : reader.result.split(NEWLINE)
                     }
                 }
                 let url = new URL(`${url_base.href}endpoint`);
-                var manifest_contents = document.getElementById('manifest_contents');
-                manifest_contents.classList = '';
                 send_request(url.toString(), 'POST', (code, response) => {
                     e.target.value = null;
                     if(code >= 200 && code < 300){
-                        manifest_contents.classList.add('response_good');
                         update_manifest();
                         console.log('upload_lines succeded');
-                        return
+                        return;
                     }
                     console.log('upload_lines failed');
                     alert(response);
@@ -339,15 +345,31 @@ root_html = """
             });
             if(file.type != 'text/plain'){
                 alert(`Invalid filetype`);
-                return
+                return;
             }
             reader.readAsText(file);
+        }
+        function erase_templates(e){
+            let payload = {
+                'action' : 'erase_templates',
+                'data' : {}
+            }
+            let url = new URL(`${url_base.href}endpoint`);
+            send_request(url.toString(), 'POST', (code, response) => {
+                update_manifest();
+            }, JSON.stringify(payload));
         }
         function update_manifest(){
             let url = new URL(`${url_base.href}manifest`);
             var manifest_contents = document.getElementById('manifest_contents');
+            manifest_contents.classList = '';
             send_request(url.toString(), 'GET', function (code, response){
                 manifest_contents.innerText = response;
+                if(code >= 400){
+                    manifest_contents.classList = 'update_elem';
+                    return;
+                }
+                manifest_contents.classList = 'update_elem has_manifest';
             });
         }
         function send_compose(e){
@@ -367,27 +389,23 @@ root_html = """
             }
             let url = new URL(`${url_base.href}endpoint`);
             function poll_until_complete(){
-                let url = new URL(`${url_base.href}composing`);
+                let url = new URL(`${url_base.href}compose_status`);
+                compose_status.classList = '';
                 send_request(url.toString(), 'GET', function (code, response){
-                    compose_status.classList = '';
-                    composing =  JSON.parse(response)['composing'];
+                    var [composing, status] = JSON.parse(response)['compose_status'];
+                    compose_status.innerText = status;
+                    compose_status.classList = 'update_elem';
                     if(!composing){
-                        console.log('compose complete');
-                        compose_status.innerText = 'Done';
-                        compose_status.classList.add('response_good');
-                        return;
+                        return
                     }
-                    compose_status.innerText = 'Composing';
-                    setTimeout(poll_until_complete, 1000);
+                    setTimeout(poll_until_complete, 1000); 
                 });
             }
             send_request(url.toString(), 'POST', (code, response) => {
                 if(code >= 200 && code < 300){
-                    cmd_input.classList.add('response_good');
                     poll_until_complete();
                     return;
                 }
-                cmd_input.classList.add('response_bad');
                 alert(response);
             }, JSON.stringify(payload));
         }
@@ -405,19 +423,19 @@ root_html = """
             xhr.send(payload);
         }
         function live_updater(e){
-            elem = e.target
-            value = elem.value
-            pre = elem.dataset.pre ? elem.dataset.pre : ''
+            elem = e.target;
+            value = elem.value;
+            pre = elem.dataset.pre ? elem.dataset.pre : '';
             if(elem.tagName == 'SELECT'){
-                option = elem.options[elem.selectedIndex]
-                pre = option.dataset.pre ? option.dataset.pre : ''
+                option = elem.options[elem.selectedIndex];
+                pre = option.dataset.pre ? option.dataset.pre : '';
             }
-            target_elem = document.getElementById(elem.dataset.target)
-            target_elem.innerText = `${pre}${value}`
-            target_elem.dataset.value = value
+            target_elem = document.getElementById(elem.dataset.target);
+            target_elem.innerText = `${pre}${value}`;
+            target_elem.dataset.value = value;
             if(value.length == 0){
-                target_elem.innerText = ''
-                target_elem.dataset.value = ''
+                target_elem.innerText = '';
+                target_elem.dataset.value = '';
             }
         }
         window.onload = ()=>{
@@ -427,6 +445,9 @@ root_html = """
             }, false);
             document.querySelector('#compose_input').addEventListener('click', (e) => {
                 send_compose(e);
+            }, false);
+            document.querySelector('#template_erase').addEventListener('click', (e) => {
+                erase_templates(e);
             }, false);
             document.querySelectorAll(".live_option").forEach((elem) => {
                 elem.addEventListener('input', (e) => {
@@ -447,7 +468,7 @@ root_html = """
                 <h2 class="title">:Upload</h2>
                 <div class="contents">
                     <div class="drop_area">
-                        <h3>Choose or drop file</h3>
+                        <h3>Click or drop file</h3>
                         <input type="file" id="upload_input" />
                     </div>
                 </div>
@@ -464,9 +485,9 @@ root_html = """
                             <option data-pre="-o /tmp/">composed.dat</option>
                         </select><br>
                         <span>Pattern: </span>
-                        <input class="live_option" data-target="compose_pattern" type="text" value="5*AA 5*BB"><br>
+                        <input class="live_option" data-target="compose_pattern" type="text" value="5*AA 5*BB" autocomplete="off"><br>
                         <span>Nrep: </span>
-                        <input class="live_option" data-target="compose_nrep" type="number" data-pre="--nreps "><br>
+                        <input class="live_option" data-target="compose_nrep" type="number" data-pre="--nreps " autocomplete="off"><br>
                     </div>
                     <h4 class="cmd_input">
                         <span>/mnt/local/awg_composer</span> 
@@ -474,14 +495,15 @@ root_html = """
                         <span id="compose_nrep" data-value=""></span> 
                         <span id="compose_pattern" data-value="5*AA 5*BB">5*AA 5*BB</span> 
                     </h4>
-                    <button id="compose_input">Compose</button>
+                    <button id="compose_input" class="med_button">Compose</button>
                     <span id="compose_status"></span>
                 </div>
             </div>
             <div class="box">
                 <h2 class="title">:Manifest</h2>
                 <div class="contents">
-                    <div id="manifest_contents"></div>
+                    <div id="manifest_contents">None</div>
+                    <button id="template_erase" class="med_button">Erase</button>
                 </div>
             </div>
         </div>

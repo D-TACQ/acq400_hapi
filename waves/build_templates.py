@@ -12,6 +12,7 @@ import sys
 import os
 import argparse
 import re
+import shutil
 
 from waves.templates.all_templates import get_wave_commands
 
@@ -28,10 +29,15 @@ def process(cmd):
     match = re.search(r'([A-Za-z0-9_-]+)/([0-9]+)', cmd[0])
     if match:
         root = f'{root_prefix}/{match.group(1)}'
+        if root not in g.templates:
+            g.templates.append(root)
+            if os.path.isdir(root):
+                print(f"removing {root}")
+                shutil.rmtree(root)
         chan = match.group(2)
         cmd = cmd[1:]
         cmd.extend(('--root', root, '--ch', chan))
-        
+
     wave_commands = get_wave_commands()
     for key in sorted(wave_commands.keys()):
         if cmd[0] == key:
@@ -62,6 +68,7 @@ def from_array(file_cmds: list):
 def init_globals():
     g.line = 0
     g.files = []
+    g.templates = []
 
 def write_manifest():
     manifest = f'{root_prefix}/MANIFEST'
