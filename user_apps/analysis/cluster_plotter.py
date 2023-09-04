@@ -7,10 +7,8 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 import threading
-#from pprint import pprint
-
 import acq400_hapi
-from acq400_hapi import PR
+from acq400_hapi import PR, pprint
 
 """
 Usage:
@@ -42,7 +40,8 @@ type_map = {
 
 def run_main(args):
     scaffold = build_scaffold(**vars(args))
-    #pprint(scaffold)
+    if args.verbose:
+        pprint(scaffold)
     demux_and_plot(scaffold, **vars(args))
 
 def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,**kwargs):
@@ -76,6 +75,8 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,
             if not uut:
                 exit('--nchan required')
             _nchan = int(uut.s0.NCHAN)
+            spad = int(uut.s0.spad.split(',')[1])
+            _nchan += spad
 
         _data_type = data_type
         if not data_type:
@@ -143,22 +144,27 @@ def get_files(path, start, end):
     file_list = []
     total_files = 0
     size = None
+    data_globs = ['?.??','*.dat']
     for cycle in range(start, end + 1):
-        file_glob = os.path.join(path, f"{cycle:06d}", "?.??")
-        files = glob.glob(file_glob)
-        if not files:
-            continue
+        for data_glob in data_globs:
+            file_glob = os.path.join(path, f"{cycle:06d}", data_glob)
+            files = glob.glob(file_glob)
+            if files:
+                break
         files.sort()
         total_files += len(files)
         file_list.extend(files)
+    if len(file_list) == 0:
+        exit(f"Error: Unable to find files for glob {path}")
     size = os.path.getsize(file_list[0])
     return file_list, total_files, size
 
-def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
+def demux_and_plot(scaffold, chans, egu, secs, uuts, per_cycle, **kwargs):
     print('demuxing data')
     title = ''
     x_arr = []
-    for uut, item in scaffold.items():
+    for uut in uuts:
+        item = scaffold[uut]
 
         i0 = 0
         nchan = item['nchan']
@@ -167,6 +173,7 @@ def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
         chan_len = item['chan_len']
         cycle_start = item['cycle_start']
         cycle_end = item['cycle_end']
+        wsize = item['wsize']
         if 'filename' in item:
             title += f"{item['filename']} "
         else:
@@ -174,14 +181,19 @@ def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
 
         for filepath in item['dat_files']:
             i1 = i0 + item['chan_len']
+            #add concat here
             data = np.fromfile(filepath, dtype=data_type)
             for chan in chans:
+                if chan > nchan:
+                    continue
+                ichan = chan - 1
                 if chan not in item['data']:
                     item['data'][chan] = np.zeros(chan_len * total_files, dtype=data_type)
-                ichan = chan - 1
+
                 try:
                     item['data'][chan][i0:i1] = (data[ichan::nchan])
-                except:
+                except Exception as e:
+                    print(e)
                     exit('Bad nchan value')
             i0 = i1
 
@@ -189,19 +201,24 @@ def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
             if not item['api']:
                 exit('no calibration unable to plot by volts')
             for chan in item['data']:
+                if wsize == 4:
+                    item['data'][chan] = item['data'][chan]/256
                 item['data'][chan] = item['api'].chan2volts(chan, item['data'][chan])
+
         print(f"{uut} Plotted")
         if secs:
             if len(x_arr) == 0:
                 offset = 0
                 if cycle_start > 1:
-                    offset = chan_len * 66 * (cycle_start - 1)
+                    offset = chan_len * per_cycle * (cycle_start - 1)
                 length = len(list(item['data'].values())[0])
                 x_arr = np.arange(offset, length + offset)
                 x_arr = x_arr / item['clk']
 
         for chan in chans:
             label = f"{uut} CH{chan}"
+            if chan not in item['data']:
+                continue
             if len(x_arr) == 0:
                 plt.plot(item['data'][chan], label=label)
                 continue
@@ -244,6 +261,8 @@ def get_parser():
     parser.add_argument('--data_type', default=None, type=int, help=f"Data type to use {type_map}")
     parser.add_argument('--clk', default=None, type=prefix_number, help="clk speed")
     parser.add_argument('--offline', default=0, type=int, help="Don't try to connect to uuts")
+    parser.add_argument('--verbose', default=0, type=int, help="Increase verbosity")
+    parser.add_argument('--per_cycle', default=66, type=int, help="Files per cycle")
     parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
 
