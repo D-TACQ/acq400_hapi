@@ -136,12 +136,16 @@ class StreamsOne:
         self.halt = halt
         self.delay = delay
         self.status = self.pipe_conn(pipe)
-        self.log_file = f"{uut_name}_times.log"
+        self.previous = None
+        self.log_file = os.path.join(args.root, f"{uut_name}_times.log")
         open(self.log_file, 'w').close()
 
     def logtime(self, t0, t1):
+        if not self.previous:
+            self.previous = t1
         with open(self.log_file, 'a') as f:
-            f.write(f"{int((t1-t0) * 1000)}\n")
+            f.write(f"{int((t1 - t0) * 1000)} {int((t1 - self.previous) * 1000 )}\n")
+        self.previous = t1
         return t1
     
     def update_status_forever(self):
