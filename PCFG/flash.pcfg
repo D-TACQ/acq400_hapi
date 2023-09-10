@@ -1,5 +1,6 @@
 1=ch_egu,fmt=CH01/HFRAME
-2=ch_egu,fmt=CH02/LPP
+2=ch_egu,fmt=CH02/~AMP
 3=ch_egu,fmt=CH03/AMP
-4=ch_egu,fmt=CH03/VFRAME
+4=ch_egu,fmt=CH04/VFRAME
+5=ch_egu,fmt=CH05/LPP
 
