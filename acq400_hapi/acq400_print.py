@@ -2,6 +2,7 @@
 
 import os
 import re
+import json
 
 class PR_NORMAL:
     def Red(txt, end='\n'): print("{}".format(txt), end=end)
@@ -102,6 +103,13 @@ class DISPLAY:
             return self.buffer
         ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
         return ansi_escape.sub('', self.buffer)
+    
+def pprint(item, indent=2, to_string=False):
+    default = lambda o: f"<<non-serializable: {type(o).__qualname__}>>"
+    string = json.dumps(item, indent=indent, default=default)
+    if to_string:
+        return string
+    print(string)
 
 def unit_test():
     import time

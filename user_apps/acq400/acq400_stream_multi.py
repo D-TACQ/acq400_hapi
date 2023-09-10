@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 This is a script intended to connect to a UUT and stream data from port 4210.
@@ -63,8 +63,9 @@ import argparse
 import sys
 import signal
 import shutil
+from acq400_hapi.acq400_print import DISPLAY
 
-import multiprocessing
+import multiprocessing as MP
 import threading
 
 def make_data_dir(directory, verbose):
@@ -113,54 +114,85 @@ def self_start_trigger_callback(uut):
         uut.s0.soft_trigger = 1
     return cb
 
-def sig_int_handler(uut):
-    def _cb(sig, frame):
-        print("SIGINT:shutdown")
-        uut.s0.set_abort = 1
-        uut.close()
-        sys.exit(0)
-    return _cb
-
 class StreamsOne:
-    def __init__ (self, args, uut_name):
+
+    class pipe_conn:
+        def __init__(self, pipe):
+            self.pipe = pipe
+            self.status = {
+                'state' : None,
+                'stopped' : False,
+            }
+
+        def send(self):
+            self.pipe.send(self.status)
+
+        def set(self, key, value):
+            self.status[key] = value
+
+    def __init__ (self, args, uut_name, halt, pipe, delay):
         self.args = args
         self.uut_name = uut_name
+        self.halt = halt
+        self.delay = delay
+        self.status = self.pipe_conn(pipe)
+        self.previous = None
+        self.log_file = os.path.join(args.root, f"{uut_name}_times.log")
+        open(self.log_file, 'w').close()
 
     def logtime(self, t0, t1):
-        print(int((t1-t0)*1000), file=self.log_file)
+        if not self.previous:
+            self.previous = t1
+        with open(self.log_file, 'a') as f:
+            f.write(f"{int((t1 - t0) * 1000)} {int((t1 - self.previous) * 1000 )}\n")
+        self.previous = t1
         return t1
+    
+    def update_status_forever(self):
+        while True:
+            self.status.set('state', acq400_hapi.pv(self.uut.s0.CONTINUOUS_STATE))
+            self.status.send()
+            time.sleep(1)
 
+    def stop_proccess(self, reason):
+        self.status.set('stopped', True)
+        self.uut.stream_close()
+        self.halt.wait()
+        exit(reason)
 
     def run(self, callback=None):
-        uut = acq400_hapi.Acq400(self.uut_name)
+
+        self.uut = acq400_hapi.factory(self.uut_name)
+        threading.Thread(target=self.update_status_forever, daemon=True).start()
+        time.sleep(self.delay)
         cycle = -1
         fnum = 999       # force initial directory create
         data_bytes = 0
         files = 0
 
-        signal.signal(signal.SIGINT, sig_int_handler(uut))
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
 
         if callback is None:
             callback = lambda _clidata: False
 
         if self.args.burst_on_demand:
-            uut.s1.rgm='3,1,1'
+            self.uut.s1.rgm='3,1,1'
             bod_def = self.args.burst_on_demand.split(',')
             bod_len = int(bod_def[0])
             bod_job = None
             if len(bod_def) == 2:
                 bod_job = bod_def[1]
-            uut.s1.RTM_TRANSLEN = bod_len
+            self.uut.s1.RTM_TRANSLEN = bod_len
             self.args.filesamples = bod_len
             if self.args.trigger_from_here != 0:
-                callback = self_burst_trigger_callback(uut, bod_job)
-                self.thread = threading.Thread(target=self_start_trigger_callback(uut))
+                callback = self_burst_trigger_callback(self.uut, bod_job)
+                self.thread = threading.Thread(target=self_start_trigger_callback(self.uut))
                 self.thread.daemon = True
                 self.thread.start()
 
 
         try:
-            if int(uut.s0.data32):
+            if int(self.uut.s0.data32):
                 data_size = 4
                 wordsizetype = "<i4"  # 32 bit little endian
             else:
@@ -171,7 +203,7 @@ class StreamsOne:
             wordsizetype = "<i2"  # 16 bit little endian
             data_size = 2
 
-        netssb = int(uut.s0.ssb)
+        netssb = int(self.uut.s0.ssb)
         if self.args.subset:
             c1,clen = [ int(x) for x in self.args.subset.split(',')]
             netssb = clen * data_size
@@ -184,11 +216,14 @@ class StreamsOne:
         if self.args.burst_on_demand and self.args.verbose:
             print(f'burst_on_demand RTM_TRANSLEN={self.args.burst_on_demand} netssb={netssb} filesize={self.args.filesize} blen={blen}')
 
-        self.log_file = open("{}_times.log".format(self.uut_name), "w")
         t_run = 0
         fn = "no-file"
 
-        for buf in uut.stream(recvlen=blen, data_size=data_size):
+        for buf in self.uut.stream(recvlen=blen, data_size=data_size):
+
+            if self.halt.is_set():
+                self.stop_proccess(f"{self.uut_name} Stopped")
+
             if data_bytes == 0:
                 t0 = time.time()
             else:
@@ -199,6 +234,11 @@ class StreamsOne:
             if len(buf) == 0:
                 print("Zero length buffer, quit")
                 return
+            
+            self.status.set('runtime', f"{t_run:.0f}s")
+            self.status.set('total bytes', f"{data_bytes}")
+            self.status.set('rate', f"{data_bytes / t_run / 0x100000  if t_run else 0:.2f}MB/s")
+            self.status.set('files', f"{files}")
 
             if not self.args.nowrite:
                 if fnum >= self.args.files_per_cycle:
@@ -217,58 +257,83 @@ class StreamsOne:
             if self.args.verbose == 0:
                 pass
             elif self.args.verbose == 1:
-                print(".", end='')
-            elif t_run > 0 and (self.args.verbose > 2 or fnum == 0):
-                print("{:8.3f} {} files {:4d} total bytes: {:10d} rate: {:.2f} MB/s".
-                          format(t_run, fn, files, int(data_bytes), data_bytes/t_run/0x100000))
+                pass
+            if not self.args.display and self.args.verbose > 2:
+                if t_run > 0:
+                    print("{:8.3f} {} files {:4d} total bytes: {:10d} data bytes: {} rate: {:.2f} MB/s".
+                            format(t_run, fn, files, int(data_bytes), int(data_bytes), data_bytes/t_run/0x100000))
             fnum += 1
 
             if callback(fn) or t_run >= self.args.runtime or data_bytes > self.args.totaldata:
                 break
         
-        uut.stream_close()
-                
-
+        self.stop_proccess(f"{self.uut_name} Finished")
 
 def status_cb():
     print("Another one")
-    
+
 def run_stream_run(args):
-    RXBUF_LEN = 4096
-    cycle = 1
-    root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
-    data = bytes()
-    num = 0
 
-    args.ps = []
+    def wrapper(args, uut, halt, pipe, delay):
+        streamer = StreamsOne(args, uut, halt, pipe, delay)
+        streamer.run()
 
-    # run all slave units su in separate processes
-    for su in reversed(args.uuts[1:]):
-        streamer = StreamsOne(args, su)
-        ps = multiprocessing.Process(target=streamer.run, name=su, daemon=True)
-        args.ps.append(ps)
-        ps.start()
+    recvs = {}
+    pss = {}
+    delay = 2
+    halt = MP.Event()
+    for uut in args.uuts:
+        recv, pipe = MP.Pipe()
+        recvs[uut] = recv
+        pss[uut] = MP.Process(target=wrapper, args=(args, uut, halt, pipe, delay,), daemon=False)
+        pss[uut].start()
+        delay = 0
 
-    # run master in foreground process.
-    ms = StreamsOne(args, args.uuts[0])
-    if len(args.uuts) > 1:
-        print("Pausing 2 before launching M")
-        time.sleep(2)
+    D = DISPLAY()
+    uut_status = {}
+    start_time = time.time()
+    try:
+        while True:
+            stopped = 0
+            for uut_name, ps in pss.items():
+                while recvs[uut_name].poll():
+                    try:
+                        uut_status[uut_name] = recvs[uut_name].recv()
+                    except EOFError:
+                        try:
+                            uut_status[uut_name]['state'] = 'DEAD'
+                        except:
+                            pass
+            D.add_line("")
+            D.add_line(f"{{BOLD}}Stream Multi {{RESET}}Runtime: {round(time.time() - start_time)}s")
+            for uut, status in uut_status.items():
+                if status['stopped']:
+                    stopped += 1
+                D.add(f"{{REVERSE}}{uut}{{RESET}} ")
+                for key, value in status.items():
+                    D.add(f"{{BOLD}}{key}{{RESET}}[{value}] ")
+                D.end()
 
-    ms.run(callback=args.callback)
-#    ms.run(callback=status_cb)
+            if stopped == len(pss):
+                halt.set()
+                D.render(False)
+                break
+            if args.display:
+                D.render()
+            D.buffer = ''
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        D.render_interrupted()
+        halt.set()
+        print('Keyboard Interrupt')
+    print('Done')
 
 def run_stream_prep(args):
     if args.filesize > args.totaldata:
             args.filesize = args.totaldata
     remove_stale_data(args)
     return args
-
-def tidy_up(args):
-    for ps in args.ps:
-        if ps.exitcode is None:
-            ps.terminate()
-            ps.join()
 
 def get_parser(parser=None):
     if not parser:
@@ -293,6 +358,7 @@ def get_parser(parser=None):
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
+    parser.add_argument('--display', default=1, type=int, help='Render display')
     if is_client:
         parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
@@ -300,7 +366,6 @@ def get_parser(parser=None):
 def run_stream(args):
     run_stream_prep(args)
     run_stream_run(args)
-    tidy_up(args)
 
 def run_main():
     run_stream(get_parser().parse_args())

@@ -7,10 +7,9 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 import threading
-#from pprint import pprint
-
 import acq400_hapi
-from acq400_hapi import PR
+from collections import namedtuple
+from acq400_hapi import PR, pprint
 
 """
 Usage:
@@ -39,14 +38,17 @@ type_map = {
         'wsize' : 1,
     },
 }
+data_globs = ['?.??','*.dat']
 
 def run_main(args):
     scaffold = build_scaffold(**vars(args))
-    #pprint(scaffold)
-    demux_and_plot(scaffold, **vars(args))
+    demux(scaffold, **vars(args))
+    if args.verbose:
+        pprint(scaffold)
+    plot(scaffold, **vars(args))
 
 def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,**kwargs):
-    print('setup')
+    print('building')
     scaffold = {}
     threads = []
     globbed_src = sorted(glob.glob(src))
@@ -59,12 +61,12 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,
         scaffold[uutname] = {}
         scaffold[uutname]['path'] = file_src
         if os.path.isdir(file_src):
-            dat_files, total_files, filesize = get_files(file_src, cycles[0], cycles[-1])
+            dat_files, filesize, first_cycle, per_cycle = get_files(file_src, cycles[0], cycles[-1])
         else:
             dat_files = [file_src]
-            total_files = 1
             filesize = os.path.getsize(file_src)
             scaffold[uutname]['filename'] = file_src
+            first_cycle = per_cycle = None
 
         if offline:
             uut = None
@@ -76,6 +78,8 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,
             if not uut:
                 exit('--nchan required')
             _nchan = int(uut.s0.NCHAN)
+            spad = int(uut.s0.spad.split(',')[1])
+            _nchan += spad
 
         _data_type = data_type
         if not data_type:
@@ -100,18 +104,21 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,
             thread.start()
             threads.append(thread)
         
+        scaffold[uutname]['dat_files'] = dat_files
         scaffold[uutname]['api'] = uut
         scaffold[uutname]['nchan'] = _nchan
         scaffold[uutname]['clk'] = _clk
         scaffold[uutname]['data_type'] = type_map[_data_type]['type']
         scaffold[uutname]['wsize'] = type_map[_data_type]['wsize']
+        scaffold[uutname]['first_cycle'] = first_cycle
+        scaffold[uutname]['per_cycle'] = per_cycle
         scaffold[uutname]['cycle_start'] = cycles[0]
         scaffold[uutname]['cycle_end'] = cycles[-1]
-        scaffold[uutname]['dat_files'] = dat_files
-        scaffold[uutname]['total_files'] = total_files
+        scaffold[uutname]['total_files'] = len(dat_files)
         scaffold[uutname]['file_size'] = filesize
         scaffold[uutname]['chan_len'] = int(filesize / _nchan / type_map[_data_type]['wsize'])
-        scaffold[uutname]['data'] = {}
+        scaffold[uutname]['data'] = []
+        scaffold[uutname]['channels'] = {}
 
     if not scaffold:
         exit('No valid uuts found')
@@ -120,10 +127,6 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,
         for thread in threads:
             thread.join()
 
-
-    print(f"Clk: {_clk}")
-    print(f"Nchan: {_nchan}")
-    print(f"Data type: {_data_type}")
     return scaffold
 
 def identify_uut(path):
@@ -140,84 +143,102 @@ def attach_api(uutname):
         return None
     
 def get_files(path, start, end):
-    file_list = []
-    total_files = 0
-    size = None
+    dat_files = []
     for cycle in range(start, end + 1):
-        file_glob = os.path.join(path, f"{cycle:06d}", "?.??")
-        files = glob.glob(file_glob)
-        if not files:
-            continue
+        for data_glob in data_globs:
+            file_glob = os.path.join(path, f"{cycle:06d}", data_glob)
+            files = glob.glob(file_glob)
+            if files:
+                break
         files.sort()
-        total_files += len(files)
-        file_list.extend(files)
-    size = os.path.getsize(file_list[0])
-    return file_list, total_files, size
+        dat_files.extend(files)
+    if len(dat_files) == 0:
+        exit(f"Error: Unable to find files for glob {path}")
+    first_cycle = get_first_cycle(path)
+    return dat_files, first_cycle.size, first_cycle.index, first_cycle.files
 
-def demux_and_plot(scaffold, chans, egu, secs, **kwargs):
-    print('demuxing data')
-    title = ''
-    x_arr = []
-    for uut, item in scaffold.items():
+def get_first_cycle(path):
+    first_cycle = namedtuple('first_cycle', ['index', 'files', 'size'])
+    for cycle in range(10):
+        for data_glob in data_globs:
+            files = glob.glob(os.path.join(path, f"{cycle:06d}", data_glob))
+            if files:
+                return first_cycle(cycle, len(files), os.path.getsize(files[0]))
+    exit('Error could not find first cycle')
 
-        i0 = 0
+def demux(scaffold, chans, uuts, **kwargs):
+    print('demuxing')
+    for uut in uuts:
+        item = scaffold[uut]
         nchan = item['nchan']
         data_type = item['data_type']
-        total_files = item['total_files']
-        chan_len = item['chan_len']
+
+        for filepath in item['dat_files']:
+            item['data'] = np.append(item['data'], np.fromfile(filepath, dtype=data_type))
+        for chan in chans:
+            if chan > nchan:
+                continue
+            ichan = chan - 1
+            item['channels'][chan] = item['data'][ichan::nchan]
+
+def plot(scaffold, uuts, secs, egu, verbose, **kwargs):
+    print('plotting')
+    title = ''
+    xlabel = 'Samples'
+    ylabel = 'Raw ADC Codes'
+    x_arrs = {}
+    for uut in uuts:
+        item = scaffold[uut]
         cycle_start = item['cycle_start']
         cycle_end = item['cycle_end']
+        wsize = item['wsize']
+        chan_len = item['chan_len']
+        api = item['api']
+        clk = item['clk']
+        first_cycle = item['first_cycle']
+        per_cycle = item['per_cycle']
+
         if 'filename' in item:
             title += f"{item['filename']} "
         else:
             title = f"{cycle_start:06d} - {cycle_end:06d}"
 
-        for filepath in item['dat_files']:
-            i1 = i0 + item['chan_len']
-            data = np.fromfile(filepath, dtype=data_type)
-            for chan in chans:
-                if chan not in item['data']:
-                    item['data'][chan] = np.zeros(chan_len * total_files, dtype=data_type)
-                ichan = chan - 1
-                try:
-                    item['data'][chan][i0:i1] = (data[ichan::nchan])
-                except:
-                    exit('Bad nchan value')
-            i0 = i1
+        def build_x_arr(length):
+            offset = 0
+            if cycle_start > first_cycle:
+                offset = chan_len * per_cycle * (cycle_start - first_cycle)
+            x_arr = np.arange(offset, length + offset)
+            x_arr = x_arr / clk
+            return x_arr
 
-        if egu:
-            if not item['api']:
-                exit('no calibration unable to plot by volts')
-            for chan in item['data']:
-                item['data'][chan] = item['api'].chan2volts(chan, item['data'][chan])
-        print(f"{uut} Plotted")
-        if secs:
-            if len(x_arr) == 0:
-                offset = 0
-                if cycle_start > 1:
-                    offset = chan_len * 66 * (cycle_start - 1)
-                length = len(list(item['data'].values())[0])
-                x_arr = np.arange(offset, length + offset)
-                x_arr = x_arr / item['clk']
-
-        for chan in chans:
+        for chan, data in scaffold[uut]['channels'].items():
             label = f"{uut} CH{chan}"
-            if len(x_arr) == 0:
-                plt.plot(item['data'][chan], label=label)
-                continue
-            plt.plot(x_arr, item['data'][chan], label=label)
+            if egu:
+                ylabel = 'Volts'
+                if not api:
+                    exit('no calibration found unable to plot by volts')
+                if wsize == 4:
+                    data = data / 256
+                data = api.chan2volts(chan, data)
 
-    print('Showing plot')
+            if verbose:
+                print(f"{uut} Plotting Chan {chan} length {len(data)}")
+
+            if not secs:
+                plt.plot(data, label=label)
+                continue
+            xlabel = 'Seconds'
+            length = len(data)
+            if length not in x_arrs:
+                x_arrs[length] = build_x_arr(length)
+            plt.plot(x_arrs[length], data, label=label)
+
     plt.legend(loc='upper right')
-    plt.xlabel('Samples')
-    plt.ylabel('raw ADC codes')
-    if egu:
-        plt.ylabel('Volts')
-    if secs:
-        plt.xlabel('Seconds')
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.title(title)
     plt.show()
-
+        
 def list_of_ints(string):
     return list(map(int, string.split(',')))
 
@@ -232,11 +253,10 @@ def prefix_number(value):
     else:
         return int(value)
 
-
 def get_parser():
     parser = argparse.ArgumentParser(description='Cluster plotter')
     parser.add_argument('--src', default='/mnt/afhba.*/acq2?06_???', help="src dir")
-    parser.add_argument('--chans', default=1, type=list_of_ints, help="channels to plot 1,2,3")
+    parser.add_argument('--chans', default='1', type=list_of_ints, help="channels to plot 1,2,3")
     parser.add_argument('--egu', default=0, type=int, help="Plot volts")
     parser.add_argument('--secs',  default=0, type=int, help="Plot secs")
     parser.add_argument('--cycles', default='1', help="single cycle 1 or start end 3:7 to plot")
@@ -244,8 +264,10 @@ def get_parser():
     parser.add_argument('--data_type', default=None, type=int, help=f"Data type to use {type_map}")
     parser.add_argument('--clk', default=None, type=prefix_number, help="clk speed")
     parser.add_argument('--offline', default=0, type=int, help="Don't try to connect to uuts")
+    parser.add_argument('--verbose', default=0, type=int, help="Increase verbosity")
     parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
 
 if __name__ == '__main__':
     run_main(get_parser().parse_args())
+
