@@ -1,4 +1,6 @@
-1,2,3,4,5=ch_egu
-#9=ch_bf,0xffffffff,fmt=SAMPLE
-#11=ch_bf,0xffffffff,fmt=USEC
+1=ch_egu,fmt=CH01/HFRAME
+2=ch_egu,fmt=CH02/~AMP
+3=ch_egu,fmt=CH03/AMP
+4=ch_egu,fmt=CH04/VFRAME
+5=ch_egu,fmt=CH05/LPP
 
