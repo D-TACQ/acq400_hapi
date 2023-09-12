@@ -218,6 +218,7 @@ class StreamsOne:
 
         t_run = 0
         fn = "no-file"
+        data_file = None
 
         for buf in self.uut.stream(recvlen=blen, data_size=data_size):
 
@@ -244,15 +245,24 @@ class StreamsOne:
                 if fnum >= self.args.files_per_cycle:
                     fnum = 0
                     cycle += 1
+                    if data_file:
+                        data_file.close()
+                        data_file = None
                     root = os.path.join(self.args.root, self.uut_name, "{:06d}".format(cycle))
                     make_data_dir(root, self.args.verbose)
-
-                fn = os.path.join(root, "{:04d}.dat".format(fnum))
-                data_file = open(fn, "wb")
-                buf.tofile(data_file, '')
-                files += 1
-                if self.args.verbose > 3:
-                    print(f'wrote file: {fn}')
+                
+                if not self.args.combine:
+                    fn = os.path.join(root, f"{fnum:04d}.dat")
+                    with open(fn, 'wb') as data_file:
+                        buf.tofile(data_file)
+                    data_file = None
+                    files += 1
+                else:
+                    if not data_file:
+                        fn = os.path.join(root, f"{0:04d}-{self.args.files_per_cycle:04d}.dat")
+                        data_file = open(fn, "wb")
+                        files += 1
+                    buf.tofile(data_file)
 
             if self.args.verbose == 0:
                 pass
@@ -359,6 +369,7 @@ def get_parser(parser=None):
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('--display', default=1, type=int, help='Render display')
+    parser.add_argument('--combine', default=0, type=int, help='Combine all cycle files into one')
     if is_client:
         parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
