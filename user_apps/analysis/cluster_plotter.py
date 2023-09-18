@@ -47,7 +47,7 @@ def run_main(args):
         pprint(scaffold)
     plot(scaffold, **vars(args))
 
-def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,**kwargs):
+def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu, spadlen, **kwargs):
     print('building')
     scaffold = {}
     threads = []
@@ -73,14 +73,6 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,
         else:
             uut = attach_api(uutname)
 
-        _nchan = nchan
-        if not nchan:
-            if not uut:
-                exit('--nchan required')
-            _nchan = int(uut.s0.NCHAN)
-            spad = int(uut.s0.spad.split(',')[1])
-            _nchan += spad
-
         _data_type = data_type
         if not data_type:
             if not uut:
@@ -89,6 +81,16 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,
                 _data_type = 32
             else:
                 _data_type = 16
+
+        _nchan = nchan
+        if not nchan:
+            if not uut:
+                exit('--nchan required')
+            _nchan = int(uut.get_ai_channels())
+            if not spadlen:
+                spadlen = int(uut.s0.spad.split(',')[1])
+            spad = spadlen * (4 - type_map[_data_type]['wsize'])
+            _nchan += spad
 
         _clk = clk
         if not clk and secs:
@@ -119,6 +121,7 @@ def build_scaffold(src, uuts, data_type, nchan, cycles, clk, secs, offline, egu,
         scaffold[uutname]['chan_len'] = int(filesize / _nchan / type_map[_data_type]['wsize'])
         scaffold[uutname]['data'] = []
         scaffold[uutname]['channels'] = {}
+        scaffold[uutname]['num_chans'] = 0
 
     if not scaffold:
         exit('No valid uuts found')
@@ -179,14 +182,58 @@ def demux(scaffold, chans, uuts, **kwargs):
             if chan > nchan:
                 continue
             ichan = chan - 1
+            item['num_chans'] += 1
             item['channels'][chan] = item['data'][ichan::nchan]
 
-def plot(scaffold, uuts, secs, egu, verbose, **kwargs):
+def plot(scaffold, uuts, secs, egu, verbose, plots, **kwargs):
     print('plotting')
     title = ''
-    xlabel = 'Samples'
-    ylabel = 'Raw ADC Codes'
-    x_arrs = {}
+    xlabel = 'Seconds' if secs else 'Samples'
+    ylabel = 'Volts' if egu else 'Raw ADC Codes'
+
+    class plt_wrapper:
+        def __init__(self, plots, num_chans):
+            self.x_arrs = {}
+            self.num_chans = num_chans
+            if not plots:
+                self.num_chans = 1
+            self.fig, axes = plt.subplots(self.num_chans, 1, sharex=True)
+            self.axes = axes if isinstance(axes, np.ndarray) else [axes]
+            self.idx = 0
+
+        def plot(self, data, label=None):
+            if egu:
+                if not api:
+                    exit('no calibration found unable to plot by volts')
+                if wsize == 4:
+                    data = data / 256
+                data = api.chan2volts(chan, data)
+
+            if secs:
+                length = len(data)
+                if length not in self.x_arrs:
+                    self.x_arrs[length] = self.build_x_array(length)
+                self.axes[self.idx].plot(self.x_arrs[length], data, label=label)
+            else:
+                self.axes[self.idx].plot(data, label=label)
+
+            self.axes[self.idx].legend(loc='upper right')
+            plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
+            plt.gca().get_yaxis().get_major_formatter().set_useOffset(False)
+            if self.num_chans > 1:
+                self.idx += 1
+
+        def build_x_array(self, length):
+            offset = 0
+            if 'filename' not in item and cycle_start > first_cycle:
+                offset = chan_len * per_cycle * (cycle_start - first_cycle)
+            x_arr = np.arange(offset, length + offset)
+            x_arr = x_arr / clk
+            return x_arr
+        
+    num_chans = sum([scaffold[uut]['num_chans'] for uut in uuts])
+    wrapper = plt_wrapper(plots, num_chans)
+
     for uut in uuts:
         item = scaffold[uut]
         cycle_start = item['cycle_start']
@@ -203,44 +250,29 @@ def plot(scaffold, uuts, secs, egu, verbose, **kwargs):
         else:
             title = f"{cycle_start:06d} - {cycle_end:06d}"
 
-        def build_x_arr(length):
-            offset = 0
-            if cycle_start > first_cycle:
-                offset = chan_len * per_cycle * (cycle_start - first_cycle)
-            x_arr = np.arange(offset, length + offset)
-            x_arr = x_arr / clk
-            return x_arr
-
         for chan, data in scaffold[uut]['channels'].items():
             label = f"{uut} CH{chan}"
-            if egu:
-                ylabel = 'Volts'
-                if not api:
-                    exit('no calibration found unable to plot by volts')
-                if wsize == 4:
-                    data = data / 256
-                data = api.chan2volts(chan, data)
 
             if verbose:
                 print(f"{uut} Plotting Chan {chan} length {len(data)}")
 
-            if not secs:
-                plt.plot(data, label=label)
-                continue
-            xlabel = 'Seconds'
-            length = len(data)
-            if length not in x_arrs:
-                x_arrs[length] = build_x_arr(length)
-            plt.plot(x_arrs[length], data, label=label)
+            wrapper.plot(data, label)
 
-    plt.legend(loc='upper right')
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
+    wrapper.fig.text(0.5, 0.04, xlabel, ha='center')
+    wrapper.fig.text(0.04, 0.5, ylabel, va='center', rotation='vertical')
+    wrapper.fig.suptitle(title)
     plt.show()
+    print('done')
         
-def list_of_ints(string):
-    return list(map(int, string.split(',')))
+def list_of_channels(chans):
+    channels = []
+    for chan in chans.split(','):
+        if '-' in chan:
+            chan = list(map(int, chan.split('-')))
+            channels.extend(list(range(chan[0], chan[1] + 1)))
+            continue
+        channels.append(int(chan))
+    return channels
 
 def prefix_number(value):
     prefixes = {
@@ -256,7 +288,7 @@ def prefix_number(value):
 def get_parser():
     parser = argparse.ArgumentParser(description='Cluster plotter')
     parser.add_argument('--src', default='/mnt/afhba.*/acq2?06_???', help="src dir")
-    parser.add_argument('--chans', default='1', type=list_of_ints, help="channels to plot 1,2,3")
+    parser.add_argument('--chans', default='1', type=list_of_channels, help="channels to plot 1,2,3-5")
     parser.add_argument('--egu', default=0, type=int, help="Plot volts")
     parser.add_argument('--secs',  default=0, type=int, help="Plot secs")
     parser.add_argument('--cycles', default='1', help="single cycle 1 or start end 3:7 to plot")
@@ -265,6 +297,8 @@ def get_parser():
     parser.add_argument('--clk', default=None, type=prefix_number, help="clk speed")
     parser.add_argument('--offline', default=0, type=int, help="Don't try to connect to uuts")
     parser.add_argument('--verbose', default=0, type=int, help="Increase verbosity")
+    parser.add_argument('--plots', default=0, type=int, help="Multi plot")
+    parser.add_argument('--spadlen', default=None, type=int, help="Length of spad")
     parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
 
