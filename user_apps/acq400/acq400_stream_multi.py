@@ -343,6 +343,8 @@ def run_stream_prep(args):
     if args.filesize > args.totaldata:
             args.filesize = args.totaldata
     remove_stale_data(args)
+    if not os.path.exists(args.root):
+        os.makedirs(args.root)
     return args
 
 def get_parser(parser=None):
