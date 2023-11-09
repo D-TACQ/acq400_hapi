@@ -18,23 +18,23 @@ Usage:
     Calibration Test :
     ./test_apps/bolo8_tester.py acq2106_123 --chans=all 
 
-    Cal and cap then store and upload results:
-    ./test_apps/bolo8_tester.py acq2106_123 --chans=all --cycles=10 --plot=1 --save=1 --url=eigg/endpoint/bolo --cal=1 cap=1 --bolo=IPT008
+    Cal and cap then plot and save results:
+    ./test_apps/bolo8_tester.py acq2106_123 --chans=all --cycles=5 --plot=1 --save=1 --cal=1 --cap=1
 """
 
 def get_parser():
     parser = argparse.ArgumentParser(description='bolo8 tester')
-    parser.add_argument('--cal', default=1, type=int, help="calibrate")
-    parser.add_argument('--cap', default=0, type=int, help="capture")
-    parser.add_argument('--chans', default='1,2', help="channels to test eg 1,2,10-15")
-    parser.add_argument('--cycles', default=1, type=int, help="number tests on each channel")
-    parser.add_argument('--foils', '--bolo_chans', default=2, type=int, help="Blometer foils")
-    parser.add_argument('--bolo', '--bolo_id', default='IPT008', help="bolometer serial")
-    parser.add_argument('--beeper', default="SG0106", help="Sig gen to beep for manual intervention")
-    parser.add_argument('--plot', default=1, type=int, help="0 no plot, 1 plot final results, 2 plot all")
+    parser.add_argument('--cal', default=1, type=int, help="Run calibrate")
+    parser.add_argument('--cap', default=0, type=int, help="Run capture")
+    parser.add_argument('--chans', default='1,2', help="Channels to test eg 1,2,10-15 or all")
+    parser.add_argument('--cycles', default=1, type=int, help="Number of tests per channel")
+    parser.add_argument('--foils', '--bolo_chans', default=2, type=int, help="Available bolometer foils")
+    parser.add_argument('--bolo', '--bolo_id', default='IPT008', help="Bolometer serial")
+    parser.add_argument('--beeper', default="SG0106", help="siggen to beep when ready")
+    parser.add_argument('--plot', default=1, type=int, help="0 no plot, 1 plot final results, 2 plot every capture")
     parser.add_argument('--tocsv', default=1, type=int, help="save calibration results to csv")
-    parser.add_argument('--save', default=0, type=int, help="save capture data to file")
-    parser.add_argument('--url', default=None, help="remote url to send file")
+    parser.add_argument('--save', default=0, type=int, help="save channel capture data to file")
+    parser.add_argument('--url', default=None, help="remote url to send results json and chandata")
     parser.add_argument('--dtypes', default='PWR', type=type_list, help="data types to plot and save ie PWR,MAG,PHI")
     parser.add_argument('--ptotal', default=40000, type=int, help="Plot total samples")
     parser.add_argument('uutname', help="uut name")
