@@ -1,348 +1,618 @@
 #!/usr/bin/env python3
 
-import acq400_hapi
-import xmltodict
-import requests
-import re
-import paramiko
-import json
-import argparse
-import time
-import csv
 import os
-from acq400_hapi.acq400_print import PR
 import datetime
-
+import time
+import requests
+import argparse
+import requests
+import csv
+import numpy as np
+from matplotlib import pyplot as plt
+import acq400_hapi
+from acq400_hapi import PR
+import json
 
 """
 Usage:
-    ./test_apps/bolo8_tester.py acq2106_191
+    Calibration Test :
+    ./test_apps/bolo8_tester.py acq2106_123 --chans=all 
 
-    ./test_apps/bolo8_tester.py sites=2,3,4 start_chan=4 end_chan=8 acq2106_191
-    ./test_apps/bolo8_tester.py  --url=http://naboo/tests/bolo/ acq2106_191
-    ./test_apps/bolo8_tester.py --cycle=10 --url=http://eigg/home/dt100/bolo_endpoint/ acq2106_388
-    ./test_apps/bolo8_tester.py --sites=1 --cycle=10 --start_chan=1 --end_chan=3 --url=http://eigg/home/dt100/bolo_endpoint/?plot=1 --forever=1 --sleep=7200 acq2106_388
-
-By default will save results to .csv named bolo_result-(serial)-(timestamp).csv in following format
-If log_all=1 will save all results to same .csv named bolo_results-(date).csv
-
-    module,channel,I0,Q0,sensitivity,cooling,result
-    BE4010064,1,0.0025633,-0.0023786,4.1098,0.046056,PASS
-    BE4010064,2,-0.032607,0.026537,4.5616,0.046192,PASS
-    BE4010064,3,0.0026337,-0.0022937,4.0439,0.0461,PASS
-    BE4010064,4,-0.033375,0.025597,4.4275,0.046204,PASS
-    BE4010064,5,0.0023858,-0.0025979,4.085,0.046022,PASS
-    BE4010064,6,-0.030446,0.028947,4.6359,0.046279,PASS
-    BE4010064,7,0.0025978,-0.0023695,4.0246,0.045802,PASS
-    BE4010064,8,-0.032845,0.026247,4.5654,0.046217,PASS
-
-If args.url is set will post json to url with this format:
-
-    {
-        "uut_state": {
-            "uut_name": "acq2106_388",
-            "fpga": "ACQ2106_TOP_64_64_64_64_64_64_9815_9011_32B",
-            "fpga_time": "2021/04/14",
-            "firmware": "acq400-591-20230424171525",
-            "modules": [
-                {
-                    "model": "BOLO8BLF N=8 M=64",
-                    "serial": "BE4010064",
-                    "nchan": "24",
-                    "full_model": "BOLO8BLF N=8 M=64",
-                    "location": "1"
-                }
-            ],
-            "serial": "CE4160388",
-            "model": "acq2106sfp",
-            "temp": 37.65
-        },
-        "results": [
-            ["1","0.0025633","-0.0023786","4.1098","0.046056","PASS"],
-            ["2","-0.032607","0.026537","4.5616","0.046192","PASS"],
-            ["3","0.0026337","-0.0022937","4.0439","0.0461","PASS"],
-            ["4","-0.033375","0.025597","4.4275","0.046204","PASS"],
-            ["5","0.0023858","-0.0025979","4.085","0.046022","PASS"],
-            ["6","-0.030446","0.028947","4.6359","0.046279","PASS"],
-            ["7","0.0025978","-0.0023695","4.0246","0.045802","PASS"],
-            ["8","-0.032845","0.026247","4.5654","0.046217","PASS"],
-        ]
-    }
+    Cal and cap then store and upload results:
+    ./test_apps/bolo8_tester.py acq2106_123 --chans=all --cycles=10 --plot=1 --save=1 --url=eigg/endpoint/bolo --cal=1 cap=1 --bolo=IPT008
 """
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='bolo8 auto tester')
-    parser.add_argument('--sites', default=None, help="sites to test eg 1,2,3,4,5,6")
-    parser.add_argument('--cycles', default=5, type=int, help="number tests on each channel")
-    parser.add_argument('--start_chan', default=1, type=int, help="first channel to test per module")
-    parser.add_argument('--end_chan', default=8, type=int, help="last channel to test per module")
-    parser.add_argument('--url', default=None, help="send results to remote url")
-    parser.add_argument('--log_all', default=0, type=int, help="log all results to same csv file")
-    parser.add_argument('--forever', default=0, type=int, help="Loop forever on 2 channels must set channels")
-    parser.add_argument('--sleep', default=5, type=int, help="sleep after module test use with forever")
-    parser.add_argument('--beeper', default="SG0761", help="Sig gen to beep when channel done")
-    parser.add_argument('uut_name', help="uut name")
+    parser = argparse.ArgumentParser(description='bolo8 tester')
+    parser.add_argument('--cal', default=1, type=int, help="calibrate")
+    parser.add_argument('--cap', default=0, type=int, help="capture")
+    parser.add_argument('--chans', default='1,2', help="channels to test eg 1,2,10-15")
+    parser.add_argument('--cycles', default=1, type=int, help="number tests on each channel")
+    parser.add_argument('--foils', '--bolo_chans', default=2, type=int, help="Blometer foils")
+    parser.add_argument('--bolo', '--bolo_id', default='IPT008', help="bolometer serial")
+    parser.add_argument('--beeper', default="SG0106", help="Sig gen to beep for manual intervention")
+    parser.add_argument('--plot', default=1, type=int, help="0 no plot, 1 plot final results, 2 plot all")
+    parser.add_argument('--tocsv', default=1, type=int, help="save calibration results to csv")
+    parser.add_argument('--save', default=0, type=int, help="save capture data to file")
+    parser.add_argument('--url', default=None, help="remote url to send file")
+    parser.add_argument('--dtypes', default='PWR', type=type_list, help="data types to plot and save ie PWR,MAG,PHI")
+    parser.add_argument('--ptotal', default=40000, type=int, help="Plot total samples")
+    parser.add_argument('uutname', help="uut name")
     return parser
 
-class globals:
-    uut_state = {}
-    temps = []
-    fails = 0
-    total_fails = 0
-    file = None
+def type_list(value):
+    value = value.upper()
+    return value.split(',')
 
-class Remote_File():
-    original_file = None
+DEFAULT_STL = [
+    "# sos, normalized, delta coding, minimize number of states",
+    "# CSCALE=6250 to run at 100ms tick",
+    "0,0",
+    "+48,0",
+    "+16,2",
+    "+16,0",
+    "+16,2",
+    "+16,0",
+    "+16,2",
+    "+16,0",
+    "+48,2",
+    "+48,0",
+    "+16,2",
+    "+48,0",
+    "+16,2",
+    "+48,0",
+    "+48,0",
+    "+16,2",
+    "+16,0",
+    "+16,2",
+    "+16,0",
+    "+16,2",
+    "+16,0",
+    "+96,0",
+]
+class bolo_handler:
 
-    ssh = None
+    def __init__(self, args):
+        PR.Reverse(f"Testing {args.uutname} with bolo {args.bolo}")
+        self.args = args
+        self.cycle = 0
+        self.uut = acq400_hapi.factory(args.uutname)
 
-    file = None
+        self.get_channels()
+        self.build_chanset()
 
-    def __init__(self, file, params):
-        self.file = file
-        self.ssh = paramiko.SSHClient()
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.strobe = self.StrobeHelper(self.uut)
+        self.results = self.ResultHelper()
+
+        self.timestamp = datetime.datetime.today().strftime('%Y.%b.%d.%H.%M')
+
+        self.data = {}
+        self.calibration = {}
+        self.dat_file = None
+        self.beeper = None
+
+        self.active_types = set()
+        self.data_types = {
+            'PWR': {
+                'nidx' : 0,
+                'unit': 'mW',
+                'scaler' : 1.25 * 3.64e-6 * 1000
+            },
+            'PHI': {
+                'nidx' : 1,
+                'unit': 'codes',
+                'scaler' : 1
+            },
+            'MAG': {
+                'nidx' : 2,
+                'unit': 'mV',
+                'scaler' : 1.25 * 5.688e-8 * 1000
+            }
+        }
+
+    #handler funcs
+    
+    def get_channels(self):
+        self.channels = []
+        if self.args.chans.upper() == 'ALL':
+            self.channels = list(range(1, int(self.uut.nchan() / 3 + 1)))
+            return
+        for chan in self.args.chans.split(','):
+            if '-' in chan:
+                chan = list(map(int, chan.split('-')))
+                self.channels.extend(list(range(chan[0], chan[1] + 1)))
+                continue
+            self.channels.append(int(chan))
+
+    def build_chanset(self):
+        channels = self.channels.copy()
+        self.chanset = []
+        new_set=[channels.pop(0)]
+        for chan in channels:
+            if chan - new_set[0] < self.args.foils:
+                new_set.append(chan)
+                continue
+            self.chanset.append(new_set)
+            new_set = [chan]
+        self.chanset.append(new_set)
+    
+    def set_cycle(self, cycle):
+        self.cycle = cycle
+        print()
+        print(f"Cycle {self.cycle}/{self.args.cycles}")
+
+    def set_active(self, chanset):
+        self.active_chans = chanset
+        self.chan_str = ','.join(map(str, self.active_chans))
+        self.uut.s14.BOLO_ACTIVE_CHAN = self.chan_str
+        print(f"Setting active chan to {self.chan_str}")
+    
+    def ask_if_connected(self):
+        self.beep_beeper(1)
+        while True:
+            ans = input(f"Is bolometer ({self.args.bolo}) connected to channels {self.chan_str}? [yes, quit]: ")
+            if ans.lower().startswith('y'):
+                break
+            if ans.lower().startswith('q'):
+                raise KeyboardInterrupt
+            print('Invalid input')
+
+    def beep_beeper(self, count=2, intvl=0.3):
         try:
-            self.ssh.connect(**params)
-        except Exception as e:
-            print(e)
-            exit(1)
-        cmd = f'cat {file}'
-        stdin, stdout, stderr = self.ssh.exec_command(cmd)
-        self.original_file = stdout.read().decode("utf-8").strip()
-        PR.Yellow(f"Archived {self.file}")
+            if self.beeper == None or self.beeper == -1:
+                self.beeper = acq400_hapi.Agilent33210A(self.args.beeper)
+            for i in range(count):
+                time.sleep(intvl)
+                self.beeper.send("SYST:BEEP")
+        except:
+            if self.beeper != -1:
+                PR.Red('Beeper not found')
+            self.beeper = -1
 
-    def append(self, line):
-        cmd = f"echo '{line}' >> {self.file}"
-        stdin, stdout, stderr = self.ssh.exec_command(cmd)
-        PR.Yellow(f"Editing {self.file}")
+    ##cal funcs
 
-    def reset(self):
-        cmd = f"echo $'{self.original_file}' > {self.file}"
-        stdin, stdout, stderr = self.ssh.exec_command(cmd)
-        PR.Yellow(f"Reseting {self.file}")
+    def run_cal(self):
+        print()
+        PR.Reverse(f" Running calibration on channels {self.chan_str} ")
+        self.uut.s1.trg = "1,1,1" # Set soft trigger for calibration.
+        self.uut.run_service(acq400_hapi.AcqPorts.BOLO8_CAL, eof="END")
+        self.get_remote_cal()
+        self.print_cal(self.active_chans, False)
 
-    def close(self):
-        PR.Yellow('Closing ssh')
-        self.ssh.close()
-        ssh = None
+    def get_remote_cal(self):
+        url = f"http://{self.uut.uut}/tmp/calibfit.log"
+        response = requests.get(url)
+        if response.status_code != 200:
+            exit(f"Error getting calibration")
+        for cal in response.text.split('\n'):
+            if not cal:
+                continue
+            self.log_cal(cal)
+        
+    def log_cal(self, cal):
+        columns = ['channel', 'sensitivity', 'cooling', 'I0', 'Q0']
+        chan = 0
+        for idx, value in enumerate(cal.split()):
+            if idx == 0:
+                chan = int(value)
+                if chan not in self.calibration:
+                    self.calibration[chan] = {}
+                continue
+            column = columns[idx]
+            if column not in self.calibration[chan]:
+                self.calibration[chan][column] = []
+            self.calibration[chan][column].append(float(value))
 
+    def check_calibration(self):
+        SENS_MIN, SENS_MAX = (1, 15)
+        COOL_MIN, COOL_MAX = (0, 1)
+        testname = 'calibration'
+        self.results.register(testname)
+        for chan in self.calibration:
+            inrange = True
+
+            sens = self.calibration[chan]['sensitivity']
+            cool = self.calibration[chan]['cooling']
+
+            if min(sens) < SENS_MIN or max(sens) > SENS_MAX:
+                inrange = False
+            if min(cool) < COOL_MIN or max(cool) > COOL_MAX:
+                inrange = False
+
+            if inrange:
+                self.results.passed(chan)
+                self.calibration[chan]['status'] = 'Pass'
+                #PR.Green(f"Pass: CH{chan} calibration in range")
+                continue
+            self.results.failed(chan)
+            self.calibration[chan]['status'] = 'Fail'
+            PR.Red(f"Fail: CH{chan} calibration outside range")
+
+    def print_cal(self, chans=None, average=True):
+        print()
+        PR.Reverse(f" Calibration results {'(averaged)' if average else ''}: ")
+        for chan, cal in self.calibration.items():
+            if chans and chan not in chans:
+                continue
+            status = cal['status'] if 'status' in cal else ''
+            if average:
+                sens = round(sum(cal['sensitivity']) / len(cal['sensitivity']), 5)
+                cool = round(sum(cal['cooling']) / len(cal['cooling']), 5)
+            else:
+                sens = cal['sensitivity'][-1]
+                cool = cal['cooling'][-1]
+            print(f"Chan {chan} \t Sensitivity {sens} \t Cooling {cool} \t {status}")
+
+    def cal_to_csv(self):
+        filepath = self.gen_filepath('csv')
+        print(f"Saving calibration to {filepath}")
+        with open(filepath, 'w') as f:
+            w = csv.writer(f)
+            w.writerow(['channel', 'sensitivity', 'cooling', 'I0', 'Q0', 'status'])
+            for chan, cal in self.calibration.items():
+                sens = None
+                for ii, values in enumerate(cal['sensitivity']):
+                    w.writerow([
+                        chan, 
+                        cal['sensitivity'][ii],
+                        cal['cooling'][ii],
+                        cal['I0'][ii],
+                        cal['Q0'][ii],
+                        cal['status']
+                    ])
+
+    #cap funcs
+    def run_cap(self):
+        print()
+        PR.Reverse(f" Running capture on channels {self.chan_str} ")
+        self.uut.s0.transient = "POST=100000 SOFT_TRIGGER=0 DEMUX=0"
+        self.strobe.start()
+        time.sleep(1)
+        self.uut.s0.set_arm = '1'
+        print('Arming')
+
+        self.uut.statmon.wait_armed()
+        self.uut.s0.soft_trigger = '1'
+        print('Triggering')
+
+        self.uut.statmon.wait_stopped()
+        self.strobe.stop()
+        print('Stopped')
+
+
+        if self.args.plot > 0 or self.args.save > 1:
+            for type in self.args.dtypes:
+                self.get_data(type)
+
+        self.check_PWR_sync()
+
+        if self.args.plot > 1:
+            self.plot_data(self.active_chans, 1)
+
+        self.dsp_reset()
+
+    def dsp_reset(self):
+        self.uut.s14.DSP_RESET = 1
+        time.sleep(0.1)
+        self.uut.s14.DSP_RESET = 0
+
+    def get_data(self, type):
+        if type not in self.data_types:
+            PR.Red(f"data type {type} is invalid")
+            return
+        self.active_types.add(type)
+        
+        dtype = self.data_types[type]
+        for chan in self.active_chans:
+            raw = self.uut.read_channels(chan * 3 - dtype['nidx'])[-1]
+            if chan not in self.data:
+                self.data[chan] = {}
+            self.data[chan][type] = raw.reshape(1,-1)[0]
+
+    def save_data(self):
+        out = []
+        total_chans = 0
+        types = sorted(list(self.active_types))
+        for chan in self.data:
+            for type in types:
+                dat = self.data[chan][type]
+                marker = np.array([chan, self.data_types[type]['nidx'], chan], dtype=dat.dtype)
+                dat = np.concatenate((marker, dat))
+                total_chans += 1
+                if len(out) == 0:
+                    out = dat.reshape(1,-1)
+                    continue
+                out = np.row_stack((out, dat))
+        if len(out) == 0:
+            return
+        filename = f"capture.{'.'.join(types)}.{total_chans}.dat"
+        filepath = os.path.join('results', self.uut.uut, filename)
+        with open(filepath, 'w') as f:
+            print(f"Saving data to {filepath}")
+            self.dat_file = filepath
+            out.T.tofile(f)
+        print(f"""hexdump -e '{total_chans}/4 "%04x," "\\n" ' {filepath}""")
+
+    def check_PWR_sync(self):
+        testname = f"sync"
+        type = 'PWR'
+        if type not in self.data[self.active_chans[0]]:
+            PR.Red('Unable to check sync no PWR')
+            return
+        self.results.register(testname)
+        zero_crossings = {}
+        for chan in self.active_chans:
+            chandata = self.data[chan][type][100:]
+            chandata = chandata - int(np.max(chandata) / 2)
+            zc = np.where(np.diff(np.sign(chandata)))[0]
+            mask = np.concatenate([[np.inf], np.diff(zc)]) > 1
+            if len(mask) == 1:
+                mask = []
+            zero_crossings[chan] = zc[mask]
+
+        for chan, dat in zero_crossings.items():
+            if not hasattr(self, 'dat0'):
+                self.dat0 = dat
+                self.chan0 = chan
+                continue
+            if len(dat) == 0:
+                self.results.failed(chan)
+                PR.Red(f"Fail: CH{chan} no zero crossings")
+                continue
+            try:
+                comparison = np.allclose(self.dat0, dat, atol=2, rtol=0)
+            except Exception as e:
+                print(e)
+                self.results.failed(chan)
+                PR.Red(f"Fail: CH{self.chan0} CH{chan} comparison failed")
+                continue
+            if comparison:
+                self.results.passed(chan)
+                PR.Green(f"Pass: CH{self.chan0} CH{chan} in sync")
+            else:
+                self.results.failed(chan)
+                PR.Red(f"Fail: CH{self.chan0} CH{chan} not in sync")
+
+    def check_capture(self):
+        print()
+        PR.Reverse('Capture results:')
+        if 'sync' in self.results.arr:
+            failures = sorted(self.results.arr['sync']['fail'])
+            if len(failures) == 0:
+                PR.Green(f"All channels in sync")
+            else:
+                PR.Red(f"Channels {','.join(list(map(str, failures)))} out of sync")
+        self.plot_data()
+
+    def get_loc(self, chan):
+        return ((chan + 7) // 8)
+
+    def plot_data(self, chans=None, plots=None):
+        for type in self.args.dtypes:
+            if type not in self.data_types:
+                PR.Red(f"data type {type} is invalid")
+                continue
+            print(f"Plotting {type}")
+            dtype = self.data_types[type]
+            if not plots:
+                plots = self.args.foils
+            figure, axis = plt.subplots(plots)
+            plt.suptitle(f"{type} Bolo[{self.args.bolo}]")
+            if plots == 1:
+                axis = [axis]
+                fidx = 0
+            for chan in self.data:
+                if chans and chan not in self.active_chans:
+                    continue
+                chan_idx = chan - 1
+                if plots > 1:
+                    fidx = (chan_idx - ((chan_idx  // self.args.foils) * self.args.foils))
+                    title = f"foil {fidx + 1}"
+                axis[fidx].plot(self.data[chan][type][100:self.args.ptotal] * dtype['scaler'], label=f"{type} CH {chan}", linewidth=1, color=self.get_color(chan_idx))
+                axis[fidx].set_ylabel(dtype['unit'])
+                if plots == 1:
+                    title = f"Foils {self.args.foils}"
+                axis[fidx].set_title(title)
+                axis[fidx].legend()
+        plt.tight_layout()
+        plt.show()
+
+    #helper classes
+
+    class StrobeHelper:
+        def __init__(self, uut):
+            self.uut = uut
+            self.stop()
+
+        def start(self):
+            print('Priming strobe')
+            self.uut.s0.GPG_ENABLE = '0'
+            self.uut.s0.SIG_EVENT_SRC_1 = 'GPG'
+            self.uut.s0.GPG_TRG = '1'
+            self.uut.s0.GPG_TRG_DX = '1'
+            self.uut.s0.GPG_TRG_SENSE = '1'
+            self.uut.s0.SIG_FP_GPIO = '2'
+            self.uut.s0.GPG_MODE = '0'
+            #self.uut.s0.gpg_timescaler = '625' #20Hz
+            self.uut.s0.gpg_timescaler = '6250' #2Hz
+            self.uut.load_gpg('\n'.join(DEFAULT_STL))
+            self.uut.s0.GPG_ENABLE = '1'
+
+        def stop(self):
+            self.uut.s0.GPG_ENABLE = '0'
+
+    class ResultHelper:
+        arr = {}
+        current = None
+        def register(self, testname):
+            self.current = testname
+            if testname in self.arr:
+                return
+            self.arr[testname] = {'pass' : [],'fail' : []}
+
+        def passed(self, chans):
+            self.add('pass', chans)
+
+        def failed(self, chans):
+            self.add('fail', chans)
+
+        def add(self, result, chans):
+            if type(chans) is not list:
+                chans = [str(chans)]
+            results = self.arr[self.current][result]
+            for chan in chans:
+                if chan not in results:
+                    results.append(str(chan))
+        
+        def get(self):
+            for type in self.arr:
+                for result in self.arr[type]:
+                    self.arr[type][result] = sorted(self.arr[type][result])
+            return self.arr
+
+    #save funcs
+
+    def get_uut_config(self):
+        uut = self.uut
+        software_version = uut.s0.software_version
+        fpga_version = uut.s0.fpga_version
+        config = {
+            'uut_name'       : uut.uut,
+            'fpga'           : fpga_version.split(' ')[0],
+            'fpga_timestamp' : fpga_version.split(' ')[-1],
+            'version'        : int(software_version.split('-')[1]),
+            'firmware'       : software_version,
+            'serial'         : uut.s0.SERIAL,
+            'model'          : uut.s0.MODEL,
+            'clk'            : int(float(acq400_hapi.pv(uut.s0.SIG_CLK_S1_FREQ))),
+            'data_size'      : uut.data_size(),
+            'modules'        : []
+        }
+        for site_i in uut.s0.sites.split(','):
+            site = getattr(uut, f"s{site_i}")
+            module = {
+                'model': site.MODEL,
+                'serial' : site.SERIAL,
+                'nchan' : int(site.NCHAN),
+                'full_model' : site.PART_NUM,
+                'location' : int(site_i),
+            }
+            config['modules'].append(module)
+        return config
+
+    def get_test(self):
+        return {
+            'type'     : 'bolo',
+            'bolo_id'  : self.args.bolo,
+            'cycles'   : f"{self.cycle}/{self.args.cycles}",
+            'channels' : ','.join(list(map(str, self.channels))),
+            'foils'    : self.args.foils,
+        }
+    
+    def get_color(self, chan):
+        colors = ['#0111B5', '#EC151D', '#21B321', '#120413', '#7C35BB', '#FFC800', '#ED17C0', '#FB6F42', '#12969B']
+        return colors[chan % len(colors)]
+
+    def get_calibration(self):
+        if len(self.calibration) > 0:
+            return self.calibration
+        return None
+    
+    def gen_filepath(self, ext):
+        path = os.path.join('results', self.uut.uut, self.timestamp)
+        filename = f"{self.uut.uut}.{self.args.bolo}.{ext}"
+        try:os.makedirs(path)
+        except:pass
+        return os.path.join(path, filename)
+    
+    def send_to_remote(self, payload):
+        url = self.args.url
+        if not url.startswith('http'):
+            url = f"http://{url}"
+        if not url.endswith('/'):
+            url = f"{url}/"
+
+        print(f'Sending results to {url}')
+
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        r = requests.post(url, data=json.dumps(payload), headers=headers)
+        if r.status_code != 200:
+            PR.Red(f'Error: {r.status_code}')
+            print(r.text)
+            return
+        #print(r.text)
+        PR.Green('Results sent successfully')
+        if not self.dat_file:
+            return
+        
+        r = requests.post(url, files={"dat_file": open(self.dat_file, "rb")})
+        if r.status_code != 200:
+            PR.Red(f'Error: {r.status_code}')
+            print(r.text)
+            return
+        #print(r.text)
+        PR.Green('Datfile sent successfully')
+
+    def save_results(self):
+        if len(self.data) == 0 and len(self.calibration) == 0:
+            exit()
+        self.beep_beeper(3)
+
+        if self.args.cal:
+            self.check_calibration()
+            self.print_cal()
+            if self.args.tocsv:
+                self.cal_to_csv()
+
+        if self.args.cap:
+            if self.args.save:
+                self.save_data()
+            self.check_capture()
+        
+        payload = {
+            'uut'         : self.get_uut_config(),
+            'test'        : self.get_test(),
+            'results'     : self.results.get(),
+            'calibration' : self.get_calibration(),
+            'v'           : 4
+        }
+
+        filepath = self.gen_filepath('json')
+        with open(filepath, 'w') as f:
+            print(f"Saving test config to {filepath}")
+            json.dump(payload, f, indent=4)
+
+        if self.args.url:
+            self.send_to_remote(payload)
+
+#execution starts here
 def run_main(args):
+    bh = bolo_handler(args)
+    
     try:
-        globals.uut = acq400_hapi.factory(args.uut_name)
-    except Exception as e:
-        print(e)
-        exit(1)
-    globals.uut_state = get_uut_state(globals.uut)
+        for chanset in bh.chanset:
 
-    globals.sites = args.sites.split(',') if args.sites else ['1', '2', '3', '4', '5', '6']
-    print(f'Connecting to {args.uut_name}')
-    password = input('Password: ')
-    LINEUP = '\033[F'
-    PR.Red(f"{LINEUP}REDACTED REDACTED REDACTED REDACTED")
-    params = {
-        'hostname': args.uut_name,
-        'port': 22,
-        'username': 'root',
-        'password' : password,
-        'timeout': 5
-    }
-    filename = '/mnt/local/sysconfig/bolo.sh'
-    globals.file  = Remote_File(filename, params)
+            bh.set_active(chanset)
+            bh.ask_if_connected()
+            time_start = time.time()
 
-    run_test(args)
-    while args.forever:
-        run_test(args)
+            for cycle in range(1, args.cycles + 1):
+                bh.set_cycle(cycle)
 
-    globals.file.close()
-    print('End')
+                if args.cal:
+                    bh.run_cal()
 
-def run_test(args):
-    for module in globals.uut_state['modules']:
-        if module['location'] not in globals.sites:
-            print(f'Skipping site {module["location"]}')
-            continue
-        print(f'starting test for module: {module["serial"]}')
-        results = []
-        start_idx = 8 * (int(module['location']) - 1)
+                if args.cap:
+                    bh.run_cap()
 
-        for channel in range(args.start_chan, args.end_chan, 2):
-            channel += start_idx
-            PR.Yellow(f'Testing channels {channel}-{channel + 1}')
+            total_time = time.time() - time_start
+            print(f"{args.cycles} cycles took {total_time:.2f}s")
 
-            while not args.forever:
+    except KeyboardInterrupt as e:
+        print('Stopping')
 
-                value = input(f'Is bolometer connected to channels {channel}-{channel + 1} yes / no / finish: ')
-                if value.startswith('y'):
-                    break
-                if value.startswith('f'):
-                    globals.file.reset()
-                    globals.file.close()
-                    if results:
-                        save_module_results(results, module, args)
-                    exit('Stopping')
-                PR.Yellow(f'Connect bolometer to channels {channel}-{channel + 1}')
-                time.sleep(1)
-
-            set_active_channels(globals.file, channel)
-            result = test_channels(channel, args)
-            results.extend(result)
-            globals.file.reset()
-            if args.beeper:
-                beep_beeper(args, 1)
-            print()
-
-        PR.Green(f'Finished testing {module["serial"]}')
-        if globals.fails > 0:
-            PR.Red(f'{module["serial"]} had {globals.fails} fails')
-            globals.total_fails += globals.fails
-        else:
-            PR.Green(f'{module["serial"]} had {globals.fails} fails')
-        PR.Yellow(f'{globals.total_fails} in total')
-        save_module_results(results, module, args)
-        if args.sleep:
-            print(f"sleeping for {args.sleep}s")
-            time.sleep(args.sleep)
-
-def get_temp():
-    temps = globals.uut.s0.SYS_TEMP.split(',')
-    temps = dict((key, float(value)) for key,value in ((value.split("=") for value in temps)))
-    globals.temps.append(temps['mainboard'])
-    print(f"Temp is {temps['mainboard']}°C")
-
-def get_uut_state(uut):
-    modules = []
-    for site_num in uut.s0.sites.split(','):
-        part = {}
-        site = getattr(uut, f"s{site_num}")
-        part['model'] = site.MODEL
-        part['serial'] = site.SERIAL
-        part['nchan'] = site.NCHAN
-        part['full_model'] = site.PART_NUM
-        part['location'] = site_num
-        modules.append(part)
-    fpga = uut.s0.fpga_version.split(' ')
-    uut_state = {
-        'uut_name'  : uut.s0.HN,
-        'fpga'      : fpga[0],
-        'fpga_time' : fpga[1],
-        'firmware'  : uut.s0.software_version,
-        'modules'   : modules,
-        'serial'    : uut.s0.SERIAL,
-        'model'     : uut.s0.MODEL,
-        'temp'      : 0,
-    }
-    return uut_state
-
-def set_active_channels(file, channel):
-    channels = f'{channel} {channel + 1}'
-    print(f'Setting active channels to {channels}')
-    line = f'export BOLO_ACTIVE_CHAN="{channels}"'
-    file.append(line)
-
-def test_channels(channel, args):
-    results = []
-    for i in range(args.cycles):
-        PR.Yellow(f'Test cycle {i + 1}')
-        get_temp()
-        try:
-            run_service()
-        except Exception as e:
-            print(e)
-            response = input('Test Failed exit? y/n ')
-            if response == 'y':
-                exit()
-        values = extract_values(get_xml(args))
-        check_for_fails(args, values)
-        results.extend(values)
-    return results
-
-def run_service():
-    #uut.s14.DSP_RESET = 1
-    #time.sleep(0.1)
-    #uut.s14.DSP_RESET = 0
-    globals.uut.run_service(acq400_hapi.AcqPorts.BOLO8_CAL, eof="END")
-
-def get_xml(args):
-    url = f'http://{args.uut_name}/d-tacq/data/BOLO_CAL.xml'
-    response = requests.get(url)
-    data = xmltodict.parse(response.content)['acqDataXML']['acqData']['v']
-    return data
-
-def beep_beeper(args, interval):
-    #beeps when its time to change bolometer port
-    try:
-        acq400_hapi.Agilent33210A(args.beeper).beep(interval)
-    except Exception as e:
-        print(e)
-        PR.Red('Beeper not found')
-    exit
-
-def extract_values(data):
-    expr = re.compile('([\d]+)[ ]+([\d\.-]+)[ ]+([\d\.-]+)[ ]+([\d\.-]+)[ ]+([\d\.-]+)[ ]+([\w]+)')
-    matches = expr.findall(data)
-    return matches
-
-def check_for_fails(args, values):
-    for value in values:
-        PR.Yellow(value)
-        if value[5] != 'PASS':
-            globals.fails += 1
-            PR.Red(f"Test failed for channel {value[0]}")
-            if args.beeper:
-                beep_beeper(args, 0.3)
-
-def save_module_results(results, module, args):
-    globals.uut_state['temp'] = sum(globals.temps) / len(globals.temps)
-    globals.temps = []
-
-    if args.url:
-        payload = build_payload(results, module)
-        send_to_remote(args.url, payload)
-
-    save_to_file(module, results, args)
-
-def build_payload(results, module):
-    state = globals.uut_state.copy()
-    state['modules'] = [module]
-    payload = {
-        'uut_state' : state,
-        'results' : results,
-    }
-    print(json.dumps(payload, indent=4))
-    return json.dumps(payload)
-
-def send_to_remote(url, payload):
-    print(f'Sending results to {url}')
-    r = requests.post(url, payload)
-    if r.status_code != 200:
-        PR.Red(f'Error: {r.status_code}')
-        print(r.text)
-        return
-    PR.Green('Results received')
-
-def save_to_file(module, results, args):
-    filename = f'bolo_result-{module["serial"]}-{round(time.time())}.csv'
-    if args.log_all:
-        filename = f'bolo_results-{datetime.date.today()}.csv'
-
-    header = ['module', 'channel', 'I0', 'Q0', 'sensitivity', 'cooling', 'result']
-
-    if not os.path.exists(filename):
-        with open(filename, 'w', encoding='UTF8') as f:
-            writer = csv.writer(f)
-            writer.writerow(header)
-
-    with open(filename, 'a', encoding='UTF8') as f:
-        writer = csv.writer(f)
-        results = sorted(results)
-        loc_offset = 8 * (int(module['location']) - 1)
-        for result in results:
-            writer.writerow([module['serial'], int(result[0]) - loc_offset, *result[1:]])
-
-    print(f"saving results to {filename}")
-
-# execution starts here
+    bh.strobe.stop()
+    bh.save_results()
 
 if __name__ == '__main__':
     run_main(get_parser().parse_args())
