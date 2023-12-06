@@ -37,28 +37,6 @@ example usage::
     # plot data from LLC, 128 channels, show one "channel" from each site.
     # 97 was actually the LSB of TLATCH.
 
-usage::
-
-    host_demux.py [-h] [--nchan NCHAN] [--nblks NBLKS] [--save SAVE]
-                     [--src SRC] [--pchan PCHAN]
-                     uut
-
-host demux, host side data handling
-
-positional arguments:
-  uut            uut
-
-optional arguments:
-  -h, --help     show this help message and exit
-  --nchan NCHAN
-  --nblks NBLKS
-  --save SAVE    save channelized data to dir
-  --src SRC      data source root
-  --pchan PCHAN  channels to plot
-  --egu EGU      plot egu (V vs s)
-  --xdt XDT      0: use interval from UUT, else specify interval
-  --double_up    Use for ACQ480 two lines per channel mode
-
 if --src is a file, use it directly
     dir/nnnn
 if --src is a directory, first check if it has cycles:
@@ -67,15 +45,17 @@ else iterate files in dir
     dir/nnnnn*
 
 TO DEMUX ON WINDOWS TO STORE CHANNELISED DATA:
-python .\host_demux.py --save=1 --src="[dir]" --pchan=none acq2106_114
-    Make sure that the muxed data is in D:\\[dir]\[UUT name]\
-Where [dir] is the location of the data.
+    python .\host_demux.py --save=1 --src="[dir]" --pchan=none acq2106_114
 
-Demuxed data will be written to D:\\demuxed\[UUT name]\
-To plot subsampled data on windows:
+    Make sure that the muxed data is in D:\\[dir]\[UUT name]
 
-python .\host_demux.py --src=Projects --nchan=8
---pchan 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16  --plot_mpl=1:1000:1 acq2106_120
+    Where [dir] is the location of the data.
+
+    Demuxed data will be written to D:\\demuxed\[UUT name]
+
+    To plot subsampled data on windows:
+        python .\host_demux.py --src=Projects --nchan=8 \
+    --pchan 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16  --plot_mpl=1:1000:1 acq2106_120
 
 """
 
@@ -422,7 +402,7 @@ def process_data(args):
     raw_data = read_data(args, NCHAN) if not os.path.isfile(args.src) else read_data_file(args, NCHAN)
 
     if args.double_up:
-	       raw_data = double_up(args, raw_data)
+       raw_data = double_up(args, raw_data)
 
     if args.save != None:
         save_data(args, raw_data)
@@ -444,23 +424,7 @@ def make_pc_list(args):
         return args.pchan.split(',')
 
 
-def run_main():
-    parser = argparse.ArgumentParser(description='host demux, host side data handling')
-    parser.add_argument('--nchan', type=int, default=80)
-    parser.add_argument('--nblks', type=int, default=-1)
-    parser.add_argument('--save', type=str, default=None, help='save channelized data to dir')
-    parser.add_argument('--src', type=str, default='/data', help='data source root')
-    parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
-    parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
-    parser.add_argument('--egu', type=str, default=0, help='plot egu (V vs s) .. --egu UUT')
-    parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
-    parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
-    parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
-    parser.add_argument('--plot_mpl', type=str, default="1:1000:1", help='Use MatPlotLib to plot subrate data args: start:stop[:step]')    
-    parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
-    parser.add_argument('--show_columns', type=int, default=0)  
-    args = parser.parse_args()
-    
+def run_main(args):
     args.WSIZE = 2
     args.NSAM = 0
     if args.data_type == 16:
@@ -497,6 +461,23 @@ def run_main():
     else:
         process_data(args)
 
+def get_parser():
+    parser = argparse.ArgumentParser(description='host demux, host side data handling')
+    parser.add_argument('--nchan', type=int, default=80)
+    parser.add_argument('--nblks', type=int, default=-1)
+    parser.add_argument('--save', type=str, default=None, help='save channelized data to dir')
+    parser.add_argument('--src', type=str, default='/data', help='data source root')
+    parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
+    parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
+    parser.add_argument('--egu', type=str, default=0, help='plot egu (V vs s) .. --egu UUT')
+    parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
+    parser.add_argument('--data_type', type=int, default=16, help='Use int16 or int32 for data demux.')
+    parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
+    parser.add_argument('--plot_mpl', type=str, default="1:1000:1", help='Use MatPlotLib to plot subrate data args: start:stop[:step]')    
+    parser.add_argument('--drive_letter', type=str, default="D", help="Which drive letter to use when on windows.")
+    parser.add_argument('--show_columns', type=int, default=0)
+    return parser
+
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())
 

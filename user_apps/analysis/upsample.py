@@ -33,12 +33,7 @@ def plot_data(args):
     plt.show()
 
 
-def run_main():
-    parser = argparse.ArgumentParser(description='plots a single channel data file')
-    parser.add_argument('file', nargs=1, help='data file')
-    parser.add_argument('--wordsize', type=int, default=16, help='16 or 32')
-    parser.add_argument('--interval', type=float, default=0.2, help='new interval size')
-    args = parser.parse_args()
+def run_main(args):
     if args.wordsize == 16:
         args.np_data_type = np.int16
         args.WSIZE = 2
@@ -48,7 +43,13 @@ def run_main():
 
     plot_data(args)
 
+def get_parser():
+    parser = argparse.ArgumentParser(description='plots a single channel data file')
+    parser.add_argument('file', nargs=1, help='data file')
+    parser.add_argument('--wordsize', type=int, default=16, help='16 or 32')
+    parser.add_argument('--interval', type=float, default=0.2, help='new interval size')
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())
 

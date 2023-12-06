@@ -5,15 +5,21 @@ A python script to demux the data from the cs system.
 
 The data is supposed to come out in the following way:
 
-CH01 .. CH02 .. CH03 .. CH04 .. INDEX .. FACET .. SAM COUNT .. usec COUNT
-short   short   short   short   long     long     long          long
+=====  =====  ======  ======  ======  ======  =========  ==========
+CH01   CH02   CH03    CH04    INDEX   FACET   SAM COUNT  usec COUNT
+=====  =====  ======  ======  ======  ======  =========  ==========
+short  short  short   short   long    long    long       long
+=====  =====  ======  ======  ======  ======  =========  ==========
 
 Usage:
-Linux:
-python cs_demux.py --data_file="/home/sean/PROJECTS/workspace/acq400_hapi-1/user_apps/
-                                    acq400/acq1001_068/000001/0000"
-Windows:
-python .\cs_demux.py --plot_facets=4 --data_file="C:/acq2106_112/000001/0000"
+
+Linux::
+
+    python cs_demux.py --data_file="/home/sean/PROJECTS/workspace/acq400_hapi-1/user_apps/acq400/acq1001_068/000001/0000"
+
+Windows::
+
+    python .\cs_demux.py --plot_facets=4 --data_file="C:/acq2106_112/000001/0000"
 """
 
 
@@ -239,20 +245,7 @@ def isNewIndex_default(w1, w2):
 def isNewIndex_msb_direct(w1, w2):
     return (w1&0x7fffffff)+1 == (w2&0x7fffffff)
 
-def run_main():
-    parser = argparse.ArgumentParser(description='cs demux')
-    parser.add_argument('--plot', default=1, type=int, help="Plot data")
-    parser.add_argument('--plot_facets', default=20, type=int, help="No of facets"
-                                                                    "to plot")
-    parser.add_argument('--save', default=0, type=int, help="Save data")
-    parser.add_argument('--transient_length', default=8192, type=int, help='transient length')
-    parser.add_argument("--data_file", default="./shot_data", type=str, help="Name of"
-                                                                    "data file")
-    parser.add_argument("--msb_direct", default=0, type=int, help="new msb_direct feature, d2/d4 embedded in count d31")
-    parser.add_argument("--find_all_es", default=0, type=int, help="find all ES markers")
-    parser.add_argument("--print_stats", default=0, type=int, help="print burst statistics, 1:top/tail 2:all bursts")
-    
-    args = parser.parse_args()
+def run_main(args):
     args.isNewIndex = isNewIndex_msb_direct if args.msb_direct else isNewIndex_default
     
     args.data32 = np.fromfile(args.data_file, dtype=np.uint32)
@@ -271,5 +264,19 @@ def run_main():
     if args.print_stats:
         print_stats(args, data)
 
+def get_parser():
+    parser = argparse.ArgumentParser(description='cs demux')
+    parser.add_argument('--plot', default=1, type=int, help="Plot data")
+    parser.add_argument('--plot_facets', default=20, type=int, help="No of facets"
+                                                                    "to plot")
+    parser.add_argument('--save', default=0, type=int, help="Save data")
+    parser.add_argument('--transient_length', default=8192, type=int, help='transient length')
+    parser.add_argument("--data_file", default="./shot_data", type=str, help="Name of"
+                                                                    "data file")
+    parser.add_argument("--msb_direct", default=0, type=int, help="new msb_direct feature, d2/d4 embedded in count d31")
+    parser.add_argument("--find_all_es", default=0, type=int, help="find all ES markers")
+    parser.add_argument("--print_stats", default=0, type=int, help="print burst statistics, 1:top/tail 2:all bursts")
+    return parser
+
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

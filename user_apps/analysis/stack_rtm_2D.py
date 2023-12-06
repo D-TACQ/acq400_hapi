@@ -1,57 +1,63 @@
 #!/usr/bin/python
 '''
 acq480 2D data is unique in that channels "double tap", so demux is .. tricky.
+
 best practise is to demux on the box
+
 what about rgm?. OK, download the demux data then reconstruct the ES
-eg
-./user_apps/acq400/set_burst.py --config_only 1 --rgm RTM --rtm_translen=250 --dx=d0 --sense=rising --trace=1 $UUTS
 
-./user_apps/acq400/acq400_upload.py --trace_upload=1 --plot_data=1 --capture=-1 --save_data=./DATA/ $UUTS
+eg::
 
-Gives us:
-pgm@hoy5 acq400_hapi]$ ls -l DATA
-total 6276
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH01
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH02
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH03
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH04
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH05
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH06
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH07
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH08
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH01
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH02
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH03
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH04
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH05
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH06
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH07
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH08
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_278_CH01
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_278_CH02
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_278_CH03
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_278_CH04
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_278_CH05
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_278_CH06
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_278_CH07
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_278_CH08
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH01
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH02
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH03
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH04
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH05
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH06
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH07
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH08
+    ./user_apps/acq400/set_burst.py --config_only 1 --rgm RTM --rtm_translen=250 --dx=d0 --sense=rising --trace=1 $UUTS
 
-ES magic is present in even channels only
-[pgm@hoy5 acq400_hapi]$ hexdump DATA/acq1001_148_CH01 | grep aa55 | head
-[pgm@hoy5 acq400_hapi]$ 
-pgm@hoy5 acq400_hapi]$ hexdump DATA/acq1001_148_CH06 | grep aa55 | head
-0000000 fe44 fe44 f154 aa55 fe44 fe4c fe48 fe44
-00003f0 f154 aa55 fe44 fe48 fe48 fe48 fe44 fe48
-00007d0 fe48 fe44 fe40 fe44 fe48 fe44 f154 aa55
-0000bc0 fe44 fe44 fe40 fe40 f154 aa55 fe44 fe48
+    ./user_apps/acq400/acq400_upload.py --trace_upload=1 --plot_data=1 --capture=-1 --save_data=./DATA/ $UUTS
+
+Gives us ::
+
+    pgm@hoy5 acq400_hapi]$ ls -l DATA
+    total 6276
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH01
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH02
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH03
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH04
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH05
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH06
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH07
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH08
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH01
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH02
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH03
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH04
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH05
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH06
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH07
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_149_CH08
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_278_CH01
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_278_CH02
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_278_CH03
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_278_CH04
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_278_CH05
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_278_CH06
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_278_CH07
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_278_CH08
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH01
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH02
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH03
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH04
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH05
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH06
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH07
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH08
+
+ES magic is present in even channels only ::
+
+    [pgm@hoy5 acq400_hapi]$ hexdump DATA/acq1001_148_CH01 | grep aa55 | head
+    [pgm@hoy5 acq400_hapi]$ 
+    pgm@hoy5 acq400_hapi]$ hexdump DATA/acq1001_148_CH06 | grep aa55 | head
+    0000000 fe44 fe44 f154 aa55 fe44 fe4c fe48 fe44
+    00003f0 f154 aa55 fe44 fe48 fe48 fe48 fe44 fe48
+    00007d0 fe48 fe44 fe40 fe44 fe48 fe44 f154 aa55
+    0000bc0 fe44 fe44 fe40 fe40 f154 aa55 fe44 fe48
 
 PLAN:
 - load all the files as int16
@@ -282,7 +288,14 @@ def process_data(args):
 
 
 
-def run_main():
+def run_main(args):
+    if os.path.isdir(args.root):
+        print("using data from {}".format(args.root))
+        process_data(args)
+    else:
+        print("ERROR: --root {} is not a directory".format(args.root))
+
+def get_parser():
     parser = argparse.ArgumentParser(description='host demux, host side data handling')
     parser.add_argument('--plotchan', type=str, default='1,17', help='list of channels to plot')
     parser.add_argument('--stack_offset', type=int, default=100, help='separate channels in plot')
@@ -292,15 +305,9 @@ def run_main():
     parser.add_argument('--root', type=str, default="./DATA", help='directory with data')
     parser.add_argument('--alignref', type=int, default=None, help='realign on this channel [index from 1]')
     parser.add_argument('--store_chan', type=str, default=None, help='directory to store result by channel') 
-    args = parser.parse_args()
-    if os.path.isdir(args.root):
-        print("using data from {}".format(args.root))
-        process_data(args)
-    else:
-        print("ERROR: --root {} is not a directory".format(args.root))
-
+    return parser
 
 
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

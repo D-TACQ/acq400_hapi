@@ -45,14 +45,7 @@ def load_data(args):
         
     return data
 
-def run_main():
-    parser = argparse.ArgumentParser(description='multiplot')
-    parser.add_argument('--title', default="multiplot", help="Plot Title")
-    parser.add_argument('--data_type', default=None, help="default: .npy file, else 16 or 32 for raw data")
-    parser.add_argument('--maxlen', type=int, default=None, help="max length to plot")
-    parser.add_argument('files', nargs='+', help='file names')
-    
-    args = parser.parse_args()
+def run_main(args):
     if args.data_type is None:
         print("plot .npy file")
     elif args.data_type == 16:
@@ -67,5 +60,13 @@ def run_main():
     
     plot_data(args, load_data(args))
 
+def get_parser():
+    parser = argparse.ArgumentParser(description='multiplot')
+    parser.add_argument('--title', default="multiplot", help="Plot Title")
+    parser.add_argument('--data_type', default=None, help="default: .npy file, else 16 or 32 for raw data")
+    parser.add_argument('--maxlen', type=int, default=None, help="max length to plot")
+    parser.add_argument('files', nargs='+', help='file names')
+    return parser
+
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

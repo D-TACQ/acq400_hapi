@@ -1,22 +1,24 @@
 #!/usr/bin/python
 '''
+::
 
-./user_apps/acq400/acq400_upload.py --trace_upload=1 --plot_data=1 --capture=-1 --save_data=./DATA/ $UUTS
+    ./user_apps/acq400/acq400_upload.py --trace_upload=1 --plot_data=1 --capture=-1 --save_data=./DATA/ $UUTS
 
-Gives us:
-pgm@hoy5 acq400_hapi]$ ls -l DATA
-total 6276
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH01
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH02
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH03
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH04
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH05
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH06
-..
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH05
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH06
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH07
--rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH08
+Gives us::
+
+    pgm@hoy5 acq400_hapi]$ ls -l DATA
+    total 6276
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH01
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH02
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH03
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH04
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH05
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:19 acq1001_148_CH06
+    ..
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH05
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH06
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH07
+    -rw-rw-r-- 1 pgm pgm 200000 Sep 24 11:20 acq1001_279_CH08
 
 
 - then restack all the data as
@@ -238,23 +240,13 @@ def process_data(args):
         realign(chx, args.alignref-1)
     fix_args(chx, args)
     if args.plotchan != '0':
-	plot_data(chx, args)
+        plot_data(chx, args)
     if args.store_chan:
         store_chan(chx, args)
 
 
 
-def run_main():
-    parser = argparse.ArgumentParser(description='host demux, host side data handling')
-    parser.add_argument('--plotchan', type=str, default='1,17', help='list of channels to plot')
-    parser.add_argument('--stack_offset', type=int, default=100, help='separate channels in plot')
-    parser.add_argument('--burst_range', type=str, default=None, help='min, max, [stride] bursts to plot')
-    parser.add_argument('--burst_list', type=str, default=None, help='list of bursts to plot')
-    parser.add_argument('--maxlen', type=int, default=999999, help='max length per burst to plot')
-    parser.add_argument('--root', type=str, default="./DATA", help='directory with data')
-    parser.add_argument('--alignref', type=int, default=None, help='realign on this channel [index from 1]')
-    parser.add_argument('--store_chan', type=str, default=None, help='directory to store result by channel')
-    args = parser.parse_args()
+def run_main(args):
     if os.path.isdir(args.root):
         print("using data from {}".format(args.root))
         process_data(args)
@@ -264,5 +256,17 @@ def run_main():
 
 
 
+def get_parser():
+    parser = argparse.ArgumentParser(description='host demux, host side data handling')
+    parser.add_argument('--plotchan', type=str, default='1,17', help='list of channels to plot')
+    parser.add_argument('--stack_offset', type=int, default=100, help='separate channels in plot')
+    parser.add_argument('--burst_range', type=str, default=None, help='min, max, [stride] bursts to plot')
+    parser.add_argument('--burst_list', type=str, default=None, help='list of bursts to plot')
+    parser.add_argument('--maxlen', type=int, default=999999, help='max length per burst to plot')
+    parser.add_argument('--root', type=str, default="./DATA", help='directory with data')
+    parser.add_argument('--alignref', type=int, default=None, help='realign on this channel [index from 1]')
+    parser.add_argument('--store_chan', type=str, default=None, help='directory to store result by channel')
+    return parser
+
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

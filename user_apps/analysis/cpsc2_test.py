@@ -4,9 +4,10 @@
 """
 This is a script used to analyse CPSC2 data.
 
-Usage:
+Usage::
 
-python3.6 cpsc2_test.py --data /home/sean/PROJECTS/workspace/cpsc2_data/small/bigrawlogfile2 --zoom 36000 36500
+    python3.6 cpsc2_test.py --data /home/sean/PROJECTS/workspace/cpsc2_data/small/bigrawlogfile2 --zoom 36000 36500
+
 """
 
 import sys
@@ -159,7 +160,7 @@ def run_test(args):
     return None
 
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='CPSC2 data validity test.')
 
     parser.add_argument('--data', default="./cpsc2_002_raw_001.dat",
@@ -178,13 +179,10 @@ def run_main():
     type=int, help="Allows the user to zoom into a portion of the data. To use \
     the user must provide two numbers: --zoom 25000 35000. Default is whole \
     dataset.")
-
-    run_test(parser.parse_args())
-
-    return None
+    return parser
 
 
 if __name__ == '__main__':
-    run_main()
+    run_test(get_parser().parse_args())
 
 
