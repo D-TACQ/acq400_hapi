@@ -16,16 +16,14 @@ def load_dpg(args):
     uut.load_dpg(stl)
     return None
 
-
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400 simple dpg demo')
     acq400_hapi.Acq400UI.add_args(parser, post=False, pre=False)
     parser.add_argument('--file', default="", help="file to load")
     parser.add_argument('uut', nargs=1, help="uut ")
-    load_dpg(parser.parse_args())
-
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    load_dpg(get_parser().parse_args())
 
 

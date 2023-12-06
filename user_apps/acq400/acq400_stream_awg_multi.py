@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-acq400_stream_awg.py --file FILE UUT
-
-Stream data from FILE continuously to UUT stream_awg port
-
-"""
+"""Stream data from FILE continuously to UUT stream_awg port"""
 
 
 import acq400_hapi
@@ -69,12 +64,12 @@ def monitor():
         print("\rix {} NBUFS {} rate: {} MB/s >".format(IBUF, NBUFS, (BCOUNT-bc)*BSIZE/0x100000), end="")
         bc = BCOUNT
 
-def get_args(argStr=None):
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400 load awg simplest')
     parser.add_argument('--file', default=None, help="file to load")
     parser.add_argument('--soft_trigger', default=0, type=int, help='Emit soft trigger')        
     parser.add_argument('uuts', nargs=1, help="uut ")
-    return parser.parse_args(argStr)
+    return parser
 
 
 def run_main(args):
@@ -85,4 +80,4 @@ def run_main(args):
 # execution starts here
 
 if __name__ == '__main__':
-    run_main(get_args())    
+    run_main(get_parser().parse_args())

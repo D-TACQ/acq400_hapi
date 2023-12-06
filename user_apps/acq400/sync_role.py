@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+"""set sync roles for a stack of modules"""
+
 import sys
 import acq400_hapi
 from acq400_hapi import intSI as intSI
@@ -81,7 +83,7 @@ def set_sync_role(args):
     if args.enable_trigger == 99:
         master.enable_trigger()
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='set sync roles for a stack of modules')
     acq400_hapi.Acq400UI.add_args(parser, post=False)
     parser.add_argument('--enable_trigger', default=0, help="0:leave disabled, 1 enable and drop out, 99 to enable at end")
@@ -93,11 +95,7 @@ def run_main():
     parser.add_argument('--si5326_bypass', default=0, type=int, help="bypass Si5326")
     parser.add_argument('--trgsense', default='rising', help="trigger sense rising unless falling specified")
     parser.add_argument('uuts', nargs='+', help="uut ")
-    set_sync_role(parser.parse_args())
-
-
-
-# execution starts here
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    set_sync_role(get_parser().parse_args())

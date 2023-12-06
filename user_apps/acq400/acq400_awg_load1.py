@@ -1,17 +1,9 @@
 #!/usr/bin/env python
 
-"""
-upload file to AWG for a one-shot play
+"""upload file to AWG for a one-shot play
+
 data for upload is either File (host-local data file) or Rainbow, a test pattern.
 assumes that clocking has been pre-assigned.
-
-
-positional arguments:
-  uuts               uut
-
-optional arguments:
-  -h, --help         show this help message and exit
-  --files FILES      list of files to load
 """
 
 
@@ -47,7 +39,7 @@ def load_awg(args):
             print("Loaded %s" % (f))
             shot_controller.run_shot(soft_trigger= True if args.trg=='int' else False)
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400 simple awg demo')
     parser.add_argument('--file', default="", help="file to load")
     parser.add_argument('--autorearm', default=0, type=int, help="enable autorearm mode")
@@ -55,12 +47,9 @@ def run_main():
     parser.add_argument('--trg', default="int", help='trg "int|ext rising|falling"')
     parser.add_argument('--awg_extend', default=1, type=int, help='Number of times the AWG is repeated.')
     parser.add_argument('uuts', nargs=1, help="uut ")
-    load_awg(parser.parse_args())
-
-# execution starts here
+    return parser
 
 if __name__ == '__main__':
-    run_main()
-
+    load_awg(get_parser().parse_args())
 
 

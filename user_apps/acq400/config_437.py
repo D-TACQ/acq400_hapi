@@ -23,7 +23,7 @@ def set_params(args):
     return None
 
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400 set gains')
 
     parser.add_argument('--gain', default="0", type=str,
@@ -32,9 +32,7 @@ def run_main():
                         help="Set sample rate on 437 device.")
 
     parser.add_argument('uuts', nargs='+', help="uuts")
-    args = parser.parse_args()
-    set_params(args)
-
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    set_params(get_parser().parse_args())

@@ -10,27 +10,6 @@ Something like:
     >>> plt.plot(data[::<number of channels>])
     >>> plt.show()
 
-usage::
-    acq400_stream.py [-h] [--filesize FILESIZE] [--totaldata TOTALDATA]
-                        [--root ROOT] [--runtime RUNTIME] [--verbose VERBOSE]
-                        uuts [uuts ...]
-
-acq400 stream
-
-positional arguments:
-  uuts                  uuts
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --filesize FILESIZE   Size of file to store in KB. If filesize > total data
-                        then no data will be stored.
-  --totaldata TOTALDATA
-                        Total amount of data to store in KB
-  --root ROOT           Location to save files
-  --runtime RUNTIME     How long to stream data for
-  --verbose VERBOSE     Prints status messages as the stream is running
-
-
 Some usage examples are included below:
 
 1: Acquire files of size 1024kb up to a total of 4096kb:
@@ -164,7 +143,7 @@ def run_stream(args):
             new_file_flag = False
 
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400 stream')
     parser.add_argument('-filesize', '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
     parser.add_argument('--files_per_cycle', type=int, default=100, help="set files per cycle directory")
@@ -175,8 +154,7 @@ def run_main():
     parser.add_argument('--port', default='STREAM', type=str, help="Which port to stream from. STREAM=4210, SPY=53667, other: use number provided.")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uuts', nargs='+', help="uuts")
-    run_stream(parser.parse_args())
-
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    run_stream(get_parser().parse_args())

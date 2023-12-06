@@ -7,9 +7,9 @@ the UUT recieves and sends the abort command once n triggers have passed.
 
 The script is intended to be run before starting a stream. For example, if the
 user wanted to start the stream on one trigger and stop the stream on the next
-trigger, then the user would set --n=2 as such:
+trigger, then the user would set --n=2 as such::
 
-./wait_for_pulse.py --n=2 --reset=1 acq2106_085
+    ./wait_for_pulse.py --n=2 --reset=1 acq2106_085
 
 The reset parameter shown above sets the counter to 0.
 
@@ -69,8 +69,7 @@ def run(args):
 
     return None
 
-
-def main():
+def get_parser():
     parser = argparse.ArgumentParser(description='stop after n triggers')
 
     parser.add_argument('--n', default=2, type=int,
@@ -83,9 +82,7 @@ def main():
     help='Whether or not to print status messages during operation. Default: 0')
 
     parser.add_argument('uuts', nargs='+', help="uut list")
-
-    run(parser.parse_args())
-
+    return parser
 
 if __name__ == '__main__':
-    main()
+    run(get_parser().parse_args())

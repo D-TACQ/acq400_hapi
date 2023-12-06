@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-"""
-capture loop test
+"""acq400 looptest
+
 acq400_caploop UUT1 [UUT2 ..]
+
 where UUT1 is the ip-address or host name of first uut
 example test client runs captures in a loop on one or more uuts
 
@@ -11,22 +12,6 @@ capture
 eg clk is running. soft trg enabled
 eg transient length set.
 
-usage: acq400_caploop_rtrig.py [-h] [--trigger_uut TRIGGER_UUT]
-                           [--nshots NSHOTS]
-                           uuts [uuts ...]
-
-acq400 looptest
-
-positional arguments:
-  uuts                  uuts
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --trigger_uut TRIGGER_UUT
-                        external trigger uut eg ACQ1001+DIO, soft_trigger
-                        brought to front panel
-  --nshots NSHOTS       number of shots, default infinit
-    
 """
 
 import sys
@@ -73,18 +58,15 @@ def run_shots(args):
     finally:
         print("Finally, going down")
 
-
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400 looptest')
     parser.add_argument('--trigger_uut', default=None, type=str, help="external trigger uut eg ACQ1001+DIO, soft_trigger brought to front panel" )
     parser.add_argument('--nshots', default=9999999, type=int, help="number of shots, default infinit")
     parser.add_argument('uuts', nargs='+', help="uuts")
-    run_shots(parser.parse_args())
-
-# execution starts here
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    run_shots(get_parser().parse_args())
 
 
 

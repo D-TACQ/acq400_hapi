@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 
 
-"""
-
-A script to loop pre-post captures.
+"""A script to loop pre-post captures.
 
 A data_test can also be run, where the system will assume a slow free running
 trigger is given (~0.5Hz) with CH01 sampling a square wave.
 
-Example usage:
+Example usage::
 
-python3 acq400_pre_post.py --data_test=1 --pre=50000 --post=100000 \
---trg=ext --shots=5 acq1001_084
+    python3 acq400_pre_post.py --data_test=1 --pre=50000 --post=100000 \
+    --trg=ext --shots=5 acq1001_084
 """
 
 
@@ -19,7 +17,7 @@ import acq400_hapi
 import argparse
 import numpy as np
 # from acq400_configure_transient import configure_shot
-import acq400_configure_transient
+from . import acq400_configure_transient
 import argparse
 import matplotlib.pyplot as plt
 import sync_role
@@ -72,7 +70,10 @@ def run_shots(args, uuts):
 
 
 
-def main():
+def main(args):
+    run_shots(args, configure_shot(args))
+
+def get_parser():
     parser = argparse.ArgumentParser(description='run pre-post capture.')
     acq400_hapi.Acq400UI.add_args(parser)
     parser.add_argument('--data_test', type=int, default=0,
@@ -87,10 +88,7 @@ def main():
     parser.add_argument('--clkdiv', default=None, help="optional clockdiv")
 
     parser.add_argument('uuts', nargs='+', help='uut1 [uut2..]')
-
-    args = parser.parse_args()
-    run_shots(args, configure_shot(args))
-
+    return parser
 
 if __name__ == '__main__':
-    main()
+    main(get_parser().parse_args())

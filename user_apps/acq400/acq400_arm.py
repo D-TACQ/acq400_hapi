@@ -1,28 +1,22 @@
 #!/usr/bin/env python
 
-"""
-usage: acq400_arm.py [-h] uut [uut ...]
-
-configure acq400_arm
-
-positional arguments:
-  uut         uut
-
-optional arguments:
-  -h, --help  show this help message and exit
-"""
+"""Arm uuts"""
 
 import acq400_hapi
 import os
 import argparse
 
-parser = argparse.ArgumentParser(description='configure acq400_arm')
-parser.add_argument('uut', nargs='+', help="uut")
+def run_main(args):
+    uuts = [ acq400_hapi.Acq400(u) for u in args.uut ]
+    for u in uuts:
+        u.s0.set_arm = 1
 
-args = parser.parse_args()
-uuts = [ acq400_hapi.Acq400(u) for u in args.uut ]
+def get_parser():
+    parser = argparse.ArgumentParser(description='configure acq400_arm')
+    parser.add_argument('uut', nargs='+', help="uut")
+    return parser
 
+if __name__ == '__main__':
+    run_main(get_parser().parse_args())
 
-for u in uuts:
-    u.s0.set_arm = 1
 

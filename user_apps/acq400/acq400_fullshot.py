@@ -20,8 +20,9 @@ matplot will get very congested with more channels.
 this is really meant as a demonstration of capture, load to numpy,
 it's not really intended as a scope UI.
 
-example:
-python3 ./user_apps/acq400/acq400_fullshot.py --post=100k --capture=1 --trace_upload=1 --plot_data=2 --channels=1,2,3,4 --trg=1,1,1 acq2106_339
+example::
+
+    python3 ./user_apps/acq400/acq400_fullshot.py --post=100k --capture=1 --trace_upload=1 --plot_data=2 --channels=1,2,3,4 --trg=1,1,1 acq2106_339
 
 --post=100k :: capture 100k samples, post trigger
 --capture=1 :: capture

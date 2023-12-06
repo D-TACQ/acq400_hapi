@@ -1,22 +1,10 @@
 #!/usr/bin/env python
 
-"""
-creates a CLK + TRG daisy chain using the SYNC (HDMI) ports
-make_clktrg_chain UUTM UUTS1 [UUTS2..]
+"""creates a CLK + TRG daisy chain using the SYNC (HDMI) ports
+
 where UUTM is the ip-address or host name of first uut
 trigger on UUTM triggers all other slaves in the chain
 
-usage: make_clktrg_chain.py [-h] [--trg TRG] [--clk CLK] uuts [uuts ...]
-
-make_clktrg_chain
-
-positional arguments:
-  uuts        uut : UUTM, UUTS ...
-
-optional arguments:
-  -h, --help  show this help message and exit
-  --trg TRG   trigger fp|soft
-  --clk CLK   clk 0=fp | intclk in Hz
 """
 
 import sys
@@ -38,15 +26,12 @@ def make_chain(args):
     for uut in UUTS:
         uut.set_sync_routing_slave()
         
-
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='make_clktrg_chain')    
     parser.add_argument('--trg', default='fp', type=str, help="trigger fp|soft")
     parser.add_argument('--clk', default='0', type=int, help='clk 0=fp | intclk in Hz')
     parser.add_argument('uuts', nargs='+', help="uut : UUTM, UUTS ...")
-    make_chain(parser.parse_args())
-
-# execution starts here
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    make_chain(get_parser().parse_args())

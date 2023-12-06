@@ -1,36 +1,21 @@
 #!/usr/bin/python
-"""
-This file is a setup file for the delay trigger
+"""This file is a setup file for the delay trigger
 mode of operation for the acq1001+480 setup.
+
 This file will perform all the setup required to
 take data on the acq480, triggering from the gpgs,
 which itself triggers from an external trigger.
 For more information on the setup please refer to the
 D-TACQ delay trigger report.
 
-An example command line example would be:
+An example command line example would be ::
  
-python delay_trigger_setup.py --verbose 1 --delay 10000000 acq1001_105
+    delay_trigger_setup.py --verbose 1 --delay 10000000 acq1001_105
+
  
 This command runs the script in verbose mode,
 configures the gpg to run with a 10s delay (dependant
 on FPCLK frequency) on acq1001_105.
-
-usage: delay_trigger_setup.py [-h] [--verbose VERBOSE] [--delay DELAY]
-                              [--pre PRE] [--post POST]
-                              uuts [uuts ...]
-
-delay-trigger analysis
-
-positional arguments:
-  uuts               uut names
-
-optional arguments:
-  -h, --help         show this help message and exit
-  --verbose VERBOSE  verbose
-  --delay DELAY      delay_trigger parameter
-  --pre PRE          delay_trigger parameter
-  --post POST        delay_trigger parameter
 """
 
 
@@ -97,16 +82,16 @@ def setup(args):
 
 
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='delay-trigger analysis')
     parser.add_argument('--verbose', type=int, default=0, help="verbose")
     parser.add_argument('--delay', type=int, default=0, help="delay_trigger parameter")
     parser.add_argument('--pre', type=int, default=0, help="delay_trigger parameter")
     parser.add_argument('--post', type=int, default=100000, help="delay_trigger parameter")
     parser.add_argument('uuts', nargs='+', help="uut names")
-    setup(parser.parse_args())
+    return parser
 
 
 if __name__  == '__main__':
-    run_main()
+    setup(get_parser().parse_args())
 

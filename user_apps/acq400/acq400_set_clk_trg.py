@@ -53,15 +53,13 @@ def set_clk_trg(args):
         uut.s1.sync = "1,0,1"
         uut.s1.sync_trg_to_clk=0
 
-
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description = 'set clk trg')
     parser.add_argument('--trg', type=str, default="d2",
     help="Which trigger to use. Default is soft.")
     parser.add_argument('--uut', type=str, default=socket.gethostname(),
     help='Which UUT we are working with. Default is found using socket.')
-    args = parser.parse_args()
-    set_clk_trg(args)
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    set_clk_trg(get_parser().parse_args())

@@ -1,17 +1,9 @@
 #!/usr/bin/env python3
 
-"""
-upload file to AWG for a one-shot play
+"""upload file to AWG for a one-shot play
+
 data for upload is a single file
 assumes that clocking has been pre-assigned.
-
-
-positional arguments:
-  uuts               uut
-
-optional arguments:
-  -h, --help         show this help message and exit
-  --files FILES      list of files to load
 """
 
 import sys
@@ -98,7 +90,7 @@ def load_awg_top(args):
     print("playloop_length {}".format(uut.modules[args.aosite].playloop_length))
 
 
-def get_args(argStr=None):
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400 load awg simplest')
     parser.add_argument('--file', default="", help="file to load")
     parser.add_argument('--mode', default=2, type=int, help="mode: 1 oneshot, 2 oneshot_autorearm")
@@ -107,13 +99,9 @@ def get_args(argStr=None):
     parser.add_argument('--reps', default=1, type=int, help='Repetitions')
     acq400_hapi.Acq400UI.add_args(parser, play=True)
     parser.add_argument('uuts', nargs=1, help="uut ")
-    return parser.parse_args(argStr)
-
-
-def run_main():
-    load_awg_top(get_args())
+    return parser
 
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    load_awg_top(get_parser().parse_args())

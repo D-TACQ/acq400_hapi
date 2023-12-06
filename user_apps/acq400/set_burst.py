@@ -1,36 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-set burst mode
-run_gpg.py [opts] uut
-
-usage: set_burst.py [-h] [--rgm RGM] [--mbclk MBCLK] [--dx DX] [--gpg GPG]
-                [--sense SENSE] [--rtm_translen RTM_TRANSLEN]
-                [--post POST] [--trg TRG] [--hdmi_slave HDMI_SLAVE]
-                [--es_enable ES_ENABLE] [--trace TRACE] [--demux DEMUX]
-                uuts [uuts ...]
-
-set_burst mode
-
-positional arguments:
-  uuts                  uut
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --rgm RGM             mode RGM|RTM
-  --mbclk MBCLK         notouch|FIN,FOUT
-  --dx DX               dx d0|d1|d2
-  --gpg GPG             source from gpg on|off
-  --sense SENSE         rising|falling
-  --rtm_translen RTM_TRANSLEN
-                        transient length
-  --post POST           shot length
-  --trg TRG             shot trigger triplet
-  --es_enable ES_ENABLE
-                        0 disables Event Signature
-  --trace TRACE         1: enable command trace
-  --demux DEMUX         0: do not demux
-"""
+"""set burst mode"""
 
 import acq400_hapi
 import argparse
@@ -83,7 +53,10 @@ def configure_and_run(args, uuts):
         run_shot(args, uuts)
 
 
-def run_main():
+def run_main(args):
+    configure_and_run(args, [acq400_hapi.Acq400(u) for u in args.uuts])
+
+def get_parser():
     parser = argparse.ArgumentParser(description='set_burst mode')
     parser.add_argument('--rgm', default='RTM', type=str, help="mode OFF|RGM|RTM")
     parser.add_argument('--dx', default='d0', type=str, help='dx d0|d1|d2')
@@ -98,10 +71,7 @@ def run_main():
     parser.add_argument('--config_only', default=1, type=int, help='1: configure RGM, do nothing else')
     parser.add_argument('--clear_counters', default=0, type=int, help="clear counters (slow)")
     parser.add_argument('uuts', nargs='+', help="uut")
-    args = parser.parse_args()
-    configure_and_run(args, [acq400_hapi.Acq400(u) for u in args.uuts])
-
-# execution starts here
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

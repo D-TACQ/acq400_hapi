@@ -15,12 +15,7 @@ def set_ident(uut):
         # return to ident pattern
         exec('uut.s5.AO_{:>02} = {}'.format(ch, ch*2048))
 
-
-def main():
-    parser = argparse.ArgumentParser(description='AO test')
-    parser.add_argument('uut', nargs='+', help="uuts")
-    args = parser.parse_args()
-
+def main(args):
     uut = acq400_hapi.Acq400(args.uut[0])
     set_ident(uut)
 
@@ -35,7 +30,11 @@ def main():
 
             set_ident(uut)
 
-
+def get_parser():
+    parser = argparse.ArgumentParser(description='AO test')
+    parser.add_argument('uut', nargs='+', help="uuts")
+    return parser
 
 if __name__ == '__main__':
-    main()
+    main(get_parser().parse_args())
+
