@@ -5,40 +5,10 @@
     - data on local SFP/AFHBA
     - control on Ethernet
 
-usage: hts_multistream.py [-h] [--clk CLK] [--trg TRG] [--sim SIM] [--trace TRACE] [--auto_soft_trigger AUTO_SOFT_TRIGGER] [--clear_counters] [--spad SPAD] [--decimate DECIMATE] [--nbuffers NBUFFERS]
-                          [--secs SECS] [--map MAP] [--sig_gen SIG_GEN] [--delete DELETE] [--recycle RECYCLE] [--check CHECK] [--dry_run DRY_RUN] [--wrtd_txi WRTD_TXI] [--SIG_SRC_TRG_0 SIG_SRC_TRG_0]
-                          [--SIG_SRC_TRG_1 SIG_SRC_TRG_1]
-                          uutnames [uutnames ...]
-
-positional arguments:
-  uutnames              uuts
-
-options:
-  -h, --help            show this help message and exit
-  --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
-  --trg TRG             int|ext,rising|falling
-  --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
-  --trace TRACE         1 : enable command tracing
-  --auto_soft_trigger AUTO_SOFT_TRIGGER force soft trigger generation
-  --clear_counters      clear all counters SLOW
-  --spad SPAD           scratchpad, eg 1,16,0
-  --decimate DECIMATE   decimate amount
-  --nbuffers NBUFFERS   max capture in buffers
-  --secs SECS           max capture in seconds
-  --map MAP             uut:port:site ie --map=67:A:1/67:B:2/130:BOTH:ALL
-  --sig_gen SIG_GEN     Signal gen to trigger when all uuts armed
-  --delete DELETE       delete stale data
-  --recycle RECYCLE     overwrite data
-  --check CHECK         run tests simulate ramp=1 or spad sequential=2
-  --dry_run DRY_RUN     run setup but dont start streams or uuts
-  --wrtd_txi WRTD_TXI   Command first box to send this trigger when all units are in ARM state
-  --SIG_SRC_TRG_0 SIG_SRC_TRG_0     Set trigger d0 source
-  --SIG_SRC_TRG_1 SIG_SRC_TRG_1     Set trigger d1 source
-  --mtrg  HDMI|EXT      Enables HDMI|EXT routing when ALL UUT's are armed, safe with free-running trigger
-
-Recommendation: --secs is really a timeout, use --nbuffers for exact data length
+**DEPRECATION WARNING: please consider using AFHBA404/HAPI/hts_multistream.py**
 
 example usage::
+
     ./user_apps/acq2106/hts_multistream.py acq2106_133 acq2106_176
 
     ./user_apps/acq2106/hts_multistream.py --nbuffers=2000 acq2106_133 acq2106_176
@@ -49,18 +19,9 @@ example usage::
 
     ./user_apps/acq2106/hts_multistream.py --spad=1,8,1 --map=11:C:2 --secs=3600 --check=2 z7io_011
 
-Warning: If data rate exceeds bandwidth uut will stay in arm
+Recommendation: --secs is really a timeout, use --nbuffers for exact data length
 
-    --map=  uut:port:sites
-        ex.
-            ALL:BOTH:ALL
-            ALL:BOTH:SPLIT - SPLIT must be used with BOTH ports
-            067:A:1,2
-            067:B:2
-            999:BOTH:3,4
-            11:C:1,2
-            C is z7io exclusive
-    --map=67:A:1/67:B:2/130:BOTH:ALL
+Warning: If data rate exceeds bandwidth uut will stay in arm
 """
 import acq400_hapi
 from acq400_hapi import PR
@@ -98,34 +59,7 @@ def get_parser():
     parser.add_argument('uutnames', nargs='+', help="uuts")
     return parser
 
-""" what is in the streams object?.
-[dt100@roger740 acq400_hapi]$ HAPI_COLOUR=0 ./user_apps/acq2106/hts_multistream.py --dry_run=1 --verbose=2  acq2206_002 acq2206_003
-UutWrapper()
- <__main__.UutWrapper object at 0x7f221de0ed30>
-streams:{
-'4': {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'},
-'5': {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}}
-ports:{
-'A': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
-'B': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
-'C': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}}
- self.streams.items()
-[0] ('4', {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
-[1] ('5', {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
-UutWrapper()
- <__main__.UutWrapper object at 0x7f221de22160>
-streams:{
-'0': {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'},
-'1': {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'}}
-ports:{
-'A': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
-'B': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'},
-'C': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}}
- self.streams.items()
-[0] ('0', {'rport': 'A', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
-[1] ('1', {'rport': 'B', 'sites': {'1': '8', '2': '8', '3': '8', '4': '8', '5': '8', '6': '8'}, 'all_sites': '1,2,3,4,5,6'})
 
-"""
 class UutWrapper:
     """ Encapsulates all information about one UUT """
 

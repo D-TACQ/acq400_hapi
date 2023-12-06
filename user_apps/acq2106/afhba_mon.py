@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+"""Web interface to monitor AFHBA connections"""
+
 import argparse
 import os
 from flask import Flask
