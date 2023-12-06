@@ -4,15 +4,19 @@
 raddds.py specializes Acq400 for RADCELF triple DDS device
 
 - enumerates all site services, available as uut.sX.knob
-- simply property interface allows natural "script-like" usage
-
- - eg
-  - uut1.s0.set_arm = 1
- - compared to 
-  - set.site1 set_arm=1
-
 - monitors transient status on uut, provides blocking events
-- read_channels() - reads all data from channel data service.
+- read_channels() reads all data from channel data service.
+- simple property interface allows natural "script-like" usage
+
+ - eg::
+
+       uut1.s0.set_arm = 1
+
+ - equivalent to running this on a logged in shell session on the UUT::
+
+       set.site1 set_arm=1
+
+
 Created on Sun Jan  8 12:36:38 2017
 
 @author: pgm
