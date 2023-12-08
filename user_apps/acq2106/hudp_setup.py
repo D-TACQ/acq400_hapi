@@ -156,7 +156,7 @@ def run_main(args):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="hudp_setup", 
+    parser = argparse.ArgumentParser(description="Setup HUDP for UUTs", 
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--netmask", default='255.255.255.0', help='netmask')
     parser.add_argument("--tx_ip",   default='10.12.198.128', help='tx ip address')

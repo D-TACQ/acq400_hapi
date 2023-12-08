@@ -221,7 +221,7 @@ def run_main(args):
     run_shot(args)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='run hts all uuts')
+    parser = argparse.ArgumentParser(description='Run HTS on mulitple UUTs')
     parser.add_argument('--secs', default=100, help='seconds to run')
     parser.add_argument('--etrg', type=int, default=0, help='1: enable external trg')
     parser.add_argument('--fclk', type=str, default='10M', help='sample clock before decimation')

@@ -92,7 +92,7 @@ def run_main(parser):
         uuts[0].set_master_trg(mtrg, edge, enabled=True)       
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="acq2106_set_sync_role")
+    parser = argparse.ArgumentParser(description="set sync roles for a stack of modules")
     parser.add_argument("--master_clk", default="zclk,2000000", help="master_clk role alt fp,sampleclk[,sysclk]")
     parser.add_argument("--master_trg", default="soft,rising", help="master_trg src alt: fp")    
     parser.add_argument("--clkdiv", default="1", help="clock divider, each module")

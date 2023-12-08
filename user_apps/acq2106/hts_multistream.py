@@ -37,7 +37,7 @@ import threading
 import traceback
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='High Throughput Stream from up to 16 UUTS')
+    parser = argparse.ArgumentParser(description='High Throughput Stream using AFHBA for up to 16 UUTS')
     acq400_hapi.Acq400UI.add_args(parser, transient=False)
     parser.add_argument('--spad', default=None, help="scratchpad, eg 1,16,0")
     parser.add_argument('--decimate', default=None, help='decimate amount')

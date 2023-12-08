@@ -344,7 +344,7 @@ def run_main(args):
         run_shots(args)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq2106 mgtdram test')
+    parser = argparse.ArgumentParser(description='mgtdram test')
     acq400_hapi.Acq400UI.add_args(parser)
     parser.add_argument('--loop', type=int, default=1, help="loop count")
     parser.add_argument('--captureblocks', type=int,

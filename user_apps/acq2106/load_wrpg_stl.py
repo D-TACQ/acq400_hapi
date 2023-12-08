@@ -123,7 +123,7 @@ def run_wrpg(args):
         load_stl_file(uut, args.stl)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="load_wrpg_stl")
+    parser = argparse.ArgumentParser(description="Load WR STL")
     parser.add_argument('--stl', default='none', type=str, help='stl file')
     parser.add_argument('--trg', default='"WrtdImmediate', help="shot trigger: WrtdImmediate or WRTT")
     parser.add_argument('--shots', default=0, type=int, help='run a series of shots, with immediate trigger')

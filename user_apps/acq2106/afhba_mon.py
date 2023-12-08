@@ -24,7 +24,7 @@ class globals:
     threads = {}
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='Stream monitor webserver')
+    parser = argparse.ArgumentParser(description='AFHBA stream monitor webapp')
     parser.add_argument('--port', default=3000, help='Port to run webserver on')
     parser.add_argument('--profile', default=None, help='1: enabled profiling')
     return parser
