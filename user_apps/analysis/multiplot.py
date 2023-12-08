@@ -61,7 +61,7 @@ def run_main(args):
     plot_data(args, load_data(args))
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='multiplot')
+    parser = argparse.ArgumentParser(description='Plot multiple data files')
     parser.add_argument('--title', default="multiplot", help="Plot Title")
     parser.add_argument('--data_type', default=None, help="default: .npy file, else 16 or 32 for raw data")
     parser.add_argument('--maxlen', type=int, default=None, help="max length to plot")

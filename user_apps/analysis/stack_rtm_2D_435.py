@@ -300,7 +300,7 @@ def run_main(args):
         print("ERROR: --root {} is not a directory".format(args.root))
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='host demux, host side data handling')
+    parser = argparse.ArgumentParser(description='acq435 2D data plotter')
     parser.add_argument('--plotchan', type=str, default='1,17', help='list of channels to plot')
     parser.add_argument('--stack_offset', type=int, default=100, help='separate channels in plot')
     parser.add_argument('--burst_range', type=str, default=None, help='min, max, [stride] bursts to plot')

@@ -265,7 +265,7 @@ def run_main(args):
         print_stats(args, data)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='cs demux')
+    parser = argparse.ArgumentParser(description='Demux for cs system')
     parser.add_argument('--plot', default=1, type=int, help="Plot data")
     parser.add_argument('--plot_facets', default=20, type=int, help="No of facets"
                                                                     "to plot")

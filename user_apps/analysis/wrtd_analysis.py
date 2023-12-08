@@ -69,7 +69,7 @@ def analyse(args):
         print("{} n:{} min:{:4d} max:{:4d} mean:{:4d} rms:{:4d} usec".format(u, len(samples), m1, m2, m3, m4))
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='wrtd_analysis')
+    parser = argparse.ArgumentParser(description='Analyse white rabbit logs')
     parser.add_argument('--verbose', default=0, type=int)
     parser.add_argument('--wrtd_delta_ns', default='50M', action=intSIAction, help="set delay NS")
     parser.add_argument('log', nargs='+', help="log files")

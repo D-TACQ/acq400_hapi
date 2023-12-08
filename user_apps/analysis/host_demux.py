@@ -558,7 +558,7 @@ def list_of_ints(string):
 def get_parser(parser=None):
     if not parser:
         is_client = True
-        parser = argparse.ArgumentParser(description='host demux, host side data handling')
+        parser = argparse.ArgumentParser(description='Host side data demuxing and plotting')
     else:
         is_client = False
     parser.add_argument('--nchan', type=int, default=None)

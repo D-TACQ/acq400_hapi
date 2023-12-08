@@ -174,7 +174,7 @@ def run_main(args):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='cs demux')
+    parser = argparse.ArgumentParser(description='Demux for go system')
     parser.add_argument('--SHORTCOLS', default=16, type=int, help="number of shorts cols")
     parser.add_argument('--LONGCOLS', default=4, type=int, help="number of longs cols")
     parser.add_argument('--plot', default=1, type=int, help="Plot data")

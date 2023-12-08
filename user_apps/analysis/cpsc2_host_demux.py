@@ -462,7 +462,7 @@ def run_main(args):
         process_data(args)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='host demux, host side data handling')
+    parser = argparse.ArgumentParser(description='CPSC2 host demux and plot')
     parser.add_argument('--nchan', type=int, default=80)
     parser.add_argument('--nblks', type=int, default=-1)
     parser.add_argument('--save', type=str, default=None, help='save channelized data to dir')

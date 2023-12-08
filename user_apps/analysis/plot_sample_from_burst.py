@@ -52,7 +52,7 @@ def plot_data(args):
     plt.show()
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='rgm plot demo')
+    parser = argparse.ArgumentParser(description='Plot data from burst')
     parser.add_argument('--nchan', type=int, default=32)
     parser.add_argument('data', nargs=1, help="data ")
     return parser

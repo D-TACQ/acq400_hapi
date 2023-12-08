@@ -1,7 +1,4 @@
 #!/bin/python
-'''
-plot1.py : plot a long single-channel data file
-'''
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -104,7 +104,7 @@ def run_main(args):
     calc_frame(args, dwell)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='multiplot')
+    parser = argparse.ArgumentParser(description='generate delays for GPG and plot')
     parser.add_argument('--d1', type=int, default=4, help="first delay (ticks)")
     parser.add_argument('--d2', type=int, default=16+4+1, help="last_delay+1 (ticks)")
     parser.add_argument('--ds', type=int, default=1, help="delay step (ticks)")
