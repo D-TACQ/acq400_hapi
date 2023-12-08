@@ -22,7 +22,7 @@ def run_main(args):
                 uut.s0.CONTINUOUS = 'start'
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='configure acq400_arm')
+    parser = argparse.ArgumentParser(description='Start or stop stream')
     parser.add_argument('-r', '--run',  type=int, help="run continuous")
     parser.add_argument('-s', '--stop', type=int, help="stop continuous")
     parser.add_argument('uut', nargs='+', help="uut")

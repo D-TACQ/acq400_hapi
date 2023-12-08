@@ -31,7 +31,7 @@ def main(args):
             set_ident(uut)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='AO test')
+    parser = argparse.ArgumentParser(description='Test AO')
     parser.add_argument('uut', nargs='+', help="uuts")
     return parser
 

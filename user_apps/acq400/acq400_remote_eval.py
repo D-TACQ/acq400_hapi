@@ -61,7 +61,7 @@ def run_main(args):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400_remote_script')
+    parser = argparse.ArgumentParser(description='eval script on UUTS')
     parser.add_argument('-e','--eval', default=None, help="script file [default stdin]") 
     parser.add_argument('-s','--script', default='-', help="script file [default stdin]")
     parser.add_argument('--script_by_uut', default=None, help="script file [default stdin]")        

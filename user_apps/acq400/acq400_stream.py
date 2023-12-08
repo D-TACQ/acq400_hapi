@@ -120,7 +120,7 @@ def run_stream(args):
             print("runtime exceeded: all stream data written to single file")
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 stream')
+    parser = argparse.ArgumentParser(description='Stream data from UUT')
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
     parser.add_argument( '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)

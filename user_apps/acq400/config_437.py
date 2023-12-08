@@ -24,7 +24,7 @@ def set_params(args):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 set gains')
+    parser = argparse.ArgumentParser(description='Config 437')
 
     parser.add_argument('--gain', default="0", type=str,
                         help="Gain range to set on the device. Options: X1, X10, X100, X1000")

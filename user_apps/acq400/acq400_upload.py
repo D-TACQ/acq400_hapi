@@ -67,7 +67,7 @@ def uniq(inp):
 
 
 def get_parser(argStr=None):
-    parser = argparse.ArgumentParser(description='acq400 upload')
+    parser = argparse.ArgumentParser(description='Simple capture and get data')
     acq400_hapi.ShotControllerUI.add_args(parser)
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     return parser

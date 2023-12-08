@@ -11,7 +11,7 @@ def trigger(args):
     uut.s0.SIG_SYNC_BUS_OUT_TRG=0
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 hdmi trigger')
+    parser = argparse.ArgumentParser(description='hdmi trigger')
     parser.add_argument('uut', type=str, nargs = 1, help="uut")
     return parser
 

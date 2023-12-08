@@ -86,7 +86,7 @@ def main(args):
     return None
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='Streaming RTM')
+    parser = argparse.ArgumentParser(description='Start RTM stream')
     parser.add_argument('--rtm_translen', default=4096, type=int,
     help='How many samples to capture after each trigger.')
 

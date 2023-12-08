@@ -27,7 +27,7 @@ def make_chain(args):
         uut.set_sync_routing_slave()
         
 def get_parser():
-    parser = argparse.ArgumentParser(description='make_clktrg_chain')    
+    parser = argparse.ArgumentParser(description='Sync routing chain')    
     parser.add_argument('--trg', default='fp', type=str, help="trigger fp|soft")
     parser.add_argument('--clk', default='0', type=int, help='clk 0=fp | intclk in Hz')
     parser.add_argument('uuts', nargs='+', help="uut : UUTM, UUTS ...")

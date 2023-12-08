@@ -61,7 +61,8 @@ def main(args):
     acq400_fullshot.run_main(args)
     
 def get_parser():
-    parser = acq400_fullshot.get_parser()    
+    parser = acq400_fullshot.get_parser()
+    parser.description = 'Run shot and load GPG'
     parser.add_argument('--stl', default='./test.stl', type=str, help="GPG pulse pattern STL") 
     parser.add_argument('--es_enable', default=None, help="enable/disable Event Signature (default: no touch)")
     return parser

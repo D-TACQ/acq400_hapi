@@ -139,7 +139,7 @@ def run_main(args):
     run_awg(args)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq1001 awg demo')
+    parser = argparse.ArgumentParser(description='awg rainbow burst demo')
     parser.add_argument('--length', type=int, default=8192, help="AWG length")
     parser.add_argument('--burst_length', type=int, default=BURST_IS_AWGLEN, 
         help="Burst length : {} same as AWG, 0: no burst, >0 special [sub] length".format(BURST_IS_AWGLEN))

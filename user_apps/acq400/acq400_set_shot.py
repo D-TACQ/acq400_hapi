@@ -14,7 +14,7 @@ def run_commands(args):
         uut.s1.shot = args.shot
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='set shot number of all uuts')
+    parser = argparse.ArgumentParser(description='Set UUT shot number')
     parser.add_argument('--shot', type=int, default=0)
     parser.add_argument('uuts', nargs='+', help='uut1 [uut2..]')
     return parser

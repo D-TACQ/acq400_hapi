@@ -12,7 +12,7 @@ def run_main(args):
         u.s0.set_arm = 1
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='configure acq400_arm')
+    parser = argparse.ArgumentParser(description='Set uuts to arm')
     parser.add_argument('uut', nargs='+', help="uut")
     return parser
 

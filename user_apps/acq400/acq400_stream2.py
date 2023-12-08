@@ -144,7 +144,7 @@ def run_stream(args):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 stream')
+    parser = argparse.ArgumentParser(description='Stream data from UUT')
     parser.add_argument('-filesize', '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
     parser.add_argument('--files_per_cycle', type=int, default=100, help="set files per cycle directory")
     parser.add_argument('-totaldata', '--totaldata', default=sys.maxsize, action=acq400_hapi.intSIAction, decimal = False)

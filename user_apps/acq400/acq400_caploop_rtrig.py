@@ -59,7 +59,7 @@ def run_shots(args):
         print("Finally, going down")
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 looptest')
+    parser = argparse.ArgumentParser(description='Shot looptest')
     parser.add_argument('--trigger_uut', default=None, type=str, help="external trigger uut eg ACQ1001+DIO, soft_trigger brought to front panel" )
     parser.add_argument('--nshots', default=9999999, type=int, help="number of shots, default infinit")
     parser.add_argument('uuts', nargs='+', help="uuts")

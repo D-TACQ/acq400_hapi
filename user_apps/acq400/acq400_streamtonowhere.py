@@ -109,7 +109,7 @@ def main(args):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 stream to nowhere')
+    parser = argparse.ArgumentParser(description='Start stream to nowhere for x samples')
 
     parser.add_argument('--shot', default=None, type=int, help="set shot number")
     parser.add_argument('--samples', default=100000, type=int,

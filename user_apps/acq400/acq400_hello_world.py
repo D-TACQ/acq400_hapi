@@ -8,7 +8,7 @@ import acq400_hapi
 import argparse
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400_remote_script') 
+    parser = argparse.ArgumentParser(description='remote test script') 
     parser.add_argument('-v','--verbose', default=0, help="show more info")
     parser.add_argument('uuts', nargs='+', help="uut[s]")
     return parser

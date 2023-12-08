@@ -68,7 +68,7 @@ def reset_counters(args):
         reset_counters_serial(args)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400_reset_counters')
+    parser = argparse.ArgumentParser(description='Reset UUT counters')
     parser.add_argument('-s','--sites', default='s0', help="sites to clear eg s0,s1,s2,cA") 
     parser.add_argument('-t','--trace', default=0, help="traces command execution")
     parser.add_argument('--threaded', type=int, default=2)

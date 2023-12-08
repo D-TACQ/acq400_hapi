@@ -34,7 +34,7 @@ def run_main(args):
     
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='fire soft_trigger')
+    parser = argparse.ArgumentParser(description='Fire soft trigger on UUT')
     parser.add_argument('--count', type=int, default=1, help="send many triggers, perhaps to test max rate")
     parser.add_argument('--interval', type=float, default=0, help="send periodic trigger (s) default: 0 aka max")
     parser.add_argument('--instrument', type=int, default=0, help="count before and after")

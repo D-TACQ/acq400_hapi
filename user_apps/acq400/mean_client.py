@@ -72,7 +72,7 @@ def get_mean(args):
                 sproc.stdin.close()
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='configure acq400_abort')
+    parser = argparse.ArgumentParser(description='Gets mean data from UUT')
     parser.add_argument('--maxsam', type=int, default=1, help="number of samples to collect")
     parser.add_argument('--nchan', type=int, default=32, help="number of channels per sample")
     parser.add_argument('--verbose', type=int, default=1, help="1: dump data, 0: silent")

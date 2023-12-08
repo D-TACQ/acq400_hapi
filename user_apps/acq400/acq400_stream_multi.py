@@ -330,7 +330,7 @@ def run_stream_prep(args):
 def get_parser(parser=None):
     if not parser:
         is_client = True        
-        parser = argparse.ArgumentParser(description='acq400 stream')
+        parser = argparse.ArgumentParser(description='Stream data from multiple UUTs')
         parser.add_argument('--callback', default=None, help='not for users, client programs can install a callback here')
     else:
         is_client = False

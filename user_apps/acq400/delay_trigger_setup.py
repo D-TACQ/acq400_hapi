@@ -83,7 +83,7 @@ def setup(args):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='delay-trigger analysis')
+    parser = argparse.ArgumentParser(description='Sets up delayed trigger for acq1001+480')
     parser.add_argument('--verbose', type=int, default=0, help="verbose")
     parser.add_argument('--delay', type=int, default=0, help="delay_trigger parameter")
     parser.add_argument('--pre', type=int, default=0, help="delay_trigger parameter")

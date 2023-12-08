@@ -23,7 +23,7 @@ def run_main(args):
         set_gain_action(uut, int(site), gain)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='configure site gains')
+    parser = argparse.ArgumentParser(description='Set UUT gains')
     parser.add_argument('--sites', type=str, default=1, help="sites to set")
     parser.add_argument('uut', nargs=1, help="uut")
     parser.add_argument('gains', nargs='+', help="gain values in site order")

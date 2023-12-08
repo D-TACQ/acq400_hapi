@@ -43,7 +43,7 @@ def run_main(args):
             stop_action(u, args, xwg_site)
             
 def get_parser():
-    parser = argparse.ArgumentParser(description='configure acq400_abort')
+    parser = argparse.ArgumentParser(description='Restart stopped AWG')
     parser.add_argument('--auto_soft_trigger', default=0, type=int, help="1: fire soft trigger on restart")
     parser.add_argument('--site', type=int, default=1, help="site with AWG")
     parser.add_argument('--command', default='stop', help="command start|stop")

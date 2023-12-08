@@ -18,7 +18,7 @@ def main(args):
         uut.s0.streamtonowhered = 'stop'
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 stream to nowhere')
+    parser = argparse.ArgumentParser(description='Stop stream to nowhere')
     parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
 

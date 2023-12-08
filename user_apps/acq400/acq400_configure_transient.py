@@ -39,7 +39,7 @@ def configure_shot(args, uuts):
 
 
 def get_parser(argStr=None):
-    parser = argparse.ArgumentParser(description='configure multiple acq400')
+    parser = argparse.ArgumentParser(description='Configure transient on multiple uuts')
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     parser.add_argument('uuts', nargs='+', help="uut pairs: m1,m2 [s1,s2 ...]")
     return parser

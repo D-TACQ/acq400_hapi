@@ -57,7 +57,7 @@ def run_main(args):
     configure_and_run(args, [acq400_hapi.Acq400(u) for u in args.uuts])
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='set_burst mode')
+    parser = argparse.ArgumentParser(description='Set burst and run shot')
     parser.add_argument('--rgm', default='RTM', type=str, help="mode OFF|RGM|RTM")
     parser.add_argument('--dx', default='d0', type=str, help='dx d0|d1|d2')
     parser.add_argument('--gpg', default='off', type=str, help='source from gpg on|off')

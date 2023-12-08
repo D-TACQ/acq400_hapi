@@ -40,7 +40,7 @@ def load_awg(args):
             shot_controller.run_shot(soft_trigger= True if args.trg=='int' else False)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 simple awg demo')
+    parser = argparse.ArgumentParser(description='simple awg demo')
     parser.add_argument('--file', default="", help="file to load")
     parser.add_argument('--autorearm', default=0, type=int, help="enable autorearm mode")
     parser.add_argument('--clear_autorearm', default=0, help="clear previous autorearm mode")

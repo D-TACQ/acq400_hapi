@@ -38,7 +38,7 @@ def main(args):
     print("All UUTs are armed and ready for trigger.")
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 stream to nowhere')
+    parser = argparse.ArgumentParser(description='Start stream to nowhere')
     parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
 

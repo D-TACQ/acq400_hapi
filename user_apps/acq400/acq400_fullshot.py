@@ -256,7 +256,7 @@ def uniq(inp):
 
 
 def get_parser(argStr=None):
-    parser = argparse.ArgumentParser(description='acq400 upload')
+    parser = argparse.ArgumentParser(description='Run a shot and capture data')
     acq400_hapi.ShotControllerUI.add_args(parser)
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     parser.add_argument('--soft_trigger', default=SOFT_TRIGGER, type=int, help="help use soft trigger on capture")

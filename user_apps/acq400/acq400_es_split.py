@@ -19,7 +19,7 @@ def check_if_es(data):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 upload')
+    parser = argparse.ArgumentParser(description='Check data for Event Signature')
     parser.add_argument('--file', default="./0000", type=str,
                         help='Which file to load to split on event signatures. Default=./0000')
     parser.add_argument('--ssb', default=-1, type=int,

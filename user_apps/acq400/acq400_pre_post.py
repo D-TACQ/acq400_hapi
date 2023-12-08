@@ -74,7 +74,7 @@ def main(args):
     run_shots(args, configure_shot(args))
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='run pre-post capture.')
+    parser = argparse.ArgumentParser(description='config pre-post then capture')
     acq400_hapi.Acq400UI.add_args(parser)
     parser.add_argument('--data_test', type=int, default=0,
                         help='Whether to test the data for the trigger at the pre/post crossover')

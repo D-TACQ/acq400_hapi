@@ -91,7 +91,7 @@ def load_awg_top(args):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 load awg simplest')
+    parser = argparse.ArgumentParser(description='load awg simplest')
     parser.add_argument('--file', default="", help="file to load")
     parser.add_argument('--mode', default=2, type=int, help="mode: 1 oneshot, 2 oneshot_autorearm")
     parser.add_argument('--awg_extend', default=1, type=int, help='Number of times the AWG is repeated.')

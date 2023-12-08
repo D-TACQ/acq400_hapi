@@ -34,7 +34,7 @@ def run_main(args):
             t.join()
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='configure acq400_abort')
+    parser = argparse.ArgumentParser(description='abort running or armed uuts')
     parser.add_argument('uut', nargs='+', help="uut")
     return parser
 

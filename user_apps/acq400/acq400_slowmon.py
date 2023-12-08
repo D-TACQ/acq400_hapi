@@ -158,7 +158,7 @@ def run_main(args):
     run_stream(args, uut)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 slowmon')
+    parser = argparse.ArgumentParser(description='Config slowmon and run stream')
     parser.add_argument('--show_raw', default=None, type=str, help="show raw data, 'd'=decimal, 'h'=hex")
     parser.add_argument('--show', default=1, type=int, help="show data on screen (raw or egu)")
     parser.add_argument('--pchan',    default=8, type=int, help="max channels to print")

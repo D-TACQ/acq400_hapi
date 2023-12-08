@@ -11,7 +11,7 @@ def run_main(args):
         uut.s0.reboot = "3210"
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='configure acq400_reboot')
+    parser = argparse.ArgumentParser(description='reboot uuts')
     parser.add_argument('uuts', nargs='+', help="uut")
     return parser
 

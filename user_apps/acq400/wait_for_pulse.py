@@ -70,7 +70,7 @@ def run(args):
     return None
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='stop after n triggers')
+    parser = argparse.ArgumentParser(description='Stop UUT after N triggers')
 
     parser.add_argument('--n', default=2, type=int,
     help="How many trgs to wait through before sending abort cmd. Default: 2")
