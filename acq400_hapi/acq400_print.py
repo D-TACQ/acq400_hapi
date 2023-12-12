@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+"""UI functions for cmd line"""
+
 import os
 import re
 import json
@@ -15,6 +17,7 @@ class PR_NORMAL:
     def Bold(txt, end='\n'): print("\033[1m{}\033[00m".format(txt), end=end)
      
 class PR_FANCY:
+    """Colored print options"""
     def Red(txt, end='\n'): print("\033[91m{}\033[00m".format(txt), end=end)
     def Green(txt, end='\n'): print("\033[92m{}\033[00m".format(txt), end=end) 
     def Yellow(txt, end='\n'): print("\033[93m{}\033[00m".format(txt), end=end) 
@@ -28,6 +31,7 @@ class PR_FANCY:
 PR = PR_FANCY if int(os.getenv("HAPI_COLOUR", "1")) else PR_NORMAL
 
 class DISPLAY:
+    """Prints text over previous text for a live display effect"""
     FORMAT_CODES = {
         'RED':'\033[38;5;196m',
         'GREEN':'\033[38;5;82m',
@@ -105,6 +109,7 @@ class DISPLAY:
         return ansi_escape.sub('', self.buffer)
     
 def pprint(item, indent=2, to_string=False):
+    """Prints dict with nice formatting"""
     default = lambda o: f"<<non-serializable: {type(o).__qualname__}>>"
     string = json.dumps(item, indent=indent, default=default)
     if to_string:

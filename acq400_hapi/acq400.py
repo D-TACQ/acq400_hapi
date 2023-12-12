@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
 """
 acq400.py interface to one acq400 appliance instance
 
 - enumerates all site services, available as uut.sX.knob
+- monitors transient status on uut, provides blocking events
+- read_channels() reads all data from channel data service.
 - simple property interface allows natural "script-like" usage
+
  - eg::
 
        uut1.s0.set_arm = 1
@@ -12,12 +15,6 @@ acq400.py interface to one acq400 appliance instance
  - equivalent to running this on a logged in shell session on the UUT::
 
        set.site1 set_arm=1
-
- - monitors transient status on uut, provides blocking events
- - read_channels() - reads all data from channel data service.
-  Created on Sun Jan  8 12:36:38 2017
-
-  @author: pgm
 """
 
 import threading
@@ -43,7 +40,7 @@ class DataNotAvailableError(Exception):
 
 
 class AcqPorts:
-    """server port constants"""
+    """uut server port constants"""
     TSTAT = 2235
     STREAM = 4210
     SITE0 = 4220
@@ -75,7 +72,7 @@ class AcqPorts:
     SLOWMON = 53666
 
 class AcqSites:
-    # site service at AcqPorts.SITE0+ AcqSites.SITEi
+    """uut site constants"""
     SITE0 = 0
     SITE1 = 1
     SITE2 = 2
@@ -90,7 +87,7 @@ class AcqSites:
     SITE_HUDP = 10
 
 class SF:
-    """state constants"""
+    """uut system state constants"""
     STATE = 0
     PRE = 1
     POST = 2
@@ -98,7 +95,7 @@ class SF:
     DEMUX = 5
 
 class STATE:
-    """transient states"""
+    """transient state constants"""
     IDLE = 0
     ARM = 1
     RUNPRE = 2
@@ -132,21 +129,24 @@ class StreamClient(netclient.Netclient):
         print("worktodo")
 
 class RawClient(netclient.Netclient):
-    """ handles raw data from any service port
-    """
+    """ handles raw data from any service port"""
     def __init__(self, addr, port):
+        """init RawClient
+
+        Args:
+            addr (str) : ip or hostname
+            port (int): service port see AcqPorts
+        """
         netclient.Netclient.__init__(self, addr, port)
 
     def read(self, nelems, data_size=2):
-        """read ndata from channel data server, return as np array.
+        """read data from channel data server
+
         Args:
-            nelems number of data elements, each data_size*ncols
-            nelems <=0 :: read until the end
-
-            data_size : 2|4 short or int
-
-            ncols : optional, to create a 2D array
-            ncols*data_size=0? just read nelems bytes
+            nelems (int): data elements 
+            data_size (int, optional): data size in bytes 2|4 short or int. Defaults to 2.
+        Returns:
+            ndarray: channel data
         """
         _dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
 
@@ -186,7 +186,7 @@ class ChannelClient(RawClient):
     """handles post shot data for one channel.
 
     Args:
-        addr (str) : ip address or dns name
+        addr (str) : ip address or hostname
 
         ch (int) : channel number 1..N
 
@@ -215,6 +215,7 @@ class Statusmonitor:
 
     def __repr__(self):
         return repr(self.logclient)
+    
     def st_monitor(self):
         self.data_valid = "UNKNOWN"
 
@@ -312,15 +313,11 @@ class Statusmonitor:
 #        print("wait_%s 99 %d" % (descr, ev.is_set()))
 
     def wait_armed(self):
-        """
-        blocks until uut is ARMED
-        """
+        """blocks until uut is ARMED"""
         self.wait_event(self.armed, "armed")
 
     def wait_stopped(self):
-        """
-        blocks until uut is STOPPED
-        """
+        """blocks until uut is STOPPED"""
         self.wait_event(self.stopped, "stopped")
 
     trace = int(os.getenv("STATUSMONITOR_TRACE", "0"))
@@ -363,6 +360,14 @@ class ProcessMonitor:
                     break
 
     def __init__(self, _uut, _monport,  _filter, set_arm):
+        """init ProcessMonitor
+
+        Args:
+            _uut (acq400): uut instance
+            _monport (int): monitor port 
+            _filter (func): filtering function
+            set_arm (bool): set arm
+        """
         self.quit_requested = False
         self.output_filter = _filter
         self.logclient = netclient.Logclient(_uut.uut, _monport)
@@ -374,18 +379,10 @@ class ProcessMonitor:
             _uut.s0.BLT_SET_ARM = '1'
 
 class Acq400:
-    """
-    host-side proxy for Acq400 uut.
+    """Host-side proxy for Acq400 uut.
 
-    discovers and maintains all site servers
-    maintains a monitor thread on the monitor port
+    acq400 discovers and maintains all site servers, maintains a monitor  and \
     handles multiple channel post shot upload
-
-    Args:
-        _uut (str) : ip-address or dns name
-
-        monitor=True (bool) : set false to stub monitor,
-          useful for tracing on a second connection to an active system.
     """
 
     def init_site_client(self, site):
@@ -423,6 +420,14 @@ class Acq400:
     uuts = {}                # for re-use by factory
 
     def __init__(self, _uut, monitor=True, s0_client=None):
+        """init acq400
+
+        Args:
+            _uut (srt): uut hostname or ip-address
+            monitor (bool, optional): start statusmonitor. Defaults to True.
+            s0_client (netclient.Siteclient, optional): existing siteclient. Defaults to None.
+        """
+
         try:
             self.__dict__ = Acq400.uuts_methods[_uut]
             return
@@ -473,6 +478,7 @@ class Acq400:
         Acq400.uuts[_uut] = self                    # store the object for reuse by factory()
 
     def close(self):
+        """Closes uut connection gracefully"""
         self.statmon.quit_reqested = True
 
         try:
@@ -524,6 +530,7 @@ class Acq400:
         return self.s0.aggregator.split(' ')[1].split('=')[1].split(',')
 
     def fetch_all_calibration(self):
+        """Gets uut calibration and stores in instance"""
 #        print("Fetching calibration data")
         self.cal_eslo = [0.]
         self.cal_eoff = [0.]
@@ -547,14 +554,14 @@ class Acq400:
         return np.right_shift(raw, rshift)
 
     def chan2volts(self, chan, raw):
-        """ chan2volts(self, chan, raw) returns calibrated volts for channel
+        """returns calibrated volts for channel
 
-            Args:
+        Args:
+            chan (int): channel index
+            raw (ndarray): uncalibrated data array
 
-               chan: 1..nchan
-
-               raw:  raw bits to convert.
-
+        Returns:
+            ndarray: calibrated data array
         """
         if len(self.cal_eslo) == 1:
             self.fetch_all_calibration()
@@ -568,6 +575,16 @@ class Acq400:
 
 
     def read_chan(self, chan, nsam = 0, data_size = None):
+        """Reads a channels data
+
+        Args:
+            chan (int): channel number
+            nsam (int, optional): Number of samples. Defaults to 0.
+            data_size (int, optional): data size in bytes. Defaults to None.
+
+        Returns:
+            ndarray
+        """
         if data_size == None:
             data_size = 4 if self.s0.data32 == '1' else 2
 
@@ -611,6 +628,13 @@ class Acq400:
 
 
     def nchan(self):
+        """gets total number of channels
+
+        can include scratchpad
+
+        Returns:
+            int: number of channels
+        """
         try:
             return self._nchan
         except:
@@ -619,21 +643,22 @@ class Acq400:
 
 
     def data_size(self):
+        """gets data size
+
+        Returns:
+            int: data size in bytes
+        """
         return 4 if self.s0.data32 == '1' else 2
 
     def uut_demux_enabled(self):
+        """returns demux status"""
         ts = self.s0.transient
         rc = bool(int(self.s0.transient.split("DEMUX=",1)[1][0]))
         #print ("uut_demux_enabled(): transient {} decoded DEMUX={} rc={}".format(ts, ts.split("DEMUX=",1)[1][0], rc))
         return rc
 
-
-
     def read_channels(self, channels=(), nsam=0, localdemux=False):
-        """read all channels post shot data.
-
-        Returns:
-            chx (list) of np arrays.
+        """read selected channels post shot data.
 
         uut_demux_enabled() == False: UUT did NOT demux the data, data order [sample][channel]
         uut_demux_enabled() == True:  UUT did demux the data, data order [channel][sample]
@@ -652,8 +677,15 @@ class Acq400:
         channels=(1,2..) and DEMUX=1 : demux locally.
 
         channels=(0) and DEMUX=0 and localdemux : demux locally, return bulk data [channels][samnples]
-        """
 
+        Args:
+            channels (tuple, optional): tuple contining channels to read . Defaults to all.
+            nsam (int, optional): Number of samples. Defaults to 0.
+            localdemux (bool, optional): demux data. Defaults to False.
+
+        Returns:
+            ndarray:  channel data
+        """
 
         if channels == ():
             channels = list(range(1, self.nchan()+1))
@@ -788,6 +820,15 @@ class Acq400:
             raise ValueError("frequency out of range {}".format(hz))
 
     def load_stl(self, stl, port, trace = False, wait_eof = True, wait_eol = True):
+        """Send a STL file to the specified port
+
+        Args:
+            stl (str): stl string each line seperated by newlines
+            port (int): port num see AcqPorts
+            trace (bool, optional): print each line sent. Defaults to False.
+            wait_eof (bool, optional): wait for end of file. Defaults to True.
+            wait_eol (bool, optional): wait for end of line. Defaults to True.
+        """
         termex = re.compile("\n")
         with netclient.Netclient(self.uut, port) as nc:
             lines = stl.split("\n")
@@ -820,10 +861,22 @@ class Acq400:
 
 
     def load_gpg(self, stl, trace = False):
-            self.load_stl(stl, AcqPorts.GPGSTL, trace)
+        """Send stl to GPG port
+
+        Args:
+            stl (str): stl string each line seperated by newlines
+            trace (bool, optional): print each line sent. Defaults to False.
+        """
+        self.load_stl(stl, AcqPorts.GPGSTL, trace)
 
 
     def load_dpg(self, stl, trace = False):
+        """Send stl to DPG port
+
+        Args:
+            stl (str): stl string each line seperated by newlines
+            trace (bool, optional): print each line sent. Defaults to False.
+        """
         self.load_stl(stl, AcqPorts.DPGSTL, trace, wait_eol=False)
 
     def load_wrpg(self, stl, trace = False):
@@ -842,6 +895,14 @@ class Acq400:
             return repr(self.value)
 
     def load_awg(self, data, autorearm=False, continuous=False, repeats=1):
+        """Load and config a AWG pattern
+
+        Args:
+            data (str): AWG pattern
+            autorearm (bool, optional): Rearm and wait after run. Defaults to False.
+            continuous (bool, optional): Run pattern continuously. Defaults to False.
+            repeats (int, optional): Number of pattern repetitions. Defaults to 1.
+        """
         if self.awg_site > 0:
             if self.modules[self.awg_site].task_active == '1':
                 raise self.AwgBusyError("awg busy")
@@ -861,6 +922,16 @@ class Acq400:
             nc.sock.close()
 
     def run_service(self, port, eof="EOF", prompt='>'):
+        """Run a service on the uut
+
+        Args:
+            port (int): service port see AcqPorts
+            eof (str, optional): end connection on character. Defaults to "EOF".
+            prompt (str, optional): prompt character. Defaults to '>'.
+
+        Returns:
+            str: service transcript
+        """
         txt = ""
         with netclient.Netclient(self.uut, port) as nc:
             while True:
@@ -909,15 +980,12 @@ class Acq400:
             self.s0.SIG_SRC_TRG_1 = trg_1
 
     def configure_post(self, role, trigger=[1,1,1], post=100000):
-        """
-        Configure UUT for a regular transient capture. Default: internal soft
-        trigger starts the capture.
+        """ Configure UUT for a regular transient capture
 
-        "Role" is a mandatory argument. For master systems, role should be the
-        string "master", if the system is a slave then role should be the string
-        "slave"
-
-        Default post samples: 100k.
+        Args:
+            role (str): uut role  ``master`` or ``slave``
+            trigger (list, optional): Trigger trinary. Defaults to [1,1,1].
+            post (int, optional): post samples. Defaults to 100k.
         """
         print(trigger)
         self.s0.transient = "PRE=0 POST={} SOFT_TRIGGER={}".format(post, trigger[1])
@@ -941,19 +1009,18 @@ class Acq400:
         self.s0.SIG_EVENT_SRC_0 = 0
 
         return None
-
-
+    
     def configure_pre_post(self, role, trigger=[1,1,1], event=[1,1,1], pre=50000, post=100000):
-        """
-        Configure UUT for pre/post mode. Default: soft trigger starts the
-        data flow and trigger the event on a hard external trigger.
+        """Configure UUT for pre/post mode.
 
-        "Role" is a mandatory argument. For master systems, role should be the
-        string "master", if the system is a slave then role should be the string
-        "slave"
+        Default setup: soft trigger starts the data flow and trigger the event on a hard external trigger.
 
-        Default pre trigger samples: 50k.
-        Default post trigger samples: 100k.
+        Args:
+            role (str): uut role ``master`` or ``slave``
+            trigger (list, optional): Trigger trinary. Defaults to [1,1,1].
+            event (list, optional): Event trinary. Defaults to [1,1,1].
+            pre (int, optional): pre samples. Defaults to 50k.
+            post (int, optional): post samples. Defaults to 100k.
         """
         if pre > post:
             print("PRE samples cannot be greater than POST samples. Config not set.")
@@ -979,24 +1046,24 @@ class Acq400:
         self.s1.RGM = 0 # Make sure RGM mode is turned off.
         self.s0.SIG_EVENT_SRC_0 = 0
         return None
-
-
+    
     def configure_rtm(self, role, trigger=[1,1,1], event=[1,1,1], post=50000, rtm_translen=5000, gpg=0):
-        """
-        Configure UUT for rtm mode. Default: external trigger starts the capture
-        and takes 5000 samples, each subsequent trigger gives us another 5000
-        samples.
+        """ Configure UUT for rtm mode.
 
-        "Role" is a mandatory argument. For master systems, role should be the
-        string "master", if the system is a slave then role should be the string
-        "slave"
+        Default setup: external trigger starts the capture and takes 5000 samples,\
+        each subsequent trigger gives us another 5000 samples.
 
-        Default rtm_translen: 5k samples.
-        Default post: 50k samples
-
-        GPG can be used in RTM mode as the Event. If you are using the GPG
-        then this function can put the GPG output onto the event bus (to use as
+        GPG can be used in RTM mode as the Event. If you are using the GPG\
+        then this function can put the GPG output onto the event bus (to use as\
         an Event for RTM).
+
+        Args:
+            role (str): uut role ``master`` or ``slave``
+            trigger (list, optional): Trigger trinary. Defaults to [1,1,1].
+            event (list, optional): Event trinary. Defaults to [1,1,1].
+            post (int, optional): post samples. Defaults to 100k.
+            rtm_translen (int, optional):  translen. Defaults to 5000.
+            gpg (int, optional): _description_. Defaults to 0.
         """
         if post > 0:
             self.s0.transient = "PRE=0 POST={}".format(post)
@@ -1022,11 +1089,15 @@ class Acq400:
 
     def configure_transient(self, pre=0, post=100000,
         sig_DX='d0', auto_soft_trigger=0, demux=1, edge='rising'):
-        """
-        Configure uut for transient capture.
-        sig_DX is the signal line responsible for TRIGGER or EVENT depending on mode;
-        function makes appropriate selection.
-        Function is aware of sync_role and sets sig_DX accordingly
+        """ Configure uut for transient capture.
+
+        Args:
+            pre (int, optional): pre samples. Defaults to 0.
+            post (int, optional): post samples. Defaults to 100k.
+            sig_DX (str, optional): signal line responsible for ``trigger`` or ``event``. Defaults to 'd0'.
+            auto_soft_trigger (int, optional): automatically soft trigger. Defaults to 0.
+            demux (int, optional): demux data on/off. Defaults to 1.
+            edge (str, optional): trigger edge. Defaults to 'rising'.
         """
         sync_role = self.s0.sync_role
         if sync_role == 'role not set' and sync_role == 'slave':
@@ -1044,25 +1115,15 @@ class Acq400:
         self.s0.transient = "PRE={} POST={} SOFT_TRIGGER={} DEMUX={}".\
             format(pre, post, auto_soft_trigger, demux)
 
-
-
-
-
     def configure_rgm(self, role, trigger=[1,0,1], event=[1,1,1], post="100000", gpg=0):
-        """
-        Configure UUT for RGM mode. Default: external trigger starts the capture
-        and the system takes samples every clock whenever the trigger is high.
+        """Configure UUT for RGM mode
 
-        "Role" is a mandatory argument. For master systems, role should be the
-        string "master", if the system is a slave then role should be the string
-        "slave"
-
-        Default post: 100k samples.
-
-        GPG can be used in RGM mode as the Event. If you are using the GPG then
-        this function can put the GPG output onto the event bus (to use as an
-        Event for RGM).
-
+        Args:
+            role (str): uut role ``master`` or ``slave``
+            trigger (list, optional): Trigger trinary. Defaults to [1,0,1].
+            event (list, optional): Event trinary. Defaults to [1,1,1].
+            post (int, optional): post samples. Defaults to 100k.
+            gpg (int, optional): Put GPG output onto the event bus (to use as an Event for RGM). Defaults to 0.
         """
         self.s0.transient = "PRE=0 POST={}".format(post)
         self.s1.TRG = 1
@@ -1084,30 +1145,27 @@ class Acq400:
 
         return None
 
-
     def get_demux_state(self):
-        """
-        Returns the current state of demux. Beware: if demux is set after the
-        shot then this function will return the new state. There is no way to
+        """Returns the current state of demux
+
+        Beware: if demux is set after the shot then this function will return the new state. There is no way to
         determine what the state was during the previous shot.
+
         """
         transient = self.s0.transient
         demux_state = transient.split("DEMUX=",1)[1][0]
         return int(demux_state)
-
-
+    
     def pull_plot(self, channels=(), demux=-1):
-        """
-        Pulls data from 53000 or 5300X depending on the status of demux.
-        This function takes a tuple of integers and will return the
-        corresponding data from each 5300X port (if demux is on) and will return
-        the corresponding data filtered from 53000 if demux is off.
+        """This function returns an array of the specified channels and plots the data.
 
-        The user can also override the detected demux state if they want to: 1
-        is demux on and 0 is demux off. Default is -1 and means autodetect.
+        Pulls data from 53000 or 5300X and will return the corresponding data from each 5300X port \
+            (if demux is on) or will return the corresponding data filtered from 53000 if demux is off.
 
-        This function returns an array of the specified channels and plots the
-        data.
+        Args:
+            channels (tuple, optional): tuple containing channel indexes. Defaults to ().
+            demux (int, optional): 1 demux on 0 demux off -1 autodetect. Defaults to -1.
+
         """
         data = []
         if demux == -1:
@@ -1133,21 +1191,18 @@ class Acq400:
 
 
     def read_muxed_data(self):
-        """
-        A function that returns data from port 53000. Only use if demux is
-        turned off. If demux is turned on then this function will not return the
-        expected muxed data. To check if demux is enabled use the
-        get_demux_state() function.
+        """returns data from port 53000. 
+        
+        Only use if demux is turned off.
         """
         data = self.read_channels((0), -1)
         return data[0]
 
-
     def pull_data(self):
-        """
-        A function to pull data based on whatever demux is set to. Should be
-        entirely automated. The function will check what channels are AI
-        channels and pull the data from those channels.
+        """Gets data from all AI channels
+
+        Returns:
+            ndarray:  channel data
         """
 
         demux_state = self.get_demux_state()
@@ -1161,15 +1216,16 @@ class Acq400:
             mux_data = self.read_muxed_data()
             for ch in channels:
                 data.append(mux_data[ch-1::nchan])
-
         return data
 
 
     def get_ai_channels(self):
-        """
-        Returns all of the AI channels. This is a more robust way to get the
-        total number of AI channels, as sometimes nchan can be set to include
-        the scratch pad.
+        """Gets total number of AI channels
+
+        nchan can sometimes include scratchpad
+
+        Returns:
+            int: total AI channels
         """
         ai_channels = 0
         site_types = self.get_site_types()
@@ -1180,9 +1236,10 @@ class Acq400:
         return ai_channels
 
     def get_site_types(self):
-        """
-        Returns a dictionary with keys AISITES, AOSITES, and DIOSITES with the
-        corresponding values as lists of the channels which are AI, AO, and DIO.
+        """gets all sites grouped by site type
+
+        Returns:
+            dict: AISITES, AOSITES, and DIOSITES
         """
         AISITES = []
         AOSITES = []
@@ -1204,28 +1261,18 @@ class Acq400:
         return site_types
 
     def get_es_indices(self, file_path="default", nchan="default", human_readable=0, return_hex_string=0):
+        """Returns the location of event samples.
+
+        Args:
+            file_path (str, optional): data source. Can load from file. Defaults to from uut.
+            nchan (int, optional): total chans use when loading from file. Defaults to from uut.
+            human_readable (int, optional): returns hex interpretations of the event sample data. Defaults to 0.
+            return_hex_string (int, optional): if 1 and human_readable 1 returns single string containing all of \
+            the event samples. Defaults to 0.
+
+        Returns:
+            list: [ [Event sample indices], [Event sample data] ]
         """
-        Returns the location of event samples.
-
-        get_es_indices will pull data from a system by default (it will also
-        read in a raw datafile) and reads through the data in order to find the
-        location of the event samples. The system will also return the raw
-        event sample data straight from the system.
-
-        If human_readable is set to 1 then the function will return the hex
-        interpretations of the event sample data. The indices will remain
-        unchanged.
-
-        If return_hex_string is set to 1 (provided human_readable has ALSO been
-        set) then the function will return one single string containing all of
-        the event samples.
-
-        Data returned by the function looks like:
-        [  [Event sample indices], [Event sample data]  ]
-        """
-        # a function that return the location of event samples.
-        # returns:
-        # [ [event sample indices], [ [event sample 1], ...[event sample N] ] ]
         indices = []
         event_samples = []
         nchan = self.nchan() if nchan == "default" else nchan
@@ -1275,6 +1322,16 @@ class Acq400:
         return [indices, event_samples]
 
     def stream(self, recvlen=4096*32, port=AcqPorts.STREAM, data_size=2):
+        """Runs stream and yields data buffers
+
+        Args:
+            recvlen (_type_, optional): buffer size. Defaults to 4096*32.
+            port (_type_, optional): uut port. Defaults to AcqPorts.STREAM value.
+            data_size (int, optional): data size in bytes. Defaults to 2.
+
+        Yields:
+            ndarray: data buffer
+        """
         dtype = np.dtype('i4' if data_size == 4 else 'i2')   # hmm, what if unsigned?
         self.stream_nc = netclient.Netclient(self.uut, port)
 
@@ -1366,14 +1423,27 @@ def activepv(_pv):
 
 
 class Acq2106(Acq400):
-    """ Acq2106 specialization of Acq400
+    """Acq2106 specialization of Acq400
 
     Defines features specific to ACQ2106
     """
 
     def __init__(self, _uut, monitor=True, s0_client=None, has_dsp=False, has_comms=True, has_wr=False, has_hudp=False):
-#        print("acq400_hapi.Acq2106 %s" % (_uut))
+        """init acq2106
+
+        Args:
+            _uut (srt): uut hostname or ip-address
+            monitor (bool, optional): start statusmonitor. Defaults to True.
+            s0_client (netclient.Siteclient, optional): existing siteclient. Defaults to None.
+            has_dsp (bool, optional): if uut has dsp. Defaults to False.
+            has_comms (bool, optional): if uut has comms. Defaults to True.
+            has_wr (bool, optional): if uut has white rabbit. Defaults to False.
+            has_hudp (bool, optional): if uut has hudp. Defaults to False.
+        """
+
         Acq400.__init__(self, _uut, monitor=monitor, s0_client=s0_client)
+
+
         self.mb_clk_min = 100000
         sn_map = ()
         if has_comms:
@@ -1393,6 +1463,14 @@ class Acq2106(Acq400):
             self.mod_count += 1
 
     def get_mgt_site(self, mgt):
+        """gets mgt site str from num
+
+        Args:
+            mgt (int): mgt site num
+
+        Returns:
+            tuple: (site string, site num)
+        """
         comms_config = {
             11 : ('cC', AcqSites.SITE_CC),
             12 : ('cB', AcqSites.SITE_CB),
@@ -1439,8 +1517,10 @@ class Acq2106(Acq400):
 
 
     def get_sys_info(self):
-        """
-        Returns a string of system information to
+        """Gets uut system information
+
+        Returns:
+            str: system info
         """
         line = "{: <6}{: <16}{: <35}{: <16}\n"
         from datetime import datetime
@@ -1463,13 +1543,22 @@ class Acq2106(Acq400):
         info += "="*72
         return info
 
-
 class Acq2106_Mgtdram8(Acq2106):
+    """Mgtdram8 specialization of Acq2106
+
+    Defines features specific to Acq2106_Mgtdram8
+    """
     MGT_BLOCK_BYTES = 0x400000
     MGT_BLOCK_MULTIPLE = 16
 
     def __init__(self, uut, monitor=True, s0_client=None):
-#        print("acq400_hapi.Acq2106_MgtDram8 %s" % (uut))
+        """init Acq2106_Mgtdram8
+
+        Args:
+            _uut (srt): uut hostname or ip-address
+            monitor (bool, optional): start statusmonitor. Defaults to True.
+            s0_client (netclient.Siteclient, optional): existing siteclient. Defaults to None.
+        """
         Acq2106.__init__(self, uut, monitor=monitor, s0_client=s0_client, has_dsp=True)
 
     def run_mgt(self, filter = null_filter, set_arm=True):
@@ -1480,11 +1569,20 @@ class Acq2106_Mgtdram8(Acq2106):
     def create_mgtdram_pull_client(self):
         return MgtDramPullClient(self.uut)
 
-
 class Acq2106_TIGA(Acq2106):
+    """TIGA specialization of Acq2106
+
+    Defines features specific to Acq2106_TIGA
+    """
 
     def __init__(self, uut, monitor=True, s0_client=None):
-        print("acq400_hapi.Acq2106_TIGA %s" % (uut))
+        """init Acq2106_TIGA
+
+        Args:
+            _uut (srt): uut hostname or ip-address
+            monitor (bool, optional): start statusmonitor. Defaults to True.
+            s0_client (netclient.Siteclient, optional): existing siteclient. Defaults to None.
+        """
         Acq2106.__init__(self, uut, monitor=monitor, s0_client=s0_client, has_wr=True)
         self.pg_sites = [ sx for sx in range(1,6+1) if sx in self.sites and self.svc["s{}".format(sx)].MTYPE == '7B' ]
 
@@ -1521,8 +1619,16 @@ def sigsel(enable=1, dx=1, site=None, edge=1):
 
 
 def factory(_uut):
-    ''' instantiate s0. deduce what sort of ACQ400 this is and invoke the appropriate subclass
-    '''
+    """deduce what sort of uut this is and invoke the appropriate class
+
+    Preferred to init hapi instance
+
+    Args:
+        _uut (str): uut hostname or ip-address
+
+    Returns:
+        acq400: uut hapi instance
+    """
     try:
         cached = Acq400.uuts[_uut]
         return cached

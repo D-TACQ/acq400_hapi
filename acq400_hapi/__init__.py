@@ -1,3 +1,4 @@
+"""Connectivity package for D-Tacq uuts"""
 from .netclient import Netclient
 from .netclient import Siteclient
 from .netclient import Logclient
