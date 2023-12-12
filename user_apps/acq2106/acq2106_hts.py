@@ -8,60 +8,62 @@
 
 example usage::
 
-	./acq2106_hts.py --trg=notouch --secs=3600 acq2106_061
-	    # act on acq2106_061, run for 3600s
+    # act on acq2106_061, run for 3600s
+    ./acq2106_hts.py --trg=notouch --secs=3600 acq2106_061
 
 
     # capture 2000 buffers, to one cycle of files on ramdisk. (data is overwritten, but it's unlikely your computer will run out of memory)
     # "RECYCLE mode"
     ./user_apps/acq2106/acq2106_hts.py --nbuffers=2000 --datahandler='./scripts/run-stream-ramdisk {} {}' acq2106_364
 
+    
     # capture 2000 buffers, to NBUFFERS cycles of files, storing all 2000 buffers on ramdisk.
     # WARNING: we assume that your HOSTPC has enough memory to do this! 2000 buffers of 1MB => 2GB, that's probably OK.
     # But, 20k buffers would need a computer with serious memory (32GB) and 200kbuffers is probably infeasible, instead streaming to a fast disk system is recommended.
-
     ./user_apps/acq2106/acq2106_hts.py --nbuffers=2000 --datahandler='./scripts/run-stream-ramdisk {} {} 0' acq2106_364
 
-
-usage::
-    acq2106_hts.py [-h] [--pre PRE] [--clk CLK] [--trg TRG] [--sim SIM]
-                      [--trace TRACE] [--nowait NOWAIT] [--secs SECS]
-                      [--spad SPAD] [--commsA COMMSA] [--commsB COMMSB]
-                      [--lport LPORT] [--hexdump HEXDUMP]
-                      [--decimate DECIMATE] [--datahandler DATAHANDLER]
-                      [--nbuffers NBUFFERS]
-                      uut [uut ...]
-
-configure acq2106 High Throughput Stream
-
-positional arguments:
-  uut                   uut
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --pre PRE             pre-trigger samples
-  --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
-  --trg TRG             int|ext,rising|falling
-  --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
-  --trace TRACE         1 : enable command tracing
-  --nowait NOWAIT       start the shot but do not wait for completion
-  --secs SECS           capture seconds [default:0 inifinity]
-  --spad SPAD           scratchpad, eg 1,16,0
-  --commsA COMMSA       custom list of sites for commsA
-  --commsB COMMSB       custom list of sites for commsB
-  --lport LPORT         local port on ahfba
-  --hexdump HEXDUMP     generate hexdump format string
-  --decimate DECIMATE   decimate arm data path
-  --datahandler DATAHANDLER
-                        program to stream the data
-  --nbuffers NBUFFERS   set capture length in buffers
-
---secs     : maximum run time for acq2106_hts, only starts counting once data is flowing
---nbuffers : data handler will stream max this number of buffers (1MB or 4MB)
 
 acq2106_hts.py will quit on the first of either elapsed_seconds > secs or buffers == nbuffers
 
 Recommendation: --secs is really a timeout, use --nbuffers for exact data length
+
+.. rst-class:: hidden
+
+    usage::
+        acq2106_hts.py [-h] [--pre PRE] [--clk CLK] [--trg TRG] [--sim SIM]
+                        [--trace TRACE] [--nowait NOWAIT] [--secs SECS]
+                        [--spad SPAD] [--commsA COMMSA] [--commsB COMMSB]
+                        [--lport LPORT] [--hexdump HEXDUMP]
+                        [--decimate DECIMATE] [--datahandler DATAHANDLER]
+                        [--nbuffers NBUFFERS]
+                        uut [uut ...]
+
+    configure acq2106 High Throughput Stream
+
+    positional arguments:
+    uut                   uut
+
+    optional arguments:
+    -h, --help            show this help message and exit
+    --pre PRE             pre-trigger samples
+    --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
+    --trg TRG             int|ext,rising|falling
+    --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
+    --trace TRACE         1 : enable command tracing
+    --nowait NOWAIT       start the shot but do not wait for completion
+    --secs SECS           capture seconds [default:0 inifinity]
+    --spad SPAD           scratchpad, eg 1,16,0
+    --commsA COMMSA       custom list of sites for commsA
+    --commsB COMMSB       custom list of sites for commsB
+    --lport LPORT         local port on ahfba
+    --hexdump HEXDUMP     generate hexdump format string
+    --decimate DECIMATE   decimate arm data path
+    --datahandler DATAHANDLER
+                            program to stream the data
+    --nbuffers NBUFFERS   set capture length in buffers
+
+    --secs     : maximum run time for acq2106_hts, only starts counting once data is flowing
+    --nbuffers : data handler will stream max this number of buffers (1MB or 4MB)
 
 """
 import sys
@@ -198,7 +200,7 @@ def run_shot(args):
         wait_completion(uut, args)
 
 def get_parser():    
-    parser = argparse.ArgumentParser(description='configure acq2106 High Throughput Stream')    
+    parser = argparse.ArgumentParser(description='High Throughput Stream using AFHBA')
     acq400_hapi.Acq400UI.add_args(parser, transient=False)
     parser.add_argument('--nowait', default=0, help='start the shot but do not wait for completion')
     parser.add_argument('--secs', default=999999, help="capture seconds [default:0 inifinity]")

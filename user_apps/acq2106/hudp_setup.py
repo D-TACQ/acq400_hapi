@@ -5,86 +5,93 @@ hudp_setup.py [opts] TXUUT RXUUT
 
 sets up a one way transfer from TXUUT to RXUUT
 
-[pgm@hoy5 acq400_hapi]$  ./user_apps/acq2106/hudp_setup.py --help
-usage: hudp_setup.py [-h] [--netmask NETMASK] [--tx_ip TX_IP] [--rx_ip RX_IP] [--gw GW] [--port PORT] [--run0 RUN0] 
-                     [--play0 PLAY0] [--broadcast BROADCAST] [--disco DISCO] [--spp SPP]
-                     [--hudp_decim HUDP_DECIM]
-                     txuut rxuut
-
-hudp_setup
-
-positional arguments:
-  txuut                 transmit uut
-  rxuut                 transmit uut
-
-options:
-  -h, --help            show this help message and exit
-  --netmask NETMASK     netmask (default: 255.255.255.0)
-  --tx_ip TX_IP         tx ip address (default: 10.12.198.128)
-  --rx_ip RX_IP         rx ip address (default: 10.12.198.129)
-  --gw GW               gateway (default: 10.12.198.1)
-  --port PORT           port (default: 53676)
-  --run0 RUN0           set tx sites+spad (default: 1 1,16,0)
-  --play0 PLAY0         set rx sites+spad (default: 1 16)
-  --broadcast BROADCAST
-                        broadcast the data (default: 0)
-  --disco DISCO         enable discontinuity check at index x (default: None)
-  --spp SPP             samples per packet (default: 1) 
-  --hudp_decim HUDP_DECIM
-                        hudp decimation, 1..16 (default: 1)
-
 Increasing spp reduces the packet rate per sample, potentially enabling a higher sample rate (do NOT exceed MTU 1400 bytes)
-Increasing decimation reduces the packet rate, suitable for spp=1 low latency control, while full rate data flows to DRAM for archive
-The DISContinuity check is a packet data checker. 
-    Typically, the TX data comes from ACQ2106 with SPAD enabled, and the DISCO index is SPAD[0], sample ramp.
 
+Increasing decimation reduces the packet rate, suitable for spp=1 low latency control, while full rate data flows to DRAM for archive
+
+The DISCOntinuity check is a packet data checker. 
+
+Typically, the TX data comes from ACQ2106 with SPAD enabled, and the DISCO index is SPAD[0], sample ramp.
 
 If either TXUUT or RXUUT is NOT an ACQ2106, or has already been configured for one direction, specify "none"
 
+
 Examples:
 
-Send data from UUT acq2106_363 at tx_ip ip 10.12.198.128 to UUT acq2106_364 at rx_ip=10.12.198.129
+Send data from UUT acq2106_363 at tx_ip ip 10.12.198.128 to UUT acq2106_364 at rx_ip=10.12.198.129::
 
-./user_apps/acq2106/hudp_setup.py --rx_ip=10.12.198.128 --tx_ip 10.12.198.129 --run0='1 1,16,0' --play0='1 16' acq2106_363 acq2106_364
+    ./user_apps/acq2106/hudp_setup.py --rx_ip=10.12.198.128 --tx_ip 10.12.198.129 --run0='1 1,16,0' --play0='1 16' acq2106_363 acq2106_364
 
-Send data from UUT acq2106_363 at tx_ip ip 10.12.198.128 to non-HUDP destination rx_ip=10.12.198.254
+Send data from UUT acq2106_363 at tx_ip ip 10.12.198.128 to non-HUDP destination rx_ip=10.12.198.254::
 
-./user_apps/acq2106/hudp_setup.py --rx_ip=10.12.198.254 --tx_ip 10.12.198.128 --run0='1 1,16,0' acq2106_363 none
+    ./user_apps/acq2106/hudp_setup.py --rx_ip=10.12.198.254 --tx_ip 10.12.198.128 --run0='1 1,16,0' acq2106_363 none
 
-Send data from non-HUDP source at tx_ip 10.12.198.254 to UUT acq2106_363 at rx_ip  10.12.198.128
+Send data from non-HUDP source at tx_ip 10.12.198.254 to UUT acq2106_363 at rx_ip  10.12.198.128::
 
-./user_apps/acq2106/hudp_setup.py --rx_ip=10.12.198.128 --tx_ip 10.12.198.254 --play0='1 16' none acq2106_363
+    ./user_apps/acq2106/hudp_setup.py --rx_ip=10.12.198.128 --tx_ip 10.12.198.254 --play0='1 16' none acq2106_363
 
-In all cases, 
+In all cases,
+
 for UUT Tx, run0 specifies data from site1 followed by a 16 column ScratchPAD.
+
 for UUT Rx, play0 specifues datas to site1 followed by a 16 column TrashCAN.
 
 This allows, for example a 32 channel, 16 bit ADC to play data direct to a 32 channel DAC, 
 including instrumentation that could be checked with --disco=16 (SPAD[0] at offset 16 LW)
 
 
+::
 
-pgm@hoy5 acq400_hapi]$ cat /home/pgm/PROJECTS/ACQ400/ACQ420FMC/NOTES/HUDPDEMO.txt
-#!/bin/bash
-set -x
-TX1=${TX1:-acq2106_189} 
-RX1=${RX1:-acq2106_274}
-RX2=${RX2:-acq2106_130}
-IP_TX1=${IP_TX1:-10.12.198.128}
-IP_RX1=${IP_RX1:-10.12.198.129}
-IP_RX2=${IP_RX2:-10.12.198.130}
+    [pgm@hoy5 acq400_hapi]$ cat /home/pgm/PROJECTS/ACQ400/ACQ420FMC/NOTES/HUDPDEMO.txt
+    #!/bin/bash
+    set -x
+    TX1=${TX1:-acq2106_189} 
+    RX1=${RX1:-acq2106_274}
+    RX2=${RX2:-acq2106_130}
+    IP_TX1=${IP_TX1:-10.12.198.128}
+    IP_RX1=${IP_RX1:-10.12.198.129}
+    IP_RX2=${IP_RX2:-10.12.198.130}
 
-echo HUDP Demo TX1:$TX1,$IP_TX1 RX1:$RX1,$IP_RX1 RX2:$RX2,$IP_RX2
-echo set clk/trg
-./user_apps/acq400/sync_role.py --fin=50k --fclk=50k --si5326_bypass 1 --toprole=fpmaster,strg acq2106_189
-echo 'UNICAST ->' $RX1
-./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX1 --broadcast=0 $TX1 $RX1
-read continue
-echo 'UNICAST ->' $RX2
-./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX2 --broadcast=0 $TX1 $RX2
-echo 'BROADCAST ->' $RX1 $RX2 and naboo
-./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX1 --broadcast=1 $TX1 $RX1
-./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX2 --broadcast=1 $TX1 $RX2
+    echo HUDP Demo TX1:$TX1,$IP_TX1 RX1:$RX1,$IP_RX1 RX2:$RX2,$IP_RX2
+    echo set clk/trg
+    ./user_apps/acq400/sync_role.py --fin=50k --fclk=50k --si5326_bypass 1 --toprole=fpmaster,strg acq2106_189
+    echo 'UNICAST ->' $RX1
+    ./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX1 --broadcast=0 $TX1 $RX1
+    read continue
+    echo 'UNICAST ->' $RX2
+    ./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX2 --broadcast=0 $TX1 $RX2
+    echo 'BROADCAST ->' $RX1 $RX2 and naboo
+    ./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX1 --broadcast=1 $TX1 $RX1
+    ./user_apps/acq2106/hudp_setup.py --tx_ip $IP_TX1 --rx_ip $IP_RX2 --broadcast=1 $TX1 $RX2
+
+.. rst-class:: hidden
+
+    usage: hudp_setup.py [-h] [--netmask NETMASK] [--tx_ip TX_IP] [--rx_ip RX_IP] [--gw GW] [--port PORT] [--run0 RUN0] 
+                        [--play0 PLAY0] [--broadcast BROADCAST] [--disco DISCO] [--spp SPP]
+                        [--hudp_decim HUDP_DECIM]
+                        txuut rxuut
+
+    hudp_setup
+
+    positional arguments:
+    txuut                 transmit uut
+    rxuut                 transmit uut
+
+    options:
+    -h, --help            show this help message and exit
+    --netmask NETMASK     netmask (default: 255.255.255.0)
+    --tx_ip TX_IP         tx ip address (default: 10.12.198.128)
+    --rx_ip RX_IP         rx ip address (default: 10.12.198.129)
+    --gw GW               gateway (default: 10.12.198.1)
+    --port PORT           port (default: 53676)
+    --run0 RUN0           set tx sites+spad (default: 1 1,16,0)
+    --play0 PLAY0         set rx sites+spad (default: 1 16)
+    --broadcast BROADCAST
+                            broadcast the data (default: 0)
+    --disco DISCO         enable discontinuity check at index x (default: None)
+    --spp SPP             samples per packet (default: 1) 
+    --hudp_decim HUDP_DECIM
+                            hudp decimation, 1..16 (default: 1)
 
 """
 
@@ -178,7 +185,7 @@ def run_main(args):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="hudp_setup", 
+    parser = argparse.ArgumentParser(description="Setup HUDP for UUTs", 
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--netmask", default='255.255.255.0', help='netmask')
     parser.add_argument("--tx_ip",   default='10.12.198.128', help='tx ip address')

@@ -25,7 +25,7 @@ def run_main(args):
         role = "slave"
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="ustc_set_sync_role")
+    parser = argparse.ArgumentParser(description="Sync role ustc stack")
     parser.add_argument("--fs", default='10M', help='sample clock')
     parser.add_argument("--fclk", default='33333000', help='master clock')
     parser.add_argument("uuts", nargs='+', help="uuts m1 [s1 s2 ...]")

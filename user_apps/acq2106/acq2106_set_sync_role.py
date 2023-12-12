@@ -1,29 +1,25 @@
 #!/usr/bin/env python
 
-""" 
-acq2106_set_sync_role master [slave1 ... slaveN]
+""" acq2106_set_sync_role uuts
 
-usage: acq2106_set_sync_role.py [-h] [--master_clk MASTER_CLK]
-                                [--master_trg MASTER_TRG] [--clkdiv CLKDIV]
-                                [--test TEST] [--trace TRACE]
-                                uuts [uuts ...]
+**DEPRECATION WARNING: please consider using user_apps/acq400/sync_role.py**
 
-*** DEPRECATION WARNING: please consider using user_apps/acq400/sync_role.py ***
+.. rst-class:: hidden
 
-acq2106_set_sync_role
+    acq2106_set_sync_role
 
-positional arguments:
-  uuts                  uuts m1 [s1 s2 ...]
+    positional arguments:
+    uuts                  uuts m1 [s1 s2 ...]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --master_clk MASTER_CLK
-                        master_clk role alt fp,sysclk,sampleclk
-  --master_trg MASTER_TRG
-                        master_trg src alt: fp
-  --clkdiv CLKDIV       clock divider, each module
-  --test TEST           test link
-  --trace TRACE         set command tracing
+    optional arguments:
+    -h, --help            show this help message and exit
+    --master_clk MASTER_CLK
+                            master_clk role alt fp,sysclk,sampleclk
+    --master_trg MASTER_TRG
+                            master_trg src alt: fp
+    --clkdiv CLKDIV       clock divider, each module
+    --test TEST           test link
+    --trace TRACE         set command tracing
 """
 
 import argparse
@@ -113,7 +109,7 @@ def run_main(parser):
         uuts[0].set_master_trg(mtrg, edge, enabled=True)       
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="acq2106_set_sync_role")
+    parser = argparse.ArgumentParser(description="set sync roles for a stack of modules")
     parser.add_argument("--master_clk", default="zclk,2000000", help="master_clk role alt fp,sampleclk[,sysclk]")
     parser.add_argument("--master_trg", default="soft,rising", help="master_trg src alt: fp")    
     parser.add_argument("--clkdiv", default="1", help="clock divider, each module")

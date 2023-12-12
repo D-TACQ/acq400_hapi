@@ -5,40 +5,12 @@
     - data on local SFP/AFHBA
     - control on Ethernet
 
-usage: hts_multistream.py [-h] [--clk CLK] [--trg TRG] [--sim SIM] [--trace TRACE] [--auto_soft_trigger AUTO_SOFT_TRIGGER] [--clear_counters] [--spad SPAD] [--decimate DECIMATE] [--nbuffers NBUFFERS]
-                          [--secs SECS] [--map MAP] [--sig_gen SIG_GEN] [--delete DELETE] [--recycle RECYCLE] [--check CHECK] [--dry_run DRY_RUN] [--wrtd_txi WRTD_TXI] [--SIG_SRC_TRG_0 SIG_SRC_TRG_0]
-                          [--SIG_SRC_TRG_1 SIG_SRC_TRG_1]
-                          uutnames [uutnames ...]
+**DEPRECATION WARNING: please consider using AFHBA404/HAPI/hts_multistream.py**
 
-positional arguments:
-  uutnames              uuts
 
-options:
-  -h, --help            show this help message and exit
-  --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
-  --trg TRG             int|ext,rising|falling
-  --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
-  --trace TRACE         1 : enable command tracing
-  --auto_soft_trigger AUTO_SOFT_TRIGGER force soft trigger generation
-  --clear_counters      clear all counters SLOW
-  --spad SPAD           scratchpad, eg 1,16,0
-  --decimate DECIMATE   decimate amount
-  --nbuffers NBUFFERS   max capture in buffers
-  --secs SECS           max capture in seconds
-  --map MAP             uut:port:site ie --map=67:A:1/67:B:2/130:BOTH:ALL
-  --sig_gen SIG_GEN     Signal gen to trigger when all uuts armed
-  --delete DELETE       delete stale data
-  --recycle RECYCLE     overwrite data
-  --check CHECK         run tests simulate ramp=1 or spad sequential=2
-  --dry_run DRY_RUN     run setup but dont start streams or uuts
-  --wrtd_txi WRTD_TXI   Command first box to send this trigger when all units are in ARM state
-  --SIG_SRC_TRG_0 SIG_SRC_TRG_0     Set trigger d0 source
-  --SIG_SRC_TRG_1 SIG_SRC_TRG_1     Set trigger d1 source
-  --mtrg  HDMI|EXT      Enables HDMI|EXT routing when ALL UUT's are armed, safe with free-running trigger
-
-Recommendation: --secs is really a timeout, use --nbuffers for exact data length
 
 example usage::
+
     ./user_apps/acq2106/hts_multistream.py acq2106_133 acq2106_176
 
     ./user_apps/acq2106/hts_multistream.py --nbuffers=2000 acq2106_133 acq2106_176
@@ -49,18 +21,43 @@ example usage::
 
     ./user_apps/acq2106/hts_multistream.py --spad=1,8,1 --map=11:C:2 --secs=3600 --check=2 z7io_011
 
+Recommendation: --secs is really a timeout, use --nbuffers for exact data length
+
 Warning: If data rate exceeds bandwidth uut will stay in arm
 
-    --map=  uut:port:sites
-        ex.
-            ALL:BOTH:ALL
-            ALL:BOTH:SPLIT - SPLIT must be used with BOTH ports
-            067:A:1,2
-            067:B:2
-            999:BOTH:3,4
-            11:C:1,2
-            C is z7io exclusive
-    --map=67:A:1/67:B:2/130:BOTH:ALL
+.. rst-class:: hidden
+
+    usage: hts_multistream.py [-h] [--clk CLK] [--trg TRG] [--sim SIM] [--trace TRACE] [--auto_soft_trigger AUTO_SOFT_TRIGGER] [--clear_counters] [--spad SPAD] [--decimate DECIMATE] [--nbuffers NBUFFERS]
+                            [--secs SECS] [--map MAP] [--sig_gen SIG_GEN] [--delete DELETE] [--recycle RECYCLE] [--check CHECK] [--dry_run DRY_RUN] [--wrtd_txi WRTD_TXI] [--SIG_SRC_TRG_0 SIG_SRC_TRG_0]
+                            [--SIG_SRC_TRG_1 SIG_SRC_TRG_1]
+                            uutnames [uutnames ...]
+
+    positional arguments:
+    uutnames              uuts
+
+    options:
+    -h, --help            show this help message and exit
+    --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
+    --trg TRG             int|ext,rising|falling
+    --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
+    --trace TRACE         1 : enable command tracing
+    --auto_soft_trigger AUTO_SOFT_TRIGGER force soft trigger generation
+    --clear_counters      clear all counters SLOW
+    --spad SPAD           scratchpad, eg 1,16,0
+    --decimate DECIMATE   decimate amount
+    --nbuffers NBUFFERS   max capture in buffers
+    --secs SECS           max capture in seconds
+    --map MAP             uut:port:site ie --map=67:A:1/67:B:2/130:BOTH:ALL
+    --sig_gen SIG_GEN     Signal gen to trigger when all uuts armed
+    --delete DELETE       delete stale data
+    --recycle RECYCLE     overwrite data
+    --check CHECK         run tests simulate ramp=1 or spad sequential=2
+    --dry_run DRY_RUN     run setup but dont start streams or uuts
+    --wrtd_txi WRTD_TXI   Command first box to send this trigger when all units are in ARM state
+    --SIG_SRC_TRG_0 SIG_SRC_TRG_0     Set trigger d0 source
+    --SIG_SRC_TRG_1 SIG_SRC_TRG_1     Set trigger d1 source
+    --mtrg  HDMI|EXT      Enables HDMI|EXT routing when ALL UUT's are armed, safe with free-running trigger
+
 """
 import acq400_hapi
 from acq400_hapi import PR
@@ -76,7 +73,7 @@ import threading
 import traceback
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='High Throughput Stream from up to 16 UUTS')
+    parser = argparse.ArgumentParser(description='High Throughput Stream using AFHBA for up to 16 UUTS')
     acq400_hapi.Acq400UI.add_args(parser, transient=False)
     parser.add_argument('--spad', default=None, help="scratchpad, eg 1,16,0")
     parser.add_argument('--decimate', default=None, help='decimate amount')
