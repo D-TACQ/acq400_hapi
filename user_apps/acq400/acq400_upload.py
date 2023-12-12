@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 
-"""
-
-acq400_upload.py :: simplified upload-only program.
+"""acq400_upload.py :: simplified upload-only program.
 
 For fullshot capture and upload, see acq400_fullshot.py 
 
-example: upload data from previous "DEMUX=0" shot:
-[pgm@hoy5 acq400_hapi]$ ./user_apps/acq400/acq400_upload.py --save_data BOLO --trace_upload 1 acq2106_123
-INFO: Shotcontroller.handle_data() acq2106_123 data valid: UNKNOWN
-TIMING:func:'handle_data' took: 11.63 sec
-RAW DATA BOLO/acq2106_123_CH00 size 19200000
-TIMING:func:'upload' took: 23.67 sec
-TIMING:func:'run_main' took: 23.67 sec
-[pgm@hoy5 acq400_hapi]$ ls -l BOLO
-BOLO/        BOLO_README  
-[pgm@hoy5 acq400_hapi]$ ls -l BOLO/
-acq2106_123_CH00  format            
-[pgm@hoy5 acq400_hapi]$ ls -l BOLO/acq2106_123_CH00 
--rw-r--r-- 1 pgm pgm 19200000 Jul  2 20:27 BOLO/acq2106_123_CH00
+example: upload data from previous "DEMUX=0" shot::
+
+    [pgm@hoy5 acq400_hapi]$ ./user_apps/acq400/acq400_upload.py --save_data BOLO --trace_upload 1 acq2106_123
+    INFO: Shotcontroller.handle_data() acq2106_123 data valid: UNKNOWN
+    TIMING:func:'handle_data' took: 11.63 sec
+    RAW DATA BOLO/acq2106_123_CH00 size 19200000
+    TIMING:func:'upload' took: 23.67 sec
+    TIMING:func:'run_main' took: 23.67 sec
+    [pgm@hoy5 acq400_hapi]$ ls -l BOLO
+    BOLO/        BOLO_README  
+    [pgm@hoy5 acq400_hapi]$ ls -l BOLO/
+    acq2106_123_CH00  format            
+    [pgm@hoy5 acq400_hapi]$ ls -l BOLO/acq2106_123_CH00 
+    -rw-r--r-- 1 pgm pgm 19200000 Jul  2 20:27 BOLO/acq2106_123_CH00
 
 
 """
@@ -68,7 +67,7 @@ def uniq(inp):
 
 
 def get_parser(argStr=None):
-    parser = argparse.ArgumentParser(description='acq400 upload')
+    parser = argparse.ArgumentParser(description='Simple capture and get data')
     acq400_hapi.ShotControllerUI.add_args(parser)
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
     return parser

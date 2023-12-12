@@ -1,57 +1,53 @@
 #!/usr/bin/env python
 
-"""
-This is a script intended to connect to a UUT and stream data from port 4210.
+"""This is a script intended to connect to a UUT and stream data from port 4210.
 
 The data that has been streamed is not demuxed and so if it is to be used then it has to be demuxed first.
-Something like:
+Something like::
 
-    >>> data = numpy.fromfile("0000", dtype="<datatype>")
-    >>> plt.plot(data[::<number of channels>])
-    >>> plt.show()
-
-usage::
-    acq400_stream.py [-h] [--filesize FILESIZE] [--totaldata TOTALDATA]
-                        [--root ROOT] [--runtime RUNTIME] [--verbose VERBOSE]
-                        uuts [uuts ...]
-
-acq400 stream
-
-positional arguments:
-  uuts                  uuts
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --filesize FILESIZE   Size of file to store in KB. If filesize > total data
-                        then no data will be stored.
-  --totaldata TOTALDATA
-                        Total amount of data to store in KB
-  --root ROOT           Location to save files
-  --runtime RUNTIME     How long to stream data for
-  --verbose VERBOSE     Prints status messages as the stream is running
-
+    data = numpy.fromfile("0000", dtype="<datatype>")
+    plt.plot(data[::<number of channels>])
+    plt.show()
 
 Some usage examples are included below:
 
-1: Acquire files of size 1024kb up to a total of 4096kb:
+1: Acquire files of size 1024kb up to a total of 4096kb::
 
+    acq400_stream.py --verbose=1 --filesize=1M --totaldata=4M <uut hostname>
 
-    >>> python acq400_stream.py --verbose=1 --filesize=1M --totaldata=4M <module ip or name>
+2: Acquire a single file of size 4096kb::
 
-2: Acquire a single file of size 4096kb:
+    acq400_stream.py --verbose=1 --filesize=4M --totaldata=4M <uut hostname>
 
+3: Acquire files of size 1024 for 10 seconds::
+    
+    acq400_stream.py --verbose=1 --filesize=1M --runtime=10 <uut hostname>
 
-    >>> python acq400_stream.py --verbose=1 --filesize=4M --totaldata=4M <module ip or name>
+4: Acquire data for 5 seconds and write the data all to a single file::
+    
+    acq400_stream.py --verbose=1 --filesize=9999M --runtime=5 <uut hostname>
 
-3: Acquire files of size 1024 for 10 seconds:
+.. rst-class:: hidden
+    usage::
+        acq400_stream.py [-h] [--filesize FILESIZE] [--totaldata TOTALDATA]
+                            [--root ROOT] [--runtime RUNTIME] [--verbose VERBOSE]
+                            uuts [uuts ...]
 
+    acq400 stream
 
-    >>> python acq400_stream.py --verbose=1 --filesize=1M --runtime=10 <module ip or name>
+    positional arguments:
+    uuts                  uuts
 
-4: Acquire data for 5 seconds and write the data all to a single file:
+    optional arguments:
+    -h, --help            show this help message and exit
+    --filesize FILESIZE   Size of file to store in KB. If filesize > total data
+                            then no data will be stored.
+    --totaldata TOTALDATA
+                            Total amount of data to store in KB
+    --root ROOT           Location to save files
+    --runtime RUNTIME     How long to stream data for
+    --verbose VERBOSE     Prints status messages as the stream is running
 
-
-    >>> python acq400_stream.py --verbose=1 --filesize=9999M --runtime=5 <module ip or name>
 
 """
 
@@ -146,7 +142,7 @@ def run_stream(args):
             print("runtime exceeded: all stream data written to single file")
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='acq400 stream')
+    parser = argparse.ArgumentParser(description='Stream data from UUT')
     #parser.add_argument('--filesize', default=1048576, type=int,
     #                    help="Size of file to store in KB. If filesize > total data then no data will be stored.")
     parser.add_argument( '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
@@ -159,9 +155,6 @@ def get_parser():
     parser.add_argument('uuts', nargs='+', help="uuts")
     return parser
 
-def run_main():
+if __name__ == '__main__':
     run_stream(get_parser().parse_args())
 
-
-if __name__ == '__main__':
-    run_main()

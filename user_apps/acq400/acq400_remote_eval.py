@@ -1,21 +1,25 @@
 #!/usr/bin/env python
 
-"""
-remote command eval -e command UUT [UUT2]
+"""remote command eval
 
-usage: acq400_remote_eval.py [-h] [-s SCRIPT] [-t TRACE] uuts [uuts ...]
+Example usage::
 
-acq400_remote_script
+    ./acq400_remote_eval.py -e command UUTS
 
-positional arguments:
-  uuts                  uut[s]
+.. rst-class:: hidden
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -s SCRIPT, --script SCRIPT
-                        script file [default stdin]
-  -t TRACE, --trace TRACE
-                        traces command execution
+    acq400_remote_script
+
+    positional arguments:
+    uuts                  uut[s]
+
+    optional arguments:
+    -h, --help            show this help message and exit
+    -s SCRIPT, --script SCRIPT
+                            script file [default stdin]
+    -t TRACE, --trace TRACE
+                            traces command execution
+
 """
 
 import sys
@@ -66,14 +70,8 @@ def remote_script_by_uut(uuts, script):
                 handle_line((u,), line.strip())                 
                     
 
-def run_main():
-    parser = argparse.ArgumentParser(description='acq400_remote_script')
-    parser.add_argument('-e','--eval', default=None, help="script file [default stdin]") 
-    parser.add_argument('-s','--script', default='-', help="script file [default stdin]")
-    parser.add_argument('--script_by_uut', default=None, help="script file [default stdin]")        
-    parser.add_argument('uuts', nargs='+', help="uut[s]")
-    args = parser.parse_args()
-    uuts = [acq400_hapi.Acq400(u) for u in args.uuts]
+def run_main(args):
+    uuts = [acq400_hapi.factory(u) for u in args.uuts]
     if args.eval:
         remote_eval(uuts, args.eval)
     elif args.script_by_uut:
@@ -82,7 +80,13 @@ def run_main():
         remote_script(uuts, args.script)
 
 
-# execution starts here
+def get_parser():
+    parser = argparse.ArgumentParser(description='eval script on UUTS')
+    parser.add_argument('-e','--eval', default=None, help="script file [default stdin]") 
+    parser.add_argument('-s','--script', default='-', help="script file [default stdin]")
+    parser.add_argument('--script_by_uut', default=None, help="script file [default stdin]")        
+    parser.add_argument('uuts', nargs='+', help="uut[s]")
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

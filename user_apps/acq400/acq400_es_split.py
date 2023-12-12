@@ -18,8 +18,8 @@ def check_if_es(data):
     return True
 
 
-def get_args(argStr=None):
-    parser = argparse.ArgumentParser(description='acq400 upload')
+def get_parser():
+    parser = argparse.ArgumentParser(description='Check data for Event Signature')
     parser.add_argument('--file', default="./0000", type=str,
                         help='Which file to load to split on event signatures. Default=./0000')
     parser.add_argument('--ssb', default=-1, type=int,
@@ -27,7 +27,7 @@ def get_args(argStr=None):
     parser.add_argument('--out_dir', default="./split_files", type=str,
                         help='Directory where split files will be written. Default: ./split_files')
     parser.add_argument('uuts', nargs='+', help="uut[s]")
-    return parser.parse_args(argStr)
+    return parser
 
 
 def make_data_dir(directory, verbose):
@@ -74,12 +74,11 @@ def get_ssb(uut, ssb):
     return ssb
 
 
-def main():
-    args = get_args()
+def main(args):
     ssb = get_ssb(args.uuts[0], args.ssb)
     split_on_es(args.file, ssb, args.out_dir)
     return None
 
 
 if __name__ == '__main__':
-    main()
+    main(get_parser().parse_args())

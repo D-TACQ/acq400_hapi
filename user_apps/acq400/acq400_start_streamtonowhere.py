@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-A script that streams N samples using streamtonowhered.
+A script that streams using streamtonowhered.
 """
 
 import acq400_hapi
@@ -21,7 +21,7 @@ def main(args):
     states = []
 
     for uut in args.uuts:
-        uuts.append(acq400_hapi.Acq400(uut))
+        uuts.append(acq400_hapi.factory(uut))
 
     for index, uut in enumerate(uuts):
         uut.s0.streamtonowhered = 'stop'
@@ -37,15 +37,10 @@ def main(args):
 
     print("All UUTs are armed and ready for trigger.")
 
-
-def run_main():
-    parser = argparse.ArgumentParser(description='acq400 stream to nowhere')
-
+def get_parser():
+    parser = argparse.ArgumentParser(description='Start stream to nowhere')
     parser.add_argument('uuts', nargs='+', help="uuts")
-
-    args = parser.parse_args()
-    main(args)
-
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    main(get_parser().parse_args())

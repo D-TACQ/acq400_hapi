@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
-"""
-usage: acq400_abort.py [-h] uut [uut ...]
+"""set shot number of all uuts
 
-configure acq400_abort
+.. rst-class:: hidden
 
-positional arguments:
-  uut         uut
+    usage: acq400_abort.py [-h] uut [uut ...]
 
-optional arguments:
-  -h, --help  show this help message and exit
+    configure acq400_abort
+
+    positional arguments:
+    uut         uut
+
+    optional arguments:
+    -h, --help  show this help message and exit
 """
 
 import acq400_hapi
@@ -22,15 +25,15 @@ def run_commands(args):
     for uut in uuts:
         uut.s1.shot = args.shot
 
-def run_main():
-    parser = argparse.ArgumentParser(description='set shot number of all uuts')
+def get_parser():
+    parser = argparse.ArgumentParser(description='Set UUT shot number')
     parser.add_argument('--shot', type=int, default=0)
     parser.add_argument('uuts', nargs='+', help='uut1 [uut2..]')
-    run_commands(parser.parse_args())
+    return parser
 
 # execution starts here
 if __name__ == '__main__':
-    run_main()
+    run_commands(get_parser().parse_args())
 
 
 

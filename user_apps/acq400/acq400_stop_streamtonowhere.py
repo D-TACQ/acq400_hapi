@@ -12,20 +12,15 @@ import time
 def main(args):
     uuts = []
     for uut in args.uuts:
-        uuts.append(acq400_hapi.Acq400(uut))
+        uuts.append(acq400_hapi.factory(uut))
 
     for uut in uuts:
         uut.s0.streamtonowhered = 'stop'
 
-
-def run_main():
-    parser = argparse.ArgumentParser(description='acq400 stream to nowhere')
-
+def get_parser():
+    parser = argparse.ArgumentParser(description='Stop stream to nowhere')
     parser.add_argument('uuts', nargs='+', help="uuts")
-
-    args = parser.parse_args()
-    main(args)
-
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    main(get_parser().parse_args())

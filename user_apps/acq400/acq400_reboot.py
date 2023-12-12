@@ -1,27 +1,19 @@
 #!/usr/bin/env python
 
-"""
-Reboot acq400 system
+"""Reboot acq400 systems"""
 
-USAGE: acq400_reboot UUT1 [UUT ...]
-"""
-
-import sys
 import acq400_hapi
+import argparse
 
-def run_main():
-    uuts = []
-    if len(sys.argv) > 1:
-        for addr in sys.argv[1:]:
-            uuts.append(acq400_hapi.Acq400(addr))
-    else:
-        print("USAGE: acq400_reboot UUT1 [UUT ...]")
-
-    for uut in uuts:
+def run_main(args):
+    for uutname in args.uuts:
+        uut = acq400_hapi.factory(uutname)
         uut.s0.reboot = "3210"
 
+def get_parser():
+    parser = argparse.ArgumentParser(description='reboot uuts')
+    parser.add_argument('uuts', nargs='+', help="uut")
+    return parser
 
 if __name__ == '__main__':
-    run_main()
-
-
+    run_main(get_parser().parse_args())

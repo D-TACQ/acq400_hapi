@@ -108,8 +108,8 @@ def main(args):
     mt_action(uuts, stream_stop, args)
 
 
-def run_main():
-    parser = argparse.ArgumentParser(description='acq400 stream to nowhere')
+def get_parser():
+    parser = argparse.ArgumentParser(description='Start stream to nowhere for x samples')
 
     parser.add_argument('--shot', default=None, type=int, help="set shot number")
     parser.add_argument('--samples', default=100000, type=int,
@@ -117,9 +117,10 @@ def run_main():
 
     parser.add_argument('uuts', nargs='+', help="uuts")
 
-    args = parser.parse_args()
-    main(args)
+    return parser
 
 
 if __name__ == '__main__':
-    run_main()
+    main(get_parser().parse_args())
+
+

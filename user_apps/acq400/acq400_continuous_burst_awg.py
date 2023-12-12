@@ -122,20 +122,9 @@ def run_awg(args):
         load_multiple_bursts_in_one_wavelen(args, uut)
 
 
-    
-    
-BURST_IS_AWGLEN = -1 
- 
-def run_main():
-    parser = argparse.ArgumentParser(description='acq1001 awg demo')
-    parser.add_argument('--length', type=int, default=8192, help="AWG length")
-    parser.add_argument('--burst_length', type=int, default=BURST_IS_AWGLEN, 
-        help="Burst length : {} same as AWG, 0: no burst, >0 special [sub] length".format(BURST_IS_AWGLEN))
-    parser.add_argument('--delay', type=int, default=0, help="auto switch on this delay")
-    parser.add_argument('--trgDX', type=int, default=0, help="trigger DX line")
-    parser.add_argument('--monitor_uut', default=None, help="url of capture ADC")
-    parser.add_argument('uuts', nargs=1, help="uut ")
-    args = parser.parse_args()
+BURST_IS_AWGLEN = -1
+
+def run_main(args):
     if args.length%64:
         args.length = (args.length&(64-1)) + 64
         print("rounding up length to next multiple of 64 {}". args.length)
@@ -148,7 +137,19 @@ def run_main():
     if args.monitor_uut:
         tee_adc(args.monitor_uut, args.burst_length)
     run_awg(args)
+
+def get_parser():
+    parser = argparse.ArgumentParser(description='awg rainbow burst demo')
+    parser.add_argument('--length', type=int, default=8192, help="AWG length")
+    parser.add_argument('--burst_length', type=int, default=BURST_IS_AWGLEN, 
+        help="Burst length : {} same as AWG, 0: no burst, >0 special [sub] length".format(BURST_IS_AWGLEN))
+    parser.add_argument('--delay', type=int, default=0, help="auto switch on this delay")
+    parser.add_argument('--trgDX', type=int, default=0, help="trigger DX line")
+    parser.add_argument('--monitor_uut', default=None, help="url of capture ADC")
+    parser.add_argument('uuts', nargs=1, help="uut ")
+    return parser
            
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())
+
     

@@ -7,11 +7,11 @@ Created on 19 Jun 2021
 import acq400_hapi
 import argparse
 
-def ui():
-    parser = argparse.ArgumentParser(description='acq400_remote_script') 
+def get_parser():
+    parser = argparse.ArgumentParser(description='remote test script') 
     parser.add_argument('-v','--verbose', default=0, help="show more info")
     parser.add_argument('uuts', nargs='+', help="uut[s]")
-    return parser.parse_args()
+    return parser
    
 def site_model(u, k):
     try:
@@ -22,8 +22,7 @@ def site_model(u, k):
 
     return ""
          
-def run_main():
-    args = ui()
+def run_main(args):
     uuts = [acq400_hapi.factory(u) for u in args.uuts]
     
     for u in uuts:
@@ -35,4 +34,4 @@ def run_main():
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

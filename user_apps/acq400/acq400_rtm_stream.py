@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-"""
-A python script to start a stream and pull data from port 4210.
+"""A python script to start a stream and pull data from port 4210.
+
 Once the data is pulled it is sorted by channel and saved to
 files in channelised order.
 """
@@ -69,20 +69,8 @@ def FileSinkFun(args):
     return sink
     
 
-def main():
-    parser = argparse.ArgumentParser(description='Streaming RTM')
-
-    parser.add_argument('--rtm_translen', default=4096, type=int,
-    help='How many samples to capture after each trigger.')
-
-    parser.add_argument('--data_dir', default='default', type=str,
-    help='Where to store your data. If left as default then data will be' \
-    ' stored under [uut_name]_[datetime]')
-
-    parser.add_argument('uut', nargs='+', help="Name of uut to stream.")
-    args = parser.parse_args()
-
-    uut = acq400_hapi.Acq400(args.uut[0])
+def main(args):
+    uut = acq400_hapi.factory(args.uut[0])
 
     if args.data_dir == 'default':
         args.data_dir = './' + args.uut[0] + '_' + datetime.datetime.now().strftime("%y%m%d%H%M") + '/'
@@ -97,6 +85,17 @@ def main():
 
     return None
 
+def get_parser():
+    parser = argparse.ArgumentParser(description='Start RTM stream')
+    parser.add_argument('--rtm_translen', default=4096, type=int,
+    help='How many samples to capture after each trigger.')
+
+    parser.add_argument('--data_dir', default='default', type=str,
+    help='Where to store your data. If left as default then data will be' \
+    ' stored under [uut_name]_[datetime]')
+
+    parser.add_argument('uut', nargs='+', help="Name of uut to stream.")
+    return parser
 
 if __name__ == '__main__':
-    main()
+    main(get_parser().parse_args())

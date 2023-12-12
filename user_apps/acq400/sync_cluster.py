@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 
+"""
+Example usage::
+
+./user_apps/acq400/sync_cluster.py --masters=acq2206_010,acq2206_007 \
+--slaves=acq2206_009,acq2206_008,acq2206_006,acq2206_005 \
+--fclk=20M --fin=1M --clk_route=HDMI --trg_route=HDMI
+
+"""
+
 import acq400_hapi
 import argparse
 import threading
 import time
 
-"""
-Usage:
-./user_apps/acq400/sync_cluster.py --masters=acq2206_010,acq2206_007 \
-    --slaves=acq2206_009,acq2206_008,acq2206_006,acq2206_005 \
-    --fclk=20M --fin=1M --clk_route=HDMI --trg_route=HDMI
-
-"""
 
 def run_main(args):
 

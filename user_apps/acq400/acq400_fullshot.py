@@ -20,45 +20,48 @@ matplot will get very congested with more channels.
 this is really meant as a demonstration of capture, load to numpy,
 it's not really intended as a scope UI.
 
-example:
-python3 ./user_apps/acq400/acq400_fullshot.py --post=100k --capture=1 --trace_upload=1 --plot_data=2 --channels=1,2,3,4 --trg=1,1,1 acq2106_339
+example::
 
---post=100k :: capture 100k samples, post trigger
---capture=1 :: capture
---trace_upload=1 :: observe upload timings (remove this)
---plot_data=2  :: plot data V vs time
---channels=1,2,3,4 :: plot 4 channels (plotter will struggle with many channels)
---trg=1,1,1   :: select soft trigger (default: front panel)
-acq2106_339   :: UUT, DNS name
+    python3 ./user_apps/acq400/acq400_fullshot.py --post=100k --capture=1 --trace_upload=1 --plot_data=2 --channels=1,2,3,4 --trg=1,1,1 acq2106_339
+
+.. rst-class:: hidden
+
+    --post=100k :: capture 100k samples, post trigger
+    --capture=1 :: capture
+    --trace_upload=1 :: observe upload timings (remove this)
+    --plot_data=2  :: plot data V vs time
+    --channels=1,2,3,4 :: plot 4 channels (plotter will struggle with many channels)
+    --trg=1,1,1   :: select soft trigger (default: front panel)
+    acq2106_339   :: UUT, DNS name
 
 
-usage: acq400_fullshot.py [-h] [--soft_trigger SOFT_TRIGGER]
-                    [--trace_upload TRACE_UPLOAD] [--save_data SAVE_DATA]
-                    [--plot_data PLOT_DATA] [--capture CAPTURE]
-                    [--remote_trigger REMOTE_TRIGGER]
-                    [--channels CHANNELS]
-                    uuts [uuts ...]
+    usage: acq400_fullshot.py [-h] [--soft_trigger SOFT_TRIGGER]
+                        [--trace_upload TRACE_UPLOAD] [--save_data SAVE_DATA]
+                        [--plot_data PLOT_DATA] [--capture CAPTURE]
+                        [--remote_trigger REMOTE_TRIGGER]
+                        [--channels CHANNELS]
+                        uuts [uuts ...]
 
-acq400 upload
+    acq400 upload
 
-positional arguments:
-  uuts                  uut[s]
+    positional arguments:
+    uuts                  uut[s]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --soft_trigger SOFT_TRIGGER
-                        help use soft trigger on capture
-  --trace_upload TRACE_UPLOAD
-                        1: verbose upload
-  --save_data SAVE_DATA
-                        store data to specified directory
-  --plot_data PLOT_DATA
-                        1: plot data
-  --capture CAPTURE     1: capture data, 0: wait for someone else to capture,
-                        -1: just upload
-  --remote_trigger REMOTE_TRIGGER
-                        your function to fire trigger
-  --channels CHANNELS   comma separated channel list
+    optional arguments:
+    -h, --help            show this help message and exit
+    --soft_trigger SOFT_TRIGGER
+                            help use soft trigger on capture
+    --trace_upload TRACE_UPLOAD
+                            1: verbose upload
+    --save_data SAVE_DATA
+                            store data to specified directory
+    --plot_data PLOT_DATA
+                            1: plot data
+    --capture CAPTURE     1: capture data, 0: wait for someone else to capture,
+                            -1: just upload
+    --remote_trigger REMOTE_TRIGGER
+                            your function to fire trigger
+    --channels CHANNELS   comma separated channel list
 """
 
 import sys
@@ -255,7 +258,7 @@ def uniq(inp):
 
 
 def get_parser(argStr=None):
-    parser = argparse.ArgumentParser(description='acq400 upload')
+    parser = argparse.ArgumentParser(description='Run a shot and capture data')
     acq400_hapi.ShotControllerUI.add_args(parser)
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     parser.add_argument('--soft_trigger', default=SOFT_TRIGGER, type=int, help="help use soft trigger on capture")

@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-acq400_stream_awg.py --file FILE UUT
-
-Stream data from FILE continuously to UUT stream_awg port
-
-"""
+"""Stream data from FILE continuously to UUT stream_awg port"""
 
 
 import acq400_hapi
@@ -33,18 +28,14 @@ def load_awg_top(args):
             
     print("Hello World")
 
-def get_args(argStr=None):
-    parser = argparse.ArgumentParser(description='acq400 load awg simplest')
+def get_parser():
+    parser = argparse.ArgumentParser(description='simple load awg')
     parser.add_argument('--file', default=None, help="file to load")
     parser.add_argument('--soft_trigger', default=0, type=int, help='Emit soft trigger')        
     parser.add_argument('uuts', nargs=1, help="uut ")
-    return parser.parse_args(argStr)
-
-
-def run_main():
-    load_awg_top(get_args())
+    return parser
 
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()    
+    load_awg_top(get_parser().parse_args())
