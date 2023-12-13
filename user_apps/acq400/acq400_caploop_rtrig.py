@@ -23,9 +23,7 @@ eg transient length set.
 
     optional arguments:
     -h, --help            show this help message and exit
-    --trigger_uut TRIGGER_UUT
-                            external trigger uut eg ACQ1001+DIO, soft_trigger
-                            brought to front panel
+    --trigger_uut TRIGGER_UUT  external trigger uut eg ACQ1001+DIO, soft_trigger brought to front panel
     --nshots NSHOTS       number of shots, default infinit
 
 

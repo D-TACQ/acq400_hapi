@@ -13,10 +13,8 @@
 
     optional arguments:
     -h, --help            show this help message and exit
-    --master_clk MASTER_CLK
-                            master_clk role alt fp,sysclk,sampleclk
-    --master_trg MASTER_TRG
-                            master_trg src alt: fp
+    --master_clk MASTER_CLK  master_clk role alt fp,sysclk,sampleclk
+    --master_trg MASTER_TRG  master_trg src alt: fp
     --clkdiv CLKDIV       clock divider, each module
     --test TEST           test link
     --trace TRACE         set command tracing

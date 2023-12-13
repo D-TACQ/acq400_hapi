@@ -86,12 +86,10 @@ including instrumentation that could be checked with --disco=16 (SPAD[0] at offs
     --port PORT           port (default: 53676)
     --run0 RUN0           set tx sites+spad (default: 1 1,16,0)
     --play0 PLAY0         set rx sites+spad (default: 1 16)
-    --broadcast BROADCAST
-                            broadcast the data (default: 0)
+    --broadcast BROADCAST  broadcast the data (default: 0)
     --disco DISCO         enable discontinuity check at index x (default: None)
     --spp SPP             samples per packet (default: 1) 
-    --hudp_decim HUDP_DECIM
-                            hudp decimation, 1..16 (default: 1)
+    --hudp_decim HUDP_DECIM  hudp decimation, 1..16 (default: 1)
 
 """
 

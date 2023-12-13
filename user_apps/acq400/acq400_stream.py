@@ -28,6 +28,7 @@ Some usage examples are included below:
     acq400_stream.py --verbose=1 --filesize=9999M --runtime=5 <uut hostname>
 
 .. rst-class:: hidden
+
     usage::
         acq400_stream.py [-h] [--filesize FILESIZE] [--totaldata TOTALDATA]
                             [--root ROOT] [--runtime RUNTIME] [--verbose VERBOSE]
@@ -40,10 +41,9 @@ Some usage examples are included below:
 
     optional arguments:
     -h, --help            show this help message and exit
-    --filesize FILESIZE   Size of file to store in KB. If filesize > total data
-                            then no data will be stored.
-    --totaldata TOTALDATA
-                            Total amount of data to store in KB
+    --filesize FILESIZE   Size of file to store in KB. If filesize > \
+        total data then no data will be stored.
+    --totaldata TOTALDATA Total amount of data to store in KB
     --root ROOT           Location to save files
     --runtime RUNTIME     How long to stream data for
     --verbose VERBOSE     Prints status messages as the stream is running

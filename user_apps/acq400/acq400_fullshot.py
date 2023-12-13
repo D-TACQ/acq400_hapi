@@ -49,18 +49,12 @@ example::
 
     optional arguments:
     -h, --help            show this help message and exit
-    --soft_trigger SOFT_TRIGGER
-                            help use soft trigger on capture
-    --trace_upload TRACE_UPLOAD
-                            1: verbose upload
-    --save_data SAVE_DATA
-                            store data to specified directory
-    --plot_data PLOT_DATA
-                            1: plot data
-    --capture CAPTURE     1: capture data, 0: wait for someone else to capture,
-                            -1: just upload
-    --remote_trigger REMOTE_TRIGGER
-                            your function to fire trigger
+    --soft_trigger SOFT_TRIGGER  help use soft trigger on capture
+    --trace_upload TRACE_UPLOAD  1: verbose upload
+    --save_data SAVE_DATA  store data to specified directory
+    --plot_data PLOT_DATA  1: plot data
+    --capture CAPTURE  1: capture data, 0: wait for someone else to capture, -1: just upload
+    --remote_trigger REMOTE_TRIGGER  your function to fire trigger
     --channels CHANNELS   comma separated channel list
 """
 

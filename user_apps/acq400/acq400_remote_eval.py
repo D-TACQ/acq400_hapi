@@ -15,10 +15,8 @@ Example usage::
 
     optional arguments:
     -h, --help            show this help message and exit
-    -s SCRIPT, --script SCRIPT
-                            script file [default stdin]
-    -t TRACE, --trace TRACE
-                            traces command execution
+    -s SCRIPT, --script SCRIPT  script file [default stdin]
+    -t TRACE, --trace TRACE  traces command execution
 
 """
 

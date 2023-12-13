@@ -3,6 +3,7 @@
 """restart previously loaded static waveform
 
 .. rst-class:: hidden
+
     usage: acq400_static_awg_restart.py [-h] uut [uut ...]
 
     positional arguments:

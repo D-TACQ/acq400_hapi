@@ -6,6 +6,7 @@ where UUTM is the ip-address or host name of first uut
 trigger on UUTM triggers all other slaves in the chain
 
 .. rst-class:: hidden
+
     usage: make_clktrg_chain.py [-h] [--trg TRG] [--clk CLK] uuts [uuts ...]
 
     make_clktrg_chain

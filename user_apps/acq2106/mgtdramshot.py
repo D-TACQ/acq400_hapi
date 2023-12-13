@@ -4,7 +4,8 @@
 - optional capture to mgtdram
 - manage upload
 - optional validation
- assumes that clocking has been pre-assigned.
+
+assumes that clocking has been pre-assigned.
 
 example usage::
 
@@ -33,27 +34,18 @@ example usage::
     --trg TRG             int|ext,rising|falling
     --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
     --trace TRACE         1 : enable command tracing
-    --auto_soft_trigger AUTO_SOFT_TRIGGER
-                            force soft trigger generation
+    --auto_soft_trigger AUTO_SOFT_TRIGGER  force soft trigger generation
     --clear_counters      clear all counters SLOW
     --loop LOOP           loop count
-    --captureblocks CAPTUREBLOCKS
-                            number of 4MB blocks to capture
-    --offloadblocks OFFLOADBLOCKS
-                            block list to upload nnn-nnn
+    --captureblocks CAPTUREBLOCKS  number of 4MB blocks to capture
+    --offloadblocks OFFLOADBLOCKS  block list to upload nnn-nnn
     --validate VALIDATE   program to validate data
-    --wait_user WAIT_USER
-                            1: force user input each shot
-    --wait_shot WAIT_SHOT
-                            1: wait for some external agent to run the shot, then
-                            offload all
-    --save_data SAVE_DATA
-                            Whether or not to save data to a file in 4MB chunks.
-                            Default: 1
+    --wait_user WAIT_USER  1: force user input each shot
+    --wait_shot WAIT_SHOT  1: wait for some external agent to run the shot, then offload all
+    --save_data SAVE_DATA  Whether or not to save data to a file in 4MB chunks. Default: 1
     --shot SHOT           set a shot number
     --twa TWA             trigger_when_armed
-    --logprint LOGPRINT   1: Print log messages. 2: Save reduced log to log
-                            file.
+    --logprint LOGPRINT   1: Print log messages. 2: Save reduced log to log file.
 
 """
 

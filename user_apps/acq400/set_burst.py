@@ -23,12 +23,10 @@
     --dx DX               dx d0|d1|d2
     --gpg GPG             source from gpg on|off
     --sense SENSE         rising|falling
-    --rtm_translen RTM_TRANSLEN
-                            transient length
+    --rtm_translen RTM_TRANSLEN  transient length
     --post POST           shot length
     --trg TRG             shot trigger triplet
-    --es_enable ES_ENABLE
-                            0 disables Event Signature
+    --es_enable ES_ENABLE  0 disables Event Signature
     --trace TRACE         1: enable command trace
     --demux DEMUX         0: do not demux
 """

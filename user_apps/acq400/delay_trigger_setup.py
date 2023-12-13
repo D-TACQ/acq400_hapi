@@ -18,6 +18,7 @@ configures the gpg to run with a 10s delay (dependant
 on FPCLK frequency) on acq1001_105.
 
 .. rst-class:: hidden
+
     usage: delay_trigger_setup.py [-h] [--verbose VERBOSE] [--delay DELAY]
                                 [--pre PRE] [--post POST]
                                 uuts [uuts ...]

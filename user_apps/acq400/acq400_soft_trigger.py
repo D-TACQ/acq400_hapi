@@ -3,6 +3,7 @@
 """fire a soft trigger
 
 .. rst-class:: hidden
+
     usage: acq400_soft_trigger.py [-h] uut [uut ...]
 
     configure fire a soft trigger

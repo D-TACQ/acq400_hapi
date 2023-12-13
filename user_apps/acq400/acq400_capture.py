@@ -27,8 +27,7 @@ loop continues "forever" until <CTRL-C>
     optional arguments:
     -h, --help            show this help message and exit
     --soft_trigger SOFT_TRIGGER
-    --transient TRANSIENT
-                            transient control string use commas rather than spaces
+    --transient TRANSIENT  transient control string use commas rather than spaces
 
 """
 

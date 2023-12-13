@@ -58,10 +58,8 @@ Recommendation: --secs is really a timeout, use --nbuffers for exact data length
     --lport LPORT         local port on ahfba
     --hexdump HEXDUMP     generate hexdump format string
     --decimate DECIMATE   decimate arm data path
-    --datahandler DATAHANDLER
-                            program to stream the data
+    --datahandler DATAHANDLER  program to stream the data
     --nbuffers NBUFFERS   set capture length in buffers
-
     --secs     : maximum run time for acq2106_hts, only starts counting once data is flowing
     --nbuffers : data handler will stream max this number of buffers (1MB or 4MB)
 
