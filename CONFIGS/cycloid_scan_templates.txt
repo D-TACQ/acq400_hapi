@@ -23,7 +23,8 @@ CC/1 parabola --reps 2 --nsam 512 --post 256
 CC/2 dc --offset 0
 # repeat parabola for each line 
 CC/3 cycloid_scan --reps 1 --nramp 512 --nrs 256 --A0 1000 --A1 11000
-
+# repeat frame pulse for each line
+CC/4 pulse --reps 2 --pre 511 --post 256
 
 ZZ/4 pulse --reps 20 --amp -1 --pre 10 --post 1
 
