@@ -1,25 +1,29 @@
 #!/usr/bin/env python
 
-"""
-bin2csv
-input raw binary, output csv
+"""bin2csv - input raw binary, output csv
 
-usage: bin2csv.py [-h] [--nchan NCHAN] [--word WORD] [--outroot OUTROOT]
-                  [--out OUT] [--paste PASTE]
-                  binfiles [binfiles ...]
+Example::
+    
+    ./user_apps/utils/bin2csv.py --out out_dir file1 file2
 
-bin2csv
+.. rst-class:: hidden
 
-positional arguments:
-  binfiles           file[s] to convert
+    usage: bin2csv.py [-h] [--nchan NCHAN] [--word WORD] [--outroot OUTROOT]
+                    [--out OUT] [--paste PASTE]
+                    binfiles [binfiles ...]
 
-optional arguments:
-  -h, --help         show this help message and exit
-  --nchan NCHAN      number of channels
-  --word WORD        int16|int32
-  --outroot OUTROOT  output root directory
-  --out OUT          explicit output name
-  --paste PASTE      1: paste multiple files * 1 chan
+    bin2csv
+
+    positional arguments:
+    binfiles           file[s] to convert
+
+    optional arguments:
+    -h, --help         show this help message and exit
+    --nchan NCHAN      number of channels
+    --word WORD        int16|int32
+    --outroot OUTROOT  output root directory
+    --out OUT          explicit output name
+    --paste PASTE      1: paste multiple files * 1 chan
 """
 
 import csv
@@ -76,19 +80,19 @@ def bin2csv(args):
     else:
         bin2csv_onesource_manychan(args)
         
-def run_main():
-    parser = argparse.ArgumentParser(description='bin2csv')
+def get_parser():
+    parser = argparse.ArgumentParser(description='input raw binary, output csv')
     parser.add_argument('--nchan', default=1, type=int, help="number of channels")
     parser.add_argument('--word', default='int16', help="int16|int32")
     parser.add_argument('--outroot', default='', help="output root directory")
     parser.add_argument('--out', default='', help="explicit output name")
     parser.add_argument('--paste', default=0, type=int, help="1: paste multiple files * 1 chan")
     parser.add_argument('binfiles', nargs='+', help="file[s] to convert")
-    bin2csv(parser.parse_args())
+    return parser
      
     
     
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    bin2csv(get_parser().parse_args())

@@ -84,28 +84,27 @@ def bigplota(args):
         c0 = args.c1 - 1
         c1 = args.c2 if args.c2 >= args.c1 else args.ccount+c0
       
-	print("Hello {}".format(args.subplots))
+        print("Hello {}".format(args.subplots))
 
         for u in range(u0, u1):
-	    if args.subplots:
-            	print("subplot {},{},{}".format(u1-u0,1,u1-u))
-		ax = plt.subplot(u1-u0,1,u)
+            if args.subplots:
+                print("subplot {},{},{}".format(u1-u0,1,u1-u))
+                ax = plt.subplot(u1-u0,1,u)
             for c in range(c0, c1):                
                 plt.plot(chx[u][0][:,c], label='a{}.{}'.format(chx[u][2][8:], c+1))
             if args.subplots:
-		ax.legend(loc='upper left', bbox_to_anchor=(1,1))
+                ax.legend(loc='upper left', bbox_to_anchor=(1,1))
 
-	if args.subplots == 0:
+        if args.subplots == 0:
             plt.legend(loc='upper left', bbox_to_anchor=(1,1))
        
         plt.title("UUTS:{} at t {}s, pulse {} at sample {}".format(list(range(u0+1,u1+1)), p*M1/SR, pp, p*M1))   
         plt.axvline(x=residue)
         plt.xlabel('cycle:{} buf:{}'.format(cycle, cycb))
-        plt.show()          
+        plt.show()
         pp += 1
 
-                
-if __name__ == '__main__':
+def get_parser():
     parser = argparse.ArgumentParser(description="plots selected pulses")
     parser.add_argument("--u1", type=int, default=1, help="first uut (count from 1)")
     parser.add_argument("--u2", type=int, default=-1, help="last uut (count from 1), inclusive")
@@ -114,7 +113,10 @@ if __name__ == '__main__':
     parser.add_argument("--c2", type=int, default=-1, help="last channel (count from 1), inclusive")
     parser.add_argument("--ccount", type=int, default=4, help="channel count unless overridden by --c2")
     parser.add_argument("--subplots", type=int, default=0, help="set to 1 to plot with subplots per uut")
-    bigplota(parser.parse_args())                 
+    return parser
+
+if __name__ == '__main__':
+    bigplota(get_parser().parse_args())
 
 
 

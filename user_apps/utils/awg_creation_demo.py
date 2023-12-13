@@ -15,19 +15,18 @@ how the channels are ordered.
 
 Example usage:
 
-To create the default file:
+To create the default file::
 
-python awg_creation_demo.py
+    python awg_creation_demo.py
 
-To create binary file with even channels set to 0 and a wave size of 3000 samples.
+To create binary file with even channels set to 0 and a wave size of 3000 samples::
 
-python awg_creation_demo.py --nsam=3000 --even_ch_to_zeros=1
+    python awg_creation_demo.py --nsam=3000 --even_ch_to_zeros=1
 
+To upload awg files once it has been generated use the following python script::
 
+    python acq1001_awg_demo.py --files="../acq400/waves/example_awg" --capture=1 --awglen=<awg_length> <UUT name>
 
-To upload awg files once it has been generated use the following python script:
-
-python acq1001_awg_demo.py --files="../acq400/waves/example_awg" --capture=1 --awglen=<awg_length> <UUT name>
 """
 
 
@@ -96,7 +95,12 @@ def generate_awg(args):
     waveform.tofile(outfn, "")
 
 
-def run_main():
+def run_main(args):
+    args.fx = eval(args.fn)
+    args.dtype = np.int16 if args.ds==16 else np.int32
+    generate_awg(args)
+
+def get_parser():
     parser = argparse.ArgumentParser(description='generate awg waveform')
     parser.add_argument('--fn', default='np.sin', help="Generator function default:np.sin()")
     parser.add_argument('--w', default=1, type=int, help="Angular frequency")
@@ -106,11 +110,7 @@ def run_main():
     parser.add_argument('--dir', default="waves", type=str, help="Location to save files")
     parser.add_argument('--scale', default=32767, type=int, help="Raw Scale Factor")
     parser.add_argument('--ds', default=16, type=int, help="Data size in bits")
-    args = parser.parse_args()
-    args.fx = eval(args.fn)
-    args.dtype = np.int16 if args.ds==16 else np.int32
-    generate_awg(args)
-
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

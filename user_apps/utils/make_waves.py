@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-'''
-make_waves ... make a related set of waveforms, store as raw binary, one file per channel
+'''make_waves ... 
+
+make a related set of waveforms, store as raw binary, one file per channel
 Created on 8 Jun 2021
 
 @author: pgm
@@ -153,8 +154,8 @@ OPS = { "generate": make_waves,
        "plot1": plot1,
        "load_uut": load_uut, "UUT": is_param, "continuous": is_param, "autorearm": is_param }
         
-def ui():
-    parser = argparse.ArgumentParser(description='make_awg_data')
+def get_parser():
+    parser = argparse.ArgumentParser(description='Make set of waveforms')
     parser.add_argument('--nchan',  default=16,     type=int,   help="number of channels in set")
     parser.add_argument('--len',    default=100000, type=int,   help="number of samples in set")
     parser.add_argument('--pulse',  default=0,      type=int,   help="length of pulse inside set")
@@ -170,16 +171,13 @@ def ui():
     parser.add_argument('--expand_to', default=4*0x400000,      help="expand to fit binary block size")
     parser.add_argument('--soft_trigger', default=1, type=int,  help="auto soft trigger on load")
     parser.add_argument('ops', nargs='+', help="operations: one or more of "+" ".join(OPS)+" # for UUT, substitute UUT name")
-    
-    args = parser.parse_args()
+    return parser 
+
+def run_main(args):
     if args.pulse:
         args.pattern_len = args.pulse
     else:
         args.pattern_len = args.len
-    return args    
-
-def run_main():
-    args = ui()
     for iarg, op in enumerate(args.ops):
         try:
             OPS[op](args, iarg)
@@ -193,4 +191,4 @@ def run_main():
 
 # execution starts here
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

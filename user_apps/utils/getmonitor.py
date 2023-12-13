@@ -1,25 +1,22 @@
 #!/usr/bin/env python
-'''
-Created on 6 Oct 2020
+'''Pulls one of the ACQ400 http ajax monitor files, parses and prints user selected values
 
-@author: pgm
+Examples::
 
-Pulls one of the ACQ400 http ajax monitor files, parses and prints user selected values
-
-Examples:
     [pgm@hoy5 utils]$ ./getmonitor.py --verbose=2 --key='VA[PN]' acq2106_119 acq2106_276
     acq2106_119 VAN -13.1
     acq2106_119 VAP 12.78
     acq2106_276 VAN -13.0
     acq2106_276 VAP 12.89
 
-    ./getmonitor.py --verbose=2 --key='.*AGGSTA.0x0c (\w+).*' --monxml=acq4000.xml \
-        acq2106_119 acq2106_261 acq2106_262
+    ./getmonitor.py --verbose=2 --key='.*AGGSTA.0x0c (\w+).*' --monxml=acq4000.xml acq2106_119 acq2106_261 acq2106_262
     acq2106_119 0x00000066
     acq2106_261 0x00000025
     acq2106_262 0x00000100
 
+Created on 6 Oct 2020
 
+@author: pgm
 '''
 
 
@@ -61,20 +58,20 @@ def getvolts(uut, monxml, kex, verbose=0):
                     print(value)                              
 
 
-def run_main():
-    parser = argparse.ArgumentParser(description='getvolts')
+def get_parser():
+    parser = argparse.ArgumentParser(description='parse and print monitor files')
     parser.add_argument('--verbose', default=1, type=int, help='0: print value, 1: print key,value, 2: print uut,key, value')
     parser.add_argument('--monxml', default="volts.xml", help='monitor file to request and parse')
     parser.add_argument('--key', default='VA.', help='key, could be regex')
     parser.add_argument('uuts', nargs='+')
+    return parser
     
-    
-    args = parser.parse_args()
+def run_main(args):
     kex = re.compile(args.key)
     for uut in args.uuts:
         getvolts(uut, args.monxml, kex, verbose=args.verbose)
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())
 
 

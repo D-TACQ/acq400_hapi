@@ -1,4 +1,5 @@
-'''
+'''Fixup cs studio workspace
+
 Created on 19 Jun 2021
 
 @author: pgm
@@ -9,20 +10,22 @@ import os
 import re
 import sys
 
-def ui():
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400_remote_script') 
     parser.add_argument('-v','--verbose', default=0, help="show more info")
     parser.add_argument('--olduser', default=None, help="user name to change")
     parser.add_argument('--newuser', default=None, help="user name to change")
 #    parser.add_argument('--uuts', default=None, help="uuts to change [uut[1][,uut2[,uut3...]]]]")
     parser.add_argument('ws', nargs='+', help="workspace[s] to change")
-    args = parser.parse_args()
-    return args
+    return parser
    
 
 # ASCII ROOLS OK, BackSlash, ForwardSlash
 BS = 0x5c
+"""ASCII BackSlash"""
+
 FS = 0x2f
+"""ASCII ForwardSlash"""
 
 # URI is in Unix notation, AND must have leading FS
 '''
@@ -101,8 +104,7 @@ def fixup(args, ws):
                     fp.write(text)
 
           
-def run_main():
-    args = ui()
+def run_main(args):
     #args.pat = re.compile(r'/home/pgm/')
     args.pat = re.compile('({})'.format(args.olduser))
     args.bpat = re.compile(('(' + args.olduser + ')' ).encode())
@@ -115,4 +117,4 @@ def run_main():
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

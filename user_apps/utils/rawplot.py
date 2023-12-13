@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
+"""
+rawplot : plots raw data
+"""
+
 import argparse
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-
-"""
-rawplot : plots raw data
-"""
 
 def get_word_type(wtype):
     if wtype == 'int16':
@@ -31,20 +31,16 @@ def load_and_plot(args):
     rc = (np.shape(raw)[0]//args.nchan, args.nchan)
     chx = np.reshape(raw[:rc[0]*rc[1]], rc)
     plot(args, chx)
-
-def run_main():
+    
+def get_parser():
     parser = argparse.ArgumentParser(description='rawplot')
     parser.add_argument('--nchan', default=1, type=int, help="number of channels")
     parser.add_argument('--pchan', default=1, type=int, help="number of channels to plot")
     parser.add_argument('--word', default='int16', help="int16|int32")
     parser.add_argument('binfiles', nargs='+', help="file[s] to convert")
-    load_and_plot(parser.parse_args())
-    
-     
-    
+    return parser
     
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
-
+    load_and_plot(get_parser().parse_args())

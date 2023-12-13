@@ -47,10 +47,13 @@ class LoadsHost:
         def load3(self, buf0=0, nchan=48):
             return load3("/data/{}".format(self.host), self.lun, self.uut, self.cycle, buf0, nchan)
         
-loaders = [ LoadsHost(h, u, 0, 100) for (h, u) in (("Bolby", "acq2106_070"), ("Betso", "acq2106_071"),
+def run_main():
+    loaders = [ LoadsHost(h, u, 0, 100) for (h, u) in (("Bolby", "acq2106_070"), ("Betso", "acq2106_071"),
                                        ("Ladna", "acq2106_072"), ("Vindo", "acq2106_073"))]
-        
-chx = [ l.load3() for l in loaders]
+    chx = [ l.load3() for l in loaders]
+
+if __name__ == '__main__':
+    run_main()
 
 
 

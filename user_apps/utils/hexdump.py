@@ -1,23 +1,30 @@
 #!/usr/bin/env python
 
 """
-./user_apps/utils/hexdump.py --help
-usage: hexdump.py [-h] [--nchan NCHAN] [--delim DELIM] [--word WORD] [--outroot OUTROOT] [--out OUT] [--paste PASTE]
-                  binfiles [binfiles ...]
-
 hexdump
 
-positional arguments:
-  binfiles           file[s] to convert
+Example::
 
-optional arguments:
-  -h, --help         show this help message and exit
-  --nchan NCHAN      number of channels
-  --delim DELIM
-  --word WORD        int16|int32,uint16,uint32
-  --outroot OUTROOT  output root directory
-  --out OUT          explicit output name
-  --paste PASTE      1: paste multiple files * 1 chan
+    ./user_apps/utils/hexdump.py --word=int16 --outroot=outdir bin1 bin2
+
+.. rst-class:: hidden
+
+    usage: hexdump.py [-h] [--nchan NCHAN] [--delim DELIM] [--word WORD] [--outroot OUTROOT] [--out OUT] [--paste PASTE]
+                  binfiles [binfiles ...]
+
+    hexdump
+
+    positional arguments:
+    binfiles           file[s] to convert
+
+    optional arguments:
+    -h, --help         show this help message and exit
+    --nchan NCHAN      number of channels
+    --delim DELIM
+    --word WORD        int16|int32,uint16,uint32
+    --outroot OUTROOT  output root directory
+    --out OUT          explicit output name
+    --paste PASTE      1: paste multiple files * 1 chan
 
 """
 
@@ -89,7 +96,11 @@ def expand_pchan(args):
     args.pchanset = set(pchan)
 #    print(args.pchanset)
 
-def run_main():
+def run_main(args):
+    expand_pchan(args)
+    hexdump(args)
+     
+def get_parser():
     parser = argparse.ArgumentParser(description='hexdump')
     parser.add_argument('--nchan', default=1, type=int, help="number of channels")
     parser.add_argument('--pchan', default='0', type=str, help="list channels to print eg 1,2,3,4 default all")
@@ -99,13 +110,9 @@ def run_main():
     parser.add_argument('--out', default='', help="explicit output name")
     parser.add_argument('--paste', default=0, type=int, help="1: paste multiple files * 1 chan")
     parser.add_argument('binfiles', nargs='+', help="file[s] to convert")
-    args = parser.parse_args()
-    expand_pchan(args)
-    hexdump(args)
-     
-    
+    return parser
     
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

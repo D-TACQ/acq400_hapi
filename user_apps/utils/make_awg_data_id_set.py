@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 '''
-Created on 3 Nov 2020
-
-@author: pgm
-
 make_awg_data_id_set fname
 
 Makes a series of waveforms, each with one of the channels as an "ID"
 
 regular: sin at +1V
 id     : cos at -1V
+
+Created on 3 Nov 2020
+
+@author: pgm
 
 '''
 
@@ -51,7 +51,7 @@ def make_id_set(args):
     
     
     
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='make_awg_data')
     parser.add_argument('--nchan',  default=16,     type=int,   help="number of channels in set")
     parser.add_argument('--len',    default=100000, type=int,   help="number of samples in set")
@@ -61,11 +61,10 @@ def run_main():
     parser.add_argument('--offset', default=1.0, type=float,     help="global offset in volts ")
     parser.add_argument('--offset_c1', default=1.0, type=float,  help="ch+1 output with this offset")
     parser.add_argument('fname', nargs=1, help="filename root")
-    args = parser.parse_args()
-    make_id_set(args)
+    return parser
 
 # execution starts here
 
 
 if __name__ == '__main__':
-    run_main()
+    make_id_set(get_parser().parse_args())
