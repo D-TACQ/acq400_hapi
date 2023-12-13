@@ -99,8 +99,12 @@ def calc_frame(args, dwell):
     plt.step(ltimes, ldac)
     plt.show()
 
-def run_main():
-    parser = argparse.ArgumentParser(description='multiplot')
+def run_main(args):
+    dwell = calc_lpd(args)
+    calc_frame(args, dwell)
+
+def get_parser():
+    parser = argparse.ArgumentParser(description='generate delays for GPG and plot')
     parser.add_argument('--d1', type=int, default=4, help="first delay (ticks)")
     parser.add_argument('--d2', type=int, default=16+4+1, help="last_delay+1 (ticks)")
     parser.add_argument('--ds', type=int, default=1, help="delay step (ticks)")
@@ -110,11 +114,7 @@ def run_main():
     parser.add_argument('--line', type=int, default=100, help="line pixel count")
     parser.add_argument('--kludge_flyback', type=int, default=0, help="fixup for GPG logic")
     parser.add_argument('--rawscale', type=int, default=1, help="scale raw gpg output for slower output easier to see DO NOT USE!")   
-    
-    
-    args = parser.parse_args()
-    dwell = calc_lpd(args)
-    calc_frame(args, dwell)
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

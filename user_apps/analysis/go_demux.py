@@ -5,20 +5,24 @@ A python script to demux the data from the GO system.
 
 Data Format
 
-CH01 .. CH02 .. CH03 .. CH16 .. DI32 ..  SAMPLE ..usec .. fill
-short   short   short   short   long     long     long    long
+=====  =====  ======  ======  ======  ======  ====  ====
+CH01   CH02   CH03    CH16    DI32    SAMPLE  usec  fill
+=====  =====  ======  ======  ======  ======  ====  ====
+short  short  short   short   long    long    long  long
+=====  =====  ======  ======  ======  ======  ====  ====
 
-Usage:
-Linux:
-./go_demux.py --data_file="./GO_DATA/event-1-50000-50000.dat"
+Example:
 
-Windows:
-python .\go_demux.py --data_file="C:/O_DATA/event-1-50000-50000.dat"
+Linux::
+
+    ./go_demux.py --data_file="./GO_DATA/event-1-50000-50000.dat"
+
+Windows::
+
+    python .\go_demux.py --data_file="C:/O_DATA/event-1-50000-50000.dat"
 """
-import sys
-if sys.version_info < (3, 0):
-    from __future__ import division
 
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -135,20 +139,7 @@ def uut_get_oneshot(args, uut):
     make_longs(args, args.raw)
 #    make_shorts(args, np.frombuffer(args.raw.tobytes(), dtype=np.int16))
    
-def run_main():
-    parser = argparse.ArgumentParser(description='cs demux')
-    parser.add_argument('--SHORTCOLS', default=16, type=int, help="number of shorts cols")
-    parser.add_argument('--LONGCOLS', default=4, type=int, help="number of longs cols")
-    parser.add_argument('--plot', default=1, type=int, help="Plot data")
-    parser.add_argument('--save', default=0, type=int, help="Save data")
-    parser.add_argument('--show_transitions', default=0, type=int, help="hexdump +/-N samples at transition")
-    parser.add_argument('--data_file', default=None, type=str, help="Name of data file")
-    parser.add_argument('--get_oneshot', default=None, type=str, help="[uut] pull oneshot data")
-    parser.add_argument('--get_next', default=None, type=str, help="[uut] get next mv file from uut")
-    parser.add_argument('--get_count', default=1, type=int, help="number of event files to fetch")
-    parser.add_argument('--get_stick', default=1, type=int, help="1: get data from USB stick, 0: from /tmp")
-
-    args = parser.parse_args()
+def run_main(args):
     args.SAMPLE_SIZE = int(args.SHORTCOLS*2 + args.LONGCOLS*4)
     args.SAMPLE_SIZE_SHORTS = int(args.SHORTCOLS + 2*args.LONGCOLS)
     args.SAMPLE_SIZE_LONGS = int(args.SHORTCOLS//2 + args.LONGCOLS)
@@ -181,5 +172,20 @@ def run_main():
             save_data(args)
         first_time = False
 
+
+def get_parser():
+    parser = argparse.ArgumentParser(description='Demux for go system')
+    parser.add_argument('--SHORTCOLS', default=16, type=int, help="number of shorts cols")
+    parser.add_argument('--LONGCOLS', default=4, type=int, help="number of longs cols")
+    parser.add_argument('--plot', default=1, type=int, help="Plot data")
+    parser.add_argument('--save', default=0, type=int, help="Save data")
+    parser.add_argument('--show_transitions', default=0, type=int, help="hexdump +/-N samples at transition")
+    parser.add_argument('--data_file', default=None, type=str, help="Name of data file")
+    parser.add_argument('--get_oneshot', default=None, type=str, help="[uut] pull oneshot data")
+    parser.add_argument('--get_next', default=None, type=str, help="[uut] get next mv file from uut")
+    parser.add_argument('--get_count', default=1, type=int, help="number of event files to fetch")
+    parser.add_argument('--get_stick', default=1, type=int, help="1: get data from USB stick, 0: from /tmp")
+    return parser
+
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

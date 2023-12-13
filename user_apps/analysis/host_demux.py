@@ -37,27 +37,28 @@ example usage::
     # plot data from LLC, 128 channels, show one "channel" from each site.
     # 97 was actually the LSB of TLATCH.
 
-usage::
+.. rst-class:: hidden
+    usage::
 
-    host_demux.py [-h] [--nchan NCHAN] [--nblks NBLKS] [--save SAVE]
-                     [--src SRC] [--pchan PCHAN]
-                     uut
+        host_demux.py [-h] [--nchan NCHAN] [--nblks NBLKS] [--save SAVE]
+                        [--src SRC] [--pchan PCHAN]
+                        uut
 
-host demux, host side data handling
+    host demux, host side data handling
 
-positional arguments:
-  uut            uut
+    positional arguments:
+    uut            uut
 
-optional arguments:
-  -h, --help     show this help message and exit
-  --nchan NCHAN
-  --nblks NBLKS
-  --save SAVE    save channelized data to dir
-  --src SRC      data source root
-  --pchan PCHAN  channels to plot
-  --egu EGU      plot egu (V vs s)
-  --xdt XDT      0: use interval from UUT, else specify interval
-  --double_up    Use for ACQ480 two lines per channel mode
+    optional arguments:
+    -h, --help     show this help message and exit
+    --nchan NCHAN
+    --nblks NBLKS
+    --save SAVE    save channelized data to dir
+    --src SRC      data source root
+    --pchan PCHAN  channels to plot
+    --egu EGU      plot egu (V vs s)
+    --xdt XDT      0: use interval from UUT, else specify interval
+    --double_up    Use for ACQ480 two lines per channel mode
 
 if --src is a file, use it directly
     dir/nnnn
@@ -67,15 +68,17 @@ else iterate files in dir
     dir/nnnnn*
 
 TO DEMUX ON WINDOWS TO STORE CHANNELISED DATA:
-python .\host_demux.py --save=1 --src="[dir]" --pchan=none acq2106_114
-    Make sure that the muxed data is in D:\\[dir]\[UUT name]\
-Where [dir] is the location of the data.
+    python .\host_demux.py --save=1 --src="[dir]" --pchan=none acq2106_114
 
-Demuxed data will be written to D:\\demuxed\[UUT name]\
-To plot subsampled data on windows:
+    Make sure that the muxed data is in D:\\[dir]\[UUT name]
 
-python .\host_demux.py --src=Projects --nchan=8
---pchan 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 --stack_480="2x8" --plot_mpl=1 acq2106_120
+    Where [dir] is the location of the data.
+
+    Demuxed data will be written to D:\\demuxed\[UUT name]
+
+    To plot subsampled data on windows:
+        python .\host_demux.py --src=Projects --nchan=8 \
+    --pchan 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16  --plot_mpl=1:1000:1 acq2106_120
 
 """
 
@@ -577,7 +580,7 @@ def list_of_ints(string):
 def get_parser(parser=None):
     if not parser:
         is_client = True
-        parser = argparse.ArgumentParser(description='host demux, host side data handling')
+        parser = argparse.ArgumentParser(description='Host side data demuxing and plotting')
     else:
         is_client = False
     parser.add_argument('--nchan', type=int, default=None)

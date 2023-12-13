@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 
+'''
+::
+
+    acq2106_181 Receiver:0 nrx:3511 cur:5:37771587 ts:5:38557949 adj:5:38557949 diff:19659050 OK
+    acq2106_200 Receiver:0 nrx:3511 cur:5:37773457 ts:5:38557949 adj:5:38557949 diff:19612300 OK
+    acq2106_172 Receiver:0 nrx:3511 cur:5:37772467 ts:5:38557949 adj:5:38557949 diff:19637050 OK
+    acq2106_182 Receiver:0 nrx:3512 cur:6:37766554 ts:6:38558156 adj:6:38558156 diff:19790050 OK
+'''
+
 import argparse
 from acq400_hapi import intSIAction
 from acq400_hapi import intSI
@@ -7,15 +16,6 @@ from acq400_hapi import intSI
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-
-
-'''
-acq2106_181 Receiver:0 nrx:3511 cur:5:37771587 ts:5:38557949 adj:5:38557949 diff:19659050 OK
-acq2106_200 Receiver:0 nrx:3511 cur:5:37773457 ts:5:38557949 adj:5:38557949 diff:19612300 OK
-acq2106_172 Receiver:0 nrx:3511 cur:5:37772467 ts:5:38557949 adj:5:38557949 diff:19637050 OK
-acq2106_182 Receiver:0 nrx:3512 cur:6:37766554 ts:6:38558156 adj:6:38558156 diff:19790050 OK
-'''
-
 
 def mmm(stats, base):
     max = -999999999
@@ -68,16 +68,12 @@ def analyse(args):
         m1, m2, m3, m4 = mmm(diffs, float(args.wrtd_delta_ns))
         print("{} n:{} min:{:4d} max:{:4d} mean:{:4d} rms:{:4d} usec".format(u, len(samples), m1, m2, m3, m4))
 
-
-
-def run_main():
-    parser = argparse.ArgumentParser(description='wrtd_analysis')
+def get_parser():
+    parser = argparse.ArgumentParser(description='Analyse white rabbit logs')
     parser.add_argument('--verbose', default=0, type=int)
     parser.add_argument('--wrtd_delta_ns', default='50M', action=intSIAction, help="set delay NS")
     parser.add_argument('log', nargs='+', help="log files")
-    analyse(parser.parse_args())
-
-# execution starts here
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    analyse(get_parser().parse_args())

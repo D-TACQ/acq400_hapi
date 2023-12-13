@@ -1,21 +1,22 @@
 #!/usr/bin/python
-"""
-UUT is running in Burst/RTM, eg at 50Hz.
+"""UUT is running in Burst/RTM, eg at 50Hz.
+
+
 Stream the data to host, then 
 - pick out all the Start Of Burst ES, then store the next sample
 - program plots time series for channel 1
 
-Capture data example:
+Capture data example::
 
-nc acq1001_343 4210 | pv > burst32-50Hz-512-3.bin
+    [pgm@harlosh RGM]$ nc acq1001_343 4210 | pv > burst32-50Hz-512-3.bin
 
-[pgm@harlosh RGM]$ hexdump -e '32/4 "%08x," "\n"' burst32-50Hz-512-3.bin | cut -d, -f1-8 | grep -n aa55f154 | head
-425:aa55f154,aa55f154,aa55f154,aa55f154,00000001,00000001,000002a0,000002a0
-940:aa55f154,aa55f154,aa55f154,aa55f154,00000002,00000002,000005c0,000005c0
-1455:aa55f154,aa55f154,aa55f154,aa55f154,00000003,00000003,000008e0,000008e0
-1970:aa55f154,aa55f154,aa55f154,aa55f154,00000004,00000004,00000c00,00000c00
-2485:aa55f154,aa55f154,aa55f154,aa55f154,00000005,00000005,00000f20,00000f20
-3000:aa55f154,aa55f154,aa55f154,aa55f154,00000006,00000006,00001240,00001240
+    [pgm@harlosh RGM]$ hexdump -e '32/4 "%08x," "\\n"' burst32-50Hz-512-3.bin | cut -d, -f1-8 | grep -n aa55f154 | head
+    425:aa55f154,aa55f154,aa55f154,aa55f154,00000001,00000001,000002a0,000002a0
+    940:aa55f154,aa55f154,aa55f154,aa55f154,00000002,00000002,000005c0,000005c0
+    1455:aa55f154,aa55f154,aa55f154,aa55f154,00000003,00000003,000008e0,000008e0
+    1970:aa55f154,aa55f154,aa55f154,aa55f154,00000004,00000004,00000c00,00000c00
+    2485:aa55f154,aa55f154,aa55f154,aa55f154,00000005,00000005,00000f20,00000f20
+    3000:aa55f154,aa55f154,aa55f154,aa55f154,00000006,00000006,00001240,00001240
 
 """
 import numpy as np
@@ -50,16 +51,11 @@ def plot_data(args):
     plt.plot(chx[0][0:ss])
     plt.show()
 
-
-
-def run_main():
-    parser = argparse.ArgumentParser(description='rgm plot demo')
+def get_parser():
+    parser = argparse.ArgumentParser(description='Plot data from burst')
     parser.add_argument('--nchan', type=int, default=32)
     parser.add_argument('data', nargs=1, help="data ")
-    plot_data(parser.parse_args())
-
-# execution starts here
+    return parser
 
 if __name__ == '__main__':
-    run_main()
-
+    plot_data(get_parser().parse_args())

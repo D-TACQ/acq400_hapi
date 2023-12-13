@@ -97,13 +97,13 @@ def process_data(args):
 
 
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='plot a dirfile')
     parser.add_argument('--matplot', type=int, default=0, help='use matplot to plot, not kst')
     parser.add_argument('--ch', default=':', help='channel list, default : all')
     parser.add_argument('dirfile', nargs=1, help='directory with dirfile')
-    process_data(parser.parse_args())
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    process_data(get_parser().parse_args())
 

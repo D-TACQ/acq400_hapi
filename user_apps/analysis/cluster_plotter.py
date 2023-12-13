@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
 
+"""
+Plots data from cluster of uuts
+
+Example usage::
+
+    ./user_apps/analysis/cluster_plotter.py --chans=1 --cycles=1:2 --secs=1 --clk=2M \
+acq2206_010 acq2206_009 acq2206_008 acq2206_007 acq2206_006 acq2206_005
+
+    ./user_apps/analysis/cluster_plotter.py --chans=1 --cycles=1:2 --secs=1 --clk=2M --nchan=64 --data_type=16\
+acq2206_010 acq2206_009 acq2206_008 acq2206_007 acq2206_006 acq2206_005
+
+    ./user_apps/analysis/cluster_plotter.py --chans=1 --src=acq2106_41?_VI.dat \
+acq2106_413 acq2106_414 acq2106_415
+
+"""
+
 import argparse
 import glob
 import os
@@ -10,19 +26,6 @@ import threading
 import acq400_hapi
 from collections import namedtuple
 from acq400_hapi import PR, pprint
-
-"""
-Usage:
-
-./user_apps/analysis/cluster_plotter.py --chans=1 --cycles=1:2 --secs=1 --clk=2M \
-    acq2206_010 acq2206_009 acq2206_008 acq2206_007 acq2206_006 acq2206_005
-
-./user_apps/analysis/cluster_plotter.py --chans=1 --cycles=1:2 --secs=1 --clk=2M --nchan=64 --data_type=16\
-    acq2206_010 acq2206_009 acq2206_008 acq2206_007 acq2206_006 acq2206_005
-
-./user_apps/analysis/cluster_plotter.py --chans=1 --src=acq2106_41?_VI.dat \
-    acq2106_413 acq2106_414 acq2106_415
-"""
 
 type_map = {
     32 : {
@@ -286,7 +289,7 @@ def prefix_number(value):
         return int(value)
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='Cluster plotter')
+    parser = argparse.ArgumentParser(description='Plot data from a cluster of UUTs')
     parser.add_argument('--src', default='/mnt/afhba.*/acq2?06_???', help="src dir")
     parser.add_argument('--chans', default='1', type=list_of_channels, help="channels to plot 1,2,3-5")
     parser.add_argument('--egu', default=0, type=int, help="Plot volts")
