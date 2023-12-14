@@ -506,7 +506,8 @@ def getRootFromAfhba404(args):
 
 def run_main(args):
     args.uut = args.uuts[0]
-    calc_stack_480(args)
+    if args.double_up == 0:
+        calc_stack_480(args)
     args.WSIZE = 2
     args.NSAM = 0
     if args.data_type == None or args.nchan == None or args.egu == 1:
