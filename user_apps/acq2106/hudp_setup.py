@@ -123,7 +123,7 @@ def ip_broadcast(args):
     
     return '.'.join(ip_dest)
         
-MTU = 1400
+MTU = 9038 - 66
 
 # tx: XI : AI, DI       
 def config_tx_uut(txuut, args):    
