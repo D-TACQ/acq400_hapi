@@ -173,6 +173,9 @@ def config_rx_uut(rxuut, args):
 PCSEL = ("none", "pc")
 
 def run_main(args):
+    if args.gw is None:
+        args.gw = args.rx_ip
+
     if args.txuut[0] not in PCSEL:
         config_tx_uut(acq400_hapi.factory(args.txuut[0]), args)
     if args.rxuut[0] not in PCSEL:
@@ -185,7 +188,7 @@ def get_parser():
     parser.add_argument("--netmask", default='255.255.255.0', help='netmask')
     parser.add_argument("--tx_ip",   default='10.12.198.128', help='tx ip address')
     parser.add_argument("--rx_ip",   default='10.12.198.129', help='rx ip address')
-    parser.add_argument("--gw",      default='10.12.198.1',   help='gateway')
+    parser.add_argument("--gw",      default=None,   help='gateway')
     parser.add_argument("--port",    default='53676',         help='port')
     parser.add_argument("--run0",    default='1 1,16,0',      help="set tx sites+spad or notouch if set elsewhere")
     parser.add_argument("--play0",   default='1 16',          help="set rx sites+spad or notouch if set elsewhere")
