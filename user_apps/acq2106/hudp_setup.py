@@ -169,11 +169,13 @@ def config_rx_uut(rxuut, args):
     rxuut.s10.rx_src_ip = args.tx_ip
     rxuut.s10.rx_port = args.port
     hudp_enable(rxuut)    
-    
+   
+PCSEL = ("none", "pc")
+
 def run_main(args):
-    if args.txuut[0] != "none":
+    if args.txuut[0] not in PCSEL:
         config_tx_uut(acq400_hapi.factory(args.txuut[0]), args)
-    if args.rxuut[0] != "none":
+    if args.rxuut[0] not in PCSEL:
         config_rx_uut(acq400_hapi.factory(args.rxuut[0]), args)
 
 
@@ -192,8 +194,8 @@ def get_parser():
     parser.add_argument("--hudp_relay", default=None, type=int,  help="0..N: relay LLC VI out HUDP txt offset in vector")
     parser.add_argument("--spp",     default=1, type=int,     help="samples per packet")
     parser.add_argument("--hudp_decim", default=1, type=int,  help="hudp decimation, 1..16")
-    parser.add_argument("txuut", nargs=1,                     help="transmit uut")
-    parser.add_argument("rxuut", nargs=1,                     help="transmit uut")
+    parser.add_argument("txuut", nargs=1,                     help=f"transmit uut (if it's a PC, type one of {PCSEL})")
+    parser.add_argument("rxuut", nargs=1,                     help=f"rx uut (if it's a PC, type one of {PCSEL})")
     return parser
     
 if __name__ == '__main__':
