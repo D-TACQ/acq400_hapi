@@ -1,4 +1,16 @@
-"""Connectivity package for D-Tacq uuts"""
+"""Connectivity package for D-Tacq uuts
+
+**comprising of** :
+    * acq400.py : Acq400 class, represents an ACQ400 UUT
+    * acq400_ui.py : common user interface elements for apps
+    * netclient.py : Netclient class, TCP socket wrapper
+    * shotcontrol.py : Shotcontrol class, handles transient shots
+    * acq400_print.py : cmd line interface functions
+    * agilent33210.py : SCPI cmd wrapper
+    * cleanup.py : cleanup on exit
+    * rad_dds.py : support for RADCELF triple DDS
+
+"""
 from .netclient import Netclient
 from .netclient import Siteclient
 from .netclient import Logclient
