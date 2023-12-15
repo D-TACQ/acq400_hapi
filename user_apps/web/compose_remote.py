@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 
+"""Remote control to composer webapp
+
+Examples
+
+Load new Template::
+
+    ./user_apps/web/compose_remote.py --file=CONFIGS/cycloid_scan_templatesAABB.txt --port=5001 acq1001_434
+
+Load new and compose::
+
+    ./user_apps/web/compose_remote.py --port=5001 --file=CONFIGS/cycloid_scan_templatesAABB.txt --output=oneshot_rearm '5*AA 5*BB' acq1001_434
+
+"""
+
 import argparse
 import requests
 import json
-
-"""
-Usage:
-    ./user_apps/web/compose_remote.py --file cycloid_scan_templatesAABB.txt \
-        --output scan_flash.dat --nrep=5 5*AA 5*BB acq1001_590
-"""
 
 def run_main(args):
     url = f"http://{args.uut}:{args.port}/endpoint"
@@ -44,7 +52,7 @@ def send_to_endpoint(url, payload):
     print(f"[{r.status_code}] {r.text}")
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='')
+    parser = argparse.ArgumentParser(description='Remote control to composer webapp')
     parser.add_argument('--port', default=5000, help="endpoint port")
     parser.add_argument('--file', default=None, help="Cmd file to send")
     parser.add_argument('--output', default=None, help="Composer output options:\
