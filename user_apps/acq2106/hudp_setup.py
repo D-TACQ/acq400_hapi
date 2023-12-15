@@ -128,7 +128,7 @@ def ip_broadcast(args):
     
     return '.'.join(ip_dest)
         
-MTU = 1400
+MTU = 9038 - 66
 
 # tx: XI : AI, DI       
 def config_tx_uut(txuut, args):    
@@ -174,11 +174,16 @@ def config_rx_uut(rxuut, args):
     rxuut.s10.rx_src_ip = args.tx_ip
     rxuut.s10.rx_port = args.port
     hudp_enable(rxuut)    
-    
+   
+PCSEL = ("none", "pc")
+
 def run_main(args):
-    if args.txuut[0] != "none":
+    if args.gw is None:
+        args.gw = args.rx_ip
+
+    if args.txuut[0] not in PCSEL:
         config_tx_uut(acq400_hapi.factory(args.txuut[0]), args)
-    if args.rxuut[0] != "none":
+    if args.rxuut[0] not in PCSEL:
         config_rx_uut(acq400_hapi.factory(args.rxuut[0]), args)
 
 
@@ -188,7 +193,7 @@ def get_parser():
     parser.add_argument("--netmask", default='255.255.255.0', help='netmask')
     parser.add_argument("--tx_ip",   default='10.12.198.128', help='tx ip address')
     parser.add_argument("--rx_ip",   default='10.12.198.129', help='rx ip address')
-    parser.add_argument("--gw",      default='10.12.198.1',   help='gateway')
+    parser.add_argument("--gw",      default=None,   help='gateway')
     parser.add_argument("--port",    default='53676',         help='port')
     parser.add_argument("--run0",    default='1 1,16,0',      help="set tx sites+spad or notouch if set elsewhere")
     parser.add_argument("--play0",   default='1 16',          help="set rx sites+spad or notouch if set elsewhere")
@@ -197,8 +202,8 @@ def get_parser():
     parser.add_argument("--hudp_relay", default=None, type=int,  help="0..N: relay LLC VI out HUDP txt offset in vector")
     parser.add_argument("--spp",     default=1, type=int,     help="samples per packet")
     parser.add_argument("--hudp_decim", default=1, type=int,  help="hudp decimation, 1..16")
-    parser.add_argument("txuut", nargs=1,                     help="transmit uut")
-    parser.add_argument("rxuut", nargs=1,                     help="transmit uut")
+    parser.add_argument("txuut", nargs=1,                     help=f"transmit uut (if it's a PC, type one of {PCSEL})")
+    parser.add_argument("rxuut", nargs=1,                     help=f"rx uut (if it's a PC, type one of {PCSEL})")
     return parser
     
 if __name__ == '__main__':
