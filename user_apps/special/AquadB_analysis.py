@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
 
+"""Wrapper for move aquadb and host demux
+
+examples::
+
+    ./user_apps/special/AquadB_analysis.py --ecolumn=DI6 --run_test=yes --silence=YES acq2106_999
+
+    ./user_apps/special/AquadB_analysis.py --stim=acq2106_888 --dwg=dat_files/dwg123 --run_test=yes --silence=NO acq2106_999
+
+args for subordinate scripts should pass through wrapper
+"""
+
 import argparse
 import os
 import sys
@@ -11,15 +22,6 @@ import user_apps.analysis.host_demux as DEMUX
 
 from prettytable import PrettyTable as PT
 import numpy as np
-
-"""
-    example cmd
-    ./user_apps/special/AquadB_analysis.py --ecolumn=DI6 --run_test=yes --silence=YES acq2106_999
-
-    ./user_apps/special/AquadB_analysis.py --stim=acq2106_888 --dwg=dat_files/dwg123 --run_test=yes --silence=NO acq2106_999
-
-    args for subordinate scripts should pass through wrapper
-"""
 
 wrapper_args = None
 

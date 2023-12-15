@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-'''
+'''runs shots with one continuous AWG as Master and multiple UUTs using MGTDRAM
+
 assuming a system with 1 x AWG, 2+ x AI, run shots and offload the data
 '''
 import sys
@@ -30,8 +31,8 @@ def timing(f):
         return result
     return wrap
 
-def get_args():    
-    parser = argparse.ArgumentParser(description='runs shots with one continuous AWG as Master and multiple UUTs using MGTDRAM')
+def get_parser():    
+    parser = argparse.ArgumentParser(description='runs shots with one continuous AWG')
     parser.add_argument('--aiseconds', type=int, default=10, help="number of seconds to run AI capture")
     parser.add_argument('--shots', type=int, default=1, help="number of shots to run")
     parser.add_argument('--plot', type=int, default=0, 
@@ -44,19 +45,7 @@ def get_args():
     parser.add_argument('--save_egu', default=0, type=int, help="save data in engineering units")
     parser.add_argument('--save_mat', default=0, type=int, help="save data in engineering units as .mat file [libraries permitting]")
     parser.add_argument('uut_names', nargs='+', help="uut names")
-    args = parser.parse_args()
-
-    args.uuts = [ acq400_hapi.factory(name) for name in args.uut_names]
-    for name in args.uut_names:
-        os.makedirs("{}".format(name), exist_ok=True)
-    if args.mu:
-        args.mu = acq400_hapi.factory(args.mu)
-
-    if args.shot_seconds:
-        set_shot_seconds(args)
-    if args.save_mat > 0 and args.save_egu == 0:
-        args.save_egu = 1
-    return args
+    return parser
 
 procs = []
 
@@ -204,8 +193,17 @@ def save_egu(args):
         shot = int(uut.s1.shot)
         save_egu1(uut, shot, "{}/{:04d}.dat".format(uut.uut, shot), args.save_mat)
 
-def main():
-    args = get_args() 
+def run_main(args):
+    args.uuts = [ acq400_hapi.factory(name) for name in args.uut_names]
+    for name in args.uut_names:
+        os.makedirs("{}".format(name), exist_ok=True)
+    if args.mu:
+        args.mu = acq400_hapi.factory(args.mu)
+
+    if args.shot_seconds:
+        set_shot_seconds(args)
+    if args.save_mat > 0 and args.save_egu == 0:
+        args.save_egu = 1
     
     for u in args.uuts:
         u.s1.shot = 0
@@ -216,4 +214,4 @@ def main():
         run_shot(args, args.uut_names, shot, trigger)
 
 if __name__ == '__main__':
-    main()
+    run_main(get_parser().parse_args())

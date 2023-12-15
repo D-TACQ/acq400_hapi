@@ -21,13 +21,13 @@ def acq2106_wr_reset(args):
         uut.cC.WR_WRTT0_RESET = 1
 
 
-def run_main():
-    parser = argparse.ArgumentParser(description='acq2106_wr_reset')
+def get_parser():
+    parser = argparse.ArgumentParser(description='acq2106 wr reset')
     parser.add_argument('uut', nargs='+', help="uuts")
-    acq2106_wr_reset(parser.parse_args())
+    return parser
 
 
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    acq2106_wr_reset(get_parser().parse_args())

@@ -1,26 +1,27 @@
 #!/usr/bin/env python
 
-"""
-configure and run a Multi Rate (MR) shot on one or more UUTs
+"""configure and run a Multi Rate (MR) shot on one or more UUTs
+
 pre-requisite: transient capture configured on all boxes
 
-usage: acq2106_mr.py uut [uut2..]
+example::
 
-example:
-./user_apps/special/acq2106_mr.py --stl user_apps/STL/acq2106_mr3.stl --set_arm=1 acq2106_182
+    ./user_apps/special/acq2106_mr.py --stl user_apps/STL/acq2106_mr3.stl --set_arm=1 acq2106_182
 
-run_gpg
+.. rst-class:: hidden
 
-positional arguments:
-  uut                   uut
+    usage: acq2106_mr.py uut [uut2..]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --trg TRG             trigger fp|soft|softloop|softonce
-  --clk CLK             clk int|dX|notouch
-  --mode MODE           mode
-  --disable DISABLE     1: disable
-  --stl STL             stl file
+    positional arguments:
+    uut                   uut
+
+    optional arguments:
+    -h, --help            show this help message and exit
+    --trg TRG             trigger fp|soft|softloop|softonce
+    --clk CLK             clk int|dX|notouch
+    --mode MODE           mode
+    --disable DISABLE     1: disable
+    --stl STL             stl file
  
 """
 
@@ -320,8 +321,13 @@ def run_mr(args):
     print("FINISHED {} uuts".format(len(args.uuts)))
 
 
-def run_main():
-    parser = argparse.ArgumentParser(description='acq2106_mr')
+def run_main(args):
+    if args.debug:
+        Debugger.enabled = args.debug
+    run_mr(args)
+
+def get_parser():
+    parser = argparse.ArgumentParser(description='Multirate shot')
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     acq400_hapi.ShotControllerUI.add_args(parser)
     parser.add_argument(
@@ -356,13 +362,8 @@ def run_main():
             '--clear_any_units_found_in_arm', default=0, type=int, 
             help="set true to clear any locked units on new shot. default is to leave them for inspection")
     parser.add_argument('uutnames', nargs='+', help="uuts")
-    args = parser.parse_args()
-    if args.debug:
-        Debugger.enabled = args.debug
-    run_mr(args)
+    return parser
 
-
-# execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

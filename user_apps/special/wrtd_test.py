@@ -1,9 +1,9 @@
 #!/usr/bin/env -S python -u
 
-"""
-tests wrtd functionality. In particular, find minimum save DELTA_NS
-export UUTS="acq2106_182 acq2106_180 acq2106_181 acq2106_172"
+"""tests wrtd functionality.
 
+In particular, find minimum save DELTA_NS
+export UUTS="acq2106_182 acq2106_180 acq2106_181 acq2106_172"
 """
 
 import acq400_hapi
@@ -68,7 +68,7 @@ def wrtd_test(args):
 
 
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='wrtd_test')
     acq400_hapi.Acq400UI.add_args(parser, transient=True)
     acq400_hapi.ShotControllerUI.add_args(parser)
@@ -78,9 +78,9 @@ def run_main():
     parser.add_argument('--wrtd_delta_ns', default='50M', action=intSIAction, help="set delay NS")
     parser.add_argument('--sleep', default=10, type=int, help="sleep delay")
     parser.add_argument('uut', nargs='+', help="uuts")
-    wrtd_test(parser.parse_args())
+    return parser
 
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    wrtd_test(get_parser().parse_args())

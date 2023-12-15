@@ -82,7 +82,7 @@ def run_test(args):
     print("mean {}".format(totalplay/len(times)))
 
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description = 'awg speed test')
     parser.add_argument('--reps', type=int, default=1, help='number of repetitions')
     parser.add_argument('--uut',  default=None, help='uut')
@@ -91,8 +91,7 @@ def run_main():
     parser.add_argument('--overlap_load', default=1, type=int)
     parser.add_argument('--pure_python', default=0, type=int)
     parser.add_argument('files', nargs='+', help='files to play')
-    run_test(parser.parse_args())
+    return parser
 
 if __name__ == '__main__':
-    run_main()
-
+    run_test(get_parser().parse_args())

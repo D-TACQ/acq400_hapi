@@ -1,27 +1,28 @@
 #!/usr/bin/env python
 
-"""
-acq480 controls .. set ACQ480 parameters
-acq480 controls [opts] UUT1 [UUT2 ..]
+"""acq480 controls .. set ACQ480 parameters
+
 where UUT1 is the ip-address or host name of first uut
 example test client runs captures in a loop on one or more uuts
 
-usage: acq480_controls.py [-h] [--FIR FIR] [--T50R T50R] [--GAIN GAIN]
-                          [--site SITE] [--channel CHANNEL]
-                          uuts [uuts ...]
+.. rst-class:: hidden
 
-configure acq480
+    usage: acq480_controls.py [-h] [--FIR FIR] [--T50R T50R] [--GAIN GAIN]
+                            [--site SITE] [--channel CHANNEL]
+                            uuts [uuts ...]
 
-positional arguments:
-  uuts               uut1 [uut2..]
+    configure acq480
 
-optional arguments:
-  -h, --help         show this help message and exit
-  --FIR FIR
-  --T50R T50R
-  --GAIN GAIN
-  --site SITE
-  --channel CHANNEL
+    positional arguments:
+    uuts               uut1 [uut2..]
+
+    optional arguments:
+    -h, --help         show this help message and exit
+    --FIR FIR
+    --T50R T50R
+    --GAIN GAIN
+    --site SITE
+    --channel CHANNEL
 """
 
 import sys
@@ -65,7 +66,10 @@ def set_480(args):
 
 # execution starts here
 
-def run_main():
+def run_main(args):
+    set_480(args)
+
+def get_parser():
     parser = argparse.ArgumentParser(description='configure acq480')
     parser.add_argument('--FIR', default=None, type=str)
     parser.add_argument('--T50R', default=None, type=int)
@@ -73,10 +77,11 @@ def run_main():
     parser.add_argument('--site', default=ALL, type=int)
     parser.add_argument('--channel', default=ALL, type=int)
     parser.add_argument('uuts', nargs='+', help='uut1 [uut2..]')
-    set_480(parser.parse_args())
+    return parser
+
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())
 
 
 

@@ -4,13 +4,12 @@ import acq400_hapi
 import argparse
 
 
-def get_args():
+def get_parser():
     parser = argparse.ArgumentParser(description='TIGA stl load.')
     parser.add_argument('--stl', default='./wd.stl', type=str, help="Which STL file to load")
     parser.add_argument('--ts', default=50000, type=int, help="GPG TimeScaler")
     parser.add_argument('uuts', nargs='+', help="Names of uuts to test.")
-    args = parser.parse_args()
-    return args
+    return parser
 
 
 def get_stl(stl):
@@ -32,10 +31,9 @@ def load_stl(uuts, stl, ts):
     return None
 
 
-def main():
-    args = get_args()
+def main(args):
     stl = get_stl(args.stl)
     load_stl(args.uuts, stl, args.ts)
 
 if __name__ == '__main__':
-    main()
+    main(get_parser().parse_args())

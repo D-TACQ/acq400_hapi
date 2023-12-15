@@ -43,15 +43,13 @@ def wrpg_clkout_demo(args):
                     format(fout, fin, "OK" if converged else "waiting.."))
 
 
-def run_main():
-    parser = argparse.ArgumentParser(description="acq2106_wrpg_clkout_demo")
+def get_parser():
+    parser = argparse.ArgumentParser(description=" wrpg clkout demo")
     parser.add_argument('--loopback', default=0, type=int, help="use loopback cable")
     parser.add_argument('--clkdiv', default=20, type=int, help="clock divider value")
     parser.add_argument('uut', nargs=1, help='uut')
-
-    wrpg_clkout_demo(parser.parse_args())
-
-# execution starts here
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    wrpg_clkout_demo(get_parser().parse_args())
+

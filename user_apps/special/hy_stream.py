@@ -134,7 +134,7 @@ def run_stream(args):
     streamer = StreamsOne(args, args.uut[0])
     streamer.run()
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='acq400 stream')
     #parser.add_argument('--burstlen', default=1048576, type=int,
     #                    help="Size of file to store in KB. If burstlen > total data then no data will be stored.")
@@ -147,10 +147,7 @@ def run_main():
     parser.add_argument('--runtime', default=1000000, type=int, help="How long to stream data for")
     parser.add_argument('--verbose', default=0, type=int, help='Prints status messages as the stream is running')
     parser.add_argument('uut', nargs=1, help="uut")
-    args = parser.parse_args()
-      
-    run_stream(args)
-
+    return parser
 
 if __name__ == '__main__':
-    run_main()
+    run_stream(get_parser().parse_args())

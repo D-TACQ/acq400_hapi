@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
-"""
-capture upload test
-quest_upload UUT1 [UUT2 ..]
+"""quest upload test
+
 where UUT1 is the ip-address or host name of first uut
 example test client runs captures in a loop on one or more uuts
 
@@ -17,39 +16,36 @@ matplot will get very congested with more channels.
 this is really meant as a demonstration of capture, load to numpy,
 it's not really intended as a scope UI.
 
-example:
+example::
+
     ./quest_upload.py --POST=60000 --CLKDIV=100 --capture=1 --plot_data=0 \
-            --save_data=magdata_0001 --channels=1,2,3,4,32 192.168.1.210
-            
-usage: acq400_upload.py [-h] [--soft_trigger SOFT_TRIGGER]
-                    [--trace_upload TRACE_UPLOAD] [--save_data SAVE_DATA]
-                    [--plot_data PLOT_DATA] [--capture CAPTURE]
-                    [--remote_trigger REMOTE_TRIGGER]
-                    [--channels CHANNELS]
-                    uuts [uuts ...]
+--save_data=magdata_0001 --channels=1,2,3,4,32 192.168.1.210
 
-acq400 upload
+.. rst-class:: hidden
 
-positional arguments:
-  uuts                  uut[s]
+    usage: acq400_upload.py [-h] [--soft_trigger SOFT_TRIGGER]
+                        [--trace_upload TRACE_UPLOAD] [--save_data SAVE_DATA]
+                        [--plot_data PLOT_DATA] [--capture CAPTURE]
+                        [--remote_trigger REMOTE_TRIGGER]
+                        [--channels CHANNELS]
+                        uuts [uuts ...]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --soft_trigger SOFT_TRIGGER
-                        help use soft trigger on capture
-  --trace_upload TRACE_UPLOAD
-                        1: verbose upload
-  --save_data SAVE_DATA
-                        store data to specified directory
-  --plot_data PLOT_DATA
-                        1: plot data
-  --capture CAPTURE     1: capture data, 0: wait for someone else to capture,
-                        -1: just upload
-  --remote_trigger REMOTE_TRIGGER
-                        your function to fire trigger
-  --channels CHANNELS   comma separated channel list
-  --CLKDIV              set clock divider (10=1M)
-  --POST                set number POST trigger samples
+    acq400 upload
+
+    positional arguments:
+    uuts                  uut[s]
+
+    optional arguments:
+    -h, --help            show this help message and exit
+    --soft_trigger SOFT_TRIGGER  help use soft trigger on capture
+    --trace_upload TRACE_UPLOAD  1: verbose upload
+    --save_data SAVE_DATA  store data to specified directory
+    --plot_data PLOT_DATA  1: plot data
+    --capture CAPTURE     1: capture data, 0: wait for someone else to capture, -1: just upload
+    --remote_trigger REMOTE_TRIGGER  your function to fire trigger
+    --channels CHANNELS   comma separated channel list
+    --CLKDIV              set clock divider (10=1M)
+    --POST                set number POST trigger samples
 """
 
 import sys
@@ -171,8 +167,8 @@ def uniq(inp):
             out.append(x)
     return out
 
-def run_main():
-    parser = argparse.ArgumentParser(description='acq400 upload')  
+def get_parser():
+    parser = argparse.ArgumentParser(description='upload quest')  
     parser.add_argument('--soft_trigger', default=SOFT_TRIGGER, type=int, help="help use soft trigger on capture")
     parser.add_argument('--trace_upload', default=TRACE_UPLOAD, type=int, help="1: verbose upload")
     parser.add_argument('--save_data', default=SAVEDATA, type=str, help="store data to specified directory")
@@ -183,20 +179,20 @@ def run_main():
     parser.add_argument('--CLKDIV', default=10, type=int, help="sample rate = 10MHz / CLKDIV")
     parser.add_argument('--POST', default=100000, type=int, help="set number of post-shot samples")
     parser.add_argument('uuts', nargs = '+', help="uut[s]")
-    args = parser.parse_args()
+    return parser
+
+def run_main(args):
     # deduplicate (yes, some non-optimal apps call with duplicated uuts, wastes time)
     args.uuts = uniq(args.uuts)
     # encourage single ints to become a list
     if re.search(r'^\d$', args.channels) is not None:
         args.channels += ','
-        
     upload(args)
-
 
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())
 
 
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-"""
+"""scans mr data for MR transitions.
 
-scans mr data for MR transitions.
 default: works on the ACQ2106, reading /dev/acq400/data/1/01
 
 """
@@ -30,13 +29,13 @@ def mr_count(args):
 			mm1 = mode
 			i0 = ix
 
-def run_main():
+def get_parser():
     parser = argparse.ArgumentParser(description='acq2106_mr_count')
     parser.add_argument('--chfile', default="/dev/acq400/data/1/01", help="uuts")
-    mr_count(parser.parse_args())
+    return parser
 
 
 # execution starts here
 
 if __name__ == '__main__':
-    run_main()
+    mr_count(get_parser().parse_args())

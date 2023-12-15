@@ -1,38 +1,47 @@
 #!/usr/bin/env python3
 """ bolo8_cal_cap_loop.py ..
+
 run a bolo8 calibration, store to MDSplus ODD shot
+
 run a bolo8 capture, store to MDSplus EVEN shot
+
 ASSUME : each uut has a tree of the same name
+
 Script calls into MDSplus to increment shots, so it MUST run on the MDSplus server
 
-Usage
-./bolo8_cal_cap_loop.py --shots=1 acq2106_059
-run one cal, one capture
-./bolo8_cal_cap_loop.py --shots=100 acq2106_059
-run 100 cal/captures
+Example::
 
-./bolo8_cal_cap_loop.py --cap=0 --shots=1 acq2106_059
-run one cal
-./bolo8_cal_cap_loop.py --cal=0 --shots=100 acq2106_059
-run 100 captures
+    run one cal, one capture
+    ./bolo8_cal_cap_loop.py --shots=1 acq2106_059
 
-sage: bolo8_cal_cap_loop.py [-h] [--cap CAP] [--cal CAL] [--post POST]
-                             [--clk CLK] [--trg TRG] [--shots SHOTS]
-                             uuts [uuts ...]
+    run 100 cal/captures
+    ./bolo8_cal_cap_loop.py --shots=100 acq2106_059
 
-bolo8_cal_cap_loop
+    run one cal
+    ./bolo8_cal_cap_loop.py --cap=0 --shots=1 acq2106_059
 
-positional arguments:
-  uuts           uut list
+    run 100 captures
+    ./bolo8_cal_cap_loop.py --cal=0 --shots=100 acq2106_059
 
-optional arguments:
-  -h, --help     show this help message and exit
-  --cap CAP      capture
-  --cal CAL      calibrate
-  --post POST    post trigger length
-  --clk CLK      clk "int|ext SR [CR]"
-  --trg TRG      trg "int|ext rising|falling"
-  --shots SHOTS  set number of shots [1]
+.. rst-class:: hidden
+
+    sage: bolo8_cal_cap_loop.py [-h] [--cap CAP] [--cal CAL] [--post POST]
+                                [--clk CLK] [--trg TRG] [--shots SHOTS]
+                                uuts [uuts ...]
+
+    bolo8_cal_cap_loop
+
+    positional arguments:
+    uuts           uut list
+
+    optional arguments:
+    -h, --help     show this help message and exit
+    --cap CAP      capture
+    --cal CAL      calibrate
+    --post POST    post trigger length
+    --clk CLK      clk "int|ext SR [CR]"
+    --trg TRG      trg "int|ext rising|falling"
+    --shots SHOTS  set number of shots [1]
 
 """
 
@@ -198,20 +207,7 @@ def run_shots(args):
             run_capture(args)
 
 
-def run_main():
-    parser = argparse.ArgumentParser(description='bolo8_cal_cap_loop')
-    parser.add_argument('--cap', default=1, type=int, help="capture")
-    parser.add_argument('--cal', default=1, type=int, help="calibrate")
-    parser.add_argument('--cc', default=None, type=int, help="--cc=1 sets cap=1,cal=0; --cc=2 => cap=0,cal=1; --cc=3 => cal=1,cap=1")
-    parser.add_argument('--single_calibration_only', default=0, type=int, help="run one calibration shot only")
-    parser.add_argument('--post', default=100000, help="post trigger length")
-    parser.add_argument('--clk', default="int 1000000", help='clk "int|ext SR [CR]"')
-    parser.add_argument('--trg', default="int", help='trg "int|ext rising|falling"')
-    parser.add_argument('--shots', default=1, type=int, help='set number of shots [1]')
-    parser.add_argument('--active_chan', default=None, help='comma separated list of active channels, ; to split between uuts (because not all channels have foils)')
-    parser.add_argument('--fpgpio_strobe', default=None, type=int, help='custom lamp control: 0: OFF, 1:ON >1: flash at N Hz')
-    parser.add_argument('uuts', nargs='+', help="uut list")
-    args = parser.parse_args()
+def run_main(args):
     if args.cc is not None:
         args.cap = 1 if args.cc&0x1 == 0x1 else 0
         args.cal = 1 if args.cc&0x2 == 0x2 else 0
@@ -225,7 +221,21 @@ def run_main():
     run_shots(args)
 
 
-# execution starts here
+def get_parser():
+    parser = argparse.ArgumentParser(description='Bolo8 calibration and capture')
+    parser.add_argument('--cap', default=1, type=int, help="capture")
+    parser.add_argument('--cal', default=1, type=int, help="calibrate")
+    parser.add_argument('--cc', default=None, type=int, help="--cc=1 sets cap=1,cal=0; --cc=2 => cap=0,cal=1; --cc=3 => cal=1,cap=1")
+    parser.add_argument('--single_calibration_only', default=0, type=int, help="run one calibration shot only")
+    parser.add_argument('--post', default=100000, help="post trigger length")
+    parser.add_argument('--clk', default="int 1000000", help='clk "int|ext SR [CR]"')
+    parser.add_argument('--trg', default="int", help='trg "int|ext rising|falling"')
+    parser.add_argument('--shots', default=1, type=int, help='set number of shots [1]')
+    parser.add_argument('--active_chan', default=None, help='comma separated list of active channels, ; to split between uuts (because not all channels have foils)')
+    parser.add_argument('--fpgpio_strobe', default=None, type=int, help='custom lamp control: 0: OFF, 1:ON >1: flash at N Hz')
+    parser.add_argument('uuts', nargs='+', help="uut list")
+    return parser
+
 
 if __name__ == '__main__':
-    run_main()
+    run_main(get_parser().parse_args())

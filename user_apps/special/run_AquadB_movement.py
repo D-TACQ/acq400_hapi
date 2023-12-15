@@ -9,8 +9,6 @@ Run a stream capture while monitoring AquadB position.
 The UUT is assumed to trigger a stimulator box that will run a movement simulation.
 OR, it could be a real movement. We don't care.
 
-
-
 '''
 
 import acq400_hapi
