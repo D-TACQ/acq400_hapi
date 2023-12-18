@@ -1,10 +1,6 @@
 # acq400_hapi: acq400 Host API
 
-python module to connect to remote hosts
-
-* acq400_hapi: source code for the connectivity package
-* user_apps : example user client applications
-* test_apps : more detailed validations
+python module to connect to remote hosts. [Documentation](https://d-tacq.github.io/acq400_hapi_docs/index.html)
 
 ## Installation
 
