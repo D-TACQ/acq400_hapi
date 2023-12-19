@@ -57,7 +57,7 @@ def run_main(args):
             'data': {
                 'output' : args.output,
                 'pattern': ' '.join(args.pattern),
-                'nrep': args.nrep,
+                'nreps': args.nreps,
                 'segment': args.segment,
             }
         }
@@ -80,7 +80,7 @@ def get_parser():
     parser.add_argument('--file', default=None, help="Cmd file to send")
     parser.add_argument('--output', default='oneshot_rearm', help="Composer output options:\
                          oneshot_rearm, oneshot, continuous or a filename")
-    parser.add_argument('--nrep', default='', help="nrep")
+    parser.add_argument('--nreps', default='', help="nreps")
     parser.add_argument('--segment', default='', choices=['A', 'B', 'C', 'D', 'E'], help="select segment")
     parser.add_argument('pattern', nargs='*', help="Pattern 5*AA 5*BB")
     parser.add_argument('uut', help="uut hostname")
