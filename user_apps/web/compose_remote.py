@@ -76,13 +76,13 @@ def send_to_endpoint(url, payload):
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Remote control to composer webapp')
-    parser.add_argument('--port', default=None, help="endpoint port autogets")
-    parser.add_argument('--file', default=None, help="Cmd file to send")
+    parser.add_argument('--port', default=None, help="Set api port")
+    parser.add_argument('--file', default=None, help="Template file to upload")
     parser.add_argument('--output', default='oneshot_rearm', help="Composer output options:\
                          oneshot_rearm, oneshot, continuous or a filename")
-    parser.add_argument('--nreps', default='', help="nreps")
-    parser.add_argument('--segment', default='', choices=['A', 'B', 'C', 'D', 'E'], help="select segment")
-    parser.add_argument('pattern', nargs='*', help="Pattern 5*AA 5*BB")
+    parser.add_argument('--nreps', default='', help="Number of pattern repetitions")
+    parser.add_argument('--segment', default='', choices=['A', 'B', 'C', 'D', 'E'], help="Set segment")
+    parser.add_argument('pattern', nargs='*', help="Pattern to compose ie 5*AA 5*BB")
     parser.add_argument('uut', help="uut hostname")
     return parser
 
