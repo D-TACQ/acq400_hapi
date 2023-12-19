@@ -40,6 +40,7 @@ def run_main(args):
                 'output' : args.output,
                 'pattern': ' '.join(args.pattern),
                 'nrep': args.nrep,
+                'segment': args.segment,
             }
         }
         send_to_endpoint(url, payload)
@@ -58,6 +59,7 @@ def get_parser():
     parser.add_argument('--output', default=None, help="Composer output options:\
                          oneshot_rearm, oneshot, continuous or a filename")
     parser.add_argument('--nrep', default='', help="nrep")
+    parser.add_argument('--segment', default='', choices=['A', 'B', 'C', 'D', 'E'], help="select segment")
     parser.add_argument('pattern', nargs='*', help="Pattern 5*AA 5*BB")
     parser.add_argument('uut', help="uut hostname")
     return parser
