@@ -6,11 +6,15 @@ Examples
 
 Load new Template::
 
-    ./user_apps/web/compose_remote.py --file=CONFIGS/cycloid_scan_templatesAABB.txt --port=5001 acq1001_434
+    ./user_apps/web/compose_remote.py --file=CONFIGS/cycloid_scan_templates.txt acq1001_434
+
+Compose::
+
+    ./user_apps/web/compose_remote.py --output=oneshot_rearm --nreps=10 --segment=A '5*AA 5*BB' acq1001_434
 
 Load new and compose::
 
-    ./user_apps/web/compose_remote.py --port=5001 --file=CONFIGS/cycloid_scan_templatesAABB.txt --output=oneshot_rearm '5*AA 5*BB' acq1001_434
+    ./user_apps/web/compose_remote.py  --file=CONFIGS/cycloid_scan_templates.txt --output=oneshot_rearm '5*AA 5*BB' acq1001_434
 
 """
 
@@ -19,6 +23,20 @@ import requests
 import json
 
 def run_main(args):
+    if not args.port:
+        url = f"http://{args.uut}/apps.port"
+        error = False
+        try:
+            r = requests.get(url)
+            if r.status_code >= 400:
+                error = True
+        except Exception as e:
+            error = True
+        if error:
+            exit('[Error] unable to detect api port')
+        args.port = int(r.text)
+        print(f"Found api on port {args.port}")
+
     url = f"http://{args.uut}:{args.port}/endpoint"
 
     if args.file:
@@ -39,7 +57,7 @@ def run_main(args):
             'data': {
                 'output' : args.output,
                 'pattern': ' '.join(args.pattern),
-                'nrep': args.nrep,
+                'nreps': args.nreps,
                 'segment': args.segment,
             }
         }
@@ -48,19 +66,23 @@ def run_main(args):
 
 def send_to_endpoint(url, payload):
     print(f"\nSending to {url}")
+    print('Json: ')
     print(json.dumps(payload, indent=2))
-    r = requests.post(url, json=payload)
-    print(f"[{r.status_code}] {r.text}")
+    try:
+        r = requests.post(url, json=payload)
+        print(f"[{r.status_code}] {r.text}")
+    except Exception as e:
+        print(f"Error: Unable to post to {url}")
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Remote control to composer webapp')
-    parser.add_argument('--port', default=5000, help="endpoint port")
-    parser.add_argument('--file', default=None, help="Cmd file to send")
-    parser.add_argument('--output', default=None, help="Composer output options:\
+    parser.add_argument('--port', default=None, help="Set api port")
+    parser.add_argument('--file', default=None, help="Template file to upload")
+    parser.add_argument('--output', default='oneshot_rearm', help="Composer output options:\
                          oneshot_rearm, oneshot, continuous or a filename")
-    parser.add_argument('--nrep', default='', help="nrep")
-    parser.add_argument('--segment', default='', choices=['A', 'B', 'C', 'D', 'E'], help="select segment")
-    parser.add_argument('pattern', nargs='*', help="Pattern 5*AA 5*BB")
+    parser.add_argument('--nreps', default='', help="Number of pattern repetitions")
+    parser.add_argument('--segment', default='', choices=['A', 'B', 'C', 'D', 'E'], help="Set segment")
+    parser.add_argument('pattern', nargs='*', help="Pattern to compose ie 5*AA 5*BB")
     parser.add_argument('uut', help="uut hostname")
     return parser
 
