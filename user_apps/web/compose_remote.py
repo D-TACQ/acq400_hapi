@@ -14,7 +14,7 @@ Compose::
 
 Load new and compose::
 
-    ./user_apps/web/compose_remote.py  --file=CONFIGS/cycloid_scan_templates.txt --output=oneshot_rearm '5*AA 5*BB' acq1001_434
+    ./user_apps/web/compose_remote.py  --file=CONFIGS/cycloid_scan_templates.txt --output=oneshot_rearm --nreps=10 --segment=A '5*AA 5*BB' acq1001_434
 
 """
 
@@ -81,7 +81,7 @@ def get_parser():
     parser.add_argument('--output', default='oneshot_rearm', help="Composer output options:\
                          oneshot_rearm, oneshot, continuous or a filename")
     parser.add_argument('--nreps', default='', help="Number of pattern repetitions")
-    parser.add_argument('--segment', default='', choices=['A', 'B', 'C', 'D', 'E'], help="Set segment")
+    parser.add_argument('--segment', default='A', choices=['A', 'B', 'C', 'D', 'E'], help="Set segment (required)")
     parser.add_argument('pattern', nargs='*', help="Pattern to compose ie 5*AA 5*BB")
     parser.add_argument('uut', help="uut hostname")
     return parser
