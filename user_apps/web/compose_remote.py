@@ -18,7 +18,7 @@ Load new and compose::
 
 Set next segments::
 
-    ./user_apps/web/compose_remote.py --next=B,E,A,B,C
+    ./user_apps/web/compose_remote.py --queue=A,B,C acq1001_434
 
 """
 
@@ -101,7 +101,7 @@ def get_parser():
                          oneshot_rearm, oneshot, continuous or a filename")
     parser.add_argument('--nreps', default='', help="Number of pattern repetitions")
     parser.add_argument('--segment', default='', choices=['A', 'B', 'C', 'D', 'E'], help="Set segment")
-    parser.add_argument('--queue', type=list_of_strings, help="Queue next active segments")
+    parser.add_argument('--queue','--next', type=list_of_strings, help="Queue next active segments")
 
     parser.add_argument('pattern', nargs='*', help="Pattern to compose ie 5*AA 5*BB")
     parser.add_argument('uut', help="uut hostname")
