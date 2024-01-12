@@ -16,9 +16,9 @@ Load new and compose::
 
     ./user_apps/web/compose_remote.py --file=CONFIGS/cycloid_scan_templates.txt --output=oneshot_rearm --segment=A "5*AA 5*BB" acq1001_434
 
-Set next segments::
+Set next_seg segments::
 
-    ./user_apps/web/compose_remote.py --next=B,E,A,B,C
+    ./user_apps/web/compose_remote.py --next_seg=B,E,A,B,C
 
 """
 
@@ -69,8 +69,8 @@ def run_main(args):
         }
         send_to_endpoint(url, payload)
 
-    if args.queue:
-        for char in args.queue:
+    if args.next_seg:
+        for char in args.next_seg:
             time.sleep(0.1)
             send_to_port(args.uut, 54210, char)
 
@@ -101,7 +101,7 @@ def get_parser():
                          oneshot_rearm, oneshot, continuous or a filename")
     parser.add_argument('--nreps', default='', help="Number of pattern repetitions")
     parser.add_argument('--segment', default='', choices=['A', 'B', 'C', 'D', 'E'], help="Set segment")
-    parser.add_argument('--queue', type=list_of_strings, help="Queue next active segments")
+    parser.add_argument('--next_seg', default=None, type=list_of_strings, help="Queue next_seg active segments")
 
     parser.add_argument('pattern', nargs='*', help="Pattern to compose ie 5*AA 5*BB")
     parser.add_argument('uut', help="uut hostname")
