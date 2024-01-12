@@ -55,6 +55,10 @@ def run_main(args):
                 'lines' : lines
             }
         }
+        if args.verbose:
+            print('Json: ')
+            print(json.dumps(payload, indent=2))
+
         send_to_endpoint(url, payload)
 
     if args.output and args.pattern and args.segment:
@@ -67,6 +71,10 @@ def run_main(args):
                 'segment': args.segment,
             }
         }
+        if args.verbose:
+            print('Json: ')
+            print(json.dumps(payload, indent=2))
+            
         send_to_endpoint(url, payload)
 
     if args.next_seg:
@@ -76,8 +84,6 @@ def run_main(args):
 
 def send_to_endpoint(url, payload):
     print(f"\nSending to {url}")
-    print('Json: ')
-    print(json.dumps(payload, indent=2))
     try:
         r = requests.post(url, json=payload)
         print(f"[{r.status_code}] {r.text}")
@@ -102,6 +108,7 @@ def get_parser():
     parser.add_argument('--nreps', default='', help="Number of pattern repetitions")
     parser.add_argument('--segment', default='', choices=['A', 'B', 'C', 'D', 'E'], help="Set segment")
     parser.add_argument('--next_seg', default=None, type=list_of_strings, help="Queue next_seg active segments")
+    parser.add_argument('--verbose', default=0, type=int, help="increase verbosity")
 
     parser.add_argument('pattern', nargs='*', help="Pattern to compose ie 5*AA 5*BB")
     parser.add_argument('uut', help="uut hostname")
