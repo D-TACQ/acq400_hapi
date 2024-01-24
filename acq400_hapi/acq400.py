@@ -264,6 +264,8 @@ class Statusmonitor:
                 if self.trace > 1:
                     print("%s <%s" % (repr(self), status1))
                 if self.status != None:
+                    if self.status[SF.STATE] != status1[SF.STATE]:
+                        self.state_changed.set()
 #                    print("Status check %s %s" % (self.status0[0], status[0]))
                     if self.status[SF.STATE] != 0 and status1[SF.STATE] == 0:
                         if self.trace:
@@ -301,7 +303,7 @@ class Statusmonitor:
         return self.status[SF.ELAPSED]
 
 
-    def wait_event(self, ev, descr):
+    def wait_event(self, ev, descr=""):
     #       print("wait_%s 02 %d" % (descr, ev.is_set()))
         while ev.wait(0.1) == False and not self.break_requested:
             if self.quit_requested:
@@ -311,6 +313,7 @@ class Statusmonitor:
 #        print("wait_%s 88 %d" % (descr, ev.is_set()))
         ev.clear()
 #        print("wait_%s 99 %d" % (descr, ev.is_set()))
+        return self.get_state()
 
     def wait_armed(self):
         """blocks until uut is ARMED"""
@@ -319,6 +322,10 @@ class Statusmonitor:
     def wait_stopped(self):
         """blocks until uut is STOPPED"""
         self.wait_event(self.stopped, "stopped")
+
+    def wait_state_changed(self):
+        """blocks until state has changed"""
+        self.wait_event(self.state_changed, "state_change")
 
     trace = int(os.getenv("STATUSMONITOR_TRACE", "0"))
 
@@ -332,6 +339,7 @@ class Statusmonitor:
         self.status = _status
         self.stopped = threading.Event()
         self.armed = threading.Event()
+        self.state_changed = threading.Event()
         self.logclient = netclient.Logclient(_uut, AcqPorts.TSTAT)
         self.st_thread = threading.Thread(target=self.st_monitor)
         self.st_thread.setDaemon(True)
