@@ -175,7 +175,7 @@ def run_main(args):
         sample_count = int(uut.s1.sample_count)
         if sample_count != sample_count0 and sample_count != sample_count1:
             print("trigger again to force flush")
-            trigger(uut, args.trg[2])
+            trigger(uut, args.trg[0])
             sample_count1 = sample_count
         else:
             time.sleep(0.1)
