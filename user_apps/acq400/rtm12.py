@@ -12,6 +12,20 @@
 
     We show an example with either soft triggers or WR triggers (txi)
 
+    Sequence
+    S0. Disable TRG out.
+    S1. SetArm
+    S1.5 WaitArm
+    S2. Send Start trigger
+    S3. Enable TRG out
+    S4. Send BURST1_TRG
+    S5. Wait State RUN
+    S6. If BLEN1 > 1 DMA BUFFER:   poll sample count until we have enough count.
+If we only start looking at SAMPLE_COUNT after transition to ARM, then we don't have to worry about the non-zero start.
+
+    S7. Send BURST2_TRG
+    S8. Wait State IDLE (complete.
+
 example::
 
     # Trivial example soft,soft,soft
@@ -232,12 +246,12 @@ class TriggerHelper():
 
     def enable_trig_out(self):
         if self.args.trg_sync_out:
-            self.uut.s0.SIG_SYNC_OUT_TRG = 2 # TRG
-            self.uut.s0.SIG_SYNC_OUT_TRG_DX = 1 # d1
+            self.uut.s0.SIG_SYNC_OUT_TRG = 'TRG'
+            self.uut.s0.SIG_SYNC_OUT_TRG_DX = 'd1'
 
     def disable_trig_out(self):
         if self.args.trg_sync_out:
-            self.uut.s0.SIG_SYNC_OUT_TRG = 0 # DO
+            self.uut.s0.SIG_SYNC_OUT_TRG = 'd0'
 
     def print_totals(self):
         print(f"Triggers script: {self.total} uut: {acq400_hapi.pv(self.uut.s0.SIG_TRG_MB_COUNT)}")
@@ -268,7 +282,7 @@ def run_main(args):
     print(f'rtm12 {bursts.bursts}')
     print(f'trg {args.trg}')
 
-    trg.disable_trig_out() #email 0. Disable TRG out.
+    trg.disable_trig_out() # S0. Disable TRG out.
 
     if state_not(uut, acq400_hapi.STATE.IDLE):
         uut.s0.set_abort
@@ -277,30 +291,29 @@ def run_main(args):
     uut.s0.transient = f'PRE=0 POST={bursts.total_samples} SOFT_TRIGGER=0'
     uut.s0.rtm12 = f'{bursts.burst1} {bursts.burst2}'
     sample_count0 = int(uut.s1.sample_count)
-    uut.s0.set_arm = 1 #email 1. SetArm
-    uut.statmon.wait_armed() #email 5. Wait State ARM
+    uut.s0.set_arm = 1 # S1. SetArm
+    uut.statmon.wait_armed() # S1.5. Wait State ARM
 
 
-    print("[trigger capture]") #email 2. Send Start trigger
-    trg.trigger(trg.next_trg()) # no need to wait, system is ready for Burst Trigger
-        
-
+    print("[trigger capture]")  # 
+    trg.trigger(trg.next_trg()) # S2. Send Start trigger 
+                                # no need to wait, system is ready for Burst Trigger
     print("[trigger burst1]")
-    trg.enable_trig_out() #email 3. Enable TRG out
-    trg.trigger(trg.next_trg()) #email 4. Send BURST1_TRG
+    trg.enable_trig_out()        # S3. Enable TRG out
+    trg.trigger(trg.next_trg())  # S4. Send BURST1_TRG
 
     while int(uut.s1.sample_count) == sample_count0:
-        print("waiting for capture to start")
+        print("waiting for capture to start")     # S5.  Wait Run
         time.sleep(0.5)
 
-    while int(uut.s1.sample_count) < bursts.burst1: #email 6. If BLEN1 > 1 DMA BUFFER:   poll sample count until we have enough count.
+    while int(uut.s1.sample_count) < bursts.burst1: # S6. If BLEN1 > 1 DMA BUFFER:   poll sample count until we have enough data.
         print("waiting for burst1")
         time.sleep(0.5)
 
 
     print("[trigger burst2]")
     sample_count1 = int(uut.s1.sample_count)
-    trg.trigger(trg.next_trg()) #email 7. Send BURST2_TRG
+    trg.trigger(trg.next_trg()) # S7. Send BURST2_TRG
     trg.disable_trig_out()
 
     while state_eq(uut, acq400_hapi.STATE.RUNPOST):
@@ -313,7 +326,7 @@ def run_main(args):
 
 
     print("[wait stopped]")
-    uut.statmon.wait_stopped() #email 8. Wait State IDLE (complete.
+    uut.statmon.wait_stopped() # S8. Wait State IDLE (complete.
     trg.print_totals()
 
     if args.plot:
