@@ -31,6 +31,16 @@ options:
   --aosite AOSITE       Site of AO module
   --playdiv PLAYDIV     CLKDIV for play site
 
+By default, the unit loads to well known server ports as described in 4GUG.
+However a dedicated server is available that can improve upload time:
+example load to a dedicated server:
+
+    set up the server:
+    acq1001_074> bb load --mode 1 --port 52233
+
+    run hapi:
+    ./user_apps/acq400/acq400_load_awg.py --auto_soft_trigger=1 --reps=9 \
+            --file W32M --mode=1 --aosite=1 --port=52233 acq1001_074
 """
 
 import sys
