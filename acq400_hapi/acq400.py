@@ -899,7 +899,7 @@ class Acq400:
         def __str__(self):
             return repr(self.value)
 
-    def load_awg(self, data, autorearm=False, continuous=False, repeats=1):
+    def load_awg(self, data, autorearm=False, continuous=False, repeats=1, port=None):
         """Load and config a AWG pattern
 
         Args:
@@ -911,7 +911,9 @@ class Acq400:
         if self.awg_site > 0:
             if self.modules[self.awg_site].task_active == '1':
                 raise self.AwgBusyError("awg busy")
-        port = AcqPorts.AWG_CONTINUOUS if continuous else AcqPorts.AWG_AUTOREARM if autorearm else AcqPorts.AWG_ONCE
+        if port is None:
+            port = AcqPorts.AWG_CONTINUOUS if continuous else \
+                AcqPorts.AWG_AUTOREARM if autorearm else AcqPorts.AWG_ONCE
 
         with netclient.Netclient(self.uut, port) as nc:
             while repeats:

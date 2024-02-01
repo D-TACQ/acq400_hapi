@@ -4,6 +4,33 @@
 
 data for upload is a single file
 assumes that clocking has been pre-assigned.
+
+load awg simplest
+
+positional arguments:
+  uuts                  uut
+
+options:
+  -h, --help            show this help message and exit
+  --file FILE           file to load
+  --mode MODE           mode: 1 oneshot, 2 oneshot_autorearm
+  --awg_extend AWG_EXTEND
+                        Number of times the AWG is repeated.
+  --soft_trigger SOFT_TRIGGER
+                        Emit soft trigger
+  --reps REPS           Repetitions
+  --port PORT           optional port number for fast start server
+  --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
+  --trg TRG             int|ext,rising|falling
+  --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
+  --trace TRACE         1 : enable command tracing
+  --auto_soft_trigger AUTO_SOFT_TRIGGER
+                        force soft trigger generation
+  --clear_counters      clear all counters SLOW
+  --playtrg PLAYTRG     int|ext,rising|falling
+  --aosite AOSITE       Site of AO module
+  --playdiv PLAYDIV     CLKDIV for play site
+
 """
 
 import sys
@@ -52,7 +79,7 @@ def load_awg(args, uut, rep):
         while loaded != 1:
             try:
                 with open(args.file, "rb") as fd:
-                    uut.load_awg(file_extender(fd, args.awg_extend), autorearm=args.mode==2)
+                    uut.load_awg(file_extender(fd, args.awg_extend), autorearm=args.mode==2, port=args.port)
                     loaded = 1
             except Exception as e:
                 if loaded == 0:
@@ -63,10 +90,7 @@ def load_awg(args, uut, rep):
                     sleep(0.1)
                 else:
                     print("Retry failed: caught {} FAIL".format(e))
-                    exit(1)    
-               
-    if args.soft_trigger:
-        uut.s0.soft_trigger = '1'
+                    exit(1)
 
 @timing
 def wait_completion(args, uut):
@@ -85,6 +109,11 @@ def load_awg_top(args):
         if rep > 0:
             print("rep {}".format(rep))
         load_awg(args, uut, rep)
+        if args.soft_trigger:
+            if args.port is not None:
+                while acq400_hapi.intpv(uut.s1.AWG_ARM) == 0:
+                    sleep(0.1)
+            uut.s0.soft_trigger = '1'
         if args.reps > 1:
             wait_completion(args, uut)
     print("playloop_length {}".format(uut.modules[args.aosite].playloop_length))
@@ -97,6 +126,7 @@ def get_parser():
     parser.add_argument('--awg_extend', default=1, type=int, help='Number of times the AWG is repeated.')
     parser.add_argument('--soft_trigger', default=1, type=int, help='Emit soft trigger')
     parser.add_argument('--reps', default=1, type=int, help='Repetitions')
+    parser.add_argument('--port', default=None, type=int, help='optional port number for fast start server')
     acq400_hapi.Acq400UI.add_args(parser, play=True)
     parser.add_argument('uuts', nargs=1, help="uut ")
     return parser
