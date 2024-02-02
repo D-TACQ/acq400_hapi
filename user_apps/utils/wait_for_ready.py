@@ -16,21 +16,22 @@ import argparse
 def wait_ready(args):
     while True:
         try:
-            contents = urllib.request.urlopen("http://{}/d-tacq/rc-local-complete".format(args.uut)).read()
-            print(contents)
+            contents = urllib.request.urlopen("http://{}/d-tacq/rc-local-complete".format(uut)).read()
+            print(contents.decode().strip())
             return True
         except:
-            print("{} not ready".format(args.uut))
+            print("{} not ready".format(uut))
             time.sleep(2)
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Wait until UUT booted')
-    parser.add_argument('uut', nargs=1, help="UUT hostname")
+    parser.add_argument('uut', nargs='+', help="UUT hostname")
     return parser
 
 # execution starts here
 if __name__ == '__main__':
-    wait_ready(get_parser().parse_args())
+    for uut in get_parser().parse_args().uut:
+        wait_ready(uut)
 
 
 
