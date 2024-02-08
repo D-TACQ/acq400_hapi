@@ -249,10 +249,21 @@ class ShotControllerWithDataHandler(ShotController):
                        
         ax = {}
         ax0 = None
-                           
+
+        fig = plt.figure(0)
+        common_xlabel = "Samples"
+        common_ylabel = 'Counts'
+        multiplot = hasattr(args, 'one_plot') and not args.one_plot   
+
         for col in range(ncol):
             for chn in range(0,nchan):
-                if hasattr(args, 'one_plot') and not args.one_plot:
+                
+                if len(args.uuts) > 1:
+                    _label = "{}.{:03d}".format(args.uuts[col], self.cmap[col][chn])
+                else:
+                    _label = "{:03d}".format(self.cmap[col][chn])
+
+                if multiplot:
                     axkey = '{}{}'.format(chn, 0 if overlay_plot else col)                    
                     if not overlay_plot or col == 0:
                         fignum = 1 + (0 if overlay_plot else col) + chn*(1 if overlay_plot else ncol)
@@ -262,16 +273,13 @@ class ShotControllerWithDataHandler(ShotController):
                             ax0 = ax[axkey]
                         else:
                             ax[axkey] = plt.subplot(nchan, 1 if overlay_plot else ncol, fignum, sharex=ax0) 
-                _label = "{}.{:03d}".format(args.uuts[col], self.cmap[col][chn])
+                        plt.ylabel(_label)
 
-                plt.suptitle('{} shot {}'.format(args.uuts[0] if len(args.uuts) == 1 else args.uuts, self.uuts[0].s1.shot))
                 if plot_data < 0:
                     _data = self.uuts[col].chan2volts(self.cmap[col][chn], chx[col][chn])                    
-                    plt.xlabel("sample")
-                    plt.ylabel("Volts")  
+                    common_ylabel = 'Volts'
                     print("ax[{}].plot( ... label={})".format(axkey, _label))  
-                    line, = ax[axkey].plot(_data, label=_label)                            
-                    ax[axkey].legend()            
+                    line, = ax[axkey].plot(_data, label=_label)                                      
 #                elif plot_data == 2:
 #                    tb = self.uuts[0].read_transient_timebase(args.post+args.pre, args.pre)
 #                    plt.xlabel("time [S]")
@@ -279,11 +287,15 @@ class ShotControllerWithDataHandler(ShotController):
 #                    line, = ax[axkey].plot(tb, self.uuts[col].chan2volts(self.cmap[col][chn], chx[col][chn]), label=_label)
 #                    plt.legend()
                 else:
-                    plt.xlabel("sample")
-                    plt.ylabel("counts")                           
-                    plt.plot(chx[col][chn])
-                    
-        
+                    plt.plot(chx[col][chn], label=_label)
+                if not multiplot:
+                    plt.legend()
+
+        fig.supxlabel(common_xlabel)
+        fig.supylabel(common_ylabel)
+        fig.align_labels()
+        plt.suptitle('{} shot {}'.format(args.uuts[0] if len(args.uuts) == 1 else args.uuts, self.uuts[0].s1.shot))
+        fig.subplots_adjust(0.17,0.1,0.96,0.9)
         plt.show()
                 
     def handle_data(self, args):        
