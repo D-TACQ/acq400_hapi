@@ -215,14 +215,20 @@ class ShotController:
 class ShotControllerWithDataHandler(ShotController):
        
     def plot_data(self, args, plot_data, chx, ncol, nchan, nsam):
-        try:
-            import matplotlib.pyplot as plt
-        except Exception as e:
-            plt = e
 
-        if isinstance(plt, Exception):
-            print("Sorry, plotting not available")
-            return        
+        import matplotlib
+        backends = ['GTK4Agg', 'WXAgg', 'TKAgg', 'GTKAgg', 'Qt4Agg']
+        for backend in backends:
+            try:
+                matplotlib.use(backend, force=True)
+                from matplotlib import pyplot as plt
+                break
+            except:
+                continue
+        else:
+            print('Error: No valid plotting backends')
+            return False
+              
     # plot ex: 2 x 8 ncol=2 nchan=8
     # U1 U2      FIG
     # 11 21      1  2
@@ -249,21 +255,10 @@ class ShotControllerWithDataHandler(ShotController):
                        
         ax = {}
         ax0 = None
-
-        fig = plt.figure(0)
-        common_xlabel = "Samples"
-        common_ylabel = 'Counts'
-        multiplot = hasattr(args, 'one_plot') and not args.one_plot   
-
+                           
         for col in range(ncol):
             for chn in range(0,nchan):
-                
-                if len(args.uuts) > 1:
-                    _label = "{}.{:03d}".format(args.uuts[col], self.cmap[col][chn])
-                else:
-                    _label = "{:03d}".format(self.cmap[col][chn])
-
-                if multiplot:
+                if hasattr(args, 'one_plot') and not args.one_plot:
                     axkey = '{}{}'.format(chn, 0 if overlay_plot else col)                    
                     if not overlay_plot or col == 0:
                         fignum = 1 + (0 if overlay_plot else col) + chn*(1 if overlay_plot else ncol)
@@ -273,13 +268,16 @@ class ShotControllerWithDataHandler(ShotController):
                             ax0 = ax[axkey]
                         else:
                             ax[axkey] = plt.subplot(nchan, 1 if overlay_plot else ncol, fignum, sharex=ax0) 
-                        plt.ylabel(_label)
+                _label = "{}.{:03d}".format(args.uuts[col], self.cmap[col][chn])
 
+                plt.suptitle('{} shot {}'.format(args.uuts[0] if len(args.uuts) == 1 else args.uuts, self.uuts[0].s1.shot))
                 if plot_data < 0:
                     _data = self.uuts[col].chan2volts(self.cmap[col][chn], chx[col][chn])                    
-                    common_ylabel = 'Volts'
+                    plt.xlabel("sample")
+                    plt.ylabel("Volts")  
                     print("ax[{}].plot( ... label={})".format(axkey, _label))  
-                    line, = ax[axkey].plot(_data, label=_label)                                      
+                    line, = ax[axkey].plot(_data, label=_label)                            
+                    ax[axkey].legend()            
 #                elif plot_data == 2:
 #                    tb = self.uuts[0].read_transient_timebase(args.post+args.pre, args.pre)
 #                    plt.xlabel("time [S]")
@@ -287,15 +285,11 @@ class ShotControllerWithDataHandler(ShotController):
 #                    line, = ax[axkey].plot(tb, self.uuts[col].chan2volts(self.cmap[col][chn], chx[col][chn]), label=_label)
 #                    plt.legend()
                 else:
-                    plt.plot(chx[col][chn], label=_label)
-                if not multiplot:
-                    plt.legend()
-
-        fig.supxlabel(common_xlabel)
-        fig.supylabel(common_ylabel)
-        fig.align_labels()
-        plt.suptitle('{} shot {}'.format(args.uuts[0] if len(args.uuts) == 1 else args.uuts, self.uuts[0].s1.shot))
-        fig.subplots_adjust(0.17,0.1,0.96,0.9)
+                    plt.xlabel("sample")
+                    plt.ylabel("counts")                           
+                    plt.plot(chx[col][chn])
+                    
+        
         plt.show()
                 
     def handle_data(self, args):        
