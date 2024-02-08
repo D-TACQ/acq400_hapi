@@ -215,14 +215,20 @@ class ShotController:
 class ShotControllerWithDataHandler(ShotController):
        
     def plot_data(self, args, plot_data, chx, ncol, nchan, nsam):
-        try:
-            import matplotlib.pyplot as plt
-        except Exception as e:
-            plt = e
 
-        if isinstance(plt, Exception):
-            print("Sorry, plotting not available")
-            return        
+        import matplotlib
+        backends = ['GTK4Agg', 'WXAgg', 'TKAgg', 'GTKAgg', 'Qt4Agg']
+        for backend in backends:
+            try:
+                matplotlib.use(backend, force=True)
+                from matplotlib import pyplot as plt
+                break
+            except:
+                continue
+        else:
+            print('Error: No valid plotting backends')
+            return False
+              
     # plot ex: 2 x 8 ncol=2 nchan=8
     # U1 U2      FIG
     # 11 21      1  2
