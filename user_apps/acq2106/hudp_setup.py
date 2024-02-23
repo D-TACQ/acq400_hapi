@@ -115,6 +115,10 @@ def hudp_init(args, uut, ip):
     
 def hudp_enable(uut):
     uut.s10.tx_ctrl = 1
+
+def init_arp_req(uut):
+    uut.s10.arp_request = 1
+    uut.s10.arp_request = 0
     
 def ip_broadcast(args):
     ip_dest = args.rx_ip.split('.')
@@ -156,6 +160,7 @@ def config_tx_uut(txuut, args):
     if  tx_pkt_sz > MTU:
         print("ERROR packet length {} exceeds MTU {}".format(tx_pkt_sz, MTU))
     hudp_enable(txuut)
+    init_arp_req(txuut)
     tx_calc_pkt_sz = int(txuut.s10.tx_calc_pkt_sz)      # actual tx pkt sz computed by FPGA logic.
     if tx_pkt_sz != tx_calc_pkt_sz:
         print("ERROR: set tx_pkt_size {} actual tx_pkt_size {}".format(tx_pkt_sz, tx_calc_pkt_sz))    
