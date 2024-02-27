@@ -46,10 +46,12 @@ def run_main(args):
         data[idx][:args.pre] = arr[:args.pre]
         data[offset][args.pre:] = arr[args.pre:]
 
-
     if args.plot != None:
         print(f"Plotting data")
         for idx, dat in enumerate(data):
+            if args.remove_es and idx in [2,3]:
+                dat = np.delete(dat, [args.pre, args.pre + 1])
+
             if 0 in args.plot or idx + 1 in args.plot:
                 plt.plot(dat, label=f"CH{idx + 1}")
         plt.legend()
@@ -91,6 +93,7 @@ def list_of_values(arg):
 
 def get_parser():
     parser = argparse.ArgumentParser(description='reunites pre/post channels of 4CH acq480')
+    parser.add_argument('--remove_es', default=1, type=int, help="Remove es error")
     parser.add_argument('--nofix', default=0, type=int, help="Do not fix")
     parser.add_argument('--plot', default=None, type=list_of_values, help="Plot data 0 for all or 1,2,3,4")
     parser.add_argument('--save', default=None, help="dir to save resolved data ")
