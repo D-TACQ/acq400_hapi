@@ -64,9 +64,13 @@ def monitor():
         print("\rix {} NBUFS {} rate: {} MB/s >".format(IBUF, NBUFS, (BCOUNT-bc)*BSIZE/0x100000), end="")
         bc = BCOUNT
 
+def file_exists(arg):
+    if not os.path.exists(arg): raise FileNotFoundError
+    return arg
+
 def get_parser():
     parser = argparse.ArgumentParser(description='simple load awg multi')
-    parser.add_argument('--file', default=None, help="file to load")
+    parser.add_argument('--file', default=None, type=file_exists, help="file to load")
     parser.add_argument('--soft_trigger', default=0, type=int, help='Emit soft trigger')        
     parser.add_argument('uuts', nargs=1, help="uut ")
     return parser
