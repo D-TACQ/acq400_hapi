@@ -86,7 +86,7 @@ def remove_stale_data(args):
             if args.force_delete:
                 pass
             else:
-                answer = input("Stale data detected. Delete all contents in " + args.root + str(args.uuts[0]) + "? y/n ")
+                answer = input(f"Stale data detected. Delete all contents in {path}? y/n ")
                 if answer != 'y':
                     continue
             if args.verbose:
@@ -344,7 +344,7 @@ def run_stream_prep(args):
     if args.filesize > args.totaldata:
             args.filesize = args.totaldata
     remove_stale_data(args)
-    if not os.path.exists(args.root):
+    if args.root and not os.path.exists(args.root):
         os.makedirs(args.root)
     return args
 
