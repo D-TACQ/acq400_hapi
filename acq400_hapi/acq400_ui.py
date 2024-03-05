@@ -178,3 +178,23 @@ class Acq400UI:
             #print("Overriding {} with {}".format(x.dest,defaults[x.dest]))
                 x.default = defaults[x.dest]
         return parser
+    
+    @staticmethod
+    def merge_parsers(parser, donor, overwrite=False, blacklist=[]):
+        """Merges arguments from two argparser parsers"""
+        blacklist = blacklist + ['h', 'help']
+        existing = [a.dest for a in parser._actions]
+        for action in donor._actions:
+            dest = action.dest
+            if dest in blacklist: continue
+            if dest in existing and parser.conflict_handler == 'error':
+                if overwrite:
+                    for idx, a in enumerate(parser._actions):
+                        if dest == a.dest:
+                            parser._actions[idx] = action
+                            for option in a.option_strings:
+                                parser._option_string_actions[option] = action
+                            break
+                continue
+            parser._add_action(action)
+        return parser
