@@ -103,15 +103,6 @@ def logprint(message):
     return None
 
 
-def make_data_dir(directory, verbose):
-    try:
-        os.makedirs(directory)
-    except Exception:
-        if verbose:
-            print("Tried to create dir but dir already exists")
-        pass
-
-
 def validate_streamed_data(good_data, test_data, cycle):
     # Using this method there is no detectable overhead.
 
@@ -167,6 +158,10 @@ def host_pull(args, uut, shot):
                              # block number. redundant, there will be only one block.
     buffer = None
 
+    rootdir = os.path.join(args.root, uut_name)
+    if not os.path.isdir(rootdir):
+        os.makedirs(rootdir)
+
     print("Starting host pull {} bytes now data size {}".format(nbytes, _data_size))
 
     for buffer in rc.get_blocks(nbytes, data_size=_data_size):
@@ -178,8 +173,7 @@ def host_pull(args, uut, shot):
         if args.save_data == 1:
             if args.overwrite:
                 shot = 0
-            fn = "./{}/{:04d}.dat".format(uut_name, shot)
-            make_data_dir(uut_name, 0)
+            fn = os.path.join(rootdir, f"{shot:04d}.dat")
             buffer.tofile(fn)
             print(f"Data saved to {fn}")
         else:
@@ -431,6 +425,7 @@ def get_parser():
     parser.add_argument('--twa', type=int, default=None, help="trigger_when_armed")
     parser.add_argument('--overwrite', type=int, default=0, help="0: new file per shot 1: same file per shot")
     parser.add_argument('--siggen', default=None, help="siggen hostname to trigger when armed")
+    parser.add_argument('--root', default='data', help="root dir to offload data to")	
 
     parser.add_argument('--logprint', type=int, default=1,
                               help='1: Print log messages. '
