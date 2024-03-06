@@ -9,44 +9,60 @@ assumes that clocking has been pre-assigned.
 
 example usage::
 
-       ./mgtdramshot.py --loop=100 --simulate=1 --validate=validate-6x480 --captureblocks=2000 --offloadblocks=0-1999 acq2106_007
+    #Capture, fill dram and offload
+    ./user_apps/acq2106/mgtdramshot.py --captureblocks=2000 --offloadblocks=2000 acq2106_007
+        acq2106_007
+
+    #Capture 1GB triggered by siggen and offload, 100 loops
+    ./user_apps/acq2106/mgtdramshot.py --loop=100 --captureblocks=250 --offloadblocks=250\
+        --overwrite=1 --trg=ext,rising --siggen=SG0131 acq2106_007                                  
+
+    #Capture, validate then offload, 100 loops
+    ./mgtdramshot.py --loop=100 --sim=1 --validate=validate-6x480 --captureblocks=2000 \
+        --offloadblocks=2000 acq2106_007
 
 .. rst-class:: hidden
-    
+ 
     usage: mgtdramshot.py [-h] [--clk CLK] [--trg TRG] [--sim SIM] [--trace TRACE]
-                        [--auto_soft_trigger AUTO_SOFT_TRIGGER]
-                        [--clear_counters] [--loop LOOP]
-                        [--captureblocks CAPTUREBLOCKS]
-                        [--offloadblocks OFFLOADBLOCKS] [--validate VALIDATE]
-                        [--wait_user WAIT_USER] [--wait_shot WAIT_SHOT]
-                        [--save_data SAVE_DATA] [--shot SHOT] [--twa TWA]
-                        [--logprint LOGPRINT]
+                        [--auto_soft_trigger AUTO_SOFT_TRIGGER] [--clear_counters] [--loop LOOP]
+                        [--captureblocks CAPTUREBLOCKS] [--offloadblocks OFFLOADBLOCKS]
+                        [--validate VALIDATE] [--wait_user WAIT_USER] [--wait_shot WAIT_SHOT]
+                        [--save_data SAVE_DATA] [--shot SHOT] [--twa TWA] [--overwrite OVERWRITE]
+                        [--siggen SIGGEN] [--logprint LOGPRINT]
                         uuts [uuts ...]
 
-    acq2106 mgtdram test
+    mgtdram test
 
     positional arguments:
     uuts                  uut
 
-    optional arguments:
+    options:
     -h, --help            show this help message and exit
     --clk CLK             int|ext|zclk|xclk,fpclk,SR,[FIN]
     --trg TRG             int|ext,rising|falling
     --sim SIM             s1[,s2,s3..] list of sites to run in simulate mode
     --trace TRACE         1 : enable command tracing
-    --auto_soft_trigger AUTO_SOFT_TRIGGER  force soft trigger generation
+    --auto_soft_trigger AUTO_SOFT_TRIGGER
+                            force soft trigger generation
     --clear_counters      clear all counters SLOW
     --loop LOOP           loop count
-    --captureblocks CAPTUREBLOCKS  number of 4MB blocks to capture
-    --offloadblocks OFFLOADBLOCKS  block list to upload nnn-nnn
+    --captureblocks CAPTUREBLOCKS
+                            number of 4MB blocks to capture
+    --offloadblocks OFFLOADBLOCKS
+                            blocks to offload
     --validate VALIDATE   program to validate data
-    --wait_user WAIT_USER  1: force user input each shot
-    --wait_shot WAIT_SHOT  1: wait for some external agent to run the shot, then offload all
-    --save_data SAVE_DATA  Whether or not to save data to a file in 4MB chunks. Default: 1
+    --wait_user WAIT_USER
+                            1: force user input each shot
+    --wait_shot WAIT_SHOT
+                            1: wait for some external agent to run the shot, then offload all
+    --save_data SAVE_DATA
+                            Whether or not to save data to a file in 4MB chunks. Default: 1
     --shot SHOT           set a shot number
     --twa TWA             trigger_when_armed
+    --overwrite OVERWRITE
+                            0: new file per shot 1: same file per shot
+    --siggen SIGGEN       siggen hostname to trigger when armed
     --logprint LOGPRINT   1: Print log messages. 2: Save reduced log to log file.
-
 """
 
 import sys
@@ -165,7 +181,7 @@ def host_pull(args, uut, shot):
             fn = "./{}/{:04d}.dat".format(uut_name, shot)
             make_data_dir(uut_name, 0)
             buffer.tofile(fn)
-            print("{}".format(fn))
+            print(f"Data saved to {fn}")
         else:
             print("Block {} pulled, size bytes : {}.".format(bn, buffer.size))
 
@@ -264,6 +280,7 @@ def run_shots(args):
     global uut_name
     uut_name = args.uut
     nbytes = 0
+    time_start = time.time()
 
     print("run_shots {}".format(uut_name))
     LOG = open("mgtdramshot-{}.log".format(uut_name), "w")
@@ -297,7 +314,7 @@ def run_shots(args):
         for shot in range(0, args.loop):
             shot_number = shot
             t1 = datetime.datetime.now()
-            print("shot: {} {}".format(shot, t1.strftime("%Y%m%d %H:%M:%S")))
+            print(f"\nRunning shot {shot} {t1.strftime('%Y/%m/%d %H:%M:%S')}")
             mbps=""
             if args.captureblocks != 0:
                 shot_number = run_shot(uut, args)
@@ -310,7 +327,10 @@ def run_shots(args):
             if nbytes:
                 mb = nbytes/0x100000
                 mbps = "offload {} MB, {:.2f} MB/s".format(mb, mb/et)
-            print("shot: {} {} done in {} seconds {}\n\n".format(shot_number, actions, et, mbps))
+
+            print(f"Shot {shot}/{args.loop} completed {actions} in {et} seconds")
+            print(f"Speed: {mbps} script time {int(time.time() - time_start)}s")
+
 
             if args.wait_user:
                 input("hit return to continue")
@@ -398,7 +418,7 @@ def get_parser():
     parser.add_argument('--captureblocks', type=int,
                         default="2000", help='number of 4MB blocks to capture')
     parser.add_argument('--offloadblocks', type=str,
-                        default="capture", help='block list to upload nnn-nnn')
+                        default="capture", help='blocks to offload')
     parser.add_argument('--validate', type=str, default='no',
                         help='program to validate data')
     parser.add_argument('--wait_user', type=int, default=0,
