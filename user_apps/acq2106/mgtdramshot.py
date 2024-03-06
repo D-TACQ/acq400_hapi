@@ -68,6 +68,7 @@ except:
 import time
 
 import multiprocessing as mp
+from threading import Thread
 
 LOG = None
 
@@ -234,10 +235,18 @@ class AtFilter:
 def run_shot(uut, args):
     # always capture over. The offload is zero based anyway, so add another one
     uut.s14.mgt_run_shot = args.captureblocks
+    if args.siggen:
+        Thread(target=trigger_on_arm, args=(uut, args.siggen)).start()
     uut.run_mgt(AtFilter())
     return int(uut.s1.shot)
 
-def wait_shot(uut, args):    
+def trigger_on_arm(uut, siggen):
+    """trigger siggen when uut reaches arm"""
+    while acq400_hapi.pv(uut.s0.CONTINUOUS_STATE) != 'ARM':
+        time.sleep(1)
+    acq400_hapi.Agilent33210A(siggen).trigger()
+
+def wait_shot(uut, args):  
     if args.offloadblocks != 'capture': 
         args.offloadblocks_count = acq400_hapi.intpv(uut.s0.BLT_BUFFERS_M)
     uut.run_mgt(AtFilter(), set_arm=False)
@@ -401,6 +410,7 @@ def get_parser():
     parser.add_argument('--shot', type=int, default=None, help="set a shot number")
     parser.add_argument('--twa', type=int, default=None, help="trigger_when_armed")
     parser.add_argument('--overwrite', type=int, default=0, help="0: new file per shot 1: same file per shot")
+    parser.add_argument('--siggen', default=None, help="siggen hostname to trigger when armed")
 
     parser.add_argument('--logprint', type=int, default=1,
                               help='1: Print log messages. '
