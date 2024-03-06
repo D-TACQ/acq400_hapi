@@ -98,7 +98,7 @@ def run_stream(args):
 
         while time.time() < (start_time + args.runtime) and data_length < args.totaldata:
             rxbuf = RXBUF_LEN if bytestogo > RXBUF_LEN else bytestogo
-            loop_time = time.clock()
+            loop_time = time.perf_counter()
             data += skt.recv(rxbuf)
             bytestogo = args.filesize - len(data)
 
