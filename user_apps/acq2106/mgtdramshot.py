@@ -159,6 +159,8 @@ def host_pull(args, uut, shot):
             first_run = False
 
         if args.save_data == 1:
+            if args.overwrite:
+                shot = 0
             fn = "./{}/{:04d}.dat".format(uut_name, shot)
             make_data_dir(uut_name, 0)
             buffer.tofile(fn)
@@ -398,6 +400,7 @@ def get_parser():
                         help='Whether or not to save data to a file in 4MB chunks. Default: 1')
     parser.add_argument('--shot', type=int, default=None, help="set a shot number")
     parser.add_argument('--twa', type=int, default=None, help="trigger_when_armed")
+    parser.add_argument('--overwrite', type=int, default=0, help="0: new file per shot 1: same file per shot")
 
     parser.add_argument('--logprint', type=int, default=1,
                               help='1: Print log messages. '
