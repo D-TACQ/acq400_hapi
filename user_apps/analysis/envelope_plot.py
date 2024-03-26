@@ -63,12 +63,15 @@ def run_main(args):
 #    plt.plot(freq[rmax], rootsq[rmax])
 #    plt.show()
 
-    freq = np.linspace(1, 2000000, 100000)[rmax]
+    print(f'raw.shape {raw.shape}')
+    print(f'len(raw) {len(raw)}')
+    freq = np.linspace(1, int(args.fmax), len(raw))[rmax]
     db = np.multiply(np.log(rootsq[rmax]), 20)
     zerodb = np.mean(db[:100])
     db = np.subtract(db, zerodb)
 #    plt.plot(freq[rmax], db)
 #    plt.show()
+
 
     print(f'length db {len(db)}')
     three_dbs = np.where(db.astype(int) == -3)
@@ -94,7 +97,7 @@ def run_main(args):
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Plot Envelope of frequency sweep')
-    parser.add_argument('--fmax', default=2e6, help='frequency at maximum of plot')
+    parser.add_argument('--fmax', type=float, default=2e6, help='frequency at maximum of plot')
     parser.add_argument('--coeffs', default='default', help='name of coefficient set')
     parser.add_argument('data', nargs=1, help='data file to plot')
     return parser
