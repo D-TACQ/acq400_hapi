@@ -35,3 +35,4 @@ from .utils import timing
 from .afhba404 import *
 from .agilent33210 import Agilent33210A
 from .propellor import *
+from .acq400_logger import acq400_logger
