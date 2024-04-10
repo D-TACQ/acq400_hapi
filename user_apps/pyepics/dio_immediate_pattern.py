@@ -1,21 +1,28 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 import argparse
 import time
 import epics
 import socket
 import re
 
+
 def play_pattern(args):
     uut = args.uut
     site = args.site
 
     print(f'play_pattern() {uut}:{site}')
-
-    dio_mode = epics.PV(f"{uut}:{site}:DIO:MODE").get(as_string=True)
-    print(dio_mode)
-    if dio_mode != 'IMM':
-        print("WARNING: DIO not in IMMediate mode, abort")
-        return -1
+  
+    dio_mode = epics.PV(f"{uut}:{site}:DIO:MODE")
+    dio_mode_value = dio_mode.get(as_string=True)
+    print(dio_mode_value)
+    if dio_mode_value != 'IMM':
+        print("WARNING: DIO not in IMMediate mode, attempt to set")
+        dio_mode.put("IMM", wait=True)
+        time.sleep(2)
+        dio_mode_value = dio_mode.get(as_string=True)
+        if dio_mode_value != 'IMM':
+            print("WARNING: DIO not in IMMediate mode, abort")
+            return -1
 
 
     eight_bits = [epics.PV(f"{uut}:{site}:IMM:DO:BYTE1.B{b}") for b in range(0, 8)]
