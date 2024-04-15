@@ -482,6 +482,33 @@ class Acq400:
         Acq400.uuts_methods[_uut] = self.__dict__   # store the dict for reuse by __init__
         Acq400.uuts[_uut] = self                    # store the object for reuse by factory()
 
+    def get_sys_info(self):
+        """Gets uut system information
+
+        Returns:
+            str: system info
+        """
+        line = "{: <6}{: <16}{: <35}{: <16}\n"
+        from datetime import datetime
+        info = ""
+        info += "="*72 + "\n"
+        info += datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n\n"
+        info += "FPGA: {}\n".format(self.s0.fpga_version)
+        info += "FW:   {}\n\n".format(self.s0.software_version)
+        info += "MB Info:\n"
+        info += "{: <57}{: <16}\n".format("MODEL", "SERIAL")
+        info += "{: <57}{: <16}\n\n".format(self.s0.MODEL, self.s0.SERIAL)
+        info += "-" * 72 + "\n\n"
+        info += "Site Info:\n"
+        info += line.format("SITE", "MODEL", "PART_NUM", "SERIAL")
+        for site in self.sites:
+            info += line.format(site,
+                                self.svc["s{}".format(site)].MODEL,
+                                self.svc["s{}".format(site)].PART_NUM,
+                                self.svc["s{}".format(site)].SERIAL)
+        info += "="*72
+        return info
+
     def close(self):
         """Closes uut connection gracefully"""
         self.statmon.quit_reqested = True
@@ -1427,8 +1454,6 @@ def activepv(_pv):
     return int(float(pv(_pv))) > 0
 
 
-
-
 class Acq2106(Acq400):
     """Acq2106 specialization of Acq400
 
@@ -1523,32 +1548,7 @@ class Acq2106(Acq400):
             return pps0 != pps1
 
 
-    def get_sys_info(self):
-        """Gets uut system information
 
-        Returns:
-            str: system info
-        """
-        line = "{: <6}{: <16}{: <35}{: <16}\n"
-        from datetime import datetime
-        info = ""
-        info += "="*72 + "\n"
-        info += datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n\n"
-        info += "FPGA: {}\n".format(self.s0.fpga_version)
-        info += "FW:   {}\n\n".format(self.s0.software_version)
-        info += "MB Info:\n"
-        info += "{: <57}{: <16}\n".format("MODEL", "SERIAL")
-        info += "{: <57}{: <16}\n\n".format(self.s0.MODEL, self.s0.SERIAL)
-        info += "-" * 72 + "\n\n"
-        info += "Site Info:\n"
-        info += line.format("SITE", "MODEL", "PART_NUM", "SERIAL")
-        for site in self.sites:
-            info += line.format(site,
-                                self.svc["s{}".format(site)].MODEL,
-                                self.svc["s{}".format(site)].PART_NUM,
-                                self.svc["s{}".format(site)].SERIAL)
-        info += "="*72
-        return info
 
 class Acq2106_Mgtdram8(Acq2106):
     """Mgtdram8 specialization of Acq2106
@@ -1645,8 +1645,10 @@ def factory(_uut):
     s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
 
     acq2106_models = ('acq2106', 'acq2206', 'z7io')
+    model = s0.MODEL
 
-    if not s0.MODEL.startswith(acq2106_models):
+
+    if not model.startswith(acq2106_models):
         return Acq400(_uut, s0_client=s0)
 
     # here with acq2106
