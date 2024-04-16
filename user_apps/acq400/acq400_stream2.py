@@ -119,6 +119,8 @@ def run_stream(args):
         args.filesize = args.totaldata
 
     data_file = None
+    current_fname = None
+    time_left0 = 0
 
     while time.time() < (start_time + args.runtime) and data_len_so_far < args.totaldata:
 
@@ -139,14 +141,19 @@ def run_stream(args):
             root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
             make_data_dir(root, args.verbose)
         if data_file == None:
-            data_file = open("{}/{:04d}".format(root, file_num), "wb")
+            current_fname = f'{root}/{file_num:04d}'
+            data_file = open(current_fname, "wb")
         data_file.write(data)
 
-        if args.verbose == 1:
-            print("New data file written.")
-            print("Data Transferred: ", data_len_so_far, "KB")
-            print("Streaming time remaining: ", -1 * (time.time() - (start_time + args.runtime)))
-            print("\n" * 2)
+        if args.verbose:
+            time_left = -1 * (time.time() - (start_time + args.runtime))
+            if time_left0 == 0:
+                time_left0 = time_left
+            if args.verbose > 1:
+                print(f'Data {data_len_so_far} KB, time remaining {time_left:.2f} s')
+            elif time_left0 - time_left > 0.5:
+                time_left0 = time_left
+                print(".", end='', flush=True)
 
         if args.es_stream == 1:
             if np.frombuffer(data, dtype=np.uint32)[2] == np.uint32(0xaa55f152):
@@ -163,6 +170,12 @@ def run_stream(args):
             data_file.close()
             data_file = None
             new_file_flag = False
+    if args.verbose:
+        print()
+
+    if args.verbose >= 1 and current_fname is not None:
+        (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(current_fname)
+        print(f'File {current_fname} length {size} mtime {time.ctime(mtime)}')
 
 
 def get_parser():
