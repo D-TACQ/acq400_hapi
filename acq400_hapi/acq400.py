@@ -1454,6 +1454,8 @@ def activepv(_pv):
     return int(float(pv(_pv))) > 0
 
 
+
+
 class Acq2106(Acq400):
     """Acq2106 specialization of Acq400
 
@@ -1485,14 +1487,23 @@ class Acq2106(Acq400):
             sn_map += (('cC', AcqSites.SITE_CC), )
         if has_dsp:
             sn_map += (('s14', AcqSites.SITE_DSP),)
+
         if has_hudp:
-            sn_map += (('s10', AcqSites.SITE_HUDP), )
+            hudp_sites = [int(x) for x in s0_client.has_hudp.split(',')]
+            for site in hudp_sites:
+                sn_map += ((f's{site}', site),)
+
         for ( service_name, site ) in sn_map:
             try:
                 self.svc[service_name] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
             except socket.error:
                 print("uut {} site {} not populated".format(_uut, site))
             self.mod_count += 1
+
+        if has_hudp:
+            self.hudp_sites = [ self.svc[f's{site}'] for site in hudp_sites ]
+        else:
+            self.hudp_sites = 'none'
 
     def get_mgt_site(self, mgt):
         """gets mgt site str from num
@@ -1600,6 +1611,14 @@ class Acq2106_TIGA(Acq2106):
         self.svc["s{}".format(site)].set_knob("DO_{}".format(dox), value)
 
 
+class Acq1102(Acq2106):
+    # retain s10 for back compatibility, new apps should use self.hudp_sites[0|1]
+    def __init__(self, _uut, monitor=True, s0_client=None, has_dsp=False, has_comms=True, has_wr=False, has_hudp=False):
+        Acq2106.__init__(self, _uut, monitor, s0_client, has_dsp, has_comms, has_wr, has_hudp)
+        if has_hudp:
+            hudp_sites = [int(x) for x in s0_client.has_hudp.split(',')]
+            self.svc['s10'] = self.svc[f's{hudp_sites[0]}']
+
 def run_unit_test():
     SERVER_ADDRESS = '10.12.132.22'
     if len(sys.argv) > 1:
@@ -1644,7 +1663,7 @@ def factory(_uut):
 
     s0 = netclient.Siteclient(_uut, AcqPorts.SITE0)
 
-    acq2106_models = ('acq2106', 'acq2206', 'z7io')
+    acq2106_models = ('acq2106', 'acq2206', 'z7io', 'acq1102')
     model = s0.MODEL
 
 
@@ -1652,37 +1671,42 @@ def factory(_uut):
         return Acq400(_uut, s0_client=s0)
 
     # here with acq2106
+    try:
+        if  s0.is_tiga != "none":
+            return Acq2106_TIGA(_uut, s0_client=s0)
+    except:
+        pass
 
     try:
-        if hasattr(s0, 'is_tiga') and s0.is_tiga != "none":
-            return Acq2106_TIGA(_uut, s0_client=s0)
-        if hasattr(s0, 'has_mgt') and hasattr(s0, 'has_mgtdram'):
-            if s0.has_mgt != "none" and s0.has_mgtdram != "none":
-                return Acq2106_Mgtdram8(_uut, s0_client=s0)
-
-        has_dsp = False
-        if hasattr(s0, 'has_dsp'):
-            has_dsp = s0.has_dsp != "none"
-
-        has_wr = False
-        if hasattr(s0, 'has_wr'):
-            has_wr = s0.has_wr != "none"
-
-        has_sfp = False
-        if hasattr(s0, 'has_mgt'):
-            has_sfp = s0.has_mgt != "none"
-
-        has_hudp = False
-        if hasattr(s0, 'has_hudp'):
-            has_hudp = s0.has_hudp != "none"
-
-        return Acq2106(_uut, s0_client=s0,  has_dsp=has_dsp, has_comms=has_sfp, has_wr=has_wr, has_hudp=has_hudp)
+        has_sfp = s0.has_mgt != "none"
     except:
-        ''' nothing special, make it a default class with existing s0
-        '''
-        print("Factory method encountered a problem. Most likely target system"
-              "\nFW is older than necessary. Using default acq2106 settings.\n")
-        return Acq2106(_uut, s0_client=s0)
+        has_sfp = False
+
+    try:
+        if has_sfp and s0.has_mgtdram != "none":
+            return Acq2106_Mgtdram8(_uut, s0_client=s0)
+    except:
+        pass
+
+    try:
+        has_dsp = s0.has_dsp != "none"
+    except:
+        has_dsp = False
+
+    try:
+        has_wr = s0.has_wr != "none"
+    except:
+        has_wr = False
+
+    try:
+        has_hudp = s0.has_hudp != "none"
+    except:
+        has_hudp = False
+
+    if (model.startswith('acq1102')):
+        return Acq1102(_uut, s0_client=s0, has_dsp=has_dsp, has_comms=has_sfp, has_wr=has_wr, has_hudp=has_hudp)
+    else:
+        return Acq2106(_uut, s0_client=s0,  has_dsp=has_dsp, has_comms=has_sfp, has_wr=has_wr, has_hudp=has_hudp)
 
 def get_hapi():
     ''' find instance of hapi '''
