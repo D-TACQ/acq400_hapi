@@ -1,0 +1,15 @@
+15=ch_raw,fmt=SC
+1=ch_egu,fmt=CH01(v)
+14=ch_bf,0x10000000,fmt=TRG.d0
+14=ch_bf,0x00000001,fmt=PPW1
+2=ch_egu,fmt=CH02/PPW1
+14=ch_bf,0x00000002,fmt=PPW2
+3=ch_egu,fmt=CH03/PPW2
+#4=ch_egu,fmt=CH04
+#5=ch_egu,fmt=CH05
+#6=ch_egu,fmt=CH06
+#7=ch_egu,fmt=CH07
+#8=ch_egu,fmt=CH08
+16=ch_bf,0xffffffff,fmt=USEC
+17=ch_taiv
+
