@@ -559,16 +559,19 @@ class Acq400:
         return self.pre_samples() + self.post_samples()
 
     def get_aggregator_sites(self):
-        return self.s0.aggregator.split(' ')[1].split('=')[1].split(',')
+        try:
+            return self.s0.run0_log.split(' ')[1].split(',')
+        except:
+            return self.s0.aggregator.split(' ')[1].split('=')[1].split(',')
 
     def fetch_all_calibration(self):
         """Gets uut calibration and stores in instance"""
-#        print("Fetching calibration data")
-        self.cal_eslo = [0.]
-        self.cal_eoff = [0.]
-        for m in (self.modules[int(c)] for c in self.get_aggregator_sites()):
-            self.cal_eslo.extend(m.AI_CAL_ESLO.split(' ')[3:])
-            self.cal_eoff.extend(m.AI_CAL_EOFF.split(' ')[3:])
+        try:
+            for m in (self.modules[int(c)] for c in self.get_aggregator_sites()):
+                self.cal_eslo.extend(m.AI_CAL_ESLO.split(' ')[3:])
+                self.cal_eoff.extend(m.AI_CAL_EOFF.split(' ')[3:])
+        except:
+            pass
 
     def scale_raw(self, raw, volts=False):
         for (sx, m) in list(self.modules.items()):
@@ -600,6 +603,7 @@ class Acq400:
 
         eslo = float(self.cal_eslo[chan])
         eoff = float(self.cal_eoff[chan])
+
         if self.verbose > 1 or (self.verbose and chan < 4):
             print("chan {} v = {}*{} + {}".format(chan, raw[0], eslo, eoff))
 
