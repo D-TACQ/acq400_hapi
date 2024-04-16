@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-""" host_demux.py Demux Data on HOST Computer
 
-  - data is stored locally, either from mgtdram/ftp or fiber-optic AFHBA404
+""" host_demux.py Demux Data on HOST Computer
+  - data is stored locally, either from mgtdram, ftp or fiber-optic AFHBA404
   - channelize the data
   - optionally store file-per-channel
   - optionally plot in pykst if available
@@ -68,16 +68,16 @@ else iterate files in dir
     dir/nnnnn*
 
 TO DEMUX ON WINDOWS TO STORE CHANNELISED DATA:
-    python .\host_demux.py --save=1 --src="[dir]" --pchan=none acq2106_114
+    python host_demux.py --save=1 --src="[dir]" --pchan=none acq2106_114
 
-    Make sure that the muxed data is in D:\\[dir]\[UUT name]
+    Make sure that the muxed data is in D:\\[dir]\\[UUT name]
 
     Where [dir] is the location of the data.
 
-    Demuxed data will be written to D:\\demuxed\[UUT name]
+    Demuxed data will be written to D:\\demuxed\\[UUT name]
 
     To plot subsampled data on windows:
-        python .\host_demux.py --src=Projects --nchan=8 \
+        python host_demux.py --src=Projects --nchan=8 \
     --pchan 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16  --plot_mpl=1:1000:1 acq2106_120
 
 """
@@ -305,7 +305,7 @@ def plot_mpl(args, raw_channels):
         fig, p1 = plt.subplots()
         plots = (p1,)
 
-    fig.suptitle("{} src {}".format(args.uut, args.src))
+    fig.suptitle("UUT {} {}\nsrc {}".format(args.uut, args.pcfg if args.pcfg else '', args.src))
     xx = None
 
     for pln, ch_handler in enumerate(args.pc_list):
