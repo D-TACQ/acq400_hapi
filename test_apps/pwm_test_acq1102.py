@@ -30,7 +30,7 @@ pvput(':CLKDIV',     1)
 pvput(':DIO:ENABLE:clr', 1)
 
 
-for dx in range(1, MAXDX):
+for dx in range(1, MAXDX+1):
     ppw = f':PPW:{dx}'
     pvput(ppw+":TRG",        "TRG_BUS")    
     pvput(ppw+":TRG:DX",     "d0")    
