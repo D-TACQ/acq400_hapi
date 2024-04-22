@@ -4,15 +4,22 @@ import epics
 import sys
 import os
 
+uut = os.getenv("UUT")
+if not uut:
+    uut = os.getenv("IOC_HOST")
+
+if not uut:
+    print("ERROR: UUT not defined")
+    os._exit(1)
+
 uut="acq1001_653"
 site=int(os.getenv("SITE", "2"))
 STL=os.getenv("STL", "/usr/local/CARE/STL/mustang-v8-left.stl")
 TSCALE=int(os.getenv("TSCALE", "1"))
 MODE=os.getenv("MODE", "LOOPWAIT")
 
-# we appear to have to use ordinals here rather than values?
-#TRGDX=int(os.getenv("TRGDX", "1"))
-#EDGE=os.getenv("EDGE", "1")
+print(f"UUT:{uut} SITE:{site} MODE:{MODE} STL:{STL}")
+
 TRGDX = os.getenv("TRGDX", "d1")   # soft trigger
 EDGE  = os.getenv("EDGE", "rising")
 
@@ -28,11 +35,6 @@ edge = epics.PV(f"{uut}:{site}:TRG:SENSE")
 ln=0
 with open(STL, "r") as fp:
 	lines = fp.readlines()
-
-
-for line in lines:
-	ln += 1
-#	print(f'{ln:2}{line}', end='')
 
 lines.append(r"EOF\n")
 
