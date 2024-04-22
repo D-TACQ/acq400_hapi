@@ -1,0 +1,9 @@
+15=ch_raw,fmt=SC
+9=ch_raw,fmt=PC1
+10=ch_raw,fmt=PC2
+11=ch_raw,fmt=PC3
+12=ch_raw,fmt=PC4
+13=ch_raw,fmt=PC5
+16=ch_bf,0xffffffff,fmt=USEC
+17=ch_taiv
+
