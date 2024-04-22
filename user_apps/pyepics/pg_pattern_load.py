@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import time
 import epics
 import sys
@@ -49,7 +49,7 @@ stlpv.put(lines, wait=True)
 mode.put(MODE, wait=True)
 enpv.put(1, wait=True)
 
-
+epics.PV(f"{uut}:{site}:GPG:PULSE_DEF").put(os.path.basename(STL))
 
 
 
