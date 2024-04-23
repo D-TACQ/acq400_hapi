@@ -4,8 +4,15 @@ import epics
 import sys
 import os
 
-uut='acq1001_653'
-site='2'
+uut = os.getenv("UUT")
+if not uut:
+    uut = os.getenv("IOC_HOST")
+
+if not uut:
+    print("ERROR: UUT not defined")
+    os._exit(1)
+
+site=os.getenv("SITE", "2")
 SLEEP=float(os.getenv("SLEEP", "0.1"))
 EIGHTBITS=int(os.getenv("EIGHTBITS", 8))
 
