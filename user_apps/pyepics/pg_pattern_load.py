@@ -12,7 +12,6 @@ if not uut:
     print("ERROR: UUT not defined")
     os._exit(1)
 
-uut="acq1001_653"
 site=int(os.getenv("SITE", "2"))
 STL=os.getenv("STL", "/usr/local/CARE/STL/mustang-v8-left.stl")
 TSCALE=int(os.getenv("TSCALE", "1"))
