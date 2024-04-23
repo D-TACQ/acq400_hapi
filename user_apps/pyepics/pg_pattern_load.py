@@ -39,14 +39,14 @@ with open(STL, "r") as fp:
 lines.append(r"EOF\n")
 
 enpv.put(0, wait=True)
+tscale.put(TSCALE, wait=True)
+mode.put(MODE, wait=True)
 trg.put("enable", wait=True)
 trgdx.put(TRGDX, wait=True)
 edge.put(EDGE, wait=True)
 
-tscale.put(TSCALE, wait=True)
 stlpv.put(lines, wait=True)
 
-mode.put(MODE, wait=True)
 enpv.put(1, wait=True)
 
 epics.PV(f"{uut}:{site}:GPG:PULSE_DEF").put(os.path.basename(STL))
