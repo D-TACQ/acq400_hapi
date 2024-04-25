@@ -1437,6 +1437,11 @@ class Acq400:
                 self.slowmon_nc = None
             else:
                 print("slowmon_close(), sorry not possible to close it down ..")
+                
+    def __getitem__(self, site):
+        if type(site) == str and not site.isnumeric():
+            return self.svc[f"c{site}"]
+        return self.svc[f"s{site}"]
 
 def pv(_pv):
     return _pv.split(" ")[1]
