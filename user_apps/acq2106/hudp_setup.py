@@ -102,7 +102,7 @@ if sys.version_info < (3, 0):
     from builtins import input
 
 def hudp_init(args, uut, ip):
-    uut.s10.tx_ctrl = 9
+    uut.s10.tx_reset = 1
     uut.s10.ip = ip
     uut.s10.gw = args.gw
     uut.s10.netmask = args.netmask
@@ -114,7 +114,7 @@ def hudp_init(args, uut, ip):
         uut.s10.disco_en = 0
     
 def hudp_enable(uut):
-    uut.s10.tx_ctrl = 1
+    uut.s10.tx_reset = 0
 
 def init_arp_req(uut):
     uut.s10.arp_request = 1
