@@ -649,6 +649,7 @@ class Acq400:
             nsam = self.pre_samples()+self.post_samples()
         cc = ChannelClient(self.uut, AcqPorts.DATAT-AcqPorts.DATA0)
         ccraw = cc.read(nsam, data_size=1)
+        cc.close()
 
         if self.save_data:
             try:
