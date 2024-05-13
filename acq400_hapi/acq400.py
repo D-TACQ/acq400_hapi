@@ -694,7 +694,7 @@ class Acq400:
         #print ("uut_demux_enabled(): transient {} decoded DEMUX={} rc={}".format(ts, ts.split("DEMUX=",1)[1][0], rc))
         return rc
 
-    def read_channels(self, channels=(), nsam=0, localdemux=False):
+    def _read_channels_1(self, channels=(), nsam=0, localdemux=False):
         """read selected channels post shot data.
 
         uut_demux_enabled() == False: UUT did NOT demux the data, data order [sample][channel]
@@ -723,7 +723,6 @@ class Acq400:
         Returns:
             ndarray:  channel data
         """
-
         if channels == ():
             channels = list(range(1, self.nchan()+1))
         elif type(channels) == int:
@@ -780,6 +779,67 @@ class Acq400:
             chx = [ item for item in data ]
 
         return chx
+    
+    def _read_channels_2(self, channels=(), nsam=None, localdemux=None):
+        """read selected channels return post shot data.
+        
+            channels: ()        = return all channels demuxed
+            channels: 0         = return all channels muxed
+            channels: 1         = return specific channel
+            channels: (1,2,3)   = return specific channels
+            
+            Args:
+                channels (tuple/int, optional): Channels to read. Default all.
+                nsam (int, optional): Number of samples. Defaults to None.
+                localdemux (bool, optional): depreciated. Defaults to None.
+
+            Returns:
+                ndarray:  channel data
+        """
+        channels = (channels, ) if type(channels) == int else channels # convert int to tuple
+        no_demux = True if channels == (0,) else False # 0 means all channels no demux
+        
+        data_size = 4 if int(self.s0.data32) else 2
+        raw_data_size = int(self.s0.raw_data_size)
+        ch_data_size = int(self.s1.ch_data_size)
+        nchan = int(self.s0.NCHAN)
+        demuxed = raw_data_size < 1 # raw_data_size is 0 when data has been demuxed on uut
+        data = None
+        
+        if demuxed: #if data has been demuxed on uut
+            nsam = nsam if nsam else ch_data_size // data_size
+            for chan in range(1, nchan+1):
+                if len(channels) > 0 and chan not in channels:
+                    if not no_demux: continue
+                    
+                if self.trace: 
+                    print("%s CH%02d start.." % (self.uut, chan))
+                    start = timeit.default_timer()
+                
+                chan_data = self.read_chan(chan, nsam, data_size)
+                
+                if data is None: 
+                    data = chan_data.reshape(1,-1)
+                else: 
+                    data = np.vstack((data, chan_data))
+                
+                if self.trace:
+                    tt = timeit.default_timer() - start  
+                    print("%s CH%02d complete.. %.3f s %.2f MB/s" %
+                        (self.uut, chan, tt, len(chan_data)*data_size/1000000/tt))
+                
+            if no_demux: return data.T.reshape(1, -1) #return undo demuxand return all channels
+            return data #return specified channels
+        
+        else: #if data has NOT been demuxed on uut           
+            nsam = nsam if nsam else raw_data_size // data_size
+            data = self.read_chan(0, nsam, data_size)
+            if no_demux: return np.array([data]) #return all channels no demux
+            data = data.reshape(-1, nchan).transpose() #demux channels
+            if len(channels) > 0: return data[np.array(channels) - 1] #return specified channels
+            return data #return all channels
+        
+    read_channels = _read_channels_2
 
     def read_transient_timebase(self, nsamples, pre=0):
         try:
