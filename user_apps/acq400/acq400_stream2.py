@@ -88,7 +88,7 @@ def make_data_dir(directory, verbose):
 
 def run_stream(args):
     remove_stale_data(args)
-    uut = acq400_hapi.Acq400(args.uuts[0])
+    uut = acq400_hapi.Acq400(args.uuts[0], monitor=False)
     data_len_so_far = 0
     RXBUF_LEN = 4096
     cycle = 1
@@ -102,7 +102,7 @@ def run_stream(args):
         uut.s0.CONTINUOUS = "0"
         uut.s0.CONTINUOUS = "1"
     else:
-        port = args.port
+        port = int(args.port)
 
     skt = socket.socket()
     skt.connect((args.uuts[0], port))
