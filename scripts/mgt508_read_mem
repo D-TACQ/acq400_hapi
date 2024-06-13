@@ -1,8 +1,16 @@
 #!/usr/bin/bash
 
 echo mgt508_read_mem MGT=$1 GB=$2
+
+one_file() {
 nc $1 2210 | pv > $1.dat
 ls -l $1.dat
+}
 
+many_files() {
+./user_apps/acq400/acq400_stream2.py --filesize=128M --totaldata ${G2}G --port 2210 --verbose 1 $1
+}
 
+#one_file $1 $2
+many_files $1 $2
 

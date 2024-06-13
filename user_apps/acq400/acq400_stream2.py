@@ -149,11 +149,11 @@ def run_stream(args):
             time_left = -1 * (time.time() - (start_time + args.runtime))
             if time_left0 == 0:
                 time_left0 = time_left
-            if args.verbose > 1:
-                print(f'Data {data_len_so_far} KB, time remaining {time_left:.2f} s')
             elif time_left0 - time_left > 0.5:
                 time_left0 = time_left
-                print(".", end='', flush=True)
+
+            if args.verbose > 1:
+                print(f'Data {data_len_so_far} KB, time remaining {time_left:.2f} s')
 
         if args.es_stream == 1:
             if np.frombuffer(data, dtype=np.uint32)[2] == np.uint32(0xaa55f152):
@@ -170,6 +170,9 @@ def run_stream(args):
             data_file.close()
             data_file = None
             new_file_flag = False
+            if args.verbose:
+                print(f'{current_fname} len {os.path.getsize(current_fname)//0x100000} MB')
+
     if args.verbose:
         print()
 
