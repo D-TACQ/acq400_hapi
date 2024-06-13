@@ -171,7 +171,9 @@ def run_stream(args):
             data_file = None
             new_file_flag = False
             if args.verbose:
-                print(f'{current_fname} len {os.path.getsize(current_fname)//0x100000} MB')
+                file_mb = os.path.getsize(current_fname)//0x100000
+                total_gb = data_len_so_far/0x40000000
+                print(f'{current_fname} len {file_mb} MB total {total_gb:.1f} GB')
 
     if args.verbose:
         print()
