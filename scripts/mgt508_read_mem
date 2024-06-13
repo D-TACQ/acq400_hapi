@@ -1,5 +1,8 @@
 #!/usr/bin/bash
 
-echo mgt508_read_mem $1 $2 STUB
+echo mgt508_read_mem MGT=$1 GB=$2
+nc $1 2210 | pv > $1.dat
+ls -l $1.dat
+
 
 
