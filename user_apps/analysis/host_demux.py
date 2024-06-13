@@ -217,7 +217,7 @@ def read_data(args, NCHAN):
             else:
                 data = np.append(data, np.fromfile(blkfile, dtype=args.np_data_type))
 
-
+            print(f"hello data {len(data)}")
 
             iblock += 1
             if iblock < GROUP:
