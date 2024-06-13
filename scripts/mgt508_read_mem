@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+
+echo mgt508_read_mem $1 $2 STUB
+
+

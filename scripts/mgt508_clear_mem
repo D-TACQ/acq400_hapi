@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+
+pv < /dev/zero | nc $1 2211
+

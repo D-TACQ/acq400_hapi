@@ -356,7 +356,7 @@ class NullFilter:
 null_filter = NullFilter()
 
 class ProcessMonitor:
-    st_rex = ( re.compile(r"^END" ), re.compile(r"^real"))
+    st_rex = ( re.compile(r"^END" ), re.compile(r"^real"), re.compile(r"^finished"))
 
     def st_monitor(self):
         while self.quit_requested == False:
@@ -1631,7 +1631,63 @@ class Acq2106(Acq400):
             pps1 = self.cC.WR_PPS_COUNT.split(' ')[1]
             return pps0 != pps1
 
+        if data_size == None:
+            data_size = 4 if self.s0.data32 == '1' else 2
 
+        if chan == 0:
+            nsam = int(self.s0.raw_data_size) // data_size
+        if chan != 0 and nsam == 0:
+            nsam = self.pre_samples()+self.post_samples()
+
+        cc = ChannelClient(self.uut, chan)
+        ccraw = cc.read(nsam, data_size=data_size)
+        cc.close()
+        if self.save_data:
+            try:
+                os.makedirs(self.save_data)
+            except OSError as exception:
+                if exception.errno != errno.EEXIST:
+                    raise
+
+            with open("%s/%s_CH%02d" % (self.save_data, self.uut, chan), 'wb') as fid:
+                ccraw.tofile(fid, '')
+
+        return ccraw
+
+class Mgt508Ports:
+    READ = 2210
+    WRITE = 2211
+    PULL = 2212
+
+GB=0x40000000
+
+class DotFilter:
+    def __init__(self):
+        self.ii = 0
+
+    def __call__ (self, st):
+        self.ii += 1
+        pc = '|' if self.ii%10 == 0 else '.'
+        print(pc, end=('\n' if self.ii%80 == 0 else ''), flush=True)
+
+class Mgt508(Acq400):
+    def __init__(self, uut):
+        Acq400.__init__(self, uut, monitor=False)
+
+    def pull(self, verbose=False):
+        _filter = NullFilter() if verbose else DotFilter()
+        pm = ProcessMonitor(self, Mgt508Ports.PULL, _filter, set_arm=False)
+        print()
+        while pm.quit_requested != True:
+            time.sleep(1)
+
+    def set_capture_length(self, mb):
+        bblen = int(self.s0.bb_len)
+        max_buffers = int(self.s0.max_buffers)
+        buffer_count = mb*0x100000//bblen + 1
+        if buffer_count > max_buffers:
+            buffer_count = max_buffers
+        self.s0.buffer_count = max_buffers
 
 
 class Acq2106_Mgtdram8(Acq2106):
