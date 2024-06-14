@@ -19,6 +19,7 @@ import argparse
 import time
 import subprocess
 import threading
+from acq400_hapi import timing as timing
 
 def configure_acq(args, acq):
     acq.s1.simulate = args.simulate
@@ -32,10 +33,12 @@ def pull(mgt):
 def configure_mgt(args, mgt):
     mgt.set_capture_length(args.GB*0x400)
 
+@timing
 def clear_mem(args, mgt):
     result = subprocess.run(['./scripts/mgt508_clear_mem', mgt.uut])
     print(f'Return code : {result.returncode}')
 
+@timing
 def read_data(args, mgt):
     if args.simulate:
         result = subprocess.run(['./scripts/mgt508_validate_mem', mgt.uut, str(args.GB)])
@@ -47,7 +50,7 @@ def start_pull(args, mgt):
     args.pull_thread = threading.Thread(target=pull, args=(mgt,))
     args.pull_thread.start()
 
-
+@timing
 def wait_pull_complete(args, mgt):
     args.pull_thread.join()
     print()
