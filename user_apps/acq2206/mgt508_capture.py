@@ -22,12 +22,17 @@ import threading
 from acq400_hapi import timing as timing
 
 def configure_acq(args, acq):
+    while acq400_hapi.pv(acq.s0.CONTINUOUS_STATE) != 'IDLE':
+            acq.s0.CONTINUOUS = 0
+            print(f'WARNING: requesting {acq.uut} to stop')
+            time.sleep(1)
+
     acq.s1.simulate = args.simulate
 
 GB1 = 0x40000000
 
 def pull(mgt):
-    print(f"this is pull {mgt.uut}")
+    print(f"Start pull {mgt.uut}")
     mgt.pull()
 
 def configure_mgt(args, mgt):
@@ -54,7 +59,9 @@ def start_pull(args, mgt):
 def wait_pull_complete(args, mgt):
     args.pull_thread.join()
     print()
-    print('wait_pull_complete:99')
+    print('Pull Complete')
+    if mgt.capture_time:
+        print(f'Capture {mgt.capture_blocks} time {mgt.capture_time:.2} sec {mgt.capture_blocks*32/mgt.capture_time:.0f} MB/s')
     
 def start_acq(args, acq):
     acq.s0.CONTINUOUS = 'start'
