@@ -44,9 +44,10 @@ def clear_mem(args, mgt):
     print(f'Return code : {result.returncode}')
 
 @timing
-def read_data(args, mgt):
+def read_data(args, acq, mgt):
     if args.simulate:
-        result = subprocess.run(['./scripts/mgt508_validate_mem', mgt.uut, str(args.GB)])
+        cols = int(acq.s0.ssb)//4
+        result = subprocess.run(['./scripts/mgt508_validate_mem', mgt.uut, str(args.GB), str(cols) ])
     else:
         result = subprocess.run(['./scripts/mgt508_read_mem', mgt.uut, str(args.GB)])
     print(f'Return code : {result.returncode}')
@@ -83,7 +84,7 @@ def run_pair(args, acq, mgt):
     wait_pull_complete(args, mgt)
     stop_acq(args, acq)
 
-    read_data(args, mgt)
+    read_data(args, acq, mgt)
     
 
 

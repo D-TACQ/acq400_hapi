@@ -1,6 +1,10 @@
 #!/usr/bin/bash
 
-echo mgt508_read_mem $1 $2 STUB
-time echo done | nc $1 2210 | pv | isramp -m 8 -c 0 -p 500 -i 1
+UUT=$1
+GB=$2
+MAXCOLS=$3
+
+echo mgt508_read_mem $UUT $GB $MAXCOLS
+time echo done | nc $UUT 2210 | pv | isramp -m $MAXCOLS -c 0 -p 500 -i 1
 
 
