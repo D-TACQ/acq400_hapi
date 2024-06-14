@@ -1662,21 +1662,34 @@ class Mgt508Ports:
 GB=0x40000000
 
 class DotFilter:
-    def __init__(self):
+    def __init__(self, mgt, verbose=1):
+        self.mgt = mgt
         self.ii = 0
+        self.ts = 0
+        self.block_re = r'([0-9]+) ([0-9a-f]+) ([0-9a-f]+)'
 
     def __call__ (self, st):
-        self.ii += 1
-        pc = '|' if self.ii%10 == 0 else '.'
-        print(pc, end=('\n' if self.ii%80 == 0 else ''), flush=True)
+        if st.startswith('DMA has started'):
+            self.ts = time.time()
+        if st.startswith('closed'):
+            te = time.time()
+            self.mgt.capture_time = te-self.ts
+        if re.match(self.block_re, st):
+            self.ii += 1
+            pc = '|' if self.ii%10 == 0 else '.'
+            print(pc, end=('\n' if self.ii%80 == 0 else ''), flush=True)
+            self.mgt.capture_blocks += 1
 
 class Mgt508(Acq400):
     def __init__(self, uut):
         Acq400.__init__(self, uut, monitor=False)
+        self.filter = DotFilter(self)
+        self.capture_time = 0
+        self.capture_blocks = 0
 
     def pull(self, verbose=False):
-        _filter = NullFilter() if verbose else DotFilter()
-        pm = ProcessMonitor(self, Mgt508Ports.PULL, _filter, set_arm=False)
+        self.filter.verbose = verbose
+        pm = ProcessMonitor(self, Mgt508Ports.PULL, self.filter, set_arm=False)
         print()
         while pm.quit_requested != True:
             time.sleep(1)
