@@ -8,7 +8,7 @@ ls -l $1.dat
 }
 
 many_files() {
-./user_apps/acq400/acq400_stream2.py --filesize=128M --totaldata ${G2}G --port 2210 --verbose 1 $1
+./user_apps/acq400/acq400_stream2.py --filesize=128M --totaldata ${2}G --port 2210 --verbose 1 $1
 }
 
 #one_file $1 $2
