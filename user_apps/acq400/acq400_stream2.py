@@ -85,12 +85,38 @@ def make_data_dir(directory, verbose):
             print("Tried to create dir but dir already exists")
         pass
 
+def calc_file_size(args, uut):
+    rxbuf_len = 4096
+
+    if not args.ssb > 0:
+        try:
+            ssb = int(uut.s0.ssb)
+            if ssb == 0:
+                print('remote ssb set 0, please set remote ssb or --ssb=N')
+                os.exit(1)
+        except:
+            print('sample size in bytes unknown, please set --ssb=N')
+            os.exit(1)
+
+    if args.es_stream:
+        nchan = uut.s0.NCHAN
+        rxbuf_len  = int(ssb)
+
+    print(f'type args.filesize {type(args.filesize)}')
+    if args.filesize > args.totaldata:
+        args.filesize = args.totaldata
+
+    filesize = (args.filesize//ssb)*ssb
+    if filesize != args.filesize:
+        print(f'fixing file size to be an integer # samples: {filesize} ({filesize/ssb:.1f})')
+        args.filesize = filesize
+    return rxbuf_len
 
 def run_stream(args):
     remove_stale_data(args)
     uut = acq400_hapi.Acq400(args.uuts[0], monitor=False)
     data_len_so_far = 0
-    RXBUF_LEN = 4096
+    RXBUF_LEN = calc_file_size(args, uut)
     cycle = 1
     root = args.root + args.uuts[0] + "/" + "{:06d}".format(cycle)
     file_num = 0
@@ -109,15 +135,6 @@ def run_stream(args):
     make_data_dir(root, args.verbose)
     start_time = time.time()
     data_length = 0
-
-    if args.es_stream:
-        nchan = uut.s0.NCHAN
-        ssb = uut.s0.ssb
-        RXBUF_LEN = int(ssb)
-
-    if args.filesize > args.totaldata:
-        args.filesize = args.totaldata
-
     data_file = None
     current_fname = None
     time_left0 = 0
@@ -188,6 +205,7 @@ def get_parser():
     parser.add_argument('-filesize', '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
     parser.add_argument('--files_per_cycle', type=int, default=100, help="set files per cycle directory")
     parser.add_argument('-totaldata', '--totaldata', default=sys.maxsize, action=acq400_hapi.intSIAction, decimal = False)
+    parser.add_argument('--ssb', default=0, type=int, help="declare sample size in bytes (else query)")
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=sys.maxsize, type=int, help="How long to stream data for")
     parser.add_argument('--es_stream', default=0, type=int, help="Stream with ES. New file is used for each ES.")
