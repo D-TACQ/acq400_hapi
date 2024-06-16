@@ -69,10 +69,16 @@ from builtins import input
 
 
 def remove_stale_data(args):
-    if os.path.exists(args.root + args.uuts[0]):
-        answer = input("Stale data detected. Delete all contents in " + args.root + str(args.uuts[0]) + "? y/n ")
-        if answer == "y":
+    answer = None
+    data_root = args.root + args.uuts[0]
+    if os.path.exists(data_root):
+        if args.delete != 'y':
+            answer = input(f'Stale data detected. Delete all contents in " + {data_root} + "? y/n ')
+
+        if answer == 'y' or args.delete == 'y':
+            print(f'removing old data from {data_root}')
             shutil.rmtree(args.root + args.uuts[0])
+            print(f'{data_root} clean')
         else:
             pass
 
@@ -102,7 +108,6 @@ def calc_file_size(args, uut):
         nchan = uut.s0.NCHAN
         rxbuf_len  = int(ssb)
 
-    print(f'type args.filesize {type(args.filesize)}')
     if args.filesize > args.totaldata:
         args.filesize = args.totaldata
 
@@ -205,6 +210,7 @@ def get_parser():
     parser.add_argument('-filesize', '--filesize', default=0x100000, action=acq400_hapi.intSIAction, decimal=False)
     parser.add_argument('--files_per_cycle', type=int, default=100, help="set files per cycle directory")
     parser.add_argument('-totaldata', '--totaldata', default=sys.maxsize, action=acq400_hapi.intSIAction, decimal = False)
+    parser.add_argument('--delete', default='n', help='set y to delete old data without question')
     parser.add_argument('--ssb', default=0, type=int, help="declare sample size in bytes (else query)")
     parser.add_argument('--root', default="", type=str, help="Location to save files. Default dir is UUT name.")
     parser.add_argument('--runtime', default=sys.maxsize, type=int, help="How long to stream data for")
