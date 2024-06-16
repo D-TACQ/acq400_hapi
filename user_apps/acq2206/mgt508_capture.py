@@ -29,6 +29,22 @@ def configure_acq(args, acq):
 
     acq.s1.simulate = args.simulate
 
+    sites = None
+    spad  = None
+    agg = acq.s0.aggregator
+    for kv in agg.split(' '):
+        key, value = kv.split('=')
+        if key == 'sites':
+            sites = value
+        if key == 'spad':
+            spad = value.split(',')[0]
+
+    if sites is None or spad is None:
+        print(f'unable to parse aggregator {agg}')
+        os.exit(1)
+    acq.cA.aggregator = f'sites={sites} spad={spad} on'
+    args.ssb = acq.s0.ssb
+
 GB1 = 0x40000000
 
 def pull(mgt):
@@ -37,6 +53,7 @@ def pull(mgt):
 
 def configure_mgt(args, mgt):
     mgt.set_capture_length(args.GB*0x400)
+    mgt.s0.ssb = args.ssb
 
 @timing
 def clear_mem(args, mgt):
