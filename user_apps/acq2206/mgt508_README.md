@@ -1,6 +1,6 @@
 # README for MGT508
 
- # Typical transcript
+ ## Typical transcript
 
 ```
 peter@danna:~/PROJECTS/acq400_hapi$ ./user_apps/acq2206/mgt508_capture.py --simulate=0 --GB=4 --clear_mem=0 acq2206_055,mgt508-003
@@ -54,8 +54,8 @@ Return code : 0
 TIMING:func:'read_data' took: 37.10 sec
 
 ```
- # Annotated Transcript
-  # --help
+ ### Annotated Transcript
+  #### --help
 ```
 peter@danna:~/PROJECTS/acq400_hapi$ ./user_apps/acq2206/mgt508_capture.py --help
 usage: mgt508_capture.py [-h] [--simulate SIMULATE] [--clear_mem CLEAR_MEM] [--GB GB] uut_pairs [uut_pairs ...]
@@ -72,7 +72,7 @@ options:
                         zero memory before run
   --GB GB               capture length in gigabytes
  ```
-  # transcript
+  #### transcript
 ```
 Capture 4GB data from  acq2206_055 and mgt508-003
 First there's a long delay while the system readies itself (from power up, with 6xACQ480), 40s).
@@ -112,8 +112,11 @@ TIMING:func:'read_data' took: 37.10 sec
 ```
 
 
- # 14GB simulation run with validation;
+ ## 14GB simulation run with validation;
 
+```
+Shows a 14GB run with offload and validation at full line rate 112MB/s
+```
 ```
 peter@danna:~/PROJECTS/acq400_hapi$ ./user_apps/acq2206/mgt508_capture.py --simulate=1 --GB=14 --clear_mem=0 acq2206_055,mgt508-003
 uut_pairs: ['acq2206_055,mgt508-003']
