@@ -80,6 +80,7 @@ Then we see a data pattern, these are capture DMA buffers, each 32MB long. eg
 .........| == 320MB
 The actual capture, 4GB takes 2.2s
 ```
+```
 peter@danna:~/PROJECTS/acq400_hapi$ ./user_apps/acq2206/mgt508_capture.py --simulate=0 --GB=4 --clear_mem=0 acq2206_055,mgt508-003
 uut_pairs: ['acq2206_055,mgt508-003']
 Start pull mgt508-003
@@ -93,6 +94,7 @@ TIMING:func:'wait_pull_complete' took: 42.60 sec
 ```
 Next we offload the data to a series of files. This is the same process as live Ethernet streaming, except of course now the data is stored in DRAM in MGT508.
 Example shows 4GB stored to disck in 37s por 108MB/s:
+```
 ```
 mgt508_read_mem MGT=mgt508-003 GB=4
 removing old data from mgt508-003
@@ -147,4 +149,14 @@ Return code : 0
 TIMING:func:'read_data' took: 127.94 sec
 
 ```
+ ## Deferred work scripts
+ * mgt508_capture.py defers work to 3 scripts:
+  1. scripts/mgt508_clear_mem   # optionally, clear the DRAM on MGT508 (not needed in normal operation)
+  2. scripts/mgt508_read_mem    # uses acq400_stream2.py to read data to a series of consecutive files
+  3. scripts/mgt508_validate_mem # uses isramp, a C++ program from AFHBA404/FUNCTIONAL_TESTS to validate the data.
+  
+  ## End
+  
+  
+ 
 

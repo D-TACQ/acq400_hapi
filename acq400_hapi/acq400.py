@@ -1695,12 +1695,12 @@ class Mgt508(Acq400):
             time.sleep(1)
 
     def set_capture_length(self, mb):
-        bblen = int(self.s0.bb_len)
+        bb_len = int(self.s0.bb_len)
         max_buffers = int(self.s0.max_buffers)
-        buffer_count = mb*0x100000//bblen + 1
+        buffer_count = mb*0x100000//bb_len + 1
         if buffer_count > max_buffers:
             buffer_count = max_buffers
-        self.s0.buffer_count = max_buffers
+        self.s0.buffer_count = buffer_count
 
 
 class Acq2106_Mgtdram8(Acq2106):
