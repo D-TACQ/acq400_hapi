@@ -110,6 +110,11 @@ File mgt508-003/000001/0032 length 0 mtime Mon Jun 17 10:29:23 2024
 Return code : 0
 TIMING:func:'read_data' took: 37.10 sec
 ```
+ ## Data Plot Example
+```
+~/PROJECTS/acq400_hapi$ ./user_apps/analysis/host_demux.py --src mgt508-003/000001/0000 --pchan 1,3,9,10,11,13,15  --egu=1 --pses=0:2000:1 acq2206_055 &
+```
+![plot result](https://github.com/D-TACQ/acq400_hapi/releases/download/v2.14.1/Screenshot.from.2024-06-17.08-52-23.png)
 
 
  ## 14GB simulation run with validation;
