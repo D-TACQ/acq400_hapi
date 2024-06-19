@@ -433,6 +433,18 @@ def cook_data(args, raw_channels):
 
     return clidata
 
+def map_from_embedded_cmap(args, raw_data):
+    try:
+        cmap = [ int(ch0) for ch0 in args.the_uut.s0.channel_mapping.split(',') ]
+        print(cmap)
+
+        r2 = []
+        for i1 in cmap:
+            r2.append(raw_data[i1])
+        return r2
+    except:
+        print("WARNING: channel_mapping request failed (old firmware?), use 1:1")
+        return raw_data
 
 def process_data(args):
     NCHAN = args.nchan
@@ -442,6 +454,8 @@ def process_data(args):
 
     raw_data = read_data(args, NCHAN) if not os.path.isfile(args.src) else read_data_file(args, NCHAN)
 
+    if args.cmap:
+        raw_data = map_from_embedded_cmap(args, raw_data)
     if args.double_up:
         raw_data = double_up(args, raw_data)
 
@@ -604,6 +618,7 @@ def get_parser(parser=None):
     parser.add_argument('--callback', default=None, help="callback for external automation")
     parser.add_argument('--traces_per_plot', default=1, type=int, help="traces_per_plot")
     parser.add_argument('--schan', default=None, type=list_of_ints, help="channels to save ie 1,49,50")
+    parser.add_argument('--cmap', default=1, type=int, help="use embedded channel mapping")
     if is_client:
         parser.add_argument('uuts', nargs='+',help='uut - for auto configuration data_type, nchan, egu or just a label')
     return parser
