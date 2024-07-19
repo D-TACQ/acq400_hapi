@@ -6,14 +6,18 @@ A Python module to connect to remote hosts.
 
 ## Installation
 
-Clone/update latest version from GitHub, then install in-place using pip:
+Clone/update latest version from GitHub, then install in-place using `pip`.
+Dependencies listed in `requirements.txt` will be automatically installed if needed:
 
 ```bash
-$ mkdir PROJECTS; cd PROJECTS
 $ git clone https://github.com/D-TACQ/acq400_hapi
 $ cd acq400_hapi
 $ sudo pip3 install -e .
 ```
+
+This creates a system-wide link to the local folder so that Python knows where to find `pysf`
+on your system. Then whenever desired, run `git pull` in the source folder to update from git,
+no further installation step required.
 
 ## Usage
 
