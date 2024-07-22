@@ -6,18 +6,44 @@ A Python module to connect to remote hosts.
 
 ## Installation
 
+#### Requirements
+	python3
+		gitpython
+		numpy
+		matplotlib
+
+### Using Pip
+  
 Clone/update latest version from GitHub, then install in-place using `pip`.
+
 Dependencies listed in `requirements.txt` will be automatically installed if needed:
 
+  
+
 ```bash
-$ git clone https://github.com/D-TACQ/acq400_hapi
-$ cd acq400_hapi
-$ sudo pip3 install -e .
+
+$  git  clone  https://github.com/D-TACQ/acq400_hapi
+$  cd  acq400_hapi
+$  pip3  install  -e  .
+
 ```
 
-This creates a system-wide link to the local folder so that Python knows where to find `pysf`
-on your system. Then whenever desired, run `git pull` in the source folder to update from git,
+This creates a system-wide link to the local folder so that Python knows where to find `acq400_hapi` on your system. 
+
+Then whenever desired, run `git pull` in the source folder to update from git,
+
 no further installation step required.
+
+### Using PythonPath
+```bash
+
+$  git  clone  https://github.com/D-TACQ/acq400_hapi
+$  cd  acq400_hapi
+
+on Linux,   run: source ./setpath
+on Windows, run: SETPYTHONPATH.BAT # restart shell.
+
+```
 
 ## Usage
 
@@ -51,7 +77,7 @@ in your system's hosts file:
  * Windows : C:\Windows\System32\Drivers\etc\hosts
 
 
-## Running a session interactively while a test loop is running:
+### Running a session interactively while a test loop is running:
 
 ```python
 >>> import acq400_hapi
@@ -89,7 +115,7 @@ The goal is to make it easy to remote-script multiple uut's:
 ...and yes, these are EPICS PV's, so we could use capy. But, this way, it's all vanilla
 Python, no other installs required.
 
-## Knob names
+### Knob names
 
 ```text
 SIG:SAMPLE_COUNT:COUNT are auto converted to valid python identifiers:
@@ -127,7 +153,7 @@ Example:
 'SIG:EVT_S1:FREQ 0'
 ```
 
-## Speed
+### Speed
 
 The `Acq400` class can be fairly slow to instantiate (imagine an ACQ2106 with 6 sites
 populated), but once the connections are nailed up, then control links are fast. The use case
