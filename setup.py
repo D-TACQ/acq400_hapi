@@ -6,22 +6,28 @@ https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 import subprocess
 
 MODULE_DIR = os.path.dirname(__file__)
 
 def get_version():
-    proc = subprocess.Popen(['git', 'describe', '--tags'], stdout=subprocess.PIPE)
-    return proc.stdout.readline().decode().strip().replace('-', '+', 1)
+    proc = subprocess.run(['git', 'describe', '--tags'], stdout=subprocess.PIPE)
+    if proc.returncode == 0:
+        return proc.stdout.decode().strip().replace('-', '+', 1)
+    return "0.0.0+nogit"
 
 setup(
     name='acq400_hapi',
     version= get_version(),
     description='A Python package for connection ACQ400 series D-TACQ products.',
     url='https://github.com/D-TACQ/acq400_hapi',
-    packages=["acq400_hapi"],
+    packages=find_packages(),
+    install_requires=[
+        'numpy>=2.0.0',
+        'matplotlib>=1.15.0',
+    ],
     python_requires='>=3.6',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
