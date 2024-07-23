@@ -9,7 +9,6 @@
 
 #### Requirements
 	python3
-		gitpython
 		numpy
 		matplotlib
 
@@ -21,7 +20,7 @@ Clone/update latest version from GitHub, then install in-place using `pip` using
 
 $  git  clone  https://github.com/D-TACQ/acq400_hapi
 $  cd  acq400_hapi
-$  ./scripts/install-local-pip  
+$  pip3 install -e .
 
 ```
 
