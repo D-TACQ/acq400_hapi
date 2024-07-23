@@ -6,7 +6,7 @@ https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 import subprocess
 
@@ -23,7 +23,11 @@ setup(
     version= get_version(),
     description='A Python package for connection ACQ400 series D-TACQ products.',
     url='https://github.com/D-TACQ/acq400_hapi',
-    packages=["acq400_hapi"],
+    packages=find_packages(),
+    install_requires=[
+        'numpy>=2.0.0',
+        'matplotlib>=1.15.0',
+    ],
     python_requires='>=3.6',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
