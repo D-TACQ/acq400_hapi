@@ -1,6 +1,7 @@
 # acq400_hapi: acq400 Host API
 
-A Python module to connect to remote hosts.
+* A Python module ./acq400_hapi to connect to remote hosts, 
+* a large set of example client programs ./user_apps
 
 * [Documentation](https://d-tacq.github.io/acq400_hapi_docs)
 
@@ -12,7 +13,7 @@ A Python module to connect to remote hosts.
 		numpy
 		matplotlib
 
-### Using Pip
+### recommended: Using Pip
   
 Clone/update latest version from GitHub, then install in-place using `pip`.
 
@@ -34,7 +35,9 @@ Then whenever desired, run `git pull` in the source folder to update from git,
 
 no further installation step required.
 
-### Using PythonPath
+It's also possible to install a PIP from PYPI, however the package on PYPI will likely be out of date, so this is not recommended.
+
+### alternate: Using PythonPath
 ```bash
 
 $  git  clone  https://github.com/D-TACQ/acq400_hapi
