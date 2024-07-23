@@ -1,0 +1,4 @@
+
+git describe --tags >version.txt
+pip3 install -e .
+

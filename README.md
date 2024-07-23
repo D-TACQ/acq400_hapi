@@ -15,17 +15,13 @@
 
 ### recommended: Using Pip
   
-Clone/update latest version from GitHub, then install in-place using `pip`.
-
-Dependencies listed in `requirements.txt` will be automatically installed if needed:
-
-  
+Clone/update latest version from GitHub, then install in-place using `pip` using a dedicated script
 
 ```bash
 
 $  git  clone  https://github.com/D-TACQ/acq400_hapi
 $  cd  acq400_hapi
-$  pip3  install  -e  .
+$  ./scripts/install-local-pip  
 
 ```
 
