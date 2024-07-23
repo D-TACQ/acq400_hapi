@@ -13,8 +13,10 @@ import subprocess
 MODULE_DIR = os.path.dirname(__file__)
 
 def get_version():
-    proc = subprocess.Popen(['git', 'describe', '--tags'], stdout=subprocess.PIPE)
-    return proc.stdout.readline().decode().strip().replace('-', '+', 1)
+    proc = subprocess.run(['git', 'describe', '--tags'], stdout=subprocess.PIPE)
+    if proc.returncode == 0:
+        return proc.stdout.decode().strip().replace('-', '+', 1)
+    return "0.0.0+nogit"
 
 setup(
     name='acq400_hapi',
