@@ -39,4 +39,4 @@ from .acq400_logger import acq400_logger
 
 from .version import get_version
 
-__version__ = get_version()
+
