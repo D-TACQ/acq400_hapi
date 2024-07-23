@@ -24,7 +24,7 @@ $  pip3 install -e .
 
 ```
 
-This creates a system-wide link to the local folder so that Python knows where to find `acq400_hapi` on your system. 
+This creates a user-specific link to the local folder so that Python knows where to find `acq400_hapi` on your system when running as your user.
 
 Then whenever desired, run `git pull` in the source folder to update from git,
 
