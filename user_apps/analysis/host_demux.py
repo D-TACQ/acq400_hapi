@@ -291,7 +291,7 @@ def save_data(args, raw_channels):
 
 
 
-def plot_mpl(args, raw_channels):
+def plot_mpl(args, raw_channels, draw=False):
     #real_len = len(raw_channels[0]) # this is the real length of the channel data
 
     nplot = len(args.pc_list)
@@ -318,6 +318,7 @@ def plot_mpl(args, raw_channels):
 
         plots[pln].set_ylabel(meta[0])
         plots[pln].set_title(plots[pln].get_title() + f' {meta[-1]}')
+
         if step:
             plots[pln].step(xx, yy, linewidth=0.75)
         else:
@@ -327,7 +328,10 @@ def plot_mpl(args, raw_channels):
 
     plots[pln].set_xlabel("Samples")
     plt.subplots_adjust(hspace=(total_plots - 1 ) * 0.15)
-    plt.show()
+    if draw:
+        plt.draw()
+    else:
+        plt.show()
     return None
 
 
@@ -468,7 +472,23 @@ def process_data(args):
     if args.save != None:
         save_data(args, raw_data)
     if args.plot and len(args.pc_list) > 0:
-        plot_data(args, raw_data)
+        print(f'len pses {len(args.pses)}, samples {len(raw_data[1])}') 
+        if len(args.pses) > 3:
+            decades = args.pses[3]
+            old_pses = args.pses
+            for x in range(decades):
+                print(f'pses {args.pses}, len {len(raw_data[1][args.pses[0]:args.pses[1]:args.pses[2]])}')
+                plot_mpl(args, raw_data, True)
+                plt.pause(1)
+
+                args.pses[1] = args.pses[1] // 10
+                args.pses[2] = args.pses[2] // 10
+                if args.pses[1] == 0 or args.pses[2] == 0:
+                    break
+            input("Done")
+            args.pses = old_pses
+        else:
+            plot_data(args, raw_data)
 
 def make_pc_list(args):
     # ch in 1.. (human)
@@ -619,6 +639,7 @@ def get_parser(parser=None):
     parser.add_argument('--traces_per_plot', default=1, type=int, help="traces_per_plot")
     parser.add_argument('--schan', default=None, type=list_of_ints, help="channels to save ie 1,49,50")
     parser.add_argument('--cmap', default=1, type=int, help="use embedded channel mapping")
+
     if is_client:
         parser.add_argument('uuts', nargs='+',help='uut - for auto configuration data_type, nchan, egu or just a label')
     return parser
