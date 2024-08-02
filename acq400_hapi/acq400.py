@@ -1681,6 +1681,9 @@ class DotFilter:
             self.mgt.capture_blocks += 1
 
 class Mgt508(Acq400):
+    ''' Warning: not true to say "Mgt508 is a Acq400". The commonality is limited to an S0 service.
+    @@todo: refactor with a common base class Device, then Mgt508 is a Device and Acq400 is a Device
+    '''
     def __init__(self, uut):
         Acq400.__init__(self, uut, monitor=False)
         self.filter = DotFilter(self)
