@@ -24,10 +24,10 @@ setup(
     description='A Python package for connection ACQ400 series D-TACQ products.',
     url='https://github.com/D-TACQ/acq400_hapi',
     packages=find_packages(),
-    install_requires=[
-        'numpy>=2.0.0',
-        'matplotlib>=1.15.0',
-    ],
+#    install_requires=[
+#        'numpy>=2.0.0',
+#        'matplotlib>=1.15.0',
+#    ],
     python_requires='>=3.6',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
