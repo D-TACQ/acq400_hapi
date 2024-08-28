@@ -625,7 +625,9 @@ class Acq400:
             data_size = 4 if self.s0.data32 == '1' else 2
 
         if chan == 0:
-            nsam = int(self.s0.raw_data_size) // data_size
+            #nsam = int(self.s0.raw_data_size) // data_size
+            nsam=200000
+
         if chan != 0 and nsam == 0:
             nsam = self.pre_samples()+self.post_samples()
 
@@ -800,8 +802,10 @@ class Acq400:
         no_demux = True if channels == (0,) else False # 0 means all channels no demux
         
         data_size = 4 if int(self.s0.data32) else 2
-        raw_data_size = int(self.s0.raw_data_size)
-        ch_data_size = int(self.s1.ch_data_size)
+#        raw_data_size = int(self.s0.raw_data_size)
+        raw_data_size=8
+#        ch_data_size = int(self.s1.ch_data_size)
+        ch_data_size=8
         nchan = int(self.s0.NCHAN)
         demuxed = raw_data_size < 1 # raw_data_size is 0 when data has been demuxed on uut
         data = None

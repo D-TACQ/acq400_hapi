@@ -293,7 +293,7 @@ class ShotControllerWithDataHandler(ShotController):
         plt.show()
                 
     def handle_data(self, args):        
-        print("INFO: Shotcontroller.handle_data() {} data valid: {}".format(self.uuts[0].uut, self.uuts[0].statmon.data_valid))
+#        print("INFO: Shotcontroller.handle_data() {} data valid: {}".format(self.uuts[0].uut, self.uuts[0].statmon.data_valid))
         if args.save_data:
             shotdir = args.save_data.format(self.increment_shot(args))
             for u in self.uuts:
