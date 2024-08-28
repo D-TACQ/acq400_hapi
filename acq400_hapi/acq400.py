@@ -808,6 +808,8 @@ class Acq400:
         
         if demuxed: #if data has been demuxed on uut
             nsam = nsam if nsam else ch_data_size // data_size
+            nchan = nchan - int(self.s0.spad.split(',')[1]) * (3 - (data_size // 2))
+
             for chan in range(1, nchan+1):
                 if len(channels) > 0 and chan not in channels:
                     if not no_demux: continue
