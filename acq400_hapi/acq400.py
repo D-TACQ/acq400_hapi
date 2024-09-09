@@ -798,6 +798,7 @@ class Acq400:
         """
         channels = (channels, ) if type(channels) == int else channels # convert int to tuple
         want_raw = True if channels == (0,) else False # 0 means all channels no demux "raw"
+        want_all_cooked = len(channels) == 0
         
         data_size = 4 if int(self.s0.data32) else 2
         raw_data_size = int(self.s0.raw_data_size)
@@ -817,10 +818,8 @@ class Acq400:
             ndata_chan = nchan - nspad_chan
 
             for chan in range(1, ndata_chan+1):
-                if len(channels) > 0 and chan not in channels and not want_raw:
-                    continue
-                
-                data.append(self.read_chan(chan, nsam, data_size))
+                if want_all_cooked or want_raw or chan in channels:
+                    data.append(self.read_chan(chan, nsam, data_size))
                 
             if want_raw:
                 return np.array(data, order='F').T.reshape(1, -1) #return muxed data
