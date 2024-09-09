@@ -816,9 +816,11 @@ class Acq400:
             nspad = int(self.s0.spad.split(',')[1])
             nspad_chan = nspad if data_size==4 else nspad*2
             ndata_chan = nchan - nspad_chan
+            if want_all_cooked or want_raw:
+                channels = [ch for ch in range(1, ndata_chan+1)]
 
             for chan in range(1, ndata_chan+1):
-                if want_all_cooked or want_raw or chan in channels:
+                if chan in channels:
                     data.append(self.read_chan(chan, nsam, data_size))
                 
             if want_raw:
