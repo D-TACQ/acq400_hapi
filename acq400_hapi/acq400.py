@@ -804,32 +804,21 @@ class Acq400:
         ch_data_size = int(self.s1.ch_data_size)
         nchan = int(self.s0.NCHAN)
         demuxed = raw_data_size < 1 # raw_data_size is 0 when data has been demuxed on uut
-        data = None
         
         if demuxed: #if data has been demuxed on uut
+            data = []
             nsam = nsam if nsam else ch_data_size // data_size
+            nchan = nchan - int(self.s0.spad.split(',')[1]) * (3 - (data_size // 2))
+
             for chan in range(1, nchan+1):
+
                 if len(channels) > 0 and chan not in channels:
                     if not no_demux: continue
-                    
-                if self.trace: 
-                    print("%s CH%02d start.." % (self.uut, chan))
-                    start = timeit.default_timer()
                 
-                chan_data = self.read_chan(chan, nsam, data_size)
+                data.append(self.read_chan(chan, nsam, data_size))
                 
-                if data is None: 
-                    data = chan_data.reshape(1,-1)
-                else: 
-                    data = np.vstack((data, chan_data))
-                
-                if self.trace:
-                    tt = timeit.default_timer() - start  
-                    print("%s CH%02d complete.. %.3f s %.2f MB/s" %
-                        (self.uut, chan, tt, len(chan_data)*data_size/1000000/tt))
-                
-            if no_demux: return data.T.reshape(1, -1) #return undo demuxand return all channels
-            return data #return specified channels
+            if no_demux: return np.array(data, order='F').T.reshape(1, -1) #return muxed data
+            return np.array(data, order='F') #return specified channels
         
         else: #if data has NOT been demuxed on uut           
             nsam = nsam if nsam else raw_data_size // data_size
