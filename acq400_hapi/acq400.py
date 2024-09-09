@@ -797,15 +797,19 @@ class Acq400:
                 ndarray:  channel data
         """
         channels = (channels, ) if type(channels) == int else channels # convert int to tuple
-        no_demux = True if channels == (0,) else False # 0 means all channels no demux
+        want_raw = True if channels == (0,) else False # 0 means all channels no demux "raw"
         
         data_size = 4 if int(self.s0.data32) else 2
         raw_data_size = int(self.s0.raw_data_size)
         ch_data_size = int(self.s1.ch_data_size)
         nchan = int(self.s0.NCHAN)
-        demuxed = raw_data_size < 1 # raw_data_size is 0 when data has been demuxed on uut
+        is_cooked = raw_data_size < 1 # raw_data_size is 0 when data has been demuxed ("cooked") on uut
         
-        if demuxed: #if data has been demuxed on uut
+        if is_cooked: #if data has been demuxed on uut
+
+            if is_cooked and want_raw:
+                print('data is_cooked but we want_raw : consider running shots with DEMUX=0 to save effort')
+
             data = []
             nsam = nsam if nsam else ch_data_size // data_size
             nspad = int(self.s0.spad.split(',')[1])
@@ -813,22 +817,27 @@ class Acq400:
             ndata_chan = nchan - nspad_chan
 
             for chan in range(1, ndata_chan+1):
-
-                if len(channels) > 0 and chan not in channels:
-                    if not no_demux: continue
+                if len(channels) > 0 and chan not in channels and not want_raw:
+                    continue
                 
                 data.append(self.read_chan(chan, nsam, data_size))
                 
-            if no_demux: return np.array(data, order='F').T.reshape(1, -1) #return muxed data
-            return np.array(data, order='F') #return specified channels
+            if want_raw:
+                return np.array(data, order='F').T.reshape(1, -1) #return muxed data
+            else:
+                return np.array(data, order='F') #return specified channels
         
         else: #if data has NOT been demuxed on uut           
             nsam = nsam if nsam else raw_data_size // data_size
             data = self.read_chan(0, nsam, data_size)
-            if no_demux: return np.array([data]) #return all channels no demux
-            data = data.reshape(-1, nchan).transpose() #demux channels
-            if len(channels) > 0: return data[np.array(channels) - 1] #return specified channels
-            return data #return all channels
+            if want_raw:
+                return np.array([data]) #return all channels no demux
+            else:
+                data = data.reshape(-1, nchan).transpose() #demux channels
+                if len(channels) > 0:
+                    return data[np.array(channels) - 1] #return specified channels
+                else:
+                    return data #return all channels
         
     read_channels = _read_channels_2
 
