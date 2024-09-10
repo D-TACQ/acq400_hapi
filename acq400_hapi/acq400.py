@@ -819,9 +819,8 @@ class Acq400:
             if want_all_cooked or want_raw:
                 channels = [ch for ch in range(1, ndata_chan+1)]
 
-            for chan in range(1, ndata_chan+1):
-                if chan in channels:
-                    data.append(self.read_chan(chan, nsam, data_size))
+            for chan in channels:
+                data.append(self.read_chan(chan, nsam, data_size))
                 
             if want_raw:
                 return np.array(data, order='F').T.reshape(1, -1) #return muxed data
