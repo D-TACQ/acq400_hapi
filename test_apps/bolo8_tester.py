@@ -281,8 +281,7 @@ class bolo_handler:
 
 
         if self.args.plot > 0 or self.args.save > 1:
-            for type in self.args.dtypes:
-                self.get_data(type)
+            self.get_data(self.args.dtypes)
 
         self.check_PWR_sync()
 
@@ -296,18 +295,16 @@ class bolo_handler:
         time.sleep(0.1)
         self.uut.s14.DSP_RESET = 0
 
-    def get_data(self, type):
-        if type not in self.data_types:
-            PR.Red(f"data type {type} is invalid")
-            return
-        self.active_types.add(type)
-        
-        dtype = self.data_types[type]
+    def get_data(self, types):
+        chan_data = self.uut.read_channels()
         for chan in self.active_chans:
-            raw = self.uut.read_channels(chan * 3 - dtype['nidx'])[-1]
-            if chan not in self.data:
-                self.data[chan] = {}
-            self.data[chan][type] = raw.reshape(1,-1)[0]
+            for chan_type in types:
+                if chan_type not in self.data_types: continue
+                offset = self.data_types[chan_type]['nidx'] + 1
+                if chan not in self.data:
+                    self.data[chan] = {}
+                idx = chan * 3 - offset
+                self.data[chan][chan_type] = chan_data[idx]
 
     def save_data(self):
         out = []
