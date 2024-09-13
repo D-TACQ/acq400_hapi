@@ -30,7 +30,7 @@ def get_parser():
     parser.add_argument('--cycles', default=1, type=int, help="Number of tests per channel")
     parser.add_argument('--foils', '--bolo_chans', default=2, type=int, help="Available bolometer foils")
     parser.add_argument('--bolo', '--bolo_id', default='IPT008', help="Bolometer serial")
-    parser.add_argument('--beeper', default="SG0106", help="siggen to beep when ready")
+    parser.add_argument('--beeper', default=None, help="siggen to beep when ready")
     parser.add_argument('--plot', default=1, type=int, help="0 no plot, 1 plot final results, 2 plot every capture")
     parser.add_argument('--tocsv', default=1, type=int, help="save calibration results to csv")
     parser.add_argument('--save', default=0, type=int, help="save channel capture data to file")
@@ -91,6 +91,8 @@ class bolo_handler:
         self.calibration = {}
         self.dat_file = None
         self.beeper = None
+        if self.args.beeper: 
+            self.beeper = acq400_hapi.Agilent33210A(self.args.beeper)
 
         self.active_types = set()
         self.data_types = {
@@ -159,16 +161,12 @@ class bolo_handler:
             print('Invalid input')
 
     def beep_beeper(self, count=2, intvl=0.3):
+        if not self.beeper: return
         try:
-            if self.beeper == None or self.beeper == -1:
-                self.beeper = acq400_hapi.Agilent33210A(self.args.beeper)
             for i in range(count):
                 time.sleep(intvl)
                 self.beeper.send("SYST:BEEP")
-        except:
-            if self.beeper != -1:
-                PR.Red('Beeper not found')
-            self.beeper = -1
+        except: pass
 
     ##cal funcs
 
