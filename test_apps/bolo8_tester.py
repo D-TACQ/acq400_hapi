@@ -37,6 +37,7 @@ def get_parser():
     parser.add_argument('--url', default=None, help="remote url to send results json and chandata")
     parser.add_argument('--dtypes', default='PWR', type=type_list, help="data types to plot and save ie PWR,MAG,PHI")
     parser.add_argument('--ptotal', default=40000, type=int, help="Plot total samples")
+    parser.add_argument('--strobe', default=0, type=int, help="Strobe led (enabled: 1) or (disabled: 0)")
     parser.add_argument('uutname', help="uut name")
     return parser
 
@@ -266,7 +267,8 @@ class bolo_handler:
         print()
         PR.Reverse(f" Running capture on channels {self.chan_str} ")
         self.uut.s0.transient = "POST=100000 SOFT_TRIGGER=0 DEMUX=0"
-        self.strobe.start()
+        
+        if self.args.strobe: self.strobe.start()
         time.sleep(1)
         self.uut.s0.set_arm = '1'
         print('Arming')
@@ -276,7 +278,7 @@ class bolo_handler:
         print('Triggering')
 
         self.uut.statmon.wait_stopped()
-        self.strobe.stop()
+        if self.args.strobe: self.strobe.stop()
         print('Stopped')
 
 
