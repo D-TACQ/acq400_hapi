@@ -30,13 +30,14 @@ def get_parser():
     parser.add_argument('--cycles', default=1, type=int, help="Number of tests per channel")
     parser.add_argument('--foils', '--bolo_chans', default=2, type=int, help="Available bolometer foils")
     parser.add_argument('--bolo', '--bolo_id', default='IPT008', help="Bolometer serial")
-    parser.add_argument('--beeper', default="SG0106", help="siggen to beep when ready")
+    parser.add_argument('--beeper', default=None, help="siggen to beep when ready")
     parser.add_argument('--plot', default=1, type=int, help="0 no plot, 1 plot final results, 2 plot every capture")
     parser.add_argument('--tocsv', default=1, type=int, help="save calibration results to csv")
     parser.add_argument('--save', default=0, type=int, help="save channel capture data to file")
     parser.add_argument('--url', default=None, help="remote url to send results json and chandata")
     parser.add_argument('--dtypes', default='PWR', type=type_list, help="data types to plot and save ie PWR,MAG,PHI")
     parser.add_argument('--ptotal', default=40000, type=int, help="Plot total samples")
+    parser.add_argument('--strobe', default=0, type=int, help="Strobe led (enabled: 1) or (disabled: 0)")
     parser.add_argument('uutname', help="uut name")
     return parser
 
@@ -90,6 +91,8 @@ class bolo_handler:
         self.calibration = {}
         self.dat_file = None
         self.beeper = None
+        if self.args.beeper: 
+            self.beeper = acq400_hapi.Agilent33210A(self.args.beeper)
 
         self.active_types = set()
         self.data_types = {
@@ -158,16 +161,12 @@ class bolo_handler:
             print('Invalid input')
 
     def beep_beeper(self, count=2, intvl=0.3):
+        if not self.beeper: return
         try:
-            if self.beeper == None or self.beeper == -1:
-                self.beeper = acq400_hapi.Agilent33210A(self.args.beeper)
             for i in range(count):
                 time.sleep(intvl)
                 self.beeper.send("SYST:BEEP")
-        except:
-            if self.beeper != -1:
-                PR.Red('Beeper not found')
-            self.beeper = -1
+        except: pass
 
     ##cal funcs
 
@@ -266,7 +265,8 @@ class bolo_handler:
         print()
         PR.Reverse(f" Running capture on channels {self.chan_str} ")
         self.uut.s0.transient = "POST=100000 SOFT_TRIGGER=0 DEMUX=0"
-        self.strobe.start()
+        
+        if self.args.strobe: self.strobe.start()
         time.sleep(1)
         self.uut.s0.set_arm = '1'
         print('Arming')
@@ -276,13 +276,12 @@ class bolo_handler:
         print('Triggering')
 
         self.uut.statmon.wait_stopped()
-        self.strobe.stop()
+        if self.args.strobe: self.strobe.stop()
         print('Stopped')
 
 
         if self.args.plot > 0 or self.args.save > 1:
-            for type in self.args.dtypes:
-                self.get_data(type)
+            self.get_data(self.args.dtypes)
 
         self.check_PWR_sync()
 
@@ -296,18 +295,16 @@ class bolo_handler:
         time.sleep(0.1)
         self.uut.s14.DSP_RESET = 0
 
-    def get_data(self, type):
-        if type not in self.data_types:
-            PR.Red(f"data type {type} is invalid")
-            return
-        self.active_types.add(type)
-        
-        dtype = self.data_types[type]
+    def get_data(self, types):
+        chan_data = self.uut.read_channels()
         for chan in self.active_chans:
-            raw = self.uut.read_channels(chan * 3 - dtype['nidx'])[-1]
-            if chan not in self.data:
-                self.data[chan] = {}
-            self.data[chan][type] = raw.reshape(1,-1)[0]
+            for chan_type in types:
+                if chan_type not in self.data_types: continue
+                offset = self.data_types[chan_type]['nidx'] + 1
+                if chan not in self.data:
+                    self.data[chan] = {}
+                idx = chan * 3 - offset
+                self.data[chan][chan_type] = chan_data[idx]
 
     def save_data(self):
         out = []
