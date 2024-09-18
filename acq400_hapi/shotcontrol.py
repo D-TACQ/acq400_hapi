@@ -217,17 +217,14 @@ class ShotControllerWithDataHandler(ShotController):
     def plot_data(self, args, plot_data, chx, ncol, nchan, nsam):
 
         import matplotlib
-        backends = ['GTK4Agg', 'WXAgg', 'TKAgg', 'GTKAgg', 'Qt4Agg']
-        for backend in backends:
+
+        if args.force_matplot_lib is not None:
             try:
-                matplotlib.use(backend, force=True)
-                from matplotlib import pyplot as plt
-                break
+                matplotlib.use(args.force_matplot_lib, force=True)
             except:
-                continue
-        else:
-            print('Error: No valid plotting backends')
-            return False
+                print(f'failed to force matplot lib {args.force_matplot_lib}')
+
+        from matplotlib import pyplot as plt
               
     # plot ex: 2 x 8 ncol=2 nchan=8
     # U1 U2      FIG
@@ -365,6 +362,7 @@ SAVEDATA=os.getenv("SAVEDATA", None)
 PLOTDATA=os.getenv("PLOTDATA", None)
 TRACE_UPLOAD=int(os.getenv("TRACE_UPLOAD", "0"))
 CHANNELS=os.getenv("CHANNELS", "()")
+FORCE_MATPLOT_LIB=os.getenv("FORCE_MATPLOT_LIB", None)
 
 class ShotControllerUI:
         @staticmethod
@@ -374,3 +372,4 @@ class ShotControllerUI:
             parser.add_argument('--one_plot', default=None, type=int, help="1: plot data")
             parser.add_argument('--trace_upload', default=TRACE_UPLOAD, type=int, help="1: verbose upload")
             parser.add_argument('--channels', default=CHANNELS, type=str, help="comma separated channel list")
+            parser.add_argument('--force_matplot_lib', default=FORCE_MATPLOT_LIB, help="select a non-default matplot lib\neg 'GTK4Agg', 'WXAgg', 'TKAgg', 'GTKAgg', 'Qt4Agg'")
