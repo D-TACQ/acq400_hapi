@@ -564,10 +564,13 @@ class Acq400:
         except:
             return self.s0.aggregator.split(' ')[1].split('=')[1].split(',')
 
+    def get_aggregator_svc_list(self):
+        return (self.modules[int(s)] for s in self.get_aggregator_sites())
+
     def fetch_all_calibration(self):
         """Gets uut calibration and stores in instance"""
         try:
-            for m in (self.modules[int(c)] for c in self.get_aggregator_sites()):
+            for m in self.get_aggregator_svc_list(self):
                 self.cal_eslo.extend(m.AI_CAL_ESLO.split(' ')[3:])
                 self.cal_eoff.extend(m.AI_CAL_EOFF.split(' ')[3:])
         except:
