@@ -38,6 +38,7 @@ def get_parser():
     parser.add_argument('--dtypes', default='PWR', type=type_list, help="data types to plot and save ie PWR,MAG,PHI")
     parser.add_argument('--ptotal', default=40000, type=int, help="Plot total samples")
     parser.add_argument('--strobe', default=0, type=int, help="Strobe led (enabled: 1) or (disabled: 0)")
+    parser.add_argument('-y', action='store_true', help='Auto yes to prompt')
     parser.add_argument('uutname', help="uut name")
     return parser
 
@@ -590,7 +591,7 @@ def run_main(args):
         for chanset in bh.chanset:
 
             bh.set_active(chanset)
-            bh.ask_if_connected()
+            if not args.y: bh.ask_if_connected()
             time_start = time.time()
 
             for cycle in range(1, args.cycles + 1):
