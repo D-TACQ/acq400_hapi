@@ -6,12 +6,11 @@ Usage:
 # 16 chans 32 bit +11.5 degrees phase offset per channel
 ./wavegen.py --nchan=16 --dsize=4 --phase=+11.5
 
-# 8 chans 32 bit even channels half scale
-./wavegen.py --nchan=8 --dsize=4 --scale=0.5:EVEN
+# 8 chans 32 bit each channel scaled down by 0.125
+./wavegen.py --nchan=8 --dsize=4 --scale=-0.125
 
 # 3 chans different wave functions on each
 ./wavegen.py --nchan=3 --wave=SINE:1/RAMP:2/SQUARE:3
-
 
 """
 
@@ -41,6 +40,7 @@ class WaveGen():
         self.phase = phase
         self.crop = crop
         self.spos = spos
+        self.scale = scale
 
         self.wavelength = self.__init_wavelength(wavelength)
         self.totallength = totallength if totallength else self.wavelength
@@ -49,7 +49,6 @@ class WaveGen():
         #print(f"wavelength {self.wavelength} totallength {self.totallength} datalength {self.datalength}")
 
         self.dtype = self.__init_dtype(dsize)
-        self.scale = self.__init_scale(scale)
         self.wave = self.__init_wave(wave)
 
         self.filename = f"{self.nchan}CH.{self.dlen}B.{self.totallength}.{self.cycles}CYCL.{int(time.time())}"
@@ -111,8 +110,7 @@ class WaveGen():
         for chan in range(self.nchan):
             gen_wave = self.__get_wave(chan + 1)
             if not gen_wave: continue
-            scale = self.__get_scale(chan + 1)
-
+            scale = self.__get_scale(chan)
             wavelength = self.__get_wavelength(chan)
             phase = self.__get_phase(chan)
             crop = self.__get_crop(chan)
@@ -133,11 +131,10 @@ class WaveGen():
             return self.wave[chan]
         return None
     
-    def __get_scale(self, chan):
-        if chan in self.scale:
-            return float(self.scale[chan])
-        return 1
-    
+    def normalize(self, n):
+        n = n % 1
+        return 1 if n == 0 else n
+        
     def __cycler_generic(self, chan, arr, last_key, zerostart=False):
         if last_key not in self.last:
             self.last[last_key] = 0
@@ -153,6 +150,9 @@ class WaveGen():
         if zerostart and signed: return preval
         return self.last[last_key]
     
+    def __get_scale(self, chan):
+        return self.normalize(self.__cycler_generic(chan, self.scale, "prescale", zerostart=True))
+
     def __get_crop(self, chan):
         return int(self.__cycler_generic(chan, self.crop, "precrop"))
     
@@ -213,8 +213,8 @@ def get_parser():
     parser.add_argument('--dsize', default=2, type=int, help="data size 2,16 or 4,32")
 
     parser.add_argument('--wave', default="SINE:ALL", help="wave func and targeted channels (SINE:1,2,3,4/RAMP:5,6,7,8)")
-    parser.add_argument('--scale', default="1:ALL", help="scale and targeted channels (1:EVEN/0.5:ODD)")
 
+    parser.add_argument('--scale', default=[1], type=comma_list, help="scale waveforms (-0.125 or 1,0.8,0.6)")
     parser.add_argument('--phase', default=[0], type=comma_list, help="phase value in degrees (45 or +45 or 45,90,135, 180)")
 
     parser.add_argument('--spos', default=[0], type=comma_list, help="start position to insert waveform")
