@@ -4,14 +4,19 @@
 Usage:
 
 # 16 chans 32 bit +11.5 degrees phase offset per channel
-./wavegen.py --nchan=16 --dsize=4 --phase=+11.5
+./user_apps/utils/wavegen.py --nchan=16 --dsize=4 --phase=+11.5
 
 # 8 chans 32 bit each channel scaled down by 0.125
-./wavegen.py --nchan=8 --dsize=4 --scale=-0.125
+./user_apps/utils/wavegen.py --nchan=8 --dsize=4 --scale=+1,-0.125
 
 # 3 chans different wave functions on each
-./wavegen.py --nchan=3 --wave=SINE:1/RAMP:2/SQUARE:3
+./user_apps/utils/wavegen.py --nchan=3 --wave=SINE:1/RAMP:2/SQUARE:3
 
+#channels spaced apart in voltage + time
+./user_apps/utils/wavegen.py --nchan=8 --dsize=2 --scale=+0.1 --voltage=10 --offset=+7:-7:-7,-2 --scale=0.05 --totallength=300000 --spos=+0,40000 --wavelength=10000
+
+Accumulate Mode:
+    +start:stop,value
 """
 
 import argparse
@@ -32,7 +37,9 @@ class WaveGen():
             phase, 
             scale,  
             crop, 
-            spos, 
+            spos,
+            voltage,
+            offset,
             **kwargs
         ):
         self.nchan = nchan
@@ -41,6 +48,8 @@ class WaveGen():
         self.crop = crop
         self.spos = spos
         self.scale = scale
+        self.voltage = voltage
+        self.offset = offset
 
         self.wavelength = self.__init_wavelength(wavelength)
         self.totallength = totallength if totallength else self.wavelength
@@ -50,10 +59,12 @@ class WaveGen():
 
         self.dtype = self.__init_dtype(dsize)
         self.wave = self.__init_wave(wave)
+     
+        self.filename = f"{self.nchan}CH.{self.dlen}B.{self.totallength}.{self.cycles}CYCL"
 
-        self.filename = f"{self.nchan}CH.{self.dlen}B.{self.totallength}.{self.cycles}CYCL.{int(time.time())}"
-
+        self.ptr = {}
         self.last = {}
+        self.range = {}
 
     def __init_wavelength(self, wavelength):
         self.wavelengths = wavelength
@@ -71,6 +82,7 @@ class WaveGen():
             'SINE': self.__gen_sine,
             'RAMP': self.__gen_ramp,
             'SQUARE': self.__gen_square,
+            'NULL': self.__gen_null,
         }
         wave_map = {}
         for value in wave.split('/'):
@@ -110,21 +122,22 @@ class WaveGen():
         for chan in range(self.nchan):
             gen_wave = self.__get_wave(chan + 1)
             if not gen_wave: continue
-            scale = self.__get_scale(chan)
-            wavelength = self.__get_wavelength(chan)
-            phase = self.__get_phase(chan)
-            crop = self.__get_crop(chan)
-            spos = self.__get_spos(chan)
+            scale = self.__get_scale()
+            wavelength = self.__get_wavelength()
+            phase = self.__get_phase()
+            crop = self.__get_crop()
+            spos = self.__get_spos()
+            offset = self.__get_offset()
 
             d0 = min(0 + spos, self.totallength)
             d1 = min(d0 + wavelength - crop, self.totallength)
 
             w0 = 0
             w1 = d1 - d0 
-         
-            print(f"CH {chan + 1} {gen_wave.__name__} phase[{phase}] spos[{spos}] scale[{scale}] wavelength[{wavelength}] crop[{crop}]")
-            #print(f"[{d0}:{d1}] <- [{w0}:{w1}]")
-            self.data[chan::self.nchan][d0:d1] = (gen_wave(wavelength, phase) * (self.max_value * scale)).astype(self.dtype)[w0:w1]
+
+            print(f"CH {chan + 1} {gen_wave.__name__} offset[{offset}] phase[{phase}] spos[{spos}] scale[{scale}] wavelength[{wavelength}] crop[{crop}]")
+            self.data[chan::self.nchan][d0:d1] = (gen_wave(wavelength, phase) * (self.max_value * scale) ).astype(self.dtype)[w0:w1]
+            self.data[chan::self.nchan] += offset
 
     def __get_wave(self, chan):
         if chan in self.wave:
@@ -132,38 +145,60 @@ class WaveGen():
         return None
     
     def normalize(self, n):
-        n = n % 1
-        return 1 if n == 0 else n
-        
-    def __cycler_generic(self, chan, arr, last_key, zerostart=False):
-        if last_key not in self.last:
-            self.last[last_key] = 0
-        value = arr[chan % len(arr)]
-        preval = 0
-        signed = False
-        if str(value).startswith(('+', '-')):
-            signed = True
-            preval = self.last[last_key]
-        value = float(value)
-        #print(f"{last_key} CH {chan +1}, arr{arr} value {value} {preval} last {self.last[last_key]} ")       
-        self.last[last_key] = value + preval
-        if zerostart and signed: return preval
-        return self.last[last_key]
+        if n == 0: return 0
+        m = n % 1
+        return 1 if m == 0 else round(m, 3)
     
-    def __get_scale(self, chan):
-        return self.normalize(self.__cycler_generic(chan, self.scale, "prescale", zerostart=True))
+    def __cycler_generic(self, arr, key):
+        if key not in self.ptr:
+            self.ptr[key] = 0
+            self.last[key] = 0
 
-    def __get_crop(self, chan):
-        return int(self.__cycler_generic(chan, self.crop, "precrop"))
-    
-    def __get_wavelength(self, chan):
-        return int(self.__cycler_generic(chan, self.wavelengths, "prewave")) * self.cycles
+        accumulate = (str(arr[0])[0] == "+")
+        value = arr[self.ptr[key] % len(arr)]
+        if not accumulate:
+            #normal mode
+            self.ptr[key] += 1
+            return float(value)
+        #accumulate mode
+        if key not in self.range:
+            self.range[key] = (arr[0].lstrip('+').split(":") + [None])[:2]
+            value = self.range[key][0]
 
-    def __get_phase(self, chan):
-        return np.deg2rad(self.__cycler_generic(chan, self.phase, "prephase", zerostart=True))
+        if value[0] == "+":
+            self.ptr[key] += 1
+            value = arr[self.ptr[key] % len(arr)]
+
+        if self.range[key][1]:
+            lower = float(min(self.range[key]))
+            upper = float(max(self.range[key]))
+            temp = float(self.last[key] + float(value))
+            if temp < lower or temp > upper:
+                self.last[key] = float(self.range[key][0])
+                return self.last[key]
+
+        value = self.last[key] + float(value)
+        self.ptr[key] += 1
+        self.last[key] = value
+        return value
     
-    def __get_spos(self, chan):
-        return int(self.__cycler_generic(chan, self.spos, "prespos", zerostart=True))
+    def __get_scale(self):
+        return self.normalize(self.__cycler_generic(self.scale, "scale"))
+
+    def __get_crop(self):
+        return int(self.__cycler_generic(self.crop, "crop"))
+    
+    def __get_wavelength(self):
+        return int(self.__cycler_generic(self.wavelengths, "wave")) * self.cycles
+
+    def __get_phase(self):
+        return np.deg2rad(self.__cycler_generic(self.phase, "phase"))
+    
+    def __get_spos(self):
+        return int(self.__cycler_generic(self.spos, "spos"))
+    
+    def __get_offset(self):
+        return int((self.__cycler_generic(self.offset, "offset") / self.voltage) * self.max_value)
     
     def __gen_sine(self, wavelength, phase):
         return np.sin(np.linspace(-phase, -phase + (self.cycles * 2) * np.pi, wavelength))
@@ -174,19 +209,26 @@ class WaveGen():
     def __gen_square(self, wavelength, phase):
         return np.sign(self.__gen_sine(wavelength, phase))
     
-    def plot(self):
+    def __gen_null(self, wavelength, phase):
+        return np.zeros(self.wavelength, dtype=self.dtype)
+    
+    def plot(self, voltage):
         print(f'Plotting')
+        view = (self.data.astype(np.float32) / self.max_value) * voltage
+
         for chan in range(self.nchan):
-            plt.plot(self.data[chan::self.nchan], label=f"CH{chan + 1}")
+            plt.plot(view[chan::self.nchan], label=f"CH{chan + 1}")
+
         plt.title(self.filename)
         plt.xlabel("Samples")
-        plt.ylabel("Codes")
+        plt.ylabel("Voltage")
         plt.legend()
         plt.show()
 
-    def save(self):
-        filename = f"{self.filename}.dat"
-        self.data.tofile(f"{self.filename}.dat")
+    def save(self, save):
+        id = int(time.time()) if save == "1" else save
+        filename = f"{self.filename}.{id}.dat"
+        self.data.tofile(filename)
         print(f"wave data saved to {filename}")
 
 
@@ -195,10 +237,10 @@ def run_main(args):
     wave.generate()
 
     if args.plot:
-        wave.plot()
+        wave.plot(args.voltage)
 
     if args.save:
-        wave.save()
+        wave.save(args.save)
 
 def comma_list(arg):
     return arg.split(',')
@@ -211,17 +253,18 @@ def get_parser():
     parser.add_argument('--wavelength', default=[20000], type=comma_list, help="wavelength in samples")
     parser.add_argument('--totallength', default=None, type=int, help="total channel length override")
     parser.add_argument('--dsize', default=2, type=int, help="data size 2,16 or 4,32")
+    parser.add_argument('--voltage', default=10, type=int, help="Max voltage")
 
     parser.add_argument('--wave', default="SINE:ALL", help="wave func and targeted channels (SINE:1,2,3,4/RAMP:5,6,7,8)")
 
     parser.add_argument('--scale', default=[1], type=comma_list, help="scale waveforms (-0.125 or 1,0.8,0.6)")
     parser.add_argument('--phase', default=[0], type=comma_list, help="phase value in degrees (45 or +45 or 45,90,135, 180)")
-
+    parser.add_argument('--offset', default=[0],  type=comma_list, help="voltage offset")
     parser.add_argument('--spos', default=[0], type=comma_list, help="start position to insert waveform")
     parser.add_argument('--crop', default=[0], type=comma_list,  help="crop waveform by x samples") 
 
     parser.add_argument('--plot', default=1, type=int, help="Plot data")
-    parser.add_argument('--save', default=0, type=int, help="Save data")
+    parser.add_argument('--save', default=None, help="Save (0: disable, 1: enabled or id string)")
 
     return parser
 
