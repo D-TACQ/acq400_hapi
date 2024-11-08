@@ -24,7 +24,7 @@ Usage:
 
 def get_parser():
     parser = argparse.ArgumentParser(description='bolo8 tester')
-    parser.add_argument('--cal', default=1, type=int, help="Run calibrate")
+    parser.add_argument('--cal', default=1, type=int, help="1: Run calibrate, 2: Run calibrate, offloading raw cal data")
     parser.add_argument('--cap', default=0, type=int, help="Run capture")
     parser.add_argument('--chans', default='1,2', help="Channels to test eg 1,2,10-15 or all")
     parser.add_argument('--cycles', default=1, type=int, help="Number of tests per channel")
@@ -175,9 +175,20 @@ class bolo_handler:
         print()
         PR.Reverse(f" Running calibration on channels {self.chan_str} ")
         self.uut.s1.trg = "1,1,1" # Set soft trigger for calibration.
-        self.uut.run_service(acq400_hapi.AcqPorts.BOLO8_CAL, eof="END")
+        if self.args.cal == 1:
+            self.uut.run_service(acq400_hapi.AcqPorts.BOLO8_CAL, eof="END")
+        elif self.args.cal == 2:
+            self.uut.run_service(acq400_hapi.AcqPorts.BOLO8_CAL1, eof="END")
+            self.save_raw_cal()
+            self.uut.run_service(acq400_hapi.AcqPorts.BOLO8_CAL2, eof="END")
+
         self.get_remote_cal()
         self.print_cal(self.active_chans, False)
+
+    def save_raw_cal(self):
+        self.uut.save_data = os.path.join('results', self.uut.uut, self.timestamp, 'raw_cal')
+        self.uut.read_channels(self.active_chans)
+
 
     def get_remote_cal(self):
         url = f"http://{self.uut.uut}/tmp/calibfit.log"
