@@ -69,13 +69,6 @@ class WaveGen():
     def __init_wavelength(self, wavelength):
         self.wavelengths = wavelength
         return int(wavelength[0]) * self.cycles
-
-    def __init_scale(self, scale):
-        scale_map = {}
-        for value in scale.split('/'):
-            selector, channels = value.split(':')
-            scale_map.update({chan: selector for chan in self.get_channels(channels)})
-        return scale_map
     
     def __init_wave(self, wave):
         wave_funcs = {
