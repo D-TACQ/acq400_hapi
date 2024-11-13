@@ -224,8 +224,9 @@ class WaveGen():
     def __gen_null(self, wavelength, phase):
         return np.zeros(self.wavelength, dtype=self.dtype)
     
-    def plot(self, voltage):
+    def plot(self, voltage = None):
         print(f'Plotting')
+        voltage = voltage if voltage != None else self.voltage
         view = (self.data.astype(np.float32) / self.max_value) * voltage
 
         for chan in range(self.nchan):
@@ -249,7 +250,7 @@ def run_main(args):
     wave.generate()
 
     if args.plot:
-        wave.plot(args.voltage)
+        wave.plot()
 
     if args.save:
         wave.save(args.save)
