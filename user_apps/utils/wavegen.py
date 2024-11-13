@@ -17,6 +17,20 @@ Usage:
 
 Accumulate Mode:
     +start:stop,value
+
+Importing:
+
+from user_apps.utils.wavegen import WaveGen
+
+waveargs = {
+    'nchan': 32,
+    'wavelength': 1000,
+}
+waveform = WaveGen(**waveargs)
+waveform.generate()
+waveform.data
+
+
 """
 
 import argparse
@@ -28,30 +42,35 @@ class WaveGen():
 
     def __init__(
             self, 
-            nchan, 
-            cycles, 
-            wavelength,
-            totallength,
-            dsize, 
-            wave, 
-            phase, 
-            scale,  
-            crop, 
-            spos,
-            voltage,
-            offset,
+            nchan=8, 
+            cycles=1, 
+            wavelength=20000,
+            totallength=None,
+            dsize=2, 
+            wave='SINE:ALL', 
+            phase=0, 
+            scale=1,  
+            crop=0, 
+            spos=0,
+            voltage=10,
+            offset=0,
             **kwargs
         ):
+
+        def tolist(var):
+            if isinstance(var, list): return var
+            return str(var).split(',')
+
         self.nchan = nchan
         self.cycles = cycles
-        self.phase = phase
-        self.crop = crop
-        self.spos = spos
-        self.scale = scale
+        self.phase = tolist(phase)
+        self.crop = tolist(crop)
+        self.spos = tolist(spos)
+        self.scale = tolist(scale)
         self.voltage = voltage
-        self.offset = offset
+        self.offset = tolist(offset)
 
-        self.wavelength = self.__init_wavelength(wavelength)
+        self.wavelength = self.__init_wavelength(tolist(wavelength))
         self.totallength = totallength if totallength else self.wavelength
         self.datalength = self.totallength * nchan
 
