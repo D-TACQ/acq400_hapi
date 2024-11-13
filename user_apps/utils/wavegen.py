@@ -166,7 +166,7 @@ class WaveGen():
             lower = float(min(self.range[key]))
             upper = float(max(self.range[key]))
             temp = float(self.last[key] + float(value))
-            if temp < lower or temp > upper:
+            if temp < lower or temp >= upper:
                 self.last[key] = float(self.range[key][0])
                 return self.last[key]
 
