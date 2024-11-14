@@ -127,11 +127,15 @@ class WaveGen():
         self.max_value = np.iinfo(dtype).max
         return dtype
         
-    def generate(self):
-        print(f"Generating {self.nchan} Chans @ {self.dlen}Bytes * {self.totallength} Samples")
+    def generate(self, hush=False):
+
+        if not hush:
+            print(f"Generating {self.nchan} Chans @ {self.dlen}Bytes * {self.totallength} Samples")
+
         self.data = np.zeros(self.datalength, dtype=self.dtype)
         self.view = self.data.reshape(-1, self.nchan).T
         for chan in range(self.nchan):
+            
             gen_wave = self.__get_wave(chan + 1)
             if not gen_wave: continue
             scale = self.__get_scale()
@@ -147,7 +151,9 @@ class WaveGen():
             w0 = 0
             w1 = d1 - d0 
 
-            print(f"CH {chan + 1} {gen_wave.__name__} offset[{offset}] phase[{phase}] spos[{spos}] scale[{scale}] wavelength[{wavelength}] crop[{crop}]")
+            if not hush:
+                print(f"CH {chan + 1} {gen_wave.__name__} offset[{offset}] phase[{phase}] spos[{spos}] scale[{scale}] wavelength[{wavelength}] crop[{crop}]")
+
             self.data[chan::self.nchan][d0:d1] = (gen_wave(wavelength, phase) * (self.max_value * scale) ).astype(self.dtype)[w0:w1]
             self.data[chan::self.nchan] += offset
 
@@ -247,7 +253,7 @@ class WaveGen():
 
 def run_main(args):
     wave = WaveGen(**vars(args))
-    wave.generate()
+    wave.generate(args.hush)
 
     if args.plot:
         wave.plot()
@@ -278,7 +284,7 @@ def get_parser():
 
     parser.add_argument('--plot', default=1, type=int, help="Plot data")
     parser.add_argument('--save', default=None, help="Save (0: disable, 1: enabled or id string)")
-
+    parser.add_argument('--hush', default=0, type=int, help="hush output")
     return parser
 
 if __name__ == '__main__':
