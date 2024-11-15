@@ -17,6 +17,20 @@ Usage:
 
 Accumulate Mode:
     +start:stop,value
+
+Importing:
+
+from user_apps.utils.wavegen import WaveGen
+
+waveargs = {
+    'nchan': 32,
+    'wavelength': 1000,
+}
+waveform = WaveGen(**waveargs)
+waveform.generate()
+waveform.data
+
+
 """
 
 import argparse
@@ -28,30 +42,35 @@ class WaveGen():
 
     def __init__(
             self, 
-            nchan, 
-            cycles, 
-            wavelength,
-            totallength,
-            dsize, 
-            wave, 
-            phase, 
-            scale,  
-            crop, 
-            spos,
-            voltage,
-            offset,
+            nchan=8, 
+            cycles=1, 
+            wavelength=20000,
+            totallength=None,
+            dsize=2, 
+            wave='SINE:ALL', 
+            phase=0, 
+            scale=1,  
+            crop=0, 
+            spos=0,
+            voltage=10,
+            offset=0,
             **kwargs
         ):
+
+        def tolist(var):
+            if isinstance(var, list): return var
+            return str(var).split(',')
+
         self.nchan = nchan
         self.cycles = cycles
-        self.phase = phase
-        self.crop = crop
-        self.spos = spos
-        self.scale = scale
+        self.phase = tolist(phase)
+        self.crop = tolist(crop)
+        self.spos = tolist(spos)
+        self.scale = tolist(scale)
         self.voltage = voltage
-        self.offset = offset
+        self.offset = tolist(offset)
 
-        self.wavelength = self.__init_wavelength(wavelength)
+        self.wavelength = self.__init_wavelength(tolist(wavelength))
         self.totallength = totallength if totallength else self.wavelength
         self.datalength = self.totallength * nchan
 
@@ -69,13 +88,6 @@ class WaveGen():
     def __init_wavelength(self, wavelength):
         self.wavelengths = wavelength
         return int(wavelength[0]) * self.cycles
-
-    def __init_scale(self, scale):
-        scale_map = {}
-        for value in scale.split('/'):
-            selector, channels = value.split(':')
-            scale_map.update({chan: selector for chan in self.get_channels(channels)})
-        return scale_map
     
     def __init_wave(self, wave):
         wave_funcs = {
@@ -115,11 +127,15 @@ class WaveGen():
         self.max_value = np.iinfo(dtype).max
         return dtype
         
-    def generate(self):
-        print(f"Generating {self.nchan} Chans @ {self.dlen}Bytes * {self.totallength} Samples")
+    def generate(self, hush=False):
+
+        if not hush:
+            print(f"Generating {self.nchan} Chans @ {self.dlen}Bytes * {self.totallength} Samples")
+
         self.data = np.zeros(self.datalength, dtype=self.dtype)
         self.view = self.data.reshape(-1, self.nchan).T
         for chan in range(self.nchan):
+            
             gen_wave = self.__get_wave(chan + 1)
             if not gen_wave: continue
             scale = self.__get_scale()
@@ -135,7 +151,9 @@ class WaveGen():
             w0 = 0
             w1 = d1 - d0 
 
-            print(f"CH {chan + 1} {gen_wave.__name__} offset[{offset}] phase[{phase}] spos[{spos}] scale[{scale}] wavelength[{wavelength}] crop[{crop}]")
+            if not hush:
+                print(f"CH {chan + 1} {gen_wave.__name__} offset[{offset}] phase[{phase}] spos[{spos}] scale[{scale}] wavelength[{wavelength}] crop[{crop}]")
+
             self.data[chan::self.nchan][d0:d1] = (gen_wave(wavelength, phase) * (self.max_value * scale) ).astype(self.dtype)[w0:w1]
             self.data[chan::self.nchan] += offset
 
@@ -173,7 +191,7 @@ class WaveGen():
             lower = float(min(self.range[key]))
             upper = float(max(self.range[key]))
             temp = float(self.last[key] + float(value))
-            if temp < lower or temp > upper:
+            if temp < lower or temp >= upper:
                 self.last[key] = float(self.range[key][0])
                 return self.last[key]
 
@@ -212,8 +230,9 @@ class WaveGen():
     def __gen_null(self, wavelength, phase):
         return np.zeros(self.wavelength, dtype=self.dtype)
     
-    def plot(self, voltage):
+    def plot(self, voltage = None):
         print(f'Plotting')
+        voltage = voltage if voltage != None else self.voltage
         view = (self.data.astype(np.float32) / self.max_value) * voltage
 
         for chan in range(self.nchan):
@@ -234,10 +253,10 @@ class WaveGen():
 
 def run_main(args):
     wave = WaveGen(**vars(args))
-    wave.generate()
+    wave.generate(args.hush)
 
     if args.plot:
-        wave.plot(args.voltage)
+        wave.plot()
 
     if args.save:
         wave.save(args.save)
@@ -265,7 +284,7 @@ def get_parser():
 
     parser.add_argument('--plot', default=1, type=int, help="Plot data")
     parser.add_argument('--save', default=None, help="Save (0: disable, 1: enabled or id string)")
-
+    parser.add_argument('--hush', default=0, type=int, help="hush output")
     return parser
 
 if __name__ == '__main__':
