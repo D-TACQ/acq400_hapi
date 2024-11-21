@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# set channels in stream subset mask for {uut} {channel ...}
 
 import numpy as np
 import epics

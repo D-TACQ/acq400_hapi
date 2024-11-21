@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# uses pyepics to load ramp patterns to 4 AO channels set by {uut} {site}
 
 import numpy as np
 import epics
