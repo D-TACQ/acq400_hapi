@@ -70,6 +70,8 @@ class AcqPorts:
     AWG_AUTOREARM = 54202
     AWG_CONTINUOUS = 54205
     AWG_STREAM = 54207
+    AWG_SEGMENT_SELECT = 54210
+    AWG_SEGMENT_LOAD_ONESHOT = 54212
     MGTDRAM = 53993
     MGTDRAM_PULL_DATA = 53991
     SLOWMON = 53666
@@ -997,7 +999,7 @@ class Acq400:
         def __str__(self):
             return repr(self.value)
 
-    def load_awg(self, data, autorearm=False, continuous=False, repeats=1, port=None):
+    def load_awg(self, data, autorearm=False, continuous=False, repeats=1, port=None, segment=None):
         """Load and config a AWG pattern
 
         Args:
@@ -1005,10 +1007,17 @@ class Acq400:
             autorearm (bool, optional): Rearm and wait after run. Defaults to False.
             continuous (bool, optional): Run pattern continuously. Defaults to False.
             repeats (int, optional): Number of pattern repetitions. Defaults to 1.
+            segment (char, optional): Which segment to upload data to
         """
-        if self.awg_site > 0:
+        
+        if self.awg_site > 0 and segment == None:
             if self.modules[self.awg_site].task_active == '1':
                 raise self.AwgBusyError("awg busy")
+            
+        if segment != None:
+            index = segment if isinstance(segment, int) else ord(segment) - ord('A')
+            port = AcqPorts.AWG_SEGMENT_LOAD_ONESHOT + (10 * index)
+
         if port is None:
             port = AcqPorts.AWG_CONTINUOUS if continuous else \
                 AcqPorts.AWG_AUTOREARM if autorearm else AcqPorts.AWG_ONCE
@@ -1025,6 +1034,11 @@ class Acq400:
                 if not rx or rx.startswith(b"DONE"):
                     break
             nc.sock.close()
+
+    def set_segment(self, segment):
+        """Set next awg segment(s)"""
+        with netclient.Netclient(self.uut, AcqPorts.AWG_SEGMENT_SELECT) as nc:
+            nc.send(segment)
 
     def run_service(self, port, eof="EOF", prompt='>'):
         """Run a service on the uut
