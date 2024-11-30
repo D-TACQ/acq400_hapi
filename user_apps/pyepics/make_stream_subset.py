@@ -10,12 +10,14 @@ parser.add_argument('uut')
 parser.add_argument('chan', nargs='+')
 args = parser.parse_args()
 
-nelm = int(epics.caget(f'{args.uut}:0:STREAM_SUBSET_MASK.NELM'))
-print(f'nelm:{nelm}')
+channels = [ int(x) for x in args.chan ]
 
-subset_mask = [ 0 for i in range(1,nelm+1) ]
-for ic in [ int(x) for x in args.chan]: 
-    subset_mask[ic] = 1
+mask = 0
+for ch in channels: 
+    mask |= 1<<(ch-1)
+
+subset_mask = f'0x{mask:x}'
+print(f'{subset_mask}')
 
 epics.caput(f'{args.uut}:0:STREAM_SUBSET_MASK', subset_mask)
 

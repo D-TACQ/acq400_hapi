@@ -22,6 +22,11 @@ epics.caput(f'{PVR}:AO:STEP:2', ramp_dn)
 epics.caput(f'{PVR}:AO:STEP:3', cup)
 epics.caput(f'{PVR}:AO:STEP:4', sup)
 
+epics.caput(f'{PVR}:AO:STEP:1:EN', 1)
+epics.caput(f'{PVR}:AO:STEP:2:EN', 1)
+epics.caput(f'{PVR}:AO:STEP:3:EN', 1)
+epics.caput(f'{PVR}:AO:STEP:4:EN', 1)
+
 epics.caput(f'{args.uut}:0:AO:STEP:CURSOR', 0)
 
 
