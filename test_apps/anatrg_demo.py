@@ -113,12 +113,14 @@ def run_main(args):
     
     wait_for_run(ai_uut)
 
-    ana = AnatrgHelper(ai_uut.uut, args.awg_site)
-    ana.set_all()
+    if not args.leave_atd:
+        ana = AnatrgHelper(ai_uut.uut, args.awg_site)
+        ana.set_all()
 
-    for idx, chans in enumerate(groups):
-        level = 8.5 - idx
-        ana.set(chans, level1=level, mode='rising')
+        for idx, chans in enumerate(groups):
+            level = 8.5 - idx
+            ana.set(chans, level1=level, mode='rising')
+            time.sleep(1)
 
     pretrg = pv(ao_uut.s0.SIG_SRC_TRG_0)
     pretrg = pretrg if pretrg != 'NONE' else 'EXT'
@@ -136,9 +138,10 @@ def run_main(args):
         waveform.generate(hush=True)
         if args.plot:
             waveform.plot()
-    
-        print(f"Uploading waveform to segment {segment}")
-        ao_uut.load_awg(waveform.data, segment=segment)
+
+        if not args.noload:
+            print(f"Uploading waveform to segment {segment}")
+            ao_uut.load_awg(waveform.data, segment=segment)
     
     ao_uut.s0.SIG_SRC_TRG_0 = pretrg
 
@@ -146,7 +149,6 @@ def run_main(args):
         for segment in segments:
             print(f"Setting segment {segment} as active")
             ao_uut.set_segment(segment)
-            ao_uut.s0.soft_trigger = 1
 
             if args.pause:
                 input('Press Enter to continue . . .')
@@ -170,6 +172,8 @@ def get_parser():
     parser.add_argument('--offset', default="+8:1,-1", help="waveform voltage offset")
     parser.add_argument('--spos', default="+0:4000,500", help="waveform start position")
     parser.add_argument('--scale', default="0.2", help="waveform voltage scale")
+    parser.add_argument('--noload', default=0, help="don't load the WF (maybe already done)")
+    parser.add_argument('--leave_atd', default=0, help="dont' change atd settings (maybe already done)")
     return parser
 
 if __name__ == '__main__':
