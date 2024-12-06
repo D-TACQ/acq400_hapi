@@ -516,7 +516,7 @@ class Acq400:
 
     def close(self):
         """Closes uut connection gracefully"""
-        self.statmon.quit_reqested = True
+        self.statmon.quit_requested = True
 
         try:
             self.statmon.logclient.close()
