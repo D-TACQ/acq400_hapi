@@ -102,23 +102,23 @@ if sys.version_info < (3, 0):
     from builtins import input
 
 def hudp_init(args, uut, ip):
-    uut.s10.tx_reset = 1
-    uut.s10.ip = ip
-    uut.s10.gw = args.gw
-    uut.s10.netmask = args.netmask
+    uut.hudp.tx_reset = 1
+    uut.hudp.ip = ip
+    uut.hudp.gw = args.gw
+    uut.hudp.netmask = args.netmask
     if args.disco is not None:
         print("enable disco at {}".format(args.disco))
-        uut.s10.disco_idx = args.disco
-        uut.s10.disco_en  = 1
+        uut.hudp.disco_idx = args.disco
+        uut.hudp.disco_en  = 1
     else:
-        uut.s10.disco_en = 0
+        uut.hudp.disco_en = 0
     
 def hudp_enable(uut):
-    uut.s10.tx_reset = 0
+    uut.hudp.tx_reset = 0
 
 def init_arp_req(uut):
-    uut.s10.arp_request = 1
-    uut.s10.arp_request = 0
+    uut.hudp.arp_request = 1
+    uut.hudp.arp_request = 0
     
 def ip_broadcast(args):
     ip_dest = args.rx_ip.split('.')
@@ -140,28 +140,28 @@ def config_tx_uut(txuut, args):
     if args.run0 != 'notouch':
         txuut.s0.run0 = args.run0
     hudp_init(args, txuut, args.tx_ip)
-    txuut.s10.hudp_decim = args.hudp_decim
-    txuut.s10.src_port = args.port
-    txuut.s10.dst_port = args.port
-    txuut.s10.dst_ip = args.rx_ip if args.broadcast == 0 else ip_broadcast(args)
+    txuut.hudp.hudp_decim = args.hudp_decim
+    txuut.hudp.src_port = args.port
+    txuut.hudp.dst_port = args.port
+    txuut.hudp.dst_ip = args.rx_ip if args.broadcast == 0 else ip_broadcast(args)
 
     if args.hudp_relay is not None:
-        txuut.s10.udp_data_src = 1
+        txuut.hudp.udp_data_src = 1
         tx_ssb = int(txuut.s0.dssb) - args.hudp_relay
-        txuut.s10.slice_len = tx_ssb//4
-        txuut.s10.slice_off = args.hudp_relay//4
+        txuut.hudp.slice_len = tx_ssb//4
+        txuut.hudp.slice_off = args.hudp_relay//4
     else:
-        txuut.s10.udp_data_src = 0
+        txuut.hudp.udp_data_src = 0
         tx_ssb = int(txuut.s0.ssb)
 
-    txuut.s10.tx_sample_sz = tx_ssb
-    txuut.s10.tx_spp = args.spp
+    txuut.hudp.tx_sample_sz = tx_ssb
+    txuut.hudp.tx_spp = args.spp
     tx_pkt_sz = tx_ssb*args.spp                         # compute tx pkt sz and check bounds
     if  tx_pkt_sz > MTU:
         print("ERROR packet length {} exceeds MTU {}".format(tx_pkt_sz, MTU))
     hudp_enable(txuut)
     init_arp_req(txuut)
-    tx_calc_pkt_sz = int(txuut.s10.tx_calc_pkt_sz)      # actual tx pkt sz computed by FPGA logic.
+    tx_calc_pkt_sz = int(txuut.hudp.tx_calc_pkt_sz)      # actual tx pkt sz computed by FPGA logic.
     if tx_pkt_sz != tx_calc_pkt_sz:
         print("ERROR: set tx_pkt_size {} actual tx_pkt_size {}".format(tx_pkt_sz, tx_calc_pkt_sz))    
     print("TX configured. ssb:{} spp:{} tx_pkt_size {}".format(tx_ssb, args.spp, tx_pkt_sz))
@@ -176,10 +176,9 @@ def config_rx_uut(rxuut, args):
     rxuut.s0.distributor = 'on'
 
     hudp_init(args, rxuut, args.rx_ip)
-    rxuut.s10.rx_src_ip = args.tx_ip
-    rxuut.s10.rx_port = args.port
-    hudp_enable(rxuut)    
-   
+    rxuut.hudp.rx_src_ip = args.tx_ip
+    rxuut.hudp.rx_port = args.port
+    hudp_enable(rxuut)
 PCSEL = ("none", "pc")
 
 def run_main(args):
