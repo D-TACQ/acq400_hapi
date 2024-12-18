@@ -88,8 +88,8 @@ class AcqSites:
     SITE_CA = 13
     SITE_CB = 12
     SITE_CC = 11
+    SITE_CD = 10
     SITE_DSP = 14
-    SITE_HUDP = 10
 
 class SF:
     """uut system state constants"""
@@ -516,7 +516,7 @@ class Acq400:
 
     def close(self):
         """Closes uut connection gracefully"""
-        self.statmon.quit_reqested = True
+        self.statmon.quit_requested = True
 
         try:
             self.statmon.logclient.close()
@@ -1567,52 +1567,38 @@ class Acq2106(Acq400):
             has_wr (bool, optional): if uut has white rabbit. Defaults to False.
             has_hudp (bool, optional): if uut has hudp. Defaults to False.
         """
-
         Acq400.__init__(self, _uut, monitor=monitor, s0_client=s0_client)
 
-
         self.mb_clk_min = 100000
-        sn_map = ()
+        sn_map = []
+
+        comms_map = {
+            AcqSites.SITE_CA : 'cA',
+            AcqSites.SITE_CB : 'cB',
+            AcqSites.SITE_CC : 'cC',
+            AcqSites.SITE_CD : 'cD',
+        }
+
         if has_comms:
-            for mgt in self.svc['s0'].has_mgt.split(' '):
-                sn_map += ((self.get_mgt_site(mgt)),)
+            for site in self.s0.has_mgt.split(' '):
+                sn_map.append((comms_map[int(site)], int(site)))
         if has_wr:
-            sn_map += (('cC', AcqSites.SITE_CC), )
+            sn_map.append(('cC', AcqSites.SITE_CC))
+            sn_map.append(('wr', AcqSites.SITE_CC))
         if has_dsp:
-            sn_map += (('s14', AcqSites.SITE_DSP),)
-
+            sn_map.append(('s14', AcqSites.SITE_DSP))
+            sn_map.append(('dsp', AcqSites.SITE_DSP))
         if has_hudp:
-            hudp_sites = [int(x) for x in s0_client.has_hudp.split(',')]
-            for site in hudp_sites:
-                sn_map += ((f's{site}', site),)
-
+            self.hudp_sites = self.s0.has_hudp.split(',')
+            sn_map.append(('hudp', int(self.hudp_sites[0])))
+            for site in self.hudp_sites:
+                sn_map.append((f's{site}', int(site)))
         for ( service_name, site ) in sn_map:
             try:
-                self.svc[service_name] = netclient.Siteclient(self.uut, AcqPorts.SITE0+site)
+                self.svc[service_name] = netclient.Siteclient(self.uut, AcqPorts.SITE0 + site)
             except socket.error:
                 print("uut {} site {} not populated".format(_uut, site))
             self.mod_count += 1
-
-        if has_hudp:
-            self.hudp_sites = [ self.svc[f's{site}'] for site in hudp_sites ]
-        else:
-            self.hudp_sites = 'none'
-
-    def get_mgt_site(self, mgt):
-        """gets mgt site str from num
-
-        Args:
-            mgt (int): mgt site num
-
-        Returns:
-            tuple: (site string, site num)
-        """
-        comms_config = {
-            11 : ('cC', AcqSites.SITE_CC),
-            12 : ('cB', AcqSites.SITE_CB),
-            13 : ('cA', AcqSites.SITE_CA),
-        }
-        return comms_config[int(mgt)]
 
     def set_mb_clk(self, hz=4000000, src="zclk", fin=1000000):
         print("set_mb_clk {} {} {}".format(hz, src, fin))
@@ -1780,9 +1766,6 @@ class Acq1102(Acq2106):
     # retain s10 for back compatibility, new apps should use self.hudp_sites[0|1]
     def __init__(self, _uut, monitor=True, s0_client=None, has_dsp=False, has_comms=True, has_wr=False, has_hudp=False):
         Acq2106.__init__(self, _uut, monitor, s0_client, has_dsp, has_comms, has_wr, has_hudp)
-        if has_hudp:
-            hudp_sites = [int(x) for x in s0_client.has_hudp.split(',')]
-            self.svc['s10'] = self.svc[f's{hudp_sites[0]}']
 
 def run_unit_test():
     SERVER_ADDRESS = '10.12.132.22'
