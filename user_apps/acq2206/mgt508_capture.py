@@ -20,6 +20,11 @@ import time
 import subprocess
 import threading
 from acq400_hapi import timing as timing
+import math
+
+GB1 = 0x40000000
+
+PULL_BUFFERS_PER_GB = 0x400
 
 def configure_acq(args, acq):
     while acq400_hapi.pv(acq.s0.CONTINUOUS_STATE) != 'IDLE':
@@ -43,16 +48,25 @@ def configure_acq(args, acq):
         print(f'unable to parse aggregator {agg}')
         os.exit(1)
     acq.cA.aggregator = f'sites={sites} spad={spad} on'
-    args.ssb = acq.s0.ssb
+    args.ssb = int(acq.s0.ssb)
 
-GB1 = 0x40000000
+    if args.samples is not None:
+        msg_qual = ""
+        if args.decimate > 1:
+            args.samples *= args.decimate
+            msg_qual = " before decimation"
+
+        capture_bytes = args.samples * args.ssb
+        args.GB = math.ceil(capture_bytes/GB1)
+        print(f'samples:{args.samples} {msg_qual}, sample-size-bytes:{args.ssb}, bytes:{bytes} setting GB:{args.GB}')
+
 
 def pull(mgt):
     print(f"Start pull {mgt.uut}")
     mgt.pull()
 
 def configure_mgt(args, mgt):
-    mgt.set_capture_length(args.GB*0x400)
+    mgt.set_capture_length(args.GB * PULL_BUFFERS_PER_GB)
     mgt.s0.ssb = args.ssb
 
 @timing
@@ -131,6 +145,7 @@ def get_parser():
     parser.add_argument('--read', type=int, default=1, help='Enable or disable read from MGT to host')
     parser.add_argument('--pull', type=int, default=1, help='Enable or disable pull from ACQ to MGT')
     parser.add_argument('--clear_mem', type=int, default=0, help='zero memory before run')
+    parser.add_argument('--samples', type=int, default=None, help='capture length in samples')
     parser.add_argument('--GB', type=int, default=4, help='capture length in gigabytes')
     parser.add_argument('--decimate', type=int, default=0, choices=(0,2), help='Enable or disable 2x decimation during read from MGT to host')
     parser.add_argument('uut_pairs', nargs='+', help="acq2206,mgt508 [a,m] ..")
