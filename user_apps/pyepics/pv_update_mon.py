@@ -6,6 +6,9 @@ import argparse
 import epics
 import time
 from acq400_hapi import acq400_logger, pprint
+import sys
+import numpy as np
+from npy_append_array import NpyAppendArray
 
 log = acq400_logger("pv_update_mon", logfile="pv_update_mon.log")
 
@@ -15,6 +18,8 @@ class UpdateMonitor:
 
         self.pvs = {}
         self.threshold = threshold
+        self.dt = []
+        self.updates = 0
 
         for pvname in pvs:
             pvname = pvname.format(uut=uut)
@@ -36,9 +41,18 @@ class UpdateMonitor:
             self.pvs[pvname].sum = 0
             self.pvs[pvname].total = 0
             self.pvs[pvname].errors = 0
+            self.last_time = self.pvs[pvname].timestamp
             return
         
         diff = timestamp - self.pvs[pvname].timestamp
+        self.dt.append(timestamp - self.last_time)
+        self.last_time = timestamp
+        self.updates += 1
+        if self.updates > 10:
+            with NpyAppendArray('data.npy') as npaa:
+                npaa.append(np.array(self.dt))
+            self.dt = []
+            self.updates = 0
 
         if "max" not in self.pvs[pvname]:
             self.pvs[pvname].min = diff
@@ -87,7 +101,7 @@ def run_main(args):
 
             time.sleep(0.2)
             print((LINE_UP + ERASE_LINE) * lines, end="")
-
+            
     except KeyboardInterrupt:
         pass
 
