@@ -95,14 +95,17 @@ def run_pair(args, acq, mgt):
     if args.clear_mem:
         clear_mem(args, mgt)
 
-    start_pull(args, mgt)
+    if args.pull:
+        start_pull(args, mgt)
+
     start_acq(args, acq)
 
-    wait_pull_complete(args, mgt)
+    if args.pull:
+        wait_pull_complete(args, mgt)
     stop_acq(args, acq)
 
-    read_data(args, acq, mgt)
-    
+    if args.read:
+        read_data(args, acq, mgt)
 
 
 def run_main(args):
@@ -116,9 +119,12 @@ def run_main(args):
 def get_parser():
     parser = argparse.ArgumentParser(description='Controls acq2206+mgt508 deep memory system')
     parser.add_argument('--simulate', type=int, default=0, help='use simulated data and validate')
+    parser.add_argument('--read', type=int, default=1, help='Enable or disable read from MGT to host')
+    parser.add_argument('--pull', type=int, default=1, help='Enable or disable pull from ACQ to MGT')
     parser.add_argument('--clear_mem', type=int, default=0, help='zero memory before run')
     parser.add_argument('--GB', type=int, default=4, help='capture length in gigabytes')
     parser.add_argument('uut_pairs', nargs='+', help="acq2206,mgt508 [a,m] ..")
+    
     return parser
 
 if __name__ == '__main__':
