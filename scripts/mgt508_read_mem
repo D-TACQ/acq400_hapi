@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-echo mgt508_read_mem MGT=$1 GB=$2
+echo mgt508_read_mem MGT=$1 GB=$2 PORT=$3
 
 one_file() {
 nc $1 2210 | pv > $1.dat
@@ -8,9 +8,9 @@ ls -l $1.dat
 }
 
 many_files() {
-./user_apps/acq400/acq400_stream2.py --delete=y --filesize=128M --totaldata ${2}G --port 2210 --verbose 1 $1
+./user_apps/acq400/acq400_stream2.py --delete=y --filesize=128M --totaldata ${2}G --port $3 --verbose 1 $1
 }
 
 #one_file $1 $2
-many_files $1 $2
+many_files $1 $2 $3
 

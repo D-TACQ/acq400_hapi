@@ -1661,6 +1661,7 @@ class Acq2106(Acq400):
         return ccraw
 
 class Mgt508Ports:
+    DECIMATE_READ = 2209
     READ = 2210
     WRITE = 2211
     PULL = 2212
@@ -1695,10 +1696,11 @@ class Mgt508(Acq400):
         self.filter = DotFilter(self)
         self.capture_time = 0
         self.capture_blocks = 0
+        self.ports = Mgt508Ports()
 
     def pull(self, verbose=False):
         self.filter.verbose = verbose
-        pm = ProcessMonitor(self, Mgt508Ports.PULL, self.filter, set_arm=False)
+        pm = ProcessMonitor(self, self.ports.PULL, self.filter, set_arm=False)
         print()
         while pm.quit_requested != True:
             time.sleep(1)
