@@ -101,11 +101,11 @@ def get_data_format(nchan, datalen, schan=0, mask=[]):
 
     return format
 
-def make_ramp(uut, site, ampitude, wavelength):
-    ramp_up = np.linspace(-ampitude, ampitude, wavelength)
-    ramp_dn = np.linspace(ampitude, -ampitude, wavelength)
-    cup = ampitude * np.cos(np.linspace(0, np.pi, wavelength))
-    sup = ampitude * np.sin(np.linspace(0, np.pi, wavelength))
+def make_ramp(uut, site, amplitude, wavelength):
+    ramp_up = np.linspace(-amplitude, amplitude, wavelength)
+    ramp_dn = np.linspace(amplitude, -amplitude, wavelength)
+    cup = amplitude * np.cos(np.linspace(0, np.pi, wavelength))
+    sup = amplitude * np.sin(np.linspace(0, np.pi, wavelength))
 
     uut[site].AO_STEP_1 = ramp_up
     uut[site].AO_STEP_2 = ramp_dn
@@ -187,7 +187,7 @@ def run_main(args):
 
     data_format = get_data_format(int(uut.s0.NCHAN), int(uut.s1.data_len), int(uut.s0.SPAD_LEN_r), mask.list)
 
-    make_ramp(uut, args.ao_site, args.ampitude, args.wavelength)
+    make_ramp(uut, args.ao_site, args.amplitude, args.wavelength)
     start_ramp(uut)
 
     if args.stream:
@@ -252,7 +252,7 @@ def get_parser():
     parser.add_argument('--all', default=1, type=int, help="plot all")
 
     parser.add_argument('--wavelength', default=400, type=int, help="Ramp wavelength")
-    parser.add_argument('--ampitude', default=5, type=int, help="Ramp ampitude")
+    parser.add_argument('--amplitude', default=5, type=int, help="Ramp amplitude")
     parser.add_argument('--ao_site', default=5, type=int, help="Site with the ao")
     parser.add_argument('--translen', default=None, type=valid_translen, help="Burst length: any number 1024 - 22000")
     parser.add_argument('--mask', default="1-6,17-20", type=list_of_channels, help="channels in the mask")
