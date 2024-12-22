@@ -45,11 +45,11 @@ class MaskHelper(DotDict):
 
 # Functions
 
-def monitor_cursor(uut, wavelength):
+def monitor_cursor(uut, scan_steps):
     cursor_pv = "{uut}:0:AO:STEP:CURSOR"
 
     def cursor_callback(value, **kwargs):
-        if value >= wavelength and uut.cstate != States.IDLE.value:
+        if value >= scan_steps and uut.cstate != States.IDLE.value:
             print('Requesting stop')
             uut.stop_flag = True
 
@@ -101,11 +101,11 @@ def get_data_format(nchan, datalen, schan=0, mask=[]):
 
     return format
 
-def make_ramp(uut, site, ampitude, wavelength):
-    ramp_up = np.linspace(-ampitude, ampitude, wavelength)
-    ramp_dn = np.linspace(ampitude, -ampitude, wavelength)
-    cup = ampitude * np.cos(np.linspace(0, np.pi, wavelength))
-    sup = ampitude * np.sin(np.linspace(0, np.pi, wavelength))
+def make_ramp(uut, site, amplitude, scan_steps):
+    ramp_up = np.linspace(-amplitude, amplitude, scan_steps)
+    ramp_dn = np.linspace(amplitude, -amplitude, scan_steps)
+    cup = amplitude * np.cos(np.linspace(0, np.pi, scan_steps))
+    sup = amplitude * np.sin(np.linspace(0, np.pi, scan_steps))
 
     uut[site].AO_STEP_1 = ramp_up
     uut[site].AO_STEP_2 = ramp_dn
@@ -183,11 +183,11 @@ def run_main(args):
     uut.s0.STREAM__SUBSET__MASK = mask.hex
     if args.translen: uut.s1.RTM__TRANSLEN = args.translen
 
-    monitor_cursor(uut, args.wavelength)
+    monitor_cursor(uut, args.scan_steps)
 
     data_format = get_data_format(int(uut.s0.NCHAN), int(uut.s1.data_len), int(uut.s0.SPAD_LEN_r), mask.list)
 
-    make_ramp(uut, args.ao_site, args.ampitude, args.wavelength)
+    make_ramp(uut, args.ao_site, args.amplitude, args.scan_steps)
     start_ramp(uut)
 
     if args.stream:
@@ -251,8 +251,8 @@ def get_parser():
     parser.add_argument('--slow', default='1-4', type=list_of_channels, help="channels to slow plot")
     parser.add_argument('--all', default=1, type=int, help="plot all")
 
-    parser.add_argument('--wavelength', default=400, type=int, help="Ramp wavelength")
-    parser.add_argument('--ampitude', default=5, type=int, help="Ramp ampitude")
+    parser.add_argument('--scan_steps', default=400, type=int, help="Ramp scan_steps")
+    parser.add_argument('--amplitude', default=5, type=int, help="Ramp amplitude")
     parser.add_argument('--ao_site', default=5, type=int, help="Site with the ao")
     parser.add_argument('--translen', default=None, type=valid_translen, help="Burst length: any number 1024 - 22000")
     parser.add_argument('--mask', default="1-6,17-20", type=list_of_channels, help="channels in the mask")
