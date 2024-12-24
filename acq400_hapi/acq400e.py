@@ -182,6 +182,8 @@ class acq400e:
             site = int(site)
             object.__setattr__(self, "uut", uut)
             object.__setattr__(self, "site", site)
+
+
             if site > 0:
                 object.__setattr__(self, "nchan", self.NCHAN)
                 object.__setattr__(self, "data_len", 4 if int(self.data32) else 2)
