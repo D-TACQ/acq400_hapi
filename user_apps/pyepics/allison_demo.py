@@ -129,6 +129,7 @@ def get_data_format(nchan, datalen, schan=0, mask=[]):
 
     format.dtype = np.dtype(format.dtype)
 
+    # this appears to be sample size in bytes ssb?. Maybe call it ssb..
     format.samp_w = (len(format.data_i) * format.data_w) + (len(format.spad_i) * format.spad_w)
 
     return format
@@ -233,6 +234,12 @@ def read_from_disk(filename, data_format):
 
     return dataset
 
+def find_transitions(dataset, ssb, threshold):
+    ch0 = dataset.chan[1]             # assume ch1 assume int16
+    diffs = np.diff(ch0)
+    transitions = np.where(diffs > threshold)
+    return transitions[0]               # where returns an unwanted extra dimension
+
 def find_event_signatures(dataset, ssb):
     signatures = [
         0xaa55f151,
@@ -254,13 +261,16 @@ def find_event_signatures(dataset, ssb):
     return []
 
 def all_plot(dataset, pchan, schan, jump_indices=[]):
-    fig1, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 5), sharex=True)
+    fig1, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 5), sharex=True)
     fig1.canvas.manager.set_window_title('All plot')
+    datalen = 0
     for chan, data in dataset.chan.items():
         if pchan != None and chan not in pchan: continue
         label = f"Chan {chan}"
         print(f"Plotting {label}")
         ax1.plot(data, label=label,  markevery=jump_indices, marker='v')
+        if datalen == 0:
+            datalen = len(data)
     ax1.set_title('Data Channels')
     ax1.legend(loc="upper left")
 
@@ -271,6 +281,24 @@ def all_plot(dataset, pchan, schan, jump_indices=[]):
         ax2.plot(data, label=label)
     ax2.set_title('Spad Channels')
     ax2.legend(loc="upper left")
+
+    es_plot = np.full(datalen, 0, dtype=int)
+    es_plot[dataset.es_indices] = 1
+    ax3.plot(es_plot, label="es")
+
+    edges_plot = np.full(datalen, 0, dtype=int)
+    edges_plot[dataset.transitions] = 1
+    ax3.plot(edges_plot+2, label="edges")
+
+# bad when there's an es and no transition or there's a transition and no es
+# xor would be really good, except there's an offset between ES and transition, we need a fuzzy XOR!
+    bad_ones =np.full(datalen, 4, dtype=int)
+    bad_ones[np.bitwise_xor(es_plot, edges_plot)] = 1
+    ax3.plot(bad_ones+4, label="bad")
+
+    ax3.set_title('Transitions')
+    ax3.legend(loc="upper left")
+
 
 def slow_plt(chans, data, burstlen):
     """Plot first value of each burst"""
@@ -294,6 +322,7 @@ def stack_plt(chans, data, burstlen, offset=0):
             cursor += burstlen
 
 def sb_find_jump_indices(data, burstlen, threshold):
+    # hmm, despite the for, this always exits on first chan..
     for chan in data:
         diffs = np.diff(data[chan][0::burstlen])
         mean = np.mean(diffs)
@@ -385,6 +414,7 @@ def run_main(args):
         stream_to_disk(pvs, data_format.samp_w, maxtime=args.maxtime, maxbytes=args.maxbytes)
     dataset = read_from_disk(pvs.datafile, data_format)
 
+    dataset.transitions = find_transitions(dataset, data_format.samp_w, args.threshold)
     find_unique_es_intervals(dataset)
 
     burstlen = int(pvs.RTM_TRANSLEN.get()) - 1
