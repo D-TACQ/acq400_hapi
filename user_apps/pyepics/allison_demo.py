@@ -293,7 +293,7 @@ def stack_plt(chans, data, burstlen, offset=0):
             plt.plot(data[chan][cursor: cursor + burstlen] + (cursor // burstlen) * offset) #fix me 
             cursor += burstlen
 
-def _find_jump_indices(data, burstlen, threshold):
+def sb_find_jump_indices(data, burstlen, threshold):
     for chan in data:
         diffs = np.diff(data[chan][0::burstlen])
         mean = np.mean(diffs)
@@ -306,7 +306,7 @@ def _find_jump_indices(data, burstlen, threshold):
         print(f'\n\n nonconsecutives: {nonconsecutives}')
         return indices[nonconsecutives] * burstlen
 
-def find_jump_indices(data, burstlen, threshold):
+def pm_find_jump_indices(data, burstlen, threshold):
 
     for chan in data:
         print(f'chan: {chan}')
@@ -339,6 +339,8 @@ def find_jump_indices(data, burstlen, threshold):
     print(f'return {unique_lengths}')
     return unique_lengths
 
+find_jump_indices = sb_find_jump_indices
+
 def find_unique_es_intervals(dataset):
     if len(dataset.es_indices) > 0:
         print(f'dataset.es_indices {dataset.es_indices}')
@@ -367,7 +369,7 @@ def run_main(args):
             print('Requesting stop')
             pvs.stop_flag = True
 
-    epics.PV("{uut}:0:AO:STEP:CURSOR".format(uut=args.uut), callback=cursor_callback, auto_monitor=True)
+    epics.PV(f"{args.uut}:0:AO:STEP:CURSOR", callback=cursor_callback, auto_monitor=True)
 
     #Generate data format dtype
     nchan = int(pvs.NCHAN.get())
