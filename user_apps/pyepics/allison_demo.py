@@ -133,7 +133,7 @@ def get_data_format(nchan, datalen, schan=0, mask=[]):
 
     return format
 
-def setup_ramp(pvs, amplitude, scan_steps):
+def setup_ramp(pvs, amplitude, scan_steps, ao_step_en):
     ramp_up = np.linspace(-amplitude, amplitude, scan_steps)
     ramp_dn = np.linspace(amplitude, -amplitude, scan_steps)
     cup = amplitude * np.cos(np.linspace(0, np.pi, scan_steps))
@@ -144,10 +144,13 @@ def setup_ramp(pvs, amplitude, scan_steps):
     pvs.AO_STEP_3.put(cup, wait=True)
     pvs.AO_STEP_4.put(sup, wait=True)
 
-#    pvs.AO_STEP_1_EN.put(1, wait=True)
-#    pvs.AO_STEP_2_EN.put(1, wait=True)
-#    pvs.AO_STEP_3_EN.put(1, wait=True)
-#    pvs.AO_STEP_4_EN.put(1, wait=True)
+   
+    if ao_step_en:
+        print("ao_step_en")
+        pvs.AO_STEP_1_EN.put(1, wait=True)
+        pvs.AO_STEP_2_EN.put(1, wait=True)
+        pvs.AO_STEP_3_EN.put(1, wait=True)
+        pvs.AO_STEP_4_EN.put(1, wait=True)
 
     pvs.AO_STEP_CURSOR.put(0, wait=True)
 
@@ -373,7 +376,7 @@ def run_main(args):
     data_format = get_data_format(nchan, chanlen, spadlen, mask.list)
 
     #Setup ramp 
-    setup_ramp(pvs, args.amplitude, args.scan_steps)
+    setup_ramp(pvs, args.amplitude, args.scan_steps, args.ao_step_en)
 
     #stream data to disk then read in data
     if args.stream:
@@ -442,6 +445,7 @@ def get_parser():
     parser.add_argument('--scan_steps', default=400, type=int, help="Ramp scan_steps")
     parser.add_argument('--amplitude', default=5, type=int, help="Ramp amplitude")
     parser.add_argument('--ao_site', default=5, type=int, help="Site with the ao")
+    parser.add_argument('--ao_step_en', default=1, type=int, help="Enable DAC ramps (almost always want this)")
     parser.add_argument('--translen', default=None, type=valid_translen, help="Burst length: any number 1024 - 22000")
     parser.add_argument('--mask', default="1-6,17-20", type=list_of_channels, help="channels in the mask")
     parser.add_argument('--threshold', default=None, type=float, help="Jump index threshold value (eg 10 codes)")
