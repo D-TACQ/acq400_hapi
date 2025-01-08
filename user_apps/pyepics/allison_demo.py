@@ -267,54 +267,78 @@ def find_event_signatures(dataset, ssb):
                 return indices
     return []
 
-def all_plot(dataset, title, pchan, schan):
-
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 5), sharex=True)
+def multiplot(dataset, title, adef):
+    """Plots mulitple subplots"""
+    
+    ta = len([a for a in adef if a is not None])
+    fig, axs = plt.subplots(ta, 1, figsize=(10, 5), sharex=True, )
     fig.canvas.manager.set_window_title(f"Allison Demo {title}")
-    #fig.suptitle(title)
+    index = 0
 
-    #Data plot
-    for chan, data in dataset.chan.items():
-        if pchan != None and chan not in pchan: continue
-        label = f"Chan {chan}"
-        print(f"Plotting {label}")
-        ax1.plot(data, label=label)
-    ax1.set_title('AO loopback')
-    ax1.legend(loc="upper left")
+    if not isinstance(axs, np.ndarray): axs = [axs]
 
-
-    if 5 in dataset.chan:
-        label = f"Chan 5"
-        ax2.plot(dataset.chan[5], label=label)
-        ax2.set_title('Signal')
-        ax2.legend(loc="upper left")
-
-    """ #Spad plot
-    for spad, data in dataset.spad.items():
-        if schan != None and spad not in schan: continue
-        label = f"Spad {spad}"
-        print(f"Plotting {label}")
-        ax2.plot(data, label=label)
-    ax2.set_title('Spad')
-    ax2.legend(loc="upper left")"""
+    #loopback plot
+    loopbacks = adef[0]
+    if loopbacks != None:
+        for chan in loopbacks:
+            if chan not in dataset.chan: continue
+            label = f"Chan {chan}"
+            print(f"Plotting AO {label}")
+            axs[index].plot(dataset.chan[chan], label=label)
+        axs[index].set_title('AO loopback')
+        axs[index].legend(loc="upper left")
+        index += 1
+    
+    #signal plot
+    signals = adef[1]
+    if signals != None:
+        for chan in signals:
+            if chan not in dataset.chan: continue
+            label = f"Chan {chan}"
+            print(f"Plotting Signal {label}")
+            axs[index].plot(dataset.chan[chan], label=label)
+        axs[index].set_title('Signal')
+        axs[index].legend(loc="upper left")
+        index += 1
 
     #Validation Plot
-    trans_arr = np.full(dataset.datalen, 0)
-    trans_arr[dataset.transitions] = 1
+    validatees = adef[2]
+    if validatees != None:
 
-    es_arr = np.full(dataset.datalen, 0)
-    es_ajust = np.arange(0, len(dataset.es_indices))
-    es_arr[dataset.es_indices - es_ajust] = 1
+        offset = 0
+        es_arr = np.full(dataset.datalen, 0)
+        es_ajust = np.arange(0, len(dataset.es_indices))
+        es_arr[dataset.es_indices - es_ajust] = 1
 
-    xor_arr = trans_arr ^ es_arr
+        for chan in validatees:
+            if chan not in dataset.chan: continue
+            transitions = find_step_transitions(dataset.chan[chan], dataset.threshold)
+            trans_arr = np.full(dataset.datalen, 0)
+            trans_arr[transitions] = 1
 
-    print(f"Plotting Validation")
-    ax3.plot(es_arr, label="es")
-    ax3.plot(trans_arr + 1, label="transitions")
-    ax3.plot(xor_arr + 2, label="ERROR (xor)", color="red")
-    ax3.set_title('Validation')
-    ax3.legend(loc="upper left")
-    
+            print(f"Plotting Validation chan {chan}")
+            axs[index].plot(es_arr + offset, label=f"es {chan}")
+            offset += 1
+            axs[index].plot(trans_arr + offset, label=f"transitions {chan}")
+            offset += 1
+            axs[index].plot((trans_arr ^ es_arr) + offset, label=f"ERROR (xor) {chan}", color="red")
+            offset += 1
+
+        axs[index].set_title('Validation')
+        axs[index].legend(loc="upper left")
+        index += 1
+
+    #Spad plot
+    spads = adef[3]
+    if spads != None:
+        for chan in spads:
+            if chan not in dataset.spad: continue
+            label = f"Spad {chan}"
+            print(f"Plotting {label}")
+            axs[index].plot(dataset.spad[chan], label=label)
+        axs[index].set_title('Spad')
+        axs[index].legend(loc="upper left")
+        index += 1
 
 def slow_plt(chans, data, burstlen):
     """Plot first value of each burst"""
@@ -355,8 +379,6 @@ def run_main(args):
     mask = MaskHelper(args.mask)
 
     args.maxtime = None if args.maxbytes else args.maxtime
-    args.pchan = None if args.pchan =='all' else args.pchan
-    args.pspad = None if args.pspad =='all' else args.pspad
     
     pvs.STREAM_SUBSET_MASK.put(mask.hex, wait=True)
     if args.translen: pvs.RTM_TRANSLEN.put(args.translen, wait=True)
@@ -384,15 +406,17 @@ def run_main(args):
         stream_to_disk(pvs, data_format.samp_w, maxtime=args.maxtime, maxbytes=args.maxbytes)
     dataset = read_from_disk(pvs.datafile, data_format)
 
-    dataset.transitions = find_step_transitions(dataset.chan[dataset.channels[0]], args.threshold)
     find_unique_es_intervals(dataset)
 
     burstlen = int(pvs.RTM_TRANSLEN.get()) - 1
 
     #plotting here
-    if args.all:
+
+    if args.multiplot:
         title = f"{args.uut} {trigger_rate}Hz"
-        all_plot(dataset, title, args.pchan, args.pspad)
+        adef = [args.loopbacks, args.signal, args.validate, args.spad]
+        dataset.threshold = args.threshold
+        multiplot(dataset, title, adef)
 
     if args.slow != None:
         slow_plt(args.slow, dataset.chan, burstlen)
@@ -407,7 +431,6 @@ def run_main(args):
 # Argparser
 
 def list_of_channels(arg):
-    if arg.lower() == 'all': return arg
     if arg.lower() == 'none': return None
     channels = []
     for chan in arg.split(','):
@@ -426,16 +449,19 @@ def valid_translen(arg):
 def get_parser():
     parser = argparse.ArgumentParser(description="Alison Plotter")
 
-    parser.add_argument('--pchan', default='1-4', type=list_of_channels, help="Channels to plot in all plot")
-    parser.add_argument('--pspad', default=[1], type=list_of_channels, help="Spads to plot (0 indexed) in all plot")
+    parser.add_argument('--loopbacks', default='1-4', type=list_of_channels, help="loopback channels to plot")
+    parser.add_argument('--signal', default='5', type=list_of_channels, help="Signal channels to plot")
+    parser.add_argument('--validate', default='1', type=list_of_channels, help="Validate channel to plot")
+    parser.add_argument('--spad', default=None, type=list_of_channels, help="Spad channels to plot")
 
     parser.add_argument('--stream', default=1, type=int, help="to stream or not to stream")
+    
     parser.add_argument('--maxtime', default=None, type=int, help="Stream max time")
     parser.add_argument('--maxbytes', default=None, type=int, help="Stream max bytes")
 
     parser.add_argument('--stack', default='none', type=list_of_channels, help="channels to stack plot")
     parser.add_argument('--slow', default='none', type=list_of_channels, help="channels to slow plot")
-    parser.add_argument('--all', default=1, type=int, help="plot all")
+    parser.add_argument('--multiplot', default=1, type=int, help="multiplot")
 
     parser.add_argument('--scan_steps', default=400, type=int, help="Ramp scan_steps")
     parser.add_argument('--amplitude', default=5, type=int, help="Ramp amplitude")
@@ -443,7 +469,7 @@ def get_parser():
     parser.add_argument('--ao_step_en', default=1, type=int, help="Enable DAC ramps (almost always want this)")
     parser.add_argument('--translen', default=None, type=valid_translen, help="Burst length: any number 1024 - 22000")
     parser.add_argument('--mask', default="1-6,17-20", type=list_of_channels, help="channels in the mask")
-    parser.add_argument('--threshold', default=20, type=float, help="Jump index threshold value (eg 20 codes)")
+    parser.add_argument('--threshold', default=20, type=int, help="Jump index threshold value (eg 20 codes)")
 
     parser.add_argument('uut', help="uut name")
     return parser
