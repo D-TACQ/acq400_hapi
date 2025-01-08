@@ -310,8 +310,8 @@ def all_plot(dataset, title, pchan, schan):
 
     print(f"Plotting Validation")
     ax3.plot(es_arr, label="es")
-    ax3.plot(trans_arr, label="transitions")
-    ax3.plot(xor_arr + 2, label="xor")
+    ax3.plot(trans_arr + 1, label="transitions")
+    ax3.plot(xor_arr + 2, label="ERROR (xor)", color="red")
     ax3.set_title('Validation')
     ax3.legend(loc="upper left")
     
