@@ -25,7 +25,7 @@ class DotDict(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
 
-class PVHelper:
+class PVHelper(dict):
     def __init__(self, uut, ao_site):
         self.uut = uut
         self.datafile = f"{uut}.dat"
@@ -39,7 +39,7 @@ class PVHelper:
         tstate_callback = lambda value, **kwargs: setattr(self, 'tstate', value)
         self.tstate_pv = epics.PV("{uut}:MODE:TRANS_ACT:STATE".format(uut=uut), callback=tstate_callback, auto_monitor=True)
 
-        pvs = [
+        pvmap = [
             (0, "STREAM_SUBSET_MASK"),
             (0, "NCHAN"),
             (0, "SPAD:LEN:r"),
@@ -58,8 +58,11 @@ class PVHelper:
             (ao_site, 'AO:STEP:4:EN'),
         ]
 
-        for (site, pvname) in pvs:
-            setattr(self, pvname.replace(':', '_'), epics.PV(f"{uut}:{site}:{pvname}"))
+        for (site, pvname) in pvmap:
+            self[pvname] = epics.PV(f"{uut}:{site}:{pvname}")
+            #setattr(self, pvname.replace(':', '_'), epics.PV(f"{uut}:{site}:{pvname}"))
+
+
 
 class MaskHelper(DotDict):
     """helper for channel mask"""
@@ -141,20 +144,20 @@ def setup_ramp(pvs, amplitude, scan_steps, ao_step_en):
     cup = amplitude * np.cos(np.linspace(0, np.pi, scan_steps))
     sup = amplitude * np.sin(np.linspace(0, np.pi, scan_steps))
 
-    pvs.AO_STEP_1.put(ramp_up, wait=True)
-    pvs.AO_STEP_2.put(ramp_dn, wait=True)
-    pvs.AO_STEP_3.put(cup, wait=True)
-    pvs.AO_STEP_4.put(sup, wait=True)
+    pvs['AO:STEP:1'].put(ramp_up, wait=True)
+    pvs['AO:STEP:2'].put(ramp_dn, wait=True)
+    pvs['AO:STEP:3'].put(cup, wait=True)
+    pvs['AO:STEP:4'].put(sup, wait=True)
 
    
     if ao_step_en:
         print("ao_step_en")
-        pvs.AO_STEP_1_EN.put(1, wait=True)
-        pvs.AO_STEP_2_EN.put(1, wait=True)
-        pvs.AO_STEP_3_EN.put(1, wait=True)
-        pvs.AO_STEP_4_EN.put(1, wait=True)
+        pvs['AO:STEP:1:EN'].put(1, wait=True)
+        pvs['AO:STEP:2:EN'].put(1, wait=True)
+        pvs['AO:STEP:3:EN'].put(1, wait=True)
+        pvs['AO:STEP:4:EN'].put(1, wait=True)
 
-    pvs.AO_STEP_CURSOR.put(0, wait=True)
+    pvs['AO:STEP:CURSOR'].put(0, wait=True)
 
 def stream_to_disk(pvs, ssb, maxbytes=None, maxtime=None, update=True):
         """Stream data to host stop after time, bytes or flag"""
@@ -269,7 +272,6 @@ def find_event_signatures(dataset, ssb):
 
 def multiplot(dataset, title, adef):
     """Plots mulitple subplots"""
-    
     ta = len([a for a in adef if a is not None])
     fig, axs = plt.subplots(ta, 1, figsize=(10, 5), sharex=True, )
     fig.canvas.manager.set_window_title(f"Allison Demo {title}")
@@ -380,8 +382,8 @@ def run_main(args):
 
     args.maxtime = None if args.maxbytes else args.maxtime
     
-    pvs.STREAM_SUBSET_MASK.put(mask.hex, wait=True)
-    if args.translen: pvs.RTM_TRANSLEN.put(args.translen, wait=True)
+    pvs['STREAM_SUBSET_MASK'].put(mask.hex, wait=True)
+    if args.translen: pvs['RTM_TRANSLEN'].put(args.translen, wait=True)
 
     #monitor cursor and stop when complete
     def cursor_callback(value, **kwargs):
@@ -392,10 +394,10 @@ def run_main(args):
     epics.PV(f"{args.uut}:0:AO:STEP:CURSOR", callback=cursor_callback, auto_monitor=True)
 
     #Generate data format dtype
-    nchan = int(pvs.NCHAN.get())
-    chanlen = 4 if int(pvs.data32.get()) else 2
-    spadlen = int(pvs.SPAD_LEN_r.get())
-    trigger_rate = pvs.SIG_TRG_EXT_FREQ.get()
+    nchan = int(pvs['NCHAN'].get())
+    chanlen = 4 if int(pvs['data32'].get()) else 2
+    spadlen = int(pvs['SPAD:LEN:r'].get())
+    trigger_rate = pvs['SIG:TRG_EXT:FREQ'].get()
     data_format = get_data_format(nchan, chanlen, spadlen, mask.list)
 
     #Setup ramp 
@@ -408,7 +410,7 @@ def run_main(args):
 
     find_unique_es_intervals(dataset)
 
-    burstlen = int(pvs.RTM_TRANSLEN.get()) - 1
+    burstlen = int(pvs['RTM_TRANSLEN'].get()) - 1
 
     #plotting here
 
