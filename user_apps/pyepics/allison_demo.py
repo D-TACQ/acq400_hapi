@@ -282,14 +282,21 @@ def all_plot(dataset, title, pchan, schan):
     ax1.set_title('AO loopback')
     ax1.legend(loc="upper left")
 
-    #Spad plot
+
+    if 5 in dataset.chan:
+        label = f"Chan 5"
+        ax2.plot(dataset.chan[5], label=label)
+        ax2.set_title('Signal')
+        ax2.legend(loc="upper left")
+
+    """ #Spad plot
     for spad, data in dataset.spad.items():
         if schan != None and spad not in schan: continue
         label = f"Spad {spad}"
         print(f"Plotting {label}")
         ax2.plot(data, label=label)
     ax2.set_title('Spad')
-    ax2.legend(loc="upper left")
+    ax2.legend(loc="upper left")"""
 
     #Validation Plot
     trans_arr = np.full(dataset.datalen, 0)
