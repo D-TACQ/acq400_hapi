@@ -16,7 +16,7 @@ import time
 import numpy as np
 from matplotlib import pyplot as plt
 import epics
-import sys
+import os
 
 # Classes
 
@@ -157,7 +157,7 @@ def setup_ramp(pvs, amplitude, scan_steps, ao_step_en):
     pvs.AO_STEP_CURSOR.put(0, wait=True)
 
 def stream_to_disk(pvs, ssb, maxbytes=None, maxtime=None, update=True):
-        
+        """Stream data to host stop after time, bytes or flag"""
         LINE_UP = '\033[1A'
         ERASE_LINE = '\033[2K'
         bufferlen = ssb * 1024
@@ -212,7 +212,11 @@ def stream_to_disk(pvs, ssb, maxbytes=None, maxtime=None, update=True):
 def read_from_disk(filename, data_format):
     """Read data from disk and organize into dataset object"""
     dataset = DotDict()
-    dataset.data = np.fromfile(filename, dtype=data_format.dtype)
+    
+    file_size = os.path.getsize(filename)
+    bytes_to_read = file_size - (file_size % data_format.samp_w)
+    dataset.data = np.fromfile(filename, dtype=data_format.dtype, count=bytes_to_read)
+
     dataset.samples = len(dataset.data)
 
     dataset.es_indices = find_event_signatures(dataset, data_format.samp_w)
@@ -226,28 +230,24 @@ def read_from_disk(filename, data_format):
     dataset.chan = {}
     dataset.channels = data_format.data_i
     for chan in dataset.channels:
-        print(f'read_from_disk() chan:{chan}')
+        print(f'read_from_disk chan[{chan}]')
         id = f"chan_{chan}"
         dataset.chan[chan] = dataset.data[id][dataset.es_mask]
     dataset.datalen = len(dataset.chan[dataset.channels[0]])
 
     dataset.spad = {}
     for idx, _ in enumerate(data_format.spad_i):
+        print(f'read_from_disk spad[{idx}]')
         id = f"spad_{idx}"
         dataset.spad[idx] = dataset.data[id]
 
-    print(f'datalen: {dataset.datalen}')
-    print(f'samples: {dataset.samples}')
+    print(f'read_from_disk datalen: {dataset.datalen}')
+    print(f'read_from_disk samples: {dataset.samples}')
 
     return dataset
 
-def find_transitions(dataset, ssb, threshold):
-    ch0 = dataset.chan[1]             # assume ch1 assume int16
-    diffs = np.diff(ch0)
-    transitions = np.where(diffs > threshold)
-    return transitions[0]               # where returns an unwanted extra dimension
-
 def find_event_signatures(dataset, ssb):
+    """Convert data to uint32 and look for es"""
     signatures = [
         0xaa55f151,
         0xaa55f152,
@@ -335,62 +335,10 @@ def find_step_transitions(data, threshold):
     diffs = np.diff(data)
     return np.where(np.abs(diffs) > threshold)[0] + 1
 
-def sb_find_jump_indices(data, burstlen, threshold):
-    # hmm, despite the for, this always exits on first chan..
-    for chan in data:
-        diffs = np.diff(data[chan][0::burstlen])
-        mean = np.mean(diffs)
-        th = np.abs(mean * threshold)
-        print(f'find_jump_indices() ch:{chan} step:{mean:0f} threshold:{threshold:0f}')
-        indices = np.where(np.abs(diffs - mean) > th)[0]
-        if len(indices) < 1: return []
-        print(f'\n\n indices:{indices}')
-        nonconsecutives = np.insert(np.diff(indices) != 1, 0, True)
-        print(f'\n\n nonconsecutives: {nonconsecutives}')
-        return indices[nonconsecutives] * burstlen
-
-def pm_find_jump_indices(data, burstlen, threshold):
-
-    for chan in data:
-        print(f'chan: {chan}')
-    print('all done')
-    print(f'for chan in data {len(data)}')
-    for chan in data:
-        print(f'chan:{chan}')
-        fig1, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 5), sharex=True)
-        fig1.canvas.manager.set_window_title(f'diff plot {chan}')
-        diffs = np.diff(data[chan])
-        ax1.set_title('AO1')
-        ax1.plot(data[chan])
-        ax1.set_title('diff')
-        ax2.plot(diffs)
-        plt.show()
-        diffs = np.diff(data[chan])
-        mean = np.mean(diffs)
-
-        transitions = np.where(np.abs(diffs - mean) > threshold)
-        unique_lengths  = np.unique(np.diff(transitions))
-
-        if abs(np.max(unique_lengths)) < burstlen*1.1:
-            print(f'chan:{chan} data:{data[chan]} lengths:{unique_lengths} all inside 10%')
-      
-        print(f'test chan {chan}')
-        if int(chan) > 0:             # assume first 4 channels are loopbacks but break anyway.
-            print('break break break')
-            break
-
-    print(f'return {unique_lengths}')
-    return unique_lengths
-
-find_jump_indices = sb_find_jump_indices
-
 def find_unique_es_intervals(dataset):
     if len(dataset.es_indices) > 0:
-        print(f'dataset.es_indices {dataset.es_indices}')
-        print(f'diff {np.diff(dataset.es_indices)}')
-        print(f'uniq {np.unique(np.diff(dataset.es_indices))}')
         unique_es_diffs = np.unique(np.diff(dataset.es_indices))
-        print(f"Event signature intervals {unique_es_diffs}")
+        print(f"Unique event signature intervals {len(dataset.es_indices)} {unique_es_diffs}")
 
 
 # Starts here
@@ -433,14 +381,6 @@ def run_main(args):
     find_unique_es_intervals(dataset)
 
     burstlen = int(pvs.RTM_TRANSLEN.get()) - 1
-
-    #find jump indices
-    jump_indices = []
-    if args.threshold != None:
-        print(f'dataset.chan len:{len(dataset.chan)}')
-        jump_indices = find_jump_indices(dataset.chan, burstlen, args.threshold)
-        if len(jump_indices) > 1:
-            print(f"Warning: found jumps at indices {jump_indices}")
 
     #plotting here
     if args.all:
