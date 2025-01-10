@@ -316,6 +316,7 @@ def multiplot(dataset, title, adef):
             if chan not in dataset.chan: continue
             transitions = find_step_transitions(dataset.chan[chan], dataset.threshold)
             trans_arr = np.full(dataset.datalen, 0)
+            trans_arr[0] = 1
             trans_arr[transitions] = 1
 
             print(f"Plotting Validation chan {chan}")
