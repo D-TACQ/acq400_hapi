@@ -26,7 +26,7 @@ class DotDict(dict):
     __setattr__ = dict.__setitem__
 
 class PVHelper(dict):
-    def __init__(self, uut, ao_site):
+    def __init__(self, uut, ao_site, trace=False):
         self.uut = uut
         self.datafile = f"{uut}.dat"
         self.stop_flag = False
@@ -58,11 +58,33 @@ class PVHelper(dict):
             (ao_site, 'AO:STEP:4:EN'),
         ]
 
+        self.PV.trace = trace
+
         for (site, pvname) in pvmap:
-            self[pvname] = epics.PV(f"{uut}:{site}:{pvname}")
+            self[pvname] = self.PV(f"{uut}:{site}:{pvname}")
             #setattr(self, pvname.replace(':', '_'), epics.PV(f"{uut}:{site}:{pvname}"))
 
+    class PV(epics.PV):
+        trace = False
 
+        def get(self, *args, **kwargs):
+            if not self.trace:
+                return super().get(*args, **kwargs)
+            host, site, pv = self.pvname.split(':', maxsplit=2)
+            print(f"[{host}, {site}] > {pv}")
+            value = super().get(*args, **kwargs)
+            print(f"[{host}, {site}] < {value}")
+            return value
+        
+        def put(self, *args, **kwargs):
+            if not self.trace:
+                return super().put(*args, **kwargs)
+            value = kwargs.get("value") if "value" in kwargs else args[0]
+            host, site, pv = self.pvname.split(':', maxsplit=2)
+            print(f"[{host}, {site}] > {pv} = {value}")
+            value = super().put(*args, **kwargs)
+            print(f"[{host}, {site}] < {value}")
+            return value
 
 class MaskHelper(DotDict):
     """helper for channel mask"""
@@ -151,7 +173,7 @@ def setup_ramp(pvs, amplitude, scan_steps, ao_step_en):
 
    
     if ao_step_en:
-        print("ao_step_en")
+        print("Enabling ao_step_en")
         pvs['AO:STEP:1:EN'].put(1, wait=True)
         pvs['AO:STEP:2:EN'].put(1, wait=True)
         pvs['AO:STEP:3:EN'].put(1, wait=True)
@@ -378,7 +400,7 @@ def find_unique_es_intervals(dataset):
 # Starts here
 
 def run_main(args):
-    pvs = PVHelper(args.uut, args.ao_site)
+    pvs = PVHelper(args.uut, args.ao_site, args.trace)
     mask = MaskHelper(args.mask)
 
     args.maxtime = None if args.maxbytes else args.maxtime
@@ -473,6 +495,7 @@ def get_parser():
     parser.add_argument('--translen', default=None, type=valid_translen, help="Burst length: any number 1024 - 22000")
     parser.add_argument('--mask', default="1-6,17-20", type=list_of_channels, help="channels in the mask")
     parser.add_argument('--threshold', default=20, type=int, help="Jump index threshold value (eg 20 codes)")
+    parser.add_argument('--trace', default=0, type=int, help="print epics trace")
 
     parser.add_argument('uut', help="uut name")
     return parser
