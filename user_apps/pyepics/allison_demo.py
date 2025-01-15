@@ -472,10 +472,10 @@ def valid_translen(arg):
     raise argparse.ArgumentTypeError(f"Invalid value: {arg}. Must be divisible by 1024.")
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="Alison Plotter")
+    parser = argparse.ArgumentParser(description="Allison Plotter")
 
     parser.add_argument('--loopbacks', default='1-4', type=list_of_channels, help="loopback channels to plot")
-    parser.add_argument('--signal', default='5', type=list_of_channels, help="Signal channels to plot")
+    parser.add_argument('--signal', default='5,6', type=list_of_channels, help="Signal channels to plot")
     parser.add_argument('--validate', default='1', type=list_of_channels, help="Validate channel to plot")
     parser.add_argument('--spad', default=None, type=list_of_channels, help="Spad channels to plot")
 
@@ -488,8 +488,8 @@ def get_parser():
     parser.add_argument('--slow', default='none', type=list_of_channels, help="channels to slow plot")
     parser.add_argument('--multiplot', default=1, type=int, help="multiplot")
 
-    parser.add_argument('--scan_steps', default=400, type=int, help="Ramp scan_steps")
-    parser.add_argument('--amplitude', default=5, type=int, help="Ramp amplitude")
+    parser.add_argument('--scan_steps', default=500, type=int, help="Ramp scan_steps")
+    parser.add_argument('--amplitude', default=10, type=int, help="Ramp amplitude")
     parser.add_argument('--ao_site', default=5, type=int, help="Site with the ao")
     parser.add_argument('--ao_step_en', default=1, type=int, help="Enable DAC ramps (almost always want this)")
     parser.add_argument('--translen', default=None, type=valid_translen, help="Burst length: any number 1024 - 22000")
