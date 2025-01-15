@@ -368,6 +368,7 @@ def multiplot(dataset, title, args, pvs):
             offset += 1
 
         axs[index].set_title('Validation')
+        axs[index].set_xlabel('sample')
         axs[index].legend(loc="upper left")
         index += 1
 
