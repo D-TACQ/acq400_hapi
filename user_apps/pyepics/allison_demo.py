@@ -73,22 +73,16 @@ class PVHelper(dict):
         trace = False
 
         def get(self, *args, **kwargs):
-            if not self.trace:
-                return super().get(*args, **kwargs)
-            host, site, pv = self.pvname.split(':', maxsplit=2)
-            print(f"[{host}, {site}] > {pv}")
             value = super().get(*args, **kwargs)
-            print(f"[{host}, {site}] < {value}")
+            if self.trace:
+                print(f"{self.pvname} get {value}")
             return value
         
         def put(self, *args, **kwargs):
-            if not self.trace:
-                return super().put(*args, **kwargs)
-            value = kwargs.get("value") if "value" in kwargs else args[0]
-            host, site, pv = self.pvname.split(':', maxsplit=2)
-            print(f"[{host}, {site}] > {pv} = {value}")
             value = super().put(*args, **kwargs)
-            print(f"[{host}, {site}] < {value}")
+            if self.trace:
+                putv = str(kwargs.get("value") if "value" in kwargs else args[0])
+                print(f"{self.pvname} put {putv[0:40]}{'...' if len(putv)>40 else ''}")
             return value
 
 class MaskHelper(DotDict):
@@ -306,11 +300,9 @@ def multiplot(dataset, title, args, pvs):
     index = 0
 
     if args.plot_egu:
-        eslo = pvs['AI:CAL:ESLO'].get()
-        print(f'eslo {eslo}')
+        eslo = pvs['AI:CAL:ESLO'].get()  # index from 1
         eoff = pvs['AI:CAL:EOFF'].get()
-        print(f'eoff {eoff}')
-        
+
     if not isinstance(axs, np.ndarray): axs = [axs]
 
     #loopback plot
