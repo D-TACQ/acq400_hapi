@@ -291,7 +291,7 @@ def find_event_signatures(dataset, ssb):
                 return indices
     return []
 
-def multiplot(dataset, title, args, pvs):
+def multiplot(dataset, title, args):
     """Plots multiple subplots"""
     adef = [args.loopbacks, args.signal, args.validate, args.spad]
     ta = len([a for a in adef if a is not None])
@@ -299,9 +299,6 @@ def multiplot(dataset, title, args, pvs):
     fig.canvas.manager.set_window_title(f"Allison Demo {title}")
     index = 0
 
-    if args.plot_egu:
-        eslo = pvs['AI:CAL:ESLO'].get()  # index from 1
-        eoff = pvs['AI:CAL:EOFF'].get()
 
     if not isinstance(axs, np.ndarray): axs = [axs]
 
@@ -312,13 +309,7 @@ def multiplot(dataset, title, args, pvs):
             if chan not in dataset.chan: continue
             label = f"Chan {chan}"
             print(f"Plotting AO {label}")
-            raw = dataset.chan[chan]
-            if args.plot_egu:
-               volts = np.add(np.multiply(raw, eslo[chan]), eoff[chan])
-               yy = volts
-            else:
-               yy = raw
-            axs[index].plot(yy, label=label)
+            axs[index].plot( (dataset.chan[chan] * dataset.eslo[chan]) + dataset.eoff[chan] , label=label )
         axs[index].set_title('AO loopback')
         axs[index].legend(loc="upper left")
         axs[index].set_ylabel('V' if args.plot_egu else 'codes')
@@ -331,13 +322,7 @@ def multiplot(dataset, title, args, pvs):
             if chan not in dataset.chan: continue
             label = f"Chan {chan}"
             print(f"Plotting Signal {label}")
-            raw = dataset.chan[chan]
-            if args.plot_egu:
-               volts = np.add(np.multiply(raw, eslo[chan]), eoff[chan])
-               yy = volts
-            else:
-               yy = raw
-            axs[index].plot(yy, label=label)
+            axs[index].plot( (dataset.chan[chan] * dataset.eslo[chan]) + dataset.eoff[chan] , label=label )
         axs[index].set_title('Signal')
         axs[index].legend(loc="upper left")
         axs[index].set_ylabel('V' if args.plot_egu else 'codes')
@@ -458,7 +443,15 @@ def run_main(args):
     if args.multiplot:
         title = f"{args.uut} {trigger_rate}Hz"
         dataset.threshold = args.threshold
-        multiplot(dataset, title, args, pvs)
+
+        if args.plot_egu:
+            dataset.eslo = pvs['AI:CAL:ESLO'].get()
+            dataset.eoff = pvs['AI:CAL:EOFF'].get()
+        else:
+            dataset.eslo = np.full(data_format.data_t + 1, 1)
+            dataset.eoff = np.full(data_format.data_t + 1, 0)
+            
+        multiplot(dataset, title, args)
 
     if args.slow != None:
         slow_plt(args.slow, dataset.chan, burstlen)
