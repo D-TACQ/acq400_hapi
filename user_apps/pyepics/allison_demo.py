@@ -25,6 +25,9 @@ class DotDict(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
 
+ai_site = 1
+sc_site = 0
+
 class PVHelper(dict):
     def __init__(self, uut, ao_site, trace=False):
         self.uut = uut
@@ -40,7 +43,7 @@ class PVHelper(dict):
         self.tstate_pv = epics.PV("{uut}:MODE:TRANS_ACT:STATE".format(uut=uut), callback=tstate_callback, auto_monitor=True)
 
         pvmap = [
-            (0, "STREAM_SUBSET_MASK"),
+            (sc_site, "STREAM_SUBSET_MASK"),
             (0, "NCHAN"),
             (0, "SPAD:LEN:r"),
             (0, "SSB"),
@@ -48,6 +51,8 @@ class PVHelper(dict):
             (0, "SIG:TRG_EXT:FREQ"),
             (1, "data32"),
             (1, "RTM_TRANSLEN"),
+            (1, "AI:CAL:ESLO"),
+            (1, "AI:CAL:EOFF"),
             (ao_site, 'AO:STEP:1'),
             (ao_site, 'AO:STEP:2'),
             (ao_site, 'AO:STEP:3'),
@@ -292,13 +297,20 @@ def find_event_signatures(dataset, ssb):
                 return indices
     return []
 
-def multiplot(dataset, title, adef):
-    """Plots mulitple subplots"""
+def multiplot(dataset, title, args, pvs):
+    """Plots multiple subplots"""
+    adef = [args.loopbacks, args.signal, args.validate, args.spad]
     ta = len([a for a in adef if a is not None])
     fig, axs = plt.subplots(ta, 1, figsize=(10, 5), sharex=True, )
     fig.canvas.manager.set_window_title(f"Allison Demo {title}")
     index = 0
 
+    if args.plot_egu:
+        eslo = pvs['AI:CAL:ESLO'].get()
+        print(f'eslo {eslo}')
+        eoff = pvs['AI:CAL:EOFF'].get()
+        print(f'eoff {eoff}')
+        
     if not isinstance(axs, np.ndarray): axs = [axs]
 
     #loopback plot
@@ -308,9 +320,16 @@ def multiplot(dataset, title, adef):
             if chan not in dataset.chan: continue
             label = f"Chan {chan}"
             print(f"Plotting AO {label}")
-            axs[index].plot(dataset.chan[chan], label=label)
+            raw = dataset.chan[chan]
+            if args.plot_egu:
+               volts = np.add(np.multiply(raw, eslo[chan]), eoff[chan])
+               yy = volts
+            else:
+               yy = raw
+            axs[index].plot(yy, label=label)
         axs[index].set_title('AO loopback')
         axs[index].legend(loc="upper left")
+        axs[index].set_ylabel('V' if args.plot_egu else 'codes')
         index += 1
     
     #signal plot
@@ -320,9 +339,16 @@ def multiplot(dataset, title, adef):
             if chan not in dataset.chan: continue
             label = f"Chan {chan}"
             print(f"Plotting Signal {label}")
-            axs[index].plot(dataset.chan[chan], label=label)
+            raw = dataset.chan[chan]
+            if args.plot_egu:
+               volts = np.add(np.multiply(raw, eslo[chan]), eoff[chan])
+               yy = volts
+            else:
+               yy = raw
+            axs[index].plot(yy, label=label)
         axs[index].set_title('Signal')
         axs[index].legend(loc="upper left")
+        axs[index].set_ylabel('V' if args.plot_egu else 'codes')
         index += 1
 
     #Validation Plot
@@ -439,9 +465,8 @@ def run_main(args):
 
     if args.multiplot:
         title = f"{args.uut} {trigger_rate}Hz"
-        adef = [args.loopbacks, args.signal, args.validate, args.spad]
         dataset.threshold = args.threshold
-        multiplot(dataset, title, adef)
+        multiplot(dataset, title, args, pvs)
 
     if args.slow != None:
         slow_plt(args.slow, dataset.chan, burstlen)
@@ -487,6 +512,7 @@ def get_parser():
     parser.add_argument('--stack', default='none', type=list_of_channels, help="channels to stack plot")
     parser.add_argument('--slow', default='none', type=list_of_channels, help="channels to slow plot")
     parser.add_argument('--multiplot', default=1, type=int, help="multiplot")
+    parser.add_argument('--plot_egu', default=0, type=int, help="[0]: plot codes, 1: plot volts")
 
     parser.add_argument('--scan_steps', default=500, type=int, help="Ramp scan_steps")
     parser.add_argument('--amplitude', default=10, type=int, help="Ramp amplitude")
