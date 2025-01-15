@@ -81,7 +81,7 @@ class PVHelper(dict):
         def put(self, *args, **kwargs):
             value = super().put(*args, **kwargs)
             if self.trace:
-                putv = str(wargs.get("value") if "value" in kwargs else args[0])
+                putv = str(kwargs.get("value") if "value" in kwargs else args[0])
                 print(f"{self.pvname} put {putv[0:40]}{'...' if len(putv)>40 else ''}")
             return value
 
