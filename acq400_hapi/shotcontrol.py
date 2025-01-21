@@ -205,6 +205,7 @@ class ShotController:
 
 
     def __init__(self, _uuts, shot=None, zombie_timeout=30):
+        if not isinstance(_uuts, list): _uuts = [_uuts]
         self.uuts = _uuts
         self.zombie_timeout = zombie_timeout
         if shot != None:
