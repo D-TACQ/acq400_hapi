@@ -51,11 +51,14 @@ def get_segments(char):
 #starts here
 def run_main(args):
     print(args)
+    nchan = 8
 
     ao_uut = acq400_hapi.factory(args.ao)
-    ai_uut = acq400_hapi.factory(args.ai)
-
-    print(f"Testing {ai_uut.uut} Site {args.awg_site} using {ao_uut.uut} Site {args.ao_site}")
+    if args.ai is not None:
+        ai_uut = acq400_hapi.factory(args.ai)
+        print(f"Testing {ai_uut.uut} Site {args.awg_site} using {ao_uut.uut} Site {args.ao_site}")
+        nchan = int(ai_uut[args.awg_site].NCHAN)
+        wait_for_run(ai_uut)
    
     waveargs = {
         'nchan': 4,
@@ -67,11 +70,9 @@ def run_main(args):
         'wave': 'SINE:ALL'
     }
 
-    nchan = int(ai_uut[args.awg_site].NCHAN)
     segments = get_segments(args.max_seg)
     groups = get_groups(nchan, 8)
     
-    wait_for_run(ai_uut)
 
     pretrg = pv(ao_uut.s0.SIG_SRC_TRG_0)
     pretrg = pretrg if pretrg != 'NONE' else 'EXT'
@@ -113,7 +114,7 @@ def get_parser():
     parser.add_argument('--ao', help="ao uut", required=True)
     parser.add_argument('--ao_site', default=5, type=int, help="ao uut ao site")
 
-    parser.add_argument('--ai', help="acq uut hostname", required=True)
+    parser.add_argument('--ai', default=None, help="acq uut hostname", required=False)
     parser.add_argument('--awg_site', default=1, type=int, help="ai uut site connected to awg")
 
     parser.add_argument('--max_seg', default='I', help="last segment")
