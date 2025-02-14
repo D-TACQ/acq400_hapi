@@ -1527,6 +1527,83 @@ class Acq400:
     def __getitem__(self, site):
         return self.SVC(site)
 
+    def stream_to_host(self, seconds=10, megabytes=None, save=None, check=-1, update=1, port=4210, blen=1024):
+        """Run stream to host
+
+        Usage:
+            uut.stream_to_host(seconds=10, save="stream_data")
+
+        Args:
+            seconds (int, optional): stop stream after n seconds.
+            megabytes (int, optional): stop stream after n megabytes.
+            save (string, optional): save data to filename.
+            check (int, optional): spad0 int32 column to check spad is contiguous.
+            update (int, optional): how often to print status.
+            port (int, optional): target port.
+            blen (int, optional): buffer base length.
+        """
+        LINE_UP = '\033[1A'
+        ERASE_LINE = '\033[2K'
+
+        if megabytes: seconds = 999999999
+
+        ssb = int(self.s0.ssb)
+        bufferlen = (ssb * blen) + ssb
+        buffer = bytearray(bufferlen)
+        view = memoryview(buffer).cast('B')
+        view32 = np.ndarray((bufferlen // 4,), dtype=np.int32, buffer=view)
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((self.uut, port))
+            if save: fp = open(save, 'wb')
+            
+            start = 0
+            cursor = 0
+            total_bytes = 0
+            timestart = 0
+            printlast = 0
+            missing = 0
+
+            print(f"Stream start {f'{megabytes}MB' if megabytes else f'{seconds}s'} from {self.uut}:{port} to {save if save else 'null'}")
+            try:
+                while True:
+                    nbytes = sock.recv_into(view[cursor:])
+                    if nbytes == 0: break # UUT has stopped
+                    
+                    cursor += nbytes
+                    total_bytes += nbytes
+                    if timestart == 0: timestart = time.time()
+
+                    if cursor >= bufferlen:
+
+                        if save: fp.write(buffer[ start : cursor ])
+
+                        if check >= 0:
+                            spad0 = view32[check::ssb // 4]
+                            missing += np.sum(np.abs(np.diff(spad0) - 1))
+                            buffer[ 0 : ssb ] = buffer[ cursor - ssb : ]
+                            start = ssb
+
+                        cursor = ssb
+                        runtime = time.time() - timestart
+
+                        if update > 0 and runtime - printlast > update:
+                            print(f"Streaming {runtime:.2f}s {(total_bytes >> 20) / runtime:.2f} MB/s {total_bytes >> 20} MB")
+                            print(LINE_UP + ERASE_LINE , end="")
+                            printlast = runtime
+
+                        if seconds and runtime > seconds:
+                            print('Stream stop reached target runtime')
+                            break
+
+                        if megabytes and total_bytes + bufferlen >= megabytes << 20:
+                            print('Stream stop reached target max bytes')
+                            break
+
+            except KeyboardInterrupt: pass
+            if save: fp.close()
+        print(f"Stream complete {runtime:.2f}s {total_bytes} bytes {total_bytes // ssb} samples {f'{missing} missing' if check >= 0 else ''}")
+
 def pv(_pv):
     return _pv.split(" ")[1]
 
