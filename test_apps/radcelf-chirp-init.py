@@ -290,10 +290,9 @@ def run_test(args):
         if not args.ignore_adc:
             for uut in uuts:
                 uut.s0.CONTINUOUS = '0'     
-                        
-        for uut in m_uuts:            
-            init_trigger(uut, dx=args.trigger_adc_dx)
-            chirp_off(uut, args.ddsX)
+            for uut in m_uuts:
+                init_trigger(uut, dx=args.trigger_adc_dx)
+                chirp_off(uut, args.ddsX)
             
         if args.stop or (args.cps[0] and args.cps[1] == 0):
             if args.power_down:
