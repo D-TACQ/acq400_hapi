@@ -5,24 +5,19 @@ import argparse
 
 from acq400_hapi import timing as timing
 
-
-print("hello world")
-
+# knob_cq : knob command KK=X or query KK
 @timing
-def exec_query(knob):
-    pass
-
-@timing
-def exec_set(knob, value):
-    pass
+def exec_knob_cq(uut, site, knob_cq):
+    value = uut.svc[f's{site}'].sr(knob_cq)
+#    print(f'value {value}')
 
 def run_main(args):
-    print(f'uut {args.uut}')
     uut = acq400_hapi.Acq400(args.uut[0])
-
-    for sk in args.knobs:
-        site, knob = sk.split(',')
-        print(f'site:{site} knob:{knob}')
+    
+    for opdef in args.knobs:
+        site, knob_cq = opdef.split(',')
+        print(f'knob_cq {knob_cq}')
+        exec_knob_cq(uut, site, knob_cq)
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Instrument knob timing')
