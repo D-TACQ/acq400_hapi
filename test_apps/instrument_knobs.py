@@ -2,6 +2,7 @@
 
 import acq400_hapi
 import argparse
+import sys
 
 from acq400_hapi import timing as timing
 
@@ -11,18 +12,31 @@ def exec_knob_cq(uut, site, knob_cq):
     value = uut.svc[f's{site}'].sr(knob_cq)
 #    print(f'value {value}')
 
+def iterate(args):
+    if args.input is None:
+        for opdef in args.knobs:
+            yield opdef
+    elif args.input == '-':
+        for line in sys.stdin:
+            yield line.strip();
+    else:
+        with open(args.input, "r") as file:
+            yield file.readline().strip()
+
+
 def run_main(args):
     uut = acq400_hapi.Acq400(args.uut[0])
-    
-    for opdef in args.knobs:
+
+    for opdef in iterate(args):    
         site, knob_cq = opdef.split(',')
         print(f'knob_cq {knob_cq}')
         exec_knob_cq(uut, site, knob_cq)
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Instrument knob timing')
+    parser.add_argument('--input', default=None, help="input file, '-' is stdin")
     parser.add_argument('uut', nargs=1 )
-    parser.add_argument('knobs', nargs='+')
+    parser.add_argument('knobs', nargs='*')
     return parser
 
 if __name__ == '__main__':
