@@ -148,7 +148,7 @@ def compare_bursts(args, burst_0, burst_n, burst):
 def main():
     args = get_args()
     data = np.fromfile(args.file, dtype=np.int32)
-
+    data = data[: -(len(data)%NCHAN)]
     # data shape [NSAMPLES..HUGE][NCHAN=10]
     data = data.reshape((-1, NCHAN))
     if args.max_samples is not None:
