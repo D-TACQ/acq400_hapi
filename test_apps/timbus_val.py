@@ -74,7 +74,7 @@ def get_args():
             help="0: no plot, OR of 1: plot raw, 2:plot gated, 4 plot first burst, 8 plot delta.")
     parser.add_argument('--analyse_burst', type=int, default=0, help="analyse burst, burst mode only")
     parser.add_argument('--plot_DI', type=int, default=0, help="1: plot 2 DI channels, 2: pplot 2DI channels, offset")
-    parser.add_argument('--max_samples', type=int, default=0, help="limit number of samples .. easier plotting")
+    parser.add_argument('--max_samples', type=int, default=None, help="limit number of samples .. easier plotting")
     parser.add_argument('--verbose', type=int, default=0)
     args = parser.parse_args()
 
@@ -148,11 +148,12 @@ def compare_bursts(args, burst_0, burst_n, burst):
 def main():
     args = get_args()
     data = np.fromfile(args.file, dtype=np.int32)
-    data = data[: -(len(data)%NCHAN)]
-    # data shape [NSAMPLES..HUGE][NCHAN=10]
+    max_samples = len(data) - len(data)%NCHAN 
+    data = data[:max_samples]
     data = data.reshape((-1, NCHAN))
     if args.max_samples is not None:
         data = data[:args.max_samples]
+
     ch01 = data[:,args.pchan-1]
     dix = np.bitwise_and(data[:,args.aichan], TRG_DI)
     DI0 = np.bitwise_and(data[:,args.aichan], MASK_DI0) != 0
