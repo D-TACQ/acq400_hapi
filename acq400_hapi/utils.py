@@ -32,7 +32,7 @@ def timing_ms(f):
 
         ts = time.time()
         result = f(*args, **kw)
-        te = time.time()
-        print('func:%r %s %5.2f' % (f.__name__, v2, (te-ts)*1000))
+        ms = (time.time() - ts) * 1000
+        print('func:%6.1f ms %r %s' % (ms, f.__name__, v2))
         return result
     return wrap
