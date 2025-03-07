@@ -45,17 +45,19 @@ AICHAN = 8                    # ANSTO
 #AICHAN=24                     # NEC	--aichan=24
 NCHAN = (AICHAN+1+1)               # 8AI, DI32, COUNT in longwords
 #NCHAN = (AICHAN+1+4)               # 8AI, DI32, COUNT in longwords
-TRG_DI = 0x10000000           # trigger input appears here in 32b mask
-TRG_DI_SCALE = 4              # convert bit mask to half scale (aka 5V)
+MASK_DI0 = 0x01000000         # DI0 appears here in the 32b field
+MASK_DI1 = 0x02000000         # DI1 appears here in the 32b field
+
+TRG_DI = 0x10000000           # trigger input appears here in 32b mask for burst analysis.
 
 TOLERANCE = 0.005              # 0.5% error target
 
-# +10V=0x7fffffff
+# +5V=0x7fffffff
 def volts2raw(v):
-    return int(v*(0x7fffff00/10))
+    return int(v*(0x7fffff00/5))
 
 def raw2volts(r):
-    return 10.0*r/0x7fffff00
+    return 5.0*r/0x7fffff00
 
 RAW_TOL = volts2raw(TOLERANCE*10)
 #print(RAW_TOL)
@@ -70,6 +72,9 @@ def get_args():
     parser.add_argument('--skip', type=int, default=0, help="")
     parser.add_argument('--plot', type=int, default=0, 
             help="0: no plot, OR of 1: plot raw, 2:plot gated, 4 plot first burst, 8 plot delta.")
+    parser.add_argument('--analyse_burst', type=int, default=0, help="analyse burst, burst mode only")
+    parser.add_argument('--plot_DI', type=int, default=0, help="1: plot 2 DI channels, 2: pplot 2DI channels, offset")
+    parser.add_argument('--max_samples', type=int, default=0, help="limit number of samples .. easier plotting")
     parser.add_argument('--verbose', type=int, default=0)
     args = parser.parse_args()
 
@@ -146,15 +151,30 @@ def main():
 
     # data shape [NSAMPLES..HUGE][NCHAN=10]
     data = data.reshape((-1, NCHAN))
+    if args.max_samples is not None:
+        data = data[:args.max_samples]
     ch01 = data[:,args.pchan-1]
     dix = np.bitwise_and(data[:,args.aichan], TRG_DI)
+    DI0 = np.bitwise_and(data[:,args.aichan], MASK_DI0) != 0
+    DI1 = np.bitwise_and(data[:,args.aichan], MASK_DI1) != 0
     mask = np.argwhere(dix)
+    offset_label = ""
 
     if args.plot& PLOT_RAW:
         plt.plot(raw2volts(ch01))
-        plt.plot(raw2volts(dix)*TRG_DI_SCALE)
+        if args.plot_DI:
+            if args.plot_DI == 1:
+                offset = 0
+                offset_label = "DI Volts"
+            else:
+                offset = 5
+                offset_label = "DI Volts (offset)"
+                
+            plt.plot(DI0*5 + offset*1)
+            plt.plot(DI1*5 + offset*2)
+ 
         plt.suptitle("Raw Plot")
-        plt.ylabel("Volts")
+        plt.ylabel(f'AI Volts {offset_label}')
         plt.grid(1)
         plt.show()
     
@@ -165,7 +185,8 @@ def main():
         plt.grid(1)
         plt.show()
 
-
+    if args.analyse_burst == 0:
+        return
     data = data[args.skip:]
     burst_0 = []                          # first (reference) burst
     burst_n = []                          # current burst

@@ -31,7 +31,7 @@ from .acq400_ui import Acq400UI
 from .acq400_print import PR, pprint
 from .intSI import *
 from .debug import Debugger
-from .utils import timing
+from .utils import timing, timing_ms
 from .afhba404 import *
 from .agilent33210 import Agilent33210A
 from .propellor import *
