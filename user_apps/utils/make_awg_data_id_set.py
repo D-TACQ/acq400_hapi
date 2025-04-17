@@ -38,12 +38,19 @@ def next(args, ch):
     
 def make_id_set(args): 
     cosv, basev = make_awg_data(args)
-    
-    for ch in range(0, args.nchan):
+    if args.duphalf == 0:
+        maxch = args.nchan
+        patoff = (0,)
+    else:
+        maxch = args.nchan//2
+        patoff = (0, maxch)
+       
+    for ch in range(0, maxch):
         chv = basev
-        chv[:,ch] = np.zeros([args.len,])
-        id_len = args.len*((ch+1)%8)//8
-        chv[:id_len,ch] = cosv[:id_len]        
+        for chid in [ x+ch for x in patoff ]:
+            chv[:,chid] = np.zeros([args.len,])
+            id_len = args.len*((ch+1)%8)//8
+            chv[:id_len,chid] = cosv[:id_len]
         fn = f"{args.fname[0]}-{args.nchan}-{args.len}-{ch+1}.dat"
         print(fn)
         chv.tofile(fn)
@@ -60,6 +67,7 @@ def get_parser():
     parser.add_argument('--offset_by_channel', default=0.0, type=float,     help="offset in volts *ch")
     parser.add_argument('--offset', default=1.0, type=float,     help="global offset in volts ")
     parser.add_argument('--offset_c1', default=1.0, type=float,  help="ch+1 output with this offset")
+    parser.add_argument('--duphalf', default=0, type=int, help="repeat pattern from half channels - good for 2 sites compare")
     parser.add_argument('fname', nargs=1, help="filename root")
     return parser
 
