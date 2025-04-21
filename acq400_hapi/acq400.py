@@ -575,7 +575,7 @@ class Acq400:
     def fetch_all_calibration(self):
         """Gets uut calibration and stores in instance"""
         try:
-            for m in self.get_aggregator_svc_list(self):
+            for m in self.get_aggregator_svc_list():
                 self.cal_eslo.extend(m.AI_CAL_ESLO.split(' ')[3:])
                 self.cal_eoff.extend(m.AI_CAL_EOFF.split(' ')[3:])
         except:
