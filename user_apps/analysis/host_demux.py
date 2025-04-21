@@ -309,15 +309,27 @@ def plot_mpl(args, raw_channels):
     xx = None
 
     for pln, ch_handler in enumerate(args.pc_list):
-        print(f'plot_mpl {ch_handler}')
         pln = int(pln / args.traces_per_plot)
         yy, meta, step = ch_handler(raw_channels, args.pses)
         if xx is None:
-            xx = np.array([ (x+args.pses[0])*args.pses[2] for x in range(0, len(yy))])
+            if args.egu >= 1:
+                x1 = args.pses[0]
+                x2 = x1 + len(yy)*args.pses[2];
+                if args.xdt == 0:
+                    if args.egu == 1:
+                        print("WARNING ##### NO CLOCK RATE PROVIDED. TIME SCALE measured by system.")
+                        input("Please press enter if you want to continue with inaccurate time base.")
+                    ti = 1/float(args.the_uut.s0.SIG_CLK_S1_FREQ.split(" ")[-1])
+                else:
+                    ti = args.xdt
 
-        print(f'pln {pln} meta {meta}')
+                xx = np.linspace(x1*ti, x2*ti, len(yy))
+                xl = "seconds"
+            else:
+                xx = np.array([ (x+args.pses[0])*args.pses[2] for x in range(0, len(yy))])
+                xl = "Samples"
+
         meta = meta.split(' ')
-
         plots[pln].set_ylabel(meta[1])
         plots[pln].set_title(plots[pln].get_title() + f' {meta[0]}')
         if step:
@@ -327,7 +339,7 @@ def plot_mpl(args, raw_channels):
         plots[pln].grid("True", linewidth=0.2)
         plots[pln].ticklabel_format(style='plain')    # to prevent scientific notation
 
-    plots[pln].set_xlabel("Samples")
+    plots[pln].set_xlabel(xl)
     plt.subplots_adjust(hspace=(total_plots - 1 ) * 0.15)
     plt.show()
     return None
@@ -339,7 +351,7 @@ def process_cmdline_cfg(args):
     ''' return list of channel_handler objects built from command line args'''
     print_ic = [ int(i)-1 for i in make_pc_list(args)]
     pl = ()
-    if args.egu == 1:
+    if args.egu >= 1:
         pl = list(CH.ch_egu(ic, args) for ic in print_ic)
     else:
         pl = list(CH.ch_raw(ic) for ic in print_ic)
@@ -354,10 +366,11 @@ def process_cmdline_cfg(args):
 def plot_data_kst(args, raw_channels):
     client = pykst.Client("NumpyVector")
     llen = len(raw_channels[0])
-    if args.egu == 1:
+    if args.egu >= 1:
         if args.xdt == 0:
-            print("WARNING ##### NO CLOCK RATE PROVIDED. TIME SCALE measured by system.")
-            raw_input("Please press enter if you want to continue with innacurate time base.")
+            if args.egu == 1:
+                print("WARNING ##### NO CLOCK RATE PROVIDED. TIME SCALE measured by system.")
+                raw_input("Please press enter if you want to continue with inaccurate time base.")
             time1 = float(args.the_uut.s0.SIG_CLK_S1_FREQ.split(" ")[-1])
             xdata = np.linspace(0, llen/time1, num=llen)
         else:
@@ -608,7 +621,7 @@ def get_parser(parser=None):
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
     parser.add_argument('--pses', type=str, default='0:-1:1', help="plot start end stride, default: 0:-1:1")
     parser.add_argument('--tai_vernier', type=int, default=None, help='decode this channel as tai_vernier')
-    parser.add_argument('--egu', type=int, default=0, help='plot egu (V vs s)')
+    parser.add_argument('--egu', type=int, default=0, help='>0 plot egu (V vs s) >1 : used computed s')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
     parser.add_argument('--data_type', type=int, default=None, help='Use int16 or int32 for data demux.')
     parser.add_argument('--double_up', type=int, default=0, help='Use for ACQ480 two lines per channel mode')
