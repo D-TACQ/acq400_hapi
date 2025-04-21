@@ -330,7 +330,8 @@ def plot_mpl(args, raw_channels):
                 xl = "Samples"
 
         meta = meta.split(' ')
-        plots[pln].set_ylabel(meta[1])
+        if len(meta) > 1:
+            plots[pln].set_ylabel(meta[1])
         plots[pln].set_title(plots[pln].get_title() + f' {meta[0]}')
         if step:
             plots[pln].step(xx, yy, linewidth=0.75)
