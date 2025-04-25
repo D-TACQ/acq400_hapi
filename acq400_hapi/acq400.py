@@ -1604,6 +1604,23 @@ class Acq400:
             if save: fp.close()
         print(f"Stream complete {runtime:.2f}s {total_bytes} bytes {total_bytes // ssb} samples {f'{missing} missing' if check >= 0 else ''}")
 
+    def get_subset_mask(self, mask_arg=None):
+        """get valid subset mask value"""
+        mask_val = self.s0.stream_subset_mask if mask_arg == None else mask_arg
+        def get_value(mask_val):
+            if mask_val.startswith("0x"):
+                num = int(mask_val, 16)
+                return [i + 1 for i in range(num.bit_length()) if num & (1 << i)]
+            arr = []
+            for num in mask_val.split(','):
+                try: arr.append(int(num))
+                except: break
+            return arr
+        if isinstance(mask_val, str): mask_val = get_value(mask_val)
+        if len(mask_val) == 0: return "None"
+        if mask_arg == None: return mask_val
+        return hex(sum(1 << (int(chan) - 1) for chan in mask_val))
+
 def pv(_pv):
     return _pv.split(" ")[1]
 
