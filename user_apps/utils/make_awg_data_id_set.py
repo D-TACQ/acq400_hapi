@@ -18,16 +18,23 @@ import numpy as np
 import argparse
 
 def make_awg_data(args):
+    if args.data32 == 1:
+        args.dtype = np.int32
+        rmax = 2**31
+    else:
+        args.dtype = np.int16
+        rmax = 2**15
+
     x = np.linspace(0, 8*np.pi, args.len)
     y = args.amp * np.sin(x) 
     volts = np.zeros([args.len, args.nchan])
     for ch in range(args.nchan):
         volts[:,ch] = np.add(y, args.offset + ch*args.offset_by_channel)
     
-    basev = (volts * 32767/10).astype(np.int16)
+    basev = (volts * rmax/10).astype(args.dtype)
     
     cos = args.amp * np.sin(x+np.pi/2)
-    cosv = (np.add(cos, -args.offset) * 32767/10).astype(np.int16)
+    cosv = (np.add(cos, -args.offset) * rmax/10).astype(args.dtype)
     return(cosv, basev)
     
 def next(args, ch):
@@ -37,21 +44,26 @@ def next(args, ch):
         return ch
     
 def make_id_set(args): 
-    cosv, basev = make_awg_data(args)
     if args.duphalf == 0:
         maxch = args.nchan
         patoff = (0,)
     else:
         maxch = args.nchan//2
         patoff = (0, maxch)
-       
+      
+    cosv, basev = make_awg_data(args)
+
     for ch in range(0, maxch):
         chv = basev
         for chid in [ x+ch for x in patoff ]:
             chv[:,chid] = np.zeros([args.len,])
             id_len = args.len*((ch+1)%8)//8
             chv[:id_len,chid] = cosv[:id_len]
-        fn = f"{args.fname[0]}-{args.nchan}-{args.len}-{ch+1}.dat"
+
+        data32id = ""
+        if args.data32 == 1:
+            data32id = f"d32"
+        fn = f"{args.fname[0]}-{args.nchan}-{args.len}{data32id}-{ch+1}.dat"
         print(fn)
         chv.tofile(fn)
     
@@ -68,6 +80,7 @@ def get_parser():
     parser.add_argument('--offset', default=1.0, type=float,     help="global offset in volts ")
     parser.add_argument('--offset_c1', default=1.0, type=float,  help="ch+1 output with this offset")
     parser.add_argument('--duphalf', default=0, type=int, help="repeat pattern from half channels - good for 2 sites compare")
+    parser.add_argument('--data32', default=0, type=int, help="set data32 mode")
     parser.add_argument('fname', nargs=1, help="filename root")
     return parser
 
