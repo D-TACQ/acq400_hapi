@@ -95,9 +95,12 @@ def run_main(args):
 def callback(pvname, value, *args, **kwargs):
     uut = pvname.split(':')[0]
     samplelen = len(value)
-    if dataset[uut].cursor >= dataset[uut].datalen: return
-    dataset[uut].data[dataset[uut].cursor: dataset[uut].cursor + samplelen] = value
-    dataset[uut].cursor  += samplelen 
+    start = dataset[uut].cursor
+    if cursor >= dataset[uut].datalen:
+        return
+    finish = start + samplelen
+    dataset[uut].data[start:finish] = value
+    dataset[uut].cursor = finish
 
 def list_of_channels(arg):
     channels = []
@@ -111,14 +114,15 @@ def list_of_channels(arg):
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Read data from 0:SLOWMON:MEAN then plot and save')
-    parser.add_argument('--pchans', default='1', type=list_of_channels, help="Channels to plot 1,2,3-5")
-    parser.add_argument('--ptime', default=1, type=int, help="Plot time (no: 0) or (yes: 1)")
-    parser.add_argument('--runtime', default=60, type=int, help="Total seconds of data to capture")
-    parser.add_argument('--save', default=1, type=int, help="(don't save: 0), (save data: 1) or (save data and plot: 2)")
+    parser.add_argument('--pchans', default='1', type=list_of_channels, help="Channels to plot 1,2,3-5 [default=1]")
+    parser.add_argument('--ptime', default=1, type=int, help="Plot time (no: 0) or (yes: 1) [default]")
+    parser.add_argument('--runtime', default=60, type=int, help="Total seconds of data to capture [default=60]")
+    parser.add_argument('--save', default=1, type=int, help="(don't save: 0), (save data: 1)[default] or (save data and plot: 2)")
     parser.add_argument('--root', default="slowmon_data", help="Save data dir")
-    parser.add_argument('--plot', default=1, type=int, help="(don't plot: 0) or (plot: 1)")
+    parser.add_argument('--plot', default=1, type=int, help="(don't plot: 0) or (plot: 1) [default]")
     parser.add_argument('uuts', nargs='+', help="uut hostnames")
     return parser
 
 if __name__ == '__main__':
     run_main(get_parser().parse_args())
+
