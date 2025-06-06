@@ -74,7 +74,8 @@ def run_main(args):
         for chan in args.pchans:
             plt.plot(time_base, dataset[uut].data[chan - 1::dataset[uut].samplelen], label=f"CH {chan}")
         plt.legend()
-        plt.xlabel('Time (s)') if args.ptime else plt.xlabel('Samples') 
+        plt.xlabel('Time (s)') if args.ptime else plt.xlabel('Samples')
+        plt.ylabel('Volts (V)')
 
         if args.save:
             filename = f"{uut}.{timestamp}.CH{dataset[uut].samplelen}.{dataset[uut].ms}ms.{args.runtime}s.dat"
