@@ -66,7 +66,8 @@ def run_main(args):
     for uut in dataset:
         dataset[uut].pv.clear_callbacks()
         
-        plt.figure(f"{uut}:0:SLOWMON:MEAN {args.runtime}s Chans {args.pchans} {dataset[uut].ms}ms")
+        plt.figure(f"{uut}_SLOWMON_MEAN")
+        plt.title(f"{uut}:0:SLOWMON:MEAN {args.runtime}s {dataset[uut].ms}ms Chans {args.pchans}")
 
         chanlen = len(dataset[uut].data[0::dataset[uut].samplelen])
         time_base = np.linspace(0, args.runtime, chanlen) if args.ptime else np.arange(chanlen)
