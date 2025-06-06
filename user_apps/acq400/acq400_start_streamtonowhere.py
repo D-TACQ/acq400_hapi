@@ -33,6 +33,15 @@ def main(args):
         uut.s0.streamtonowhered = 'start'
 
     while not all(elem == 'CONTINUOUS:STATE ARM' for elem in states):
+        if all(elem == 'CONTINUOUS:STATE IDLE' for elem in states):
+            pass
+        if all (elem == 'CONTINUOUS:STATE RUN' for elem in states):
+            print("all units running")
+            return
+        else:
+            for elem in states:
+                if elem == 'CONTINUOUS:STATE RUN':
+                    print(f"ERROR: we have a runaway {states}")
         states = update_states(uuts, states)
 
     print("All UUTs are armed and ready for trigger.")
@@ -44,3 +53,4 @@ def get_parser():
 
 if __name__ == '__main__':
     main(get_parser().parse_args())
+

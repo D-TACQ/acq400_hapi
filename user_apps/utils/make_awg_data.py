@@ -22,7 +22,7 @@ import argparse
 
 def make_awg_data(args):
     x = np.linspace(0, args.ncycles*np.pi, args.len)
-    y = args.amp * np.sin(x) D32
+    y = args.amp * np.sin(x)
     volts = np.zeros([args.len, args.nchan])
     for ch in range(args.nchan):
         volts[:,ch] = np.add(y, ch*args.offset_by_channel)
