@@ -66,7 +66,7 @@ def run_main(args):
     for uut in dataset:
         dataset[uut].pv.clear_callbacks()
         
-        plt.figure(f"{uut}_SLOWMON_MEAN")
+        plt.figure(f"{uut}_SLOWMON_MEAN", figsize=(10, 4))
         plt.title(f"{uut}:0:SLOWMON:MEAN {args.runtime}s {dataset[uut].ms}ms Chans {args.pchans}")
 
         chanlen = len(dataset[uut].data[0::dataset[uut].samplelen])
@@ -78,12 +78,17 @@ def run_main(args):
         plt.xlabel('Time (s)') if args.ptime else plt.xlabel('Samples')
         plt.ylabel('Volts (V)')
 
-        if args.save:
-            filename = f"{uut}.{timestamp}.CH{dataset[uut].samplelen}.{dataset[uut].ms}ms.{args.runtime}s.dat"
+        if args.save > 0:
+            filename = f"{uut}.{timestamp}.CH{dataset[uut].samplelen}.{dataset[uut].ms}ms.{args.runtime}s"
             os.makedirs(args.root, exist_ok=True)
-            savepath = os.path.join(args.root, filename)
+            savepath = os.path.join(args.root, filename + '.dat')
             print(f"{uut} data saved to {savepath}")
             dataset[uut].data.tofile(savepath)
+
+        if args.save == 2: 
+            savepath = os.path.join(args.root, filename + '.png')
+            print(f"{uut} plot saved to {savepath}")
+            plt.savefig(savepath)
 
     if args.plot: plt.show()
 
@@ -109,9 +114,9 @@ def get_parser():
     parser.add_argument('--pchans', default='1', type=list_of_channels, help="Channels to plot 1,2,3-5")
     parser.add_argument('--ptime', default=1, type=int, help="Plot time (no: 0) or (yes: 1)")
     parser.add_argument('--runtime', default=60, type=int, help="Total seconds of data to capture")
-    parser.add_argument('--save', default=1, help="Save data (no save: 0) or (save: 1)")
+    parser.add_argument('--save', default=1, type=int, help="(don't save: 0), (save data: 1) or (save data and plot: 2)")
     parser.add_argument('--root', default="slowmon_data", help="Save data dir")
-    parser.add_argument('--plot', default=1, help="Plot data (no plot: 0) or (plot: 1)")
+    parser.add_argument('--plot', default=1, type=int, help="(don't plot: 0) or (plot: 1)")
     parser.add_argument('uuts', nargs='+', help="uut hostnames")
     return parser
 
