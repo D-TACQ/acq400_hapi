@@ -1,5 +1,9 @@
 *.pyc
 *.dat
+*.log
+*.data
+*.raw
+*.swp
 acq400_hapi.egg-info
 
 user_apps/acq400/waves/
