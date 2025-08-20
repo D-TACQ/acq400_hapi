@@ -145,11 +145,16 @@ def config_tx_uut(txuut, args):
     txuut.hudp.dst_port = args.port
     txuut.hudp.dst_ip = args.rx_ip if args.broadcast == 0 else ip_broadcast(args)
 
+
     if args.hudp_relay is not None:
         txuut.hudp.udp_data_src = 1
-        tx_ssb = int(txuut.s0.dssb) - args.hudp_relay
-        txuut.hudp.slice_len = tx_ssb//4
-        txuut.hudp.slice_off = args.hudp_relay//4
+        if args.hudp_relay > 0:
+            tx_ssb = int(txuut.s0.dssb) - args.hudp_relay
+            txuut.hudp.slice_len = tx_ssb//4
+            txuut.hudp.slice_off = args.hudp_relay//4
+        else:
+            tx_ssb = int(txuut.hudp.slice_len)*4
+            print(f'using existing hudp len/slice setup')
     else:
         txuut.hudp.udp_data_src = 0
         tx_ssb = int(txuut.s0.ssb)
@@ -203,7 +208,7 @@ def get_parser():
     parser.add_argument("--play0",   default='1 16',          help="set rx sites+spad or notouch if set elsewhere")
     parser.add_argument("--broadcast", default=0, type = int, help="broadcast the data")
     parser.add_argument("--disco",   default=None, type=int,  help="enable discontinuity check at index x")
-    parser.add_argument("--hudp_relay", default=None, type=int,  help="0..N: relay LLC VI out HUDP txt offset in vector")
+    parser.add_argument("--hudp_relay", default=None, type=int,  help="-1,0..N: relay LLC VI out HUDP txt offset in vector (-1: enable, but use existing slice_len, slice_offset settings)")
     parser.add_argument("--spp",     default=1, type=int,     help="samples per packet")
     parser.add_argument("--hudp_decim", default=1, type=int,  help="hudp decimation, 1..16")
     parser.add_argument("txuut", nargs=1,                     help=f"transmit uut (if it's a PC, type one of {PCSEL})")
