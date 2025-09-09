@@ -119,6 +119,9 @@ def hudp_enable(uut):
 def init_arp_req(uut):
     uut.hudp.arp_request = 1
     uut.hudp.arp_request = 0
+
+    while uut.hudp.arp_mac_resp == '00:00:00:00:00:00:00:':
+        print("waiting for arp")
     
 def ip_broadcast(args):
     ip_dest = args.rx_ip.split('.')
