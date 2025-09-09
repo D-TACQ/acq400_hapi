@@ -50,6 +50,9 @@ def make_id_set(args):
     else:
         maxch = args.nchan//2
         patoff = (0, maxch)
+
+    if args.max_seg is not None and args.max_seg < maxch:
+        maxch = args.max_seg
       
     cosv, basev = make_awg_data(args)
 
@@ -80,6 +83,7 @@ def get_parser():
     parser.add_argument('--offset', default=1.0, type=float,     help="global offset in volts ")
     parser.add_argument('--offset_c1', default=1.0, type=float,  help="ch+1 output with this offset")
     parser.add_argument('--duphalf', default=0, type=int, help="repeat pattern from half channels - good for 2 sites compare")
+    parser.add_argument('--max_seg', default=None, type=int, help="optionally limit the number of files generated. Better for LARGE data")
     parser.add_argument('--data32', default=0, type=int, help="set data32 mode")
     parser.add_argument('fname', nargs=1, help="filename root")
     return parser
