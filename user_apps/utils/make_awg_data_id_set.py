@@ -66,7 +66,7 @@ def make_id_set(args):
         data32id = ""
         if args.data32 == 1:
             data32id = f"d32"
-        fn = f"{args.fname[0]}-{args.nchan}-{args.len}{data32id}-{ch+1}.dat"
+        fn = f"{args.fname[0]}-{args.nchan}-{args.len}{data32id}-{ch+1:03d}.dat"
         print(fn)
         chv.tofile(fn)
     
