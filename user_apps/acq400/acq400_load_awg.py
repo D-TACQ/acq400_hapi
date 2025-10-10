@@ -50,6 +50,7 @@ import acq400_hapi
 from acq400_hapi import awg_data
 from acq400_hapi import netclient as netclient
 import argparse
+import glob
 
 
 from functools import wraps
@@ -115,18 +116,28 @@ def wait_completion(args, uut):
 @timing
 def load_awg_top(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
+    fglob = glob.glob(args.file)
+    wait_complete = len(fglob) > 1 or reps > 1
+
+    if len(fglob) > 1 and args.mode != 1:
+        print("globbing is ONLY supported in mode 1")
+        return
+
     for rep in range(0, args.reps):
         if rep > 0:
             print("rep {}".format(rep))
-        load_awg(args, uut, rep)
-        if args.soft_trigger:
-            if args.port is not None:
-                while acq400_hapi.intpv(uut.s1.AWG_ARM) == 0:
-                    sleep(0.1)
-            uut.s0.soft_trigger = '1'
-        if args.reps > 1:
-            wait_completion(args, uut)
-    print("playloop_length {}".format(uut.modules[args.aosite].playloop_length))
+        for file in fglob:
+            args.file = file
+            load_awg(args, uut, rep)
+            if args.verbose:
+                print("playloop_length {}".format(uut.modules[args.aosite].playloop_length))
+            if args.soft_trigger:
+                if args.port is not None:
+                    while acq400_hapi.intpv(uut.s1.AWG_ARM) == 0:
+                        sleep(0.1)
+                uut.s0.soft_trigger = '1'
+            if wait_complete:
+                wait_completion(args, uut)
 
 
 def get_parser():
@@ -137,6 +148,7 @@ def get_parser():
     parser.add_argument('--soft_trigger', default=1, type=int, help='Emit soft trigger')
     parser.add_argument('--reps', default=1, type=int, help='Repetitions')
     parser.add_argument('--port', default=None, type=int, help='optional port number for fast start server')
+    parser.add_argument('--verbose', default=0, type=int, help='be more chatty')
     acq400_hapi.Acq400UI.add_args(parser, play=True)
     parser.add_argument('uuts', nargs=1, help="uut ")
     return parser
