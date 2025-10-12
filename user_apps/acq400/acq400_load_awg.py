@@ -80,28 +80,26 @@ def file_extender(fd, ext_count):
         
 
 @timing
-def load_awg(args, uut, rep):
+def load_awg(args, uut, file):
     acq400_hapi.Acq400UI.exec_args(uut, args)
     args.shot = uut.modules[args.aosite].shot
-    if args.mode == 1 or (args.mode == 2 and rep == 0):
-        
-        loaded = 0
+    loaded = 0
  
-        while loaded != 1:
-            try:
-                with open(args.file, "rb") as fd:
-                    uut.load_awg(file_extender(fd, args.awg_extend), autorearm=args.mode==2, port=args.port)
-                    loaded = 1
-            except Exception as e:
-                if loaded == 0:
-                    print("First time: caught {}, abort and retry".format(e))
-                    loaded = -1
-                    uut.modules[args.aosite].playloop_oneshot = '1'
-                    uut.modules[args.aosite].awg_abort = '1'
-                    sleep(0.1)
-                else:
-                    print("Retry failed: caught {} FAIL".format(e))
-                    exit(1)
+    while loaded != 1:
+        try:
+            with open(file, "rb") as fd:
+                uut.load_awg(file_extender(fd, args.awg_extend), autorearm=args.mode==2, port=args.port)
+                loaded = 1
+        except Exception as e:
+            if loaded == 0:
+                print("First time: caught {}, abort and retry".format(e))
+                loaded = -1
+                uut.modules[args.aosite].playloop_oneshot = '1'
+                uut.modules[args.aosite].awg_abort = '1'
+                sleep(0.1)
+            else:
+                print("Retry failed: caught {} FAIL".format(e))
+                exit(1)
 
 @timing
 def wait_completion(args, uut):
@@ -113,6 +111,18 @@ def wait_completion(args, uut):
        while args.shot == uut.modules[args.aosite].shot:
            sleep(0.1)
 
+def load_play_file(uut, args, file):
+    load_awg(args, uut, file)
+    if args.verbose:
+        print("playloop_length {}".format(uut.modules[args.aosite].playloop_length))
+    if args.soft_trigger:
+        if args.port is not None:
+            while acq400_hapi.intpv(uut.s1.AWG_ARM) == 0:
+                sleep(0.1)
+            uut.s0.soft_trigger = '1'
+        if wait_complete:
+            wait_completion(args, uut)
+
 @timing
 def load_awg_top(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
@@ -123,21 +133,15 @@ def load_awg_top(args):
         print("globbing is ONLY supported in mode 1")
         return
 
-    for rep in range(0, args.reps):
-        if rep > 0:
-            print("rep {}".format(rep))
-        for file in fglob:
-            args.file = file
-            load_awg(args, uut, rep)
-            if args.verbose:
-                print("playloop_length {}".format(uut.modules[args.aosite].playloop_length))
-            if args.soft_trigger:
-                if args.port is not None:
-                    while acq400_hapi.intpv(uut.s1.AWG_ARM) == 0:
-                        sleep(0.1)
-                uut.s0.soft_trigger = '1'
-            if wait_complete:
-                wait_completion(args, uut)
+    if args.mode == 1:
+        for rep in range(0, args.reps):
+            if args.reps > 0:
+                print("rep {}".format(rep))
+            for file in fglob:
+                print(f"load_play_file {file}")
+                load_play_file(uut, args, file)
+    else:
+        load_play_file(uut, args, fglob[0])
 
 
 def get_parser():
