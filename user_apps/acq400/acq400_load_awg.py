@@ -117,7 +117,7 @@ def wait_completion(args, uut):
 def load_awg_top(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
     fglob = glob.glob(args.file)
-    wait_complete = len(fglob) > 1 or reps > 1
+    wait_complete = len(fglob) > 1 or args.reps > 1
 
     if len(fglob) > 1 and args.mode != 1:
         print("globbing is ONLY supported in mode 1")
