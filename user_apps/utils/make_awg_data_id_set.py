@@ -25,7 +25,7 @@ def make_awg_data(args):
         args.dtype = np.int16
         rmax = 2**15
 
-    x = np.linspace(0, 8*np.pi, args.len)
+    x = np.linspace(0, args.ncycles*2*np.pi, args.len)
     y = args.amp * np.sin(x) 
     volts = np.zeros([args.len, args.nchan])
     for ch in range(args.nchan):
@@ -33,7 +33,7 @@ def make_awg_data(args):
     
     basev = (volts * rmax/10).astype(args.dtype)
     
-    cos = args.amp * np.sin(x+np.pi/2)
+    cos = args.amp * np.cos(x)
     cosv = (np.add(cos, -args.offset) * rmax/10).astype(args.dtype)
     return(cosv, basev)
     
@@ -60,8 +60,9 @@ def make_id_set(args):
         chv = basev
         for chid in [ x+ch for x in patoff ]:
             chv[:,chid] = np.zeros([args.len,])
-            id_len = args.len*((ch+1)%8)//8
+            id_len = args.len//args.ncycles*((ch+1)%8)//8
             chv[:id_len,chid] = cosv[:id_len]
+
 
         data32id = ""
         if args.data32 == 1:
