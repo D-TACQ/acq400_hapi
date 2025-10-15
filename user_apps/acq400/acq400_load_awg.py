@@ -117,17 +117,19 @@ def load_play_file(uut, args, file):
         print("playloop_length {}".format(uut.modules[args.aosite].playloop_length))
     if args.soft_trigger:
         if args.port is not None:
-            while acq400_hapi.intpv(uut.s1.AWG_ARM) == 0:
+            while acq400_hapi.intpv(uut.modules[args.aosite].AWG_ARM) == 0:
                 sleep(0.1)
             uut.s0.soft_trigger = '1'
-        if wait_complete:
+        if args.wait_complete:
             wait_completion(args, uut)
 
 @timing
 def load_awg_top(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
+    if args.aosite is None:
+        args.aosite = int(uut.s0.dist_s1)
     fglob = glob.glob(args.file)
-    wait_complete = len(fglob) > 1 or args.reps > 1
+    args.wait_complete = len(fglob) > 1 or args.reps > 1
 
     if len(fglob) > 1 and args.mode != 1:
         print("globbing is ONLY supported in mode 1")
