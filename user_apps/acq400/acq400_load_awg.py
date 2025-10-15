@@ -127,7 +127,7 @@ def load_play_file(uut, args, file):
 def load_awg_top(args):
     uut = acq400_hapi.Acq400(args.uuts[0])
     if args.aosite is None:
-        args.aosite = int(uut.s0.dist_s1)
+        args.aosite = int(uut.s0.play0_s1)
     fglob = glob.glob(args.file)
     args.wait_complete = len(fglob) > 1 or args.reps > 1
 
