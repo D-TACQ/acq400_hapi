@@ -59,7 +59,7 @@ def make_id_set(args):
     for ch in range(0, maxch):
         chv = basev
         for chid in [ x+ch for x in patoff ]:
-            chv[:,chid] = np.zeros([args.len,])
+   #         chv[:,chid] = np.zeros([args.len,])
             id_len = args.len//args.ncycles*((ch+1)%8)//8
             chv[:id_len,chid] = cosv[:id_len]
 
