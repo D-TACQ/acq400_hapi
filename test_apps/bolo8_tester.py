@@ -38,6 +38,7 @@ def get_parser():
     parser.add_argument('--dtypes', default='PWR', type=type_list, help="data types to plot and save ie PWR,MAG,PHI")
     parser.add_argument('--ptotal', default=40000, type=int, help="Plot total samples")
     parser.add_argument('--strobe', default=0, type=int, help="Strobe led (enabled: 1) or (disabled: 0)")
+    parser.add_argument('--cal_pause', action='store_true', help="pause after cal")
     parser.add_argument('-y', action='store_true', help='Auto yes to prompt')
     parser.add_argument('uutname', help="uut name")
     return parser
@@ -610,6 +611,7 @@ def run_main(args):
 
                 if args.cal:
                     bh.run_cal()
+                    if args.cal_pause: input("Pausing after calibration; Enter to Continue")
 
                 if args.cap:
                     bh.run_cap()
