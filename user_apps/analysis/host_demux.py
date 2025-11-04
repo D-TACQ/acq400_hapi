@@ -597,7 +597,7 @@ def run_main(args):
             if os.name != "nt":
                 args.saveroot = r"{}/{}".format(args.uutroot, args.save)
 
-    args.pses = [ int(x) for x in args.pses.split(':') ]
+    args.pses = [ int(x) if x and x.lower() != "none" else None for x in args.pses.split(':') ]
     if args.pcfg:
         args.pc_list = CH.process_pcfg(args)
     else:
@@ -620,7 +620,7 @@ def get_parser(parser=None):
     parser.add_argument('--src', type=str, default='/data', help='data source root')
     parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
-    parser.add_argument('--pses', type=str, default='0:-1:1', help="plot start end stride, default: 0:-1:1")
+    parser.add_argument('--pses', type=str, default='0:None:1', help="plot start:end:stride, default: 0:None:1")
     parser.add_argument('--tai_vernier', type=int, default=None, help='decode this channel as tai_vernier')
     parser.add_argument('--egu', type=int, default=0, help='>0 plot egu (V vs s) >1 : used computed s')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
