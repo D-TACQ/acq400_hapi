@@ -1620,6 +1620,40 @@ class Acq400:
         if len(mask_val) == 0: return "None"
         if mask_arg == None: return mask_val
         return hex(sum(1 << (int(chan) - 1) for chan in mask_val))
+    
+    def state_eq(self, state):
+        """Check if UUT state = arg"""
+        if self.statmon.get_state() == state: return True
+        return False
+
+    def state_not(self, state):
+        """Check if UUT state != arg"""
+        if self.statmon.get_state() != state: return True
+        return False
+    
+    def wait_for_arm(self, timeout=60):
+        """Wait for state == ARM or timeout"""
+        #Warning may break with AUTO_SOFT_TRIGGER=1
+        t0 = time.time()
+        while self.state_not(STATE.ARM):
+            if timeout and time.time() - t0 > timeout: raise TimeoutError(f'{self.uut} failed to reach ARM')
+            time.sleep(1)
+
+    def wait_for_idle(self, timeout=60):
+        """Wait for state == IDLE or timeout"""
+        t0 = time.time()
+        while self.state_not(STATE.IDLE):
+            if timeout and time.time() - t0 > timeout: raise TimeoutError(f'{self.uut} failed to reach IDLE')
+            time.sleep(1)
+
+    def wait_for_samples(self, samples, timeout=60):
+        """Wait for samples >= arg or timeout"""
+        t0 = time.time()
+        while True:
+            current_samples = int(pv(self.s0.CONTINUOUS_SC))
+            if current_samples >= samples: break
+            if timeout and time.time() - t0 > timeout: return TimeoutError(f'{self.uut} failed to reach sample target')
+            time.sleep(1)
 
 def pv(_pv):
     return _pv.split(" ")[1]
