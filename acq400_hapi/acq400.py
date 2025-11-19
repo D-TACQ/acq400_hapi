@@ -1562,7 +1562,7 @@ class Acq400:
             total_bytes = 0
             timestart = 0
             printlast = 0
-            missing = 0
+            missed_samples = 0
 
             print(f"Stream start {f'{megabytes}MB' if megabytes else f'{seconds}s'} from {self.uut}:{port} to {save if save else 'null'}")
             try:
@@ -1580,7 +1580,9 @@ class Acq400:
 
                         if check >= 0:
                             spad0 = view32[check::ssb // 4]
-                            missing += np.sum(np.abs(np.diff(spad0) - 1))
+                            missed = np.sum(np.abs(np.diff(spad0) - 1))
+                            if missed: print(f'Warning: {missed} samples missed')
+                            missed_samples += missed
                             buffer[ 0 : ssb ] = buffer[ cursor - ssb : ]
                             start = ssb
 
@@ -1588,7 +1590,7 @@ class Acq400:
                         runtime = time.time() - timestart
 
                         if update > 0 and runtime - printlast > update:
-                            print(f"Streaming {runtime:.2f}s {(total_bytes >> 20) / runtime:.2f} MB/s {total_bytes >> 20} MB")
+                            print(f"Streaming {runtime:.2f}s {(total_bytes >> 20) / runtime:.2f} MB/s {total_bytes >> 20} MB {f'{missed_samples} missing' if check >= 0 else ''}")
                             print(LINE_UP + ERASE_LINE , end="")
                             printlast = runtime
 
@@ -1602,7 +1604,7 @@ class Acq400:
 
             except KeyboardInterrupt: pass
             if save: fp.close()
-        print(f"Stream complete {runtime:.2f}s {total_bytes} bytes {total_bytes // ssb} samples {f'{missing} missing' if check >= 0 else ''}")
+        print(f"Stream complete {runtime:.2f}s {total_bytes} bytes {total_bytes // ssb} samples {f'{missed_samples} missing' if check >= 0 else ''}")
 
     def get_subset_mask(self, mask_arg=None):
         """get valid subset mask value"""
