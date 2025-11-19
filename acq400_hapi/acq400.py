@@ -1657,6 +1657,11 @@ class Acq400:
             if timeout and time.time() - t0 > timeout: return TimeoutError(f'{self.uut} failed to reach sample target')
             time.sleep(1)
 
+    def ident_spad(self):
+        """Add identity values into each spad e.g. SPAD[7]=0x7777777"""
+        for num in range(1, 8):
+            self.s0.sr("spad{}={}".format(num, str(num)*8))
+
 def pv(_pv):
     return _pv.split(" ")[1]
 
