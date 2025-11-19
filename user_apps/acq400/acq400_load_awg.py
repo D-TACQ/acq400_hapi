@@ -130,7 +130,7 @@ def load_awg_top(args):
         args.aosite = int(uut.s0.play0_s1)
     fglob = glob.glob(args.file)
     args.wait_complete = len(fglob) > 1 or args.reps > 1
-
+    if len(fglob) < 1: raise FileNotFoundError(args.file)
     if len(fglob) > 1 and args.mode != 1:
         print("globbing is ONLY supported in mode 1")
         return
