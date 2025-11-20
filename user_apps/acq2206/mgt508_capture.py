@@ -21,6 +21,8 @@ import subprocess
 import threading
 from acq400_hapi import timing as timing
 import math
+import os
+import sys
 
 GB1 = 0x40000000
 
@@ -76,16 +78,37 @@ def clear_mem(args, mgt):
 
 @timing
 def read_data(args, acq, mgt):
+    target_script = os.path.join("user_apps", "acq400", "acq400_stream2.py")
     if args.simulate:
         cols = int(acq.s0.ssb)//4
         read_amount = args.GB
         result = subprocess.run(['./scripts/mgt508_validate_mem', mgt.uut, str(read_amount), str(cols) ])
     elif args.decimate:
-        read_amount = args.GB / args.decimate 
-        result = subprocess.run(['./scripts/mgt508_read_mem', mgt.uut, str(read_amount), str(mgt.ports.DECIMATE_READ)])
+        read_amount = args.GB / args.decimate
+        cmd = [
+        sys.executable,
+        target_script,
+        "--delete=y",
+        "--filesize=128M",
+        f"--totaldata={read_amount}G",
+        f"--port={mgt.ports.DECIMATE_READ}",
+        "--verbose=1",
+        mgt.uut
+        ]
+        result = subprocess.run(cmd, check=True)
     else:
         read_amount = args.GB
-        result = subprocess.run(['./scripts/mgt508_read_mem', mgt.uut, str(read_amount), str(mgt.ports.READ)])
+        cmd = [
+        sys.executable,       # Uses the currently running python.exe / python3
+        target_script,
+        "--delete=y",
+        "--filesize=128M",
+        f"--totaldata={read_amount}G", # Replicates the ${2}G from bash
+        f"--port={mgt.ports.READ}",
+        "--verbose=1",
+        mgt.uut
+        ]
+        result = subprocess.run(cmd, check=True)
     print(f'Return code : {result.returncode}')
 
 def start_pull(args, mgt):
