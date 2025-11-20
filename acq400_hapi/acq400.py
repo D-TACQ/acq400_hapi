@@ -1562,7 +1562,7 @@ class Acq400:
             total_bytes = 0
             timestart = 0
             printlast = 0
-            missing = 0
+            missed_samples = 0
 
             print(f"Stream start {f'{megabytes}MB' if megabytes else f'{seconds}s'} from {self.uut}:{port} to {save if save else 'null'}")
             try:
@@ -1580,7 +1580,9 @@ class Acq400:
 
                         if check >= 0:
                             spad0 = view32[check::ssb // 4]
-                            missing += np.sum(np.abs(np.diff(spad0) - 1))
+                            missed = np.sum(np.abs(np.diff(spad0) - 1))
+                            if missed: print(f'Warning: {missed} samples missed')
+                            missed_samples += missed
                             buffer[ 0 : ssb ] = buffer[ cursor - ssb : ]
                             start = ssb
 
@@ -1588,7 +1590,7 @@ class Acq400:
                         runtime = time.time() - timestart
 
                         if update > 0 and runtime - printlast > update:
-                            print(f"Streaming {runtime:.2f}s {(total_bytes >> 20) / runtime:.2f} MB/s {total_bytes >> 20} MB")
+                            print(f"Streaming {runtime:.2f}s {(total_bytes >> 20) / runtime:.2f} MB/s {total_bytes >> 20} MB {f'{missed_samples} missing' if check >= 0 else ''}")
                             print(LINE_UP + ERASE_LINE , end="")
                             printlast = runtime
 
@@ -1602,7 +1604,7 @@ class Acq400:
 
             except KeyboardInterrupt: pass
             if save: fp.close()
-        print(f"Stream complete {runtime:.2f}s {total_bytes} bytes {total_bytes // ssb} samples {f'{missing} missing' if check >= 0 else ''}")
+        print(f"Stream complete {runtime:.2f}s {total_bytes} bytes {total_bytes // ssb} samples {f'{missed_samples} missing' if check >= 0 else ''}")
 
     def get_subset_mask(self, mask_arg=None):
         """get valid subset mask value"""
@@ -1620,6 +1622,45 @@ class Acq400:
         if len(mask_val) == 0: return "None"
         if mask_arg == None: return mask_val
         return hex(sum(1 << (int(chan) - 1) for chan in mask_val))
+    
+    def state_eq(self, state):
+        """Check if UUT state = arg"""
+        if self.statmon.get_state() == state: return True
+        return False
+
+    def state_not(self, state):
+        """Check if UUT state != arg"""
+        if self.statmon.get_state() != state: return True
+        return False
+    
+    def wait_for_arm(self, timeout=60):
+        """Wait for state == ARM or timeout"""
+        #Warning may break with AUTO_SOFT_TRIGGER=1
+        t0 = time.time()
+        while self.state_not(STATE.ARM):
+            if timeout and time.time() - t0 > timeout: raise TimeoutError(f'{self.uut} failed to reach ARM')
+            time.sleep(1)
+
+    def wait_for_idle(self, timeout=60):
+        """Wait for state == IDLE or timeout"""
+        t0 = time.time()
+        while self.state_not(STATE.IDLE):
+            if timeout and time.time() - t0 > timeout: raise TimeoutError(f'{self.uut} failed to reach IDLE')
+            time.sleep(1)
+
+    def wait_for_samples(self, samples, timeout=60):
+        """Wait for samples >= arg or timeout"""
+        t0 = time.time()
+        while True:
+            current_samples = int(pv(self.s0.CONTINUOUS_SC))
+            if current_samples >= samples: break
+            if timeout and time.time() - t0 > timeout: return TimeoutError(f'{self.uut} failed to reach sample target')
+            time.sleep(1)
+
+    def ident_spad(self):
+        """Add identity values into each spad e.g. SPAD[7]=0x7777777"""
+        for num in range(1, 8):
+            self.s0.sr("spad{}={}".format(num, str(num)*8))
 
 def pv(_pv):
     return _pv.split(" ")[1]
