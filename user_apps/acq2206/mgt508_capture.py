@@ -169,7 +169,7 @@ def get_parser():
     parser.add_argument('--pull', type=int, default=1, help='Enable or disable pull from ACQ to MGT')
     parser.add_argument('--clear_mem', type=int, default=0, help='zero memory before run')
     parser.add_argument('--samples', type=int, default=None, help='capture length in samples')
-    parser.add_argument('--GB', type=int, default=4, help='capture length in gigabytes')
+    parser.add_argument('--GB', type=int, default=4, choices=range(1,15), help='capture length in gigabytes')
     parser.add_argument('--decimate', type=int, default=0, choices=(0,2), help='Enable or disable 2x decimation during read from MGT to host')
     parser.add_argument('uut_pairs', nargs='+', help="acq2206,mgt508 [a,m] ..")
     return parser
