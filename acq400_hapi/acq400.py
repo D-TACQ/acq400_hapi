@@ -1662,6 +1662,45 @@ class Acq400:
         for num in range(1, 8):
             self.s0.sr("spad{}={}".format(num, str(num)*8))
 
+    def get_role(self):
+        """Return the UUT role"""
+        return self.s0.sync_role.split(' ')[0]
+    
+    def is_master(self):
+        """Return true if 'master' in role"""
+        return 'master' in self.get_role().lower()
+    
+    def configure_capture(
+            self,
+            pre=0,
+            post=0,
+            soft=1,
+            trigger='0,0,0',
+            event0='0,0,0',
+            event1='0,0,0',
+            rgm='0,0,0',
+            spad=None,
+            translen=0,
+            demux=0,
+        ):
+        """Configures UUT for capture"""
+        self.s0.transient = f"PRE={pre} POST={post} SOFT_TRIGGER={soft} DEMUX={demux}"
+        self.s1.trg = trigger
+        self.s1.event0 = event0
+        self.s1.event1 = event1
+        self.s1.rgm = rgm
+        self.s1.RTM_TRANSLEN = translen
+
+        if spad: self.s0.spad = spad
+
+        if not self.is_master() and trigger != '0,0,0':
+            #Only master can soft trigger
+            trigger = trigger.split(',')
+            trigger[1] = '0'
+            self.s1.trg = ','.join(trigger)
+
+        self.s0.run0 = f"{self.s0.sites} {self.s0.spad}"
+
 def pv(_pv):
     return _pv.split(" ")[1]
 
