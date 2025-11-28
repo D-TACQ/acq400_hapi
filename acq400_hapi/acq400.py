@@ -1662,6 +1662,14 @@ class Acq400:
         for num in range(1, 8):
             self.s0.sr("spad{}={}".format(num, str(num)*8))
 
+    def get_role(self):
+        """Return the UUT role"""
+        return self.s0.sync_role.split(' ')[0]
+    
+    def is_master(self):
+        """Return true if 'master' in role"""
+        return 'master' in self.get_role().lower()
+
 def pv(_pv):
     return _pv.split(" ")[1]
 
