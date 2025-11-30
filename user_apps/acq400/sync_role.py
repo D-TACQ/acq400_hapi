@@ -48,8 +48,6 @@ def set_sync_role(args):
 
     args.postfix = []       # master specials
     postfix = []            # common specials
-    if args.clkdiv:
-        args.postfix.append("CLKDIV={}".args.clkdiv)
 
     master.s0.sync_role = "{} {} {} {}".format(expand_role(args, args.toprole),
                                             args.fclk, args.fin if not args.toprole=="master" else "", 
@@ -61,6 +59,9 @@ def set_sync_role(args):
             master.s0.set_si5326_bypass = '1'
     if args.downstream_bypass:
         master.s0.SIG_SYNC_OUT_CLK_DX = 'd1'
+
+    if args.clkdiv:
+        master.s1.CLKDIV = args.clkdiv
 
     if args.external_trigger and len(args.uuts) > 1:
         master.disable_trigger()
