@@ -61,7 +61,16 @@ def set_sync_role(args):
         master.s0.SIG_SYNC_OUT_CLK_DX = 'd1'
 
     if args.clkdiv:
-        master.s1.CLKDIV = args.clkdiv
+        clkdiv_args = args.clkdiv.split(',')
+        if len(clkdiv_args) == 1:
+            master.s1.CLKDIV = args.clkdiv
+        else:
+            site, clkdiv = args.clkdiv.split(',')
+            try:
+                master.svc[f"s{site}"].CLKDIV = clkdiv
+            except KeyError:
+                print(f"ERROR site {site} is not valid")
+                exit(1)
 
     if args.external_trigger and len(args.uuts) > 1:
         master.disable_trigger()
@@ -91,7 +100,7 @@ def get_parser():
     parser.add_argument('--toprole', default='master', help="role of top in stack")
     parser.add_argument('--fclk', default='1000000', help="sample clock rate")
     parser.add_argument('--fin',  default='1000000', help="external clock rate")
-    parser.add_argument('--clkdiv', default=None, help="optional clockdiv")
+    parser.add_argument('--clkdiv', default=None, help="optional [site,]clockdiv")
     parser.add_argument('--downstream_bypass', default=0, type=int, help="provide full rate clock downstream")
     parser.add_argument('--si5326_bypass', default=0, type=int, help="bypass Si5326")
     parser.add_argument('--trgsense', default='rising', help="trigger sense rising unless falling specified")
