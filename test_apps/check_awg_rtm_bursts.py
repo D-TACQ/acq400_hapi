@@ -42,8 +42,10 @@ def run_main(args):
     first_burst = read_burst(args.file, args.translen, args.datasize, args.nchan)
     
     target_sample = check_burst(
-        args.file, first_burst, args.translen, args.datasize, args.nchan, atol
+        args.file, first_burst, args.translen, args.datasize, args.nchan, atol, rate_mode=args.rate, skip_bursts=args.skip
     )
+    
+    if args.rate: return 0
     
     if target_sample is None: 
         print("Burst check passed!")
@@ -84,13 +86,17 @@ def read_burst(filename, translen, datasize, nchan):
 
     return burst_raw
 
-def check_burst(filename, burst, translen, datasize, nchan, atol):
+def check_burst(filename, burst, translen, datasize, nchan, atol, rate_mode=False, skip_bursts=0):
     file_size = os.path.getsize(filename)
     bytes_per_sample = datasize * nchan
     total_samples = file_size // bytes_per_sample
+    total_bursts = total_samples // translen
     burst_length = len(burst)
+    bad_bursts = [] if rate_mode else None
     
-    current_sample = translen
+    start_sample = (skip_bursts if skip_bursts > 0 else 1) * translen
+    checked_bursts = total_bursts - skip_bursts if skip_bursts > 0 else total_bursts - 1
+    current_sample = start_sample
     
     while current_sample < total_samples:
         aligned_sample = (current_sample // translen) * translen
@@ -112,15 +118,26 @@ def check_burst(filename, burst, translen, datasize, nchan, atol):
         mismatch_count = np.sum(exceeds_tolerance)
         
         if mismatch_count > 0:
+            burst_num = aligned_sample // translen
             max_diff = np.max(diff)
-            print(f"Mismatch detected: {mismatch_count} values exceed tolerance (max diff: {max_diff}, atol: {atol})")
-            return aligned_sample
+            bad_bursts.append(aligned_sample)
+            print(f"Mismatch detected: Sample {aligned_sample:,} Burst #{burst_num} {mismatch_count} values exceed tolerance (max diff: {max_diff}, atol: {atol})")
+            if not rate_mode: return aligned_sample
         
         current_sample = aligned_sample + translen
         progress_pct = (current_sample / total_samples) * 100
         print(f"\rChecking sample {current_sample:,} / {total_samples:,} ({progress_pct:.1f}%)", end='', flush=True)
     
     print()
+    
+    if rate_mode:
+        bad_count = len(bad_bursts)
+        if bad_count == 0: print(f"Burst check passed! All {checked_bursts} bursts matched.")
+        else:
+            bad_pct = (bad_count / checked_bursts) * 100.0
+            print(f"Out of {checked_bursts} bursts, {bad_count} were bad ({bad_pct:.2f}%)")
+        return None
+    
     return None
 
 def read_chunk(filename, start_sample, num_samples, datasize, nchan):
@@ -265,6 +282,8 @@ def get_parser():
     parser.add_argument('--tolerance', type=float, default=15, help='tolerance percent of max scale')
     parser.add_argument('--datasize', type=int, default=2, help='data size')
     parser.add_argument('--compare', action='store_true', help='compare bad burst to first burst')
+    parser.add_argument('--rate', action='store_true', help='print the error rate instead of plotting the first error')
+    parser.add_argument('--skip', type=int, default=0, help='skip first N bursts when checking')
     return parser
 
 if __name__ == '__main__':
