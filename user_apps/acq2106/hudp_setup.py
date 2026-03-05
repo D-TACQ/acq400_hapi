@@ -162,6 +162,8 @@ def config_tx_uut(txuut, args):
         txuut.hudp.udp_data_src = 0
         tx_ssb = int(txuut.s0.ssb)
 
+    if args.tx_ssb != None: tx_ssb = args.tx_ssb
+    
     txuut.hudp.tx_sample_sz = tx_ssb
     txuut.hudp.tx_spp = args.spp
     tx_pkt_sz = tx_ssb*args.spp                         # compute tx pkt sz and check bounds
@@ -214,6 +216,7 @@ def get_parser():
     parser.add_argument("--hudp_relay", default=None, type=int,  help="-1,0..N: relay LLC VI out HUDP txt offset in vector (-1: enable, but use existing slice_len, slice_offset settings)")
     parser.add_argument("--spp",     default=1, type=int,     help="samples per packet")
     parser.add_argument("--hudp_decim", default=1, type=int,  help="hudp decimation, 1..16")
+    parser.add_argument("--tx_ssb", default=None, type=int,  help="Override the SSB value from the TX UUT")
     parser.add_argument("txuut", nargs=1,                     help=f"transmit uut (if it's a PC, type one of {PCSEL})")
     parser.add_argument("rxuut", nargs=1,                     help=f"rx uut (if it's a PC, type one of {PCSEL})")
     return parser
