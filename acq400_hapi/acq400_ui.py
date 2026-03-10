@@ -251,7 +251,7 @@ class ArgTypes:
         end = ArgTypes.int_with_unit(value[1]) if 1 < len(value) and value[1] else default[1]
         stride = ArgTypes.int_with_unit(value[2]) if 2 < len(value) and value[2] else default[2]
         assert(stride > 0)
-        assert(end > start)
+        assert(end == -1 or end > start)
         return (start, end, stride)
 
 
