@@ -1,13 +1,12 @@
+#!/usr/bin/env python3
 
 import argparse
 import os
 
-from . import acq400
-from . import intSI
-from .intSI import intSI_cvt
-from .intSI import intSIAction
-from . import acq400_uut_handler
-from .acq400_uut_handler import uut_handler
+from acq400_hapi import acq400, intSI
+from acq400_hapi.intSI import intSI_cvt
+from acq400_hapi.intSI import intSIAction
+from acq400_hapi.acq400_uut_handler import uut_handler
 from acq400_hapi.debug import Debugger
 
 
@@ -243,3 +242,34 @@ class ArgTypes:
                 value = value[:-len(unit)]
                 break
         return int(float(value) * scaler)
+
+    @staticmethod
+    def start_end_stride(value, default=(0, -1, 1)):
+        """Converts start:end:stride into tuple"""
+        value = value.strip().split(':')
+        start = ArgTypes.int_with_unit(value[0]) if 0 < len(value) and value[0] else default[0]
+        end = ArgTypes.int_with_unit(value[1]) if 1 < len(value) and value[1] else default[1]
+        stride = ArgTypes.int_with_unit(value[2]) if 2 < len(value) and value[2] else default[2]
+        assert(stride > 0)
+        assert(end > start)
+        return (start, end, stride)
+
+
+def unit_test():
+
+    # Testing start end stride
+    assert(ArgTypes.start_end_stride('10:1000:100') == (10, 1000, 100))
+    assert(ArgTypes.start_end_stride('1000:') == (1000, -1, 1))
+    assert(ArgTypes.start_end_stride('1000::') == (1000, -1, 1))
+    assert(ArgTypes.start_end_stride(':1000') == (0, 1000, 1))
+    assert(ArgTypes.start_end_stride(':1000:') == (0, 1000, 1))
+    assert(ArgTypes.start_end_stride('::1000') == (0, -1, 1000))
+    assert(ArgTypes.start_end_stride(':') == (0, -1, 1))
+    assert(ArgTypes.start_end_stride('0:') == (0, -1, 1))
+    assert(ArgTypes.start_end_stride('::') == (0, -1, 1))
+    assert(ArgTypes.start_end_stride('1:2:3:4:5:6') == (1, 2, 3))
+    assert(ArgTypes.start_end_stride('1K:1M:100K') == (1000, 1000000, 100000))
+
+
+if __name__ == '__main__':
+    unit_test()

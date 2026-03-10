@@ -114,7 +114,15 @@ class ch_raw(channel_handler):
         super().__init__(ic, _fmt)
 
     def __call__(self, raw_channels, pses):
-        return raw_channels[self.ic][pses[0]:pses[1]:pses[2]], self.fmt.format(self.ch), SMOO
+        start, end, stride = pses
+
+        length = len(raw_channels[self.ic])
+
+        if end is None or end < 0: end = length
+        start = max(0, min(start, length))
+        end = max(start, min(end, length))
+
+        return raw_channels[self.ic][start:end:stride], self.fmt.format(self.ch), SMOO
 
     def build(nchan, defstr, client_args):
         channels, args, fmts = channel_handler.defsplit(nchan, defstr, ch_raw.def_fmt)

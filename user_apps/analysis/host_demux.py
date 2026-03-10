@@ -310,11 +310,13 @@ def plot_mpl(args, raw_channels):
 
     for pln, ch_handler in enumerate(args.pc_list):
         pln = int(pln / args.traces_per_plot)
-        yy, meta, step = ch_handler(raw_channels, args.pses)
+
+        yy, meta, not_smooth = ch_handler(raw_channels, args.pses)
         if xx is None:
+            start, end, stride = args.pses
             if args.egu >= 1:
-                x1 = args.pses[0]
-                x2 = x1 + len(yy)*args.pses[2];
+                x1 = start
+                x2 = x1 + (len(yy) - 1) * stride
                 if args.xdt == 0:
                     if args.egu == 1:
                         print("WARNING ##### NO CLOCK RATE PROVIDED. TIME SCALE measured by system.")
@@ -326,14 +328,14 @@ def plot_mpl(args, raw_channels):
                 xx = np.linspace(x1*ti, x2*ti, len(yy))
                 xl = "seconds"
             else:
-                xx = np.array([ (x+args.pses[0])*args.pses[2] for x in range(0, len(yy))])
+                xx = np.array([ start + x*stride for x in range(len(yy)) ])
                 xl = "Samples"
 
         meta = meta.split(' ')
         if len(meta) > 1:
             plots[pln].set_ylabel(meta[1])
         plots[pln].set_title(plots[pln].get_title() + f' {meta[0]}')
-        if step:
+        if not_smooth:
             plots[pln].step(xx, yy, linewidth=0.75)
         else:
             plots[pln].plot(xx, yy, linewidth=0.75)
@@ -597,7 +599,6 @@ def run_main(args):
             if os.name != "nt":
                 args.saveroot = r"{}/{}".format(args.uutroot, args.save)
 
-    args.pses = [ int(x) if x and x.lower() != "none" else None for x in args.pses.split(':') ]
     if args.pcfg:
         args.pc_list = CH.process_pcfg(args)
     else:
@@ -620,7 +621,7 @@ def get_parser(parser=None):
     parser.add_argument('--src', type=str, default='/data', help='data source root')
     parser.add_argument('--cycle', type=str, default=None, help='cycle from rtm-t-stream-disk')
     parser.add_argument('--pchan', type=str, default=':', help='channels to plot')
-    parser.add_argument('--pses', type=str, default='0:None:1', help="plot start:end:stride, default: 0:None:1")
+    parser.add_argument('--pses', type=acq400_hapi.ArgTypes.start_end_stride, default=(0, -1, 1), help="plot start:end:stride, default: 0:-1:1")
     parser.add_argument('--tai_vernier', type=int, default=None, help='decode this channel as tai_vernier')
     parser.add_argument('--egu', type=int, default=0, help='>0 plot egu (V vs s) >1 : used computed s')
     parser.add_argument('--xdt', type=float, default=0, help='0: use interval from UUT, else specify interval ')
