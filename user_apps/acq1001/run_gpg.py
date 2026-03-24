@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 configure and run gpg on uut
@@ -28,9 +28,6 @@ optional arguments:
                         clk, trg and gpg drive HDMI outputs
 """
 import sys
-if sys.version_info < (3, 0):
-    from __future__ import division
-    from builtins import input
 import acq400_hapi
 import argparse
 import re

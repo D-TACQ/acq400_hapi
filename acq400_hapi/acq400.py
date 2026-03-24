@@ -994,7 +994,13 @@ class Acq400:
                     break
                 wait_end = wait_eof
 
-
+    def read_stl(self):
+        """
+        Read the loaded STL
+        """
+        termex = re.compile(r"(EOF\n)")
+        with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc:
+            return nc.receive_message(termex)
 
     def load_gpg(self, stl, trace = False):
         """Send stl to GPG port
