@@ -39,6 +39,7 @@ def run_main(args):
 
     with open(args.stl, 'r') as fp:
         uut.load_gpg(fp.read())
+        uut.s0.pulse_def = args.stl
 
     uut.s0.GPG_ENABLE = '1'
 
