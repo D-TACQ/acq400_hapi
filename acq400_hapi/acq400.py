@@ -994,7 +994,18 @@ class Acq400:
                     break
                 wait_end = wait_eof
 
-
+    def read_stl(self):
+        """
+        Read the loaded STL
+        """
+        lines = []
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((self.uut, AcqPorts.GPGDUMP))
+            while True:
+                data = sock.recv(1024)
+                if not data: break
+                lines.append(data.decode('latin-1'))
+        return lines
 
     def load_gpg(self, stl, trace = False):
         """Send stl to GPG port
