@@ -998,14 +998,9 @@ class Acq400:
         """
         Read the loaded STL
         """
-        lines = []
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((self.uut, AcqPorts.GPGDUMP))
-            while True:
-                data = sock.recv(1024)
-                if not data: break
-                lines.append(data.decode('latin-1'))
-        return lines
+        termex = re.compile(r"(EOF\n)")
+        with netclient.Netclient(self.uut, AcqPorts.GPGDUMP) as nc:
+            return nc.receive_message(termex)
 
     def load_gpg(self, stl, trace = False):
         """Send stl to GPG port

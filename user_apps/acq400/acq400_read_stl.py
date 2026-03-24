@@ -14,8 +14,7 @@ import socket
 
 def run_main(args):    
     uut = acq400_hapi.factory(args.uutname)
-    stl = uut.read_stl()
-    print(''.join(stl))
+    print(uut.read_stl())
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Read the loaded STL')
