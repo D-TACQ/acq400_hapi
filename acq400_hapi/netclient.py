@@ -88,7 +88,7 @@ class Netclient:
                 print("Netclient(%s, %d) connect" % (self.__addr, self.__port))
             self.sock.connect((self.__addr, self.__port))
         except socket.error as e:
-            print("Netclient {}.{} connect fail {}".format(addr, port, e))
+            print("Netclient address={} port={} connect fail {}".format(addr, port, e))
             raise e
         Netclient.instances.append(self)
 
