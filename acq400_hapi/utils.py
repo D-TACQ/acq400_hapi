@@ -60,3 +60,7 @@ class Tri(str):
         arr = list(self.split(','))
         arr[self.enum.index(name)] = str(value)
         return ','.join(arr)
+
+
+def extract_key_values(string):
+    return {k: v for k, v in (item.split('=', 1) for item in string.split())}
