@@ -35,6 +35,8 @@ import socket
 import timeit
 import time
 
+from . import utils
+
 class DataNotAvailableError(Exception):
     pass
 
@@ -408,35 +410,30 @@ class Acq400:
             self.awg_site = site
         self.mod_count += 1
 
-    def _make_svc_from_log(self, log):
-        ms = None
-        try :
-            _ms = log.split(" ")[1].split(",")[0]
-            if _ms in "123456":
-                ms = self.svc[f"s{_ms}"]
-            else:
-                print(f"ms {ms} not a valid site")
-        except:
-            print(f"bad split")
-
-        return ms
-
     def make_sa_sd_aliases(self):
         """ create aliases for Aggregator Master Site, Distributor Master site 
             ensure that self.sA is set regardless. If no XI, use self.sD, else go with s1
         """
-        ams = self._make_svc_from_log(self.s0.run0_log)
-        dms = self._make_svc_from_log(self.s0.play0_log) if hasattr(self.s0, 'play0_log') else None
 
-        if dms is not None:
-            self.svc["sD"] = dms
-        if ams is not None:
-            self.svc["sA"] = ams
-        elif dms is not None:
-            self.svc["sA"] = dms
-        else:
-            self.svc["sA"] = self.s1
+        #find dist master site - default none
+        self.svc["sD"] = None
+        distributor = utils.extract_key_values(self.s0.distributor)
 
+        if distributor['sites'].lower() != 'none':
+            for site in distributor['sites'].split(','):
+                if self[site].module_role == 'MASTER':
+                    self.svc["sD"] = self[site]
+                    break
+        
+        #find agg master site - default dist if dist else s1
+        self.svc["sA"] = self.svc["sD"] if self.svc["sD"] else self[1]
+        aggregator = utils.extract_key_values(self.s0.aggregator)
+
+        if aggregator['sites'].lower() != 'none':
+            for site in aggregator['sites'].split(','):
+                if self[site].module_role == 'MASTER':
+                    self.svc["sA"] = self[site]
+                    break
     @classmethod
     def create_uuts(cls, uut_names):
         """ create_uuts():  factory .. create them in parallel
