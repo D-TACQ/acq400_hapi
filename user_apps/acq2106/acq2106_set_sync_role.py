@@ -81,7 +81,7 @@ def run_main(parser):
             trg = "1,%d,%d" % (1 if mtrg=="soft" else 0, rf(edge))
             clkdiv = parser.clkdiv
             sync_trg_to_clk(uut)
-            uut.s1.clkdiv = clkdiv
+            uut.s1.CLKDIV = clkdiv
             uut.s0.SIG_SYNC_OUT_CLK = "CLK"
             uut.s0.SIG_SYNC_OUT_CLK_DX = "d2"
             uut.s0.SIG_SYNC_OUT_TRG = "TRG"
