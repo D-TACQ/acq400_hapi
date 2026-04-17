@@ -76,7 +76,6 @@ def set_sync_role(args):
     for t in threads:
         t.join()
 
-    master.s2.clkdiv = 2
     master.s2.CLKDIV = 2
     
     if args.enable_trigger == 99:

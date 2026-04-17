@@ -33,7 +33,7 @@ def set_clk_trg(args):
         uut.s1.clk = "1,3,1"
         uut.s1.trg = "1,",args.trg,",1"
         uut.s1.sync = "0,0,0"
-        uut.s1.clkdiv = 1
+        uut.s1.CLKDIV = 1
         uut.s1.sync_trg_to_clk=1
 
     else:

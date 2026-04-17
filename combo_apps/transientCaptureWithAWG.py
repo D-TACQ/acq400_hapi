@@ -92,7 +92,7 @@ def acq400_upload_config_and_execute():
 def edit_ao_settings():
     uut = acq400_hapi.Acq400(DEFAULTS.uutIPAddress[0])
     uut.s5.clk = "1,2,1"
-    uut.s5.clkdiv = "1"
+    uut.s5.CLKDIV = "1"
     return None
 
 
