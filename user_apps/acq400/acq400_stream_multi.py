@@ -74,17 +74,17 @@ def make_data_dir(directory, verbose):
         print("make_data_dir {}".format(directory))
     try:
         os.makedirs(directory)
-    except Exception:
+    except OSError:
         if verbose > 2:
             print("Directory already exists")
         pass
 
 
-def remove_stale_data(args):
-    for uut in args.uuts:
-        path = os.path.join(args.root, uut)
+def remove_stale_data(uuts, root, force_delete, verbose):
+    for uut in uuts:
+        path = os.path.join(root, uut)
         if os.path.exists(path):
-            if args.force_delete:
+            if force_delete:
                 pass
             else:
                 answer = input(
@@ -92,7 +92,7 @@ def remove_stale_data(args):
                 )
                 if answer != "y":
                     continue
-            if args.verbose:
+            if verbose:
                 print("removing {}".format(path))
             shutil.rmtree(path)
 
@@ -145,33 +145,36 @@ class StreamsOne:
 
     def __init__(self, args, uut_name, halt, pipe, delay):
         self.uut = None
-        self.subset = args.subset
-        self.filesamples = args.filesamples
+        self.channel_subset = args.subset
+        self.file_size_samples = args.filesamples
         self.filesize = args.filesize
         self.burst_on_demand = args.burst_on_demand
-        self.nowrite = args.nowrite
-        self.root = args.root
-        self.combine = args.combine
+        self.no_write_file = args.nowrite
+        self.rootdir = args.root
+        self.combine_files = args.combine
         self.files_per_cycle = args.files_per_cycle
         self.display = args.display
         self.verbose = args.verbose
-        self.runtime = args.runtime
+        self.run_time = args.runtime
         self.totaldata = args.totaldata
         self.trigger_from_here = args.trigger_from_here
         self.uut_name = uut_name
         self.halt = halt
         self.delay = delay
         self.status = self.PipeConn(pipe)
-        self.previous = None
+        self.previous_time = None
+        self.thread = None
         self.log_file = os.path.join(args.root, f"{uut_name}_times.log")
         open(self.log_file, "w").close()
 
     def logtime(self, t0, t1):
-        if not self.previous:
-            self.previous = t1
+        if not self.previous_time:
+            self.previous_time = t1
         with open(self.log_file, "a") as f:
-            f.write(f"{int((t1 - t0) * 1000)} {int((t1 - self.previous) * 1000 )}\n")
-        self.previous = t1
+            f.write(
+                f"{int((t1 - t0) * 1000)} {int((t1 - self.previous_time) * 1000 )}\n"
+            )
+        self.previous_time = t1
         return t1
 
     def update_status_forever(self):
@@ -180,7 +183,7 @@ class StreamsOne:
             self.status.send()
             time.sleep(1)
 
-    def stop_proccess(self, reason):
+    def stop_process(self, reason):
         self.status.set("stopped", True)
         self.uut.stream_close()
         self.halt.wait()
@@ -209,7 +212,7 @@ class StreamsOne:
             if len(bod_def) == 2:
                 bod_job = bod_def[1]
             self.uut.s1.RTM_TRANSLEN = bod_len
-            self.filesamples = bod_len
+            self.file_size_samples = bod_len
             if self.trigger_from_here != 0:
                 callback = self_burst_trigger_callback(self.uut, bod_job)
                 self.thread = threading.Thread(
@@ -233,12 +236,14 @@ class StreamsOne:
             data_size = 2
 
         netssb = int(self.uut.s0.ssb)
-        if self.subset:
-            c1, clen = [int(x) for x in self.subset.split(",")]
-            netssb = clen * data_size
+        if self.channel_subset:
+            subset_start_channel1, subset_length = [
+                int(x) for x in self.channel_subset.split(",")
+            ]
+            netssb = subset_length * data_size
 
-        if self.filesamples:
-            self.filesize = self.filesamples * netssb
+        if self.file_size_samples:
+            self.filesize = self.file_size_samples * netssb
 
         blen = self.filesize // data_size
 
@@ -254,7 +259,7 @@ class StreamsOne:
         for buf in self.uut.stream(recvlen=blen, data_size=data_size):
 
             if self.halt.is_set():
-                self.stop_proccess(f"{self.uut_name} Stopped")
+                self.stop_process(f"{self.uut_name} Stopped")
 
             if data_bytes == 0:
                 t0 = time.time()
@@ -274,7 +279,7 @@ class StreamsOne:
             )
             self.status.set("files", f"{files}")
 
-            if not self.nowrite:
+            if not self.no_write_file:
                 if fnum >= self.files_per_cycle:
                     fnum = 0
                     cycle += 1
@@ -282,11 +287,11 @@ class StreamsOne:
                         data_file.close()
                         data_file = None
                     root = os.path.join(
-                        self.root, self.uut_name, "{:06d}".format(cycle)
+                        self.rootdir, self.uut_name, "{:06d}".format(cycle)
                     )
                     make_data_dir(root, self.verbose)
 
-                if not self.combine:
+                if not self.combine_files:
                     fn = os.path.join(root, f"{fnum:04d}.dat")
                     with open(fn, "wb") as data_file:
                         buf.tofile(data_file)
@@ -319,10 +324,10 @@ class StreamsOne:
                     )
             fnum += 1
 
-            if callback(fn) or t_run >= self.runtime or data_bytes > self.totaldata:
+            if callback(fn) or t_run >= self.run_time or data_bytes > self.totaldata:
                 break
 
-        self.stop_proccess(f"{self.uut_name} Finished")
+        self.stop_process(f"{self.uut_name} Finished")
 
 
 def status_cb():
@@ -334,27 +339,7 @@ def wrapper(args, uut, halt, pipe, delay):
     streamer.run()
 
 
-class DUD_DISPLAY:
-    def __init__(self):
-        self.buffer = ""
-
-    def add_line(self, *args):
-        pass
-
-    def add(self, *args):
-        pass
-
-    def end(self, *args):
-        pass
-
-    def render(self, *args):
-        pass
-
-    def render_interrupted(self, *args):
-        pass
-
-
-def run_stream_run(args):
+def run_stream(args):
     receivers = {}
     processes = {}
     uut_statuses = {}
@@ -376,10 +361,7 @@ def run_stream_run(args):
         )
         processes[uut].start()
         delay = 0
-    if args.display:
-        D = DISPLAY()
-    else:
-        D = DUD_DISPLAY()
+    D = DISPLAY()
     start_time = time.time()
     try:
         while True:
@@ -389,10 +371,7 @@ def run_stream_run(args):
                     try:
                         uut_statuses[uut_name] = receivers[uut_name].recv()
                     except EOFError:
-                        try:
-                            uut_statuses[uut_name]["state"] = "DEAD"
-                        except:
-                            pass
+                        uut_statuses[uut_name]["state"] = "DEAD"
             D.add_line("")
             D.add_line(
                 f"{{BOLD}}Stream Multi {{RESET}}Runtime: {round(time.time() - start_time)}s"
@@ -508,12 +487,14 @@ def get_parser(parser=None):
 
 
 if __name__ == "__main__":
-    args = get_parser().parse_args()
-    print(args)
-    # run_stream_prep
-    if args.filesize > args.totaldata:
-        args.filesize = args.totaldata
-    remove_stale_data(args)
-    if args.root and not os.path.exists(args.root):
-        os.makedirs(args.root)
-    run_stream_run(args)
+    arguments = get_parser().parse_args()
+    print(arguments)
+    # prep stream
+    if arguments.filesize > arguments.totaldata:
+        arguments.filesize = arguments.totaldata
+    remove_stale_data(
+        arguments.uuts, arguments.root, arguments.force_delete, arguments.verbose
+    )
+    if arguments.root and not os.path.exists(arguments.root):
+        os.makedirs(arguments.root)
+    run_stream(arguments)
