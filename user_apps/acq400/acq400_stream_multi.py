@@ -355,14 +355,15 @@ class DUD_DISPLAY:
 
 
 def run_stream_run(args):
-    recvs = {}
-    pss = {}
+    receivers = {}
+    processes = {}
+    uut_statuses = {}
     delay = 2
     halt = multiprocessing.Event()
     for uut in args.uuts:
         recv, pipe = multiprocessing.Pipe()
-        recvs[uut] = recv
-        pss[uut] = multiprocessing.Process(
+        receivers[uut] = recv
+        processes[uut] = multiprocessing.Process(
             target=wrapper,
             args=(
                 args,
@@ -373,31 +374,30 @@ def run_stream_run(args):
             ),
             daemon=False,
         )
-        pss[uut].start()
+        processes[uut].start()
         delay = 0
     if args.display:
         D = DISPLAY()
     else:
         D = DUD_DISPLAY()
-    uut_status = {}
     start_time = time.time()
     try:
         while True:
             stopped = 0
-            for uut_name, ps in pss.items():
-                while recvs[uut_name].poll():
+            for uut_name, ps in processes.items():
+                while receivers[uut_name].poll():
                     try:
-                        uut_status[uut_name] = recvs[uut_name].recv()
+                        uut_statuses[uut_name] = receivers[uut_name].recv()
                     except EOFError:
                         try:
-                            uut_status[uut_name]["state"] = "DEAD"
+                            uut_statuses[uut_name]["state"] = "DEAD"
                         except:
                             pass
             D.add_line("")
             D.add_line(
                 f"{{BOLD}}Stream Multi {{RESET}}Runtime: {round(time.time() - start_time)}s"
             )
-            for uut, status in uut_status.items():
+            for uut, status in uut_statuses.items():
                 if status["stopped"]:
                     stopped += 1
                 D.add(f"{{REVERSE}}{uut}{{RESET}} ")
@@ -405,7 +405,7 @@ def run_stream_run(args):
                     D.add(f"{{BOLD}}{key}{{RESET}}[{value}] ")
                 D.end()
 
-            if stopped == len(pss):
+            if stopped == len(processes):
                 halt.set()
                 D.render(False)
                 break
