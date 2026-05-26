@@ -56,18 +56,17 @@ Some usage examples are included below:
 
 """
 
-import acq400_hapi
-import numpy as np
-import os
-import time
 import argparse
-import sys
-import signal
+import multiprocessing
+import os
 import shutil
-from acq400_hapi.acq400_print import DISPLAY
-
-import multiprocessing as MP
+import signal
+import sys
 import threading
+import time
+
+import acq400_hapi
+from acq400_hapi.acq400_print import DISPLAY
 
 
 def make_data_dir(directory, verbose):
@@ -126,12 +125,16 @@ def self_start_trigger_callback(uut):
 
 class StreamsOne:
 
-    class pipe_conn:
+    class PipeConn:
         def __init__(self, pipe):
             self.pipe = pipe
             self.status = {
                 "state": None,
                 "stopped": False,
+                "files": None,
+                "runtime": None,
+                "total bytes": None,
+                "rate": None,
             }
 
         def send(self):
@@ -141,11 +144,24 @@ class StreamsOne:
             self.status[key] = value
 
     def __init__(self, args, uut_name, halt, pipe, delay):
-        self.args = args
+        self.uut = None
+        self.subset = args.subset
+        self.filesamples = args.filesamples
+        self.filesize = args.filesize
+        self.burst_on_demand = args.burst_on_demand
+        self.nowrite = args.nowrite
+        self.root = args.root
+        self.combine = args.combine
+        self.files_per_cycle = args.files_per_cycle
+        self.display = args.display
+        self.verbose = args.verbose
+        self.runtime = args.runtime
+        self.totaldata = args.totaldata
+        self.trigger_from_here = args.trigger_from_here
         self.uut_name = uut_name
         self.halt = halt
         self.delay = delay
-        self.status = self.pipe_conn(pipe)
+        self.status = self.PipeConn(pipe)
         self.previous = None
         self.log_file = os.path.join(args.root, f"{uut_name}_times.log")
         open(self.log_file, "w").close()
@@ -185,16 +201,16 @@ class StreamsOne:
         if callback is None:
             callback = lambda _clidata: False
 
-        if self.args.burst_on_demand:
+        if self.burst_on_demand:
             self.uut.s1.rgm = "3,1,1"
-            bod_def = self.args.burst_on_demand.split(",")
+            bod_def = self.burst_on_demand.split(",")
             bod_len = int(bod_def[0])
             bod_job = None
             if len(bod_def) == 2:
                 bod_job = bod_def[1]
             self.uut.s1.RTM_TRANSLEN = bod_len
-            self.args.filesamples = bod_len
-            if self.args.trigger_from_here != 0:
+            self.filesamples = bod_len
+            if self.trigger_from_here != 0:
                 callback = self_burst_trigger_callback(self.uut, bod_job)
                 self.thread = threading.Thread(
                     target=self_start_trigger_callback(self.uut)
@@ -217,18 +233,18 @@ class StreamsOne:
             data_size = 2
 
         netssb = int(self.uut.s0.ssb)
-        if self.args.subset:
-            c1, clen = [int(x) for x in self.args.subset.split(",")]
+        if self.subset:
+            c1, clen = [int(x) for x in self.subset.split(",")]
             netssb = clen * data_size
 
-        if self.args.filesamples:
-            self.args.filesize = self.args.filesamples * netssb
+        if self.filesamples:
+            self.filesize = self.filesamples * netssb
 
-        blen = self.args.filesize // data_size
+        blen = self.filesize // data_size
 
-        if self.args.burst_on_demand and self.args.verbose:
+        if self.burst_on_demand and self.verbose:
             print(
-                f"burst_on_demand RTM_TRANSLEN={self.args.burst_on_demand} netssb={netssb} filesize={self.args.filesize} blen={blen}"
+                f"burst_on_demand RTM_TRANSLEN={self.burst_on_demand} netssb={netssb} filesize={self.filesize} blen={blen}"
             )
 
         t_run = 0
@@ -258,19 +274,19 @@ class StreamsOne:
             )
             self.status.set("files", f"{files}")
 
-            if not self.args.nowrite:
-                if fnum >= self.args.files_per_cycle:
+            if not self.nowrite:
+                if fnum >= self.files_per_cycle:
                     fnum = 0
                     cycle += 1
                     if data_file:
                         data_file.close()
                         data_file = None
                     root = os.path.join(
-                        self.args.root, self.uut_name, "{:06d}".format(cycle)
+                        self.root, self.uut_name, "{:06d}".format(cycle)
                     )
-                    make_data_dir(root, self.args.verbose)
+                    make_data_dir(root, self.verbose)
 
-                if not self.args.combine:
+                if not self.combine:
                     fn = os.path.join(root, f"{fnum:04d}.dat")
                     with open(fn, "wb") as data_file:
                         buf.tofile(data_file)
@@ -279,17 +295,17 @@ class StreamsOne:
                 else:
                     if not data_file:
                         fn = os.path.join(
-                            root, f"{0:04d}-{self.args.files_per_cycle:04d}.dat"
+                            root, f"{0:04d}-{self.files_per_cycle:04d}.dat"
                         )
                         data_file = open(fn, "wb")
                         files += 1
                     buf.tofile(data_file)
 
-            if self.args.verbose == 0:
+            if self.verbose == 0:
                 pass
-            elif self.args.verbose == 1:
+            elif self.verbose == 1:
                 pass
-            if not self.args.display and self.args.verbose > 2:
+            if not self.display and self.verbose > 2:
                 if t_run > 0:
                     print(
                         "{:8.3f} {} files {:4d} total bytes: {:10d} data bytes: {} rate: {:.2f} MB/s".format(
@@ -303,11 +319,7 @@ class StreamsOne:
                     )
             fnum += 1
 
-            if (
-                callback(fn)
-                or t_run >= self.args.runtime
-                or data_bytes > self.args.totaldata
-            ):
+            if callback(fn) or t_run >= self.runtime or data_bytes > self.totaldata:
                 break
 
         self.stop_proccess(f"{self.uut_name} Finished")
@@ -322,15 +334,35 @@ def wrapper(args, uut, halt, pipe, delay):
     streamer.run()
 
 
+class DUD_DISPLAY:
+    def __init__(self):
+        self.buffer = ""
+
+    def add_line(self, *args):
+        pass
+
+    def add(self, *args):
+        pass
+
+    def end(self, *args):
+        pass
+
+    def render(self, *args):
+        pass
+
+    def render_interrupted(self, *args):
+        pass
+
+
 def run_stream_run(args):
     recvs = {}
     pss = {}
     delay = 2
-    halt = MP.Event()
+    halt = multiprocessing.Event()
     for uut in args.uuts:
-        recv, pipe = MP.Pipe()
+        recv, pipe = multiprocessing.Pipe()
         recvs[uut] = recv
-        pss[uut] = MP.Process(
+        pss[uut] = multiprocessing.Process(
             target=wrapper,
             args=(
                 args,
@@ -343,8 +375,10 @@ def run_stream_run(args):
         )
         pss[uut].start()
         delay = 0
-
-    D = DISPLAY()
+    if args.display:
+        D = DISPLAY()
+    else:
+        D = DUD_DISPLAY()
     uut_status = {}
     start_time = time.time()
     try:
@@ -385,15 +419,6 @@ def run_stream_run(args):
         halt.set()
         print("Keyboard Interrupt")
     print("Done")
-
-
-def run_stream_prep(args):
-    if args.filesize > args.totaldata:
-        args.filesize = args.totaldata
-    remove_stale_data(args)
-    if args.root and not os.path.exists(args.root):
-        os.makedirs(args.root)
-    return args
 
 
 def get_parser(parser=None):
@@ -482,10 +507,13 @@ def get_parser(parser=None):
     return parser
 
 
-def run_stream(args):
-    run_stream_prep(args)
-    run_stream_run(args)
-
-
 if __name__ == "__main__":
-    run_stream(get_parser().parse_args())
+    args = get_parser().parse_args()
+    print(args)
+    # run_stream_prep
+    if args.filesize > args.totaldata:
+        args.filesize = args.totaldata
+    remove_stale_data(args)
+    if args.root and not os.path.exists(args.root):
+        os.makedirs(args.root)
+    run_stream_run(args)
