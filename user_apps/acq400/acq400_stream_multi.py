@@ -283,12 +283,11 @@ class StreamsOne:
 def status_cb():
     print("Another one")
 
+def wrapper(args, uut, halt, pipe, delay):
+    streamer = StreamsOne(args, uut, halt, pipe, delay)
+    streamer.run()
+
 def run_stream_run(args):
-
-    def wrapper(args, uut, halt, pipe, delay):
-        streamer = StreamsOne(args, uut, halt, pipe, delay)
-        streamer.run()
-
     recvs = {}
     pss = {}
     delay = 2
