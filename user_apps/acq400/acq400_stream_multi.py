@@ -407,7 +407,7 @@ def get_parser(parser=None):
         parser.add_argument(
             "--callback",
             default=None,
-            help="not for users, client programs can install a callback here",
+            help="not for users, client programs can install a callback here (default: %(default)s)",
         )
     else:
         is_client = False
@@ -418,68 +418,69 @@ def get_parser(parser=None):
         "--burst_on_demand",
         default=None,
         type=str,
-        help="Burst Size in Samples[,./plotjob]",
+        help="Burst Size in Samples[,./plotjob] (default: %(default)s)",
     )
     parser.add_argument(
         "--trigger_from_here",
         default=0,
         type=int,
-        help="action soft trigger from this application",
+        help="action soft trigger from this application (default: %(default)s)",
     )
     parser.add_argument(
         "--subset",
         default=None,
-        help="subset command if present eg 1,5 :: strips first 5 channels",
+        help="subset command if present eg 1,5 :: strips first 5 channels (default: %(default)s)",
     )
     parser.add_argument(
         "--filesize",
         default=0x100000,
         action=acq400_hapi.intSIAction,
         decimal=False,
-        help="file size in bytes",
+        help="file size in bytes (default: %(default)s)",
     )
     parser.add_argument(
         "--filesamples",
         default=None,
         action=acq400_hapi.intSIAction,
         decimal=False,
-        help="file size in samples (overrides filesize)",
+        help="file size in samples (overrides filesize) (default: %(default)s)",
     )
     parser.add_argument(
-        "--files_per_cycle", default=100, type=int, help="files per cycle (directory)"
+        "--files_per_cycle", default=100, type=int, help="files per cycle (directory) (default: %(default)s)"
     )
     parser.add_argument(
         "--force_delete",
         default=0,
         type=int,
-        help="silently delete any existing data files",
+        help="silently delete any existing data files (default: %(default)s)",
     )
-    parser.add_argument("--nowrite", default=0, help="do not write file")
+    parser.add_argument("--nowrite", default=0, help="do not write file (default: %(default)s)")
     parser.add_argument(
         "--totaldata",
         default=10000000000,
         action=acq400_hapi.intSIAction,
         decimal=False,
+        help="Total amount of data to store in bytes (default: %(default)s)",
     )
     # parser.add_argument('--totaldata', default=4194304, type=int, help="Total amount of data to store in KB")
     parser.add_argument(
         "--root",
         default="",
         type=str,
-        help="Location to save files. Default dir is UUT name.",
+        help="Location to save files. Default dir is UUT name. (default: %(default)s)",
     )
     parser.add_argument(
-        "--runtime", default=1000000, type=int, help="How long to stream data for"
+        "--runtime", default=1000000, type=int, help="How long to stream data for (default: %(default)s)"
     )
     parser.add_argument(
         "--verbose",
         default=0,
         type=int,
-        help="Prints status messages as the stream is running",
+        help="Prints status messages as the stream is running (default: %(default)s)",
     )
-    parser.add_argument("--display", default=1, type=int, help="Render display")
+    parser.add_argument("--display", default=1, type=int, help="Render display (default: %(default)s)")
     parser.add_argument(
-        "--combine", default=0, type=int, help="Combine all cycle files into one"
+        "--combine", default=0, type=int, help="Combine all cycle files into one (default: %(default)s)"
     )
     if is_client:
         parser.add_argument("uuts", nargs="+", help="uuts")
@@ -487,8 +488,10 @@ def get_parser(parser=None):
 
 
 if __name__ == "__main__":
-    arguments = get_parser().parse_args()
-    print(arguments)
+    parser = get_parser()
+    arguments = parser.parse_args()
+    if arguments.verbose:
+        print(arguments)
     # prep stream
     if arguments.filesize > arguments.totaldata:
         arguments.filesize = arguments.totaldata
@@ -497,4 +500,5 @@ if __name__ == "__main__":
     )
     if arguments.root and not os.path.exists(arguments.root):
         os.makedirs(arguments.root)
+    # run stream
     run_stream(arguments)
