@@ -18,7 +18,7 @@ def ajust_stl(stl, repeat, end_state):
         print(f"repeating stl {repeat} times")
         for lno, line in enumerate(lines):
             if line.strip() and not line.strip().startswith('#'):
-                index = lno
+                index = lno + 1
                 break
         tail = lines[index:]
         for _ in range(repeat):
