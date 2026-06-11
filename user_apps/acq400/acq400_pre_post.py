@@ -17,7 +17,7 @@ import acq400_hapi
 import argparse
 import numpy as np
 # from acq400_configure_transient import configure_shot
-from . import acq400_configure_transient
+import acq400_configure_transient
 import argparse
 import matplotlib.pyplot as plt
 import sync_role
