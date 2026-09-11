@@ -14,12 +14,14 @@ import argparse
 import sys
 import threading
 import os
+import socket
 import time
 import glob
 import signal
 
 class UUTStreamer(threading.Thread):
-    def __init__(self, target_spec, file_list, repeat=False, reps=0, soft_trigger=0):
+    def __init__(self, target_spec, file_list, loaded_buffers=None, repeat=False,
+                 reps=0, soft_trigger=0, chunk_size=0x40000, sock_buf=0x100000):
         super().__init__()
         self.daemon = True  # Allows immediate termination on Ctrl+C
         
@@ -29,9 +31,12 @@ class UUTStreamer(threading.Thread):
         self.port = int(parts[1]) if len(parts) > 1 else 54207
         
         self.file_list = file_list
+        self.loaded_buffers = loaded_buffers
         self.repeat = repeat
         self.reps = reps
         self.soft_trigger = soft_trigger
+        self.chunk_size = chunk_size
+        self.sock_buf = sock_buf
         
         self.bytes_sent = 0
         self.active = True
@@ -46,7 +51,19 @@ class UUTStreamer(threading.Thread):
             except Exception:
                 pass
 
-    def read_file_chunks(self, filepath, chunk_size=0x10000):
+    def configure_socket(self, sock):
+        """ Tune socket options for high-throughput, low-latency streaming """
+        try:
+            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        except Exception:
+            pass
+        if self.sock_buf:
+            try:
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.sock_buf)
+            except Exception:
+                pass
+
+    def read_file_chunks(self, filepath, chunk_size=0x40000):
         """ Yield binary chunks from file """
         with open(filepath, "rb") as fp:
             while self.active:
@@ -57,23 +74,38 @@ class UUTStreamer(threading.Thread):
 
     def run(self):
         try:
-            uut = acq400_hapi.Acq400(self.host)
-            
-            if self.soft_trigger:
-                uut.s0.soft_trigger = 1
-
             rep_count = 0
             with netclient.Netclient(self.host, self.port) as nc:
                 self.nc = nc
+                self.configure_socket(nc.sock)
+
+                if self.soft_trigger:
+                    uut = acq400_hapi.Acq400(self.host)
+                    uut.s0.soft_trigger = 1
+
                 while self.active:
-                    for filepath in self.file_list:
-                        if not self.active:
-                            break
-                        for chunk in self.read_file_chunks(filepath):
+                    if self.loaded_buffers:
+                        for buf in self.loaded_buffers:
                             if not self.active:
                                 break
-                            nc.sock.sendall(chunk)
-                            self.bytes_sent += len(chunk)
+                            view = memoryview(buf)
+                            total_len = len(view)
+                            offset = 0
+                            while offset < total_len and self.active:
+                                chunk = view[offset : offset + self.chunk_size]
+                                nc.sock.sendall(chunk)
+                                chunk_len = len(chunk)
+                                self.bytes_sent += chunk_len
+                                offset += chunk_len
+                    else:
+                        for filepath in self.file_list:
+                            if not self.active:
+                                break
+                            for chunk in self.read_file_chunks(filepath, self.chunk_size):
+                                if not self.active:
+                                    break
+                                nc.sock.sendall(chunk)
+                                self.bytes_sent += len(chunk)
                     
                     rep_count += 1
                     if self.reps > 0 and rep_count >= self.reps:
@@ -146,12 +178,27 @@ def get_parser():
     parser.add_argument('--repeat', default=0, type=int, help='Continuous loop mode (1=enable, 0=disable)')
     parser.add_argument('--reps', default=0, type=int, help='Number of repetition loops (0=infinite if repeat enabled)')
     parser.add_argument('--soft_trigger', default=0, type=int, help='Emit soft trigger on start')
+    parser.add_argument('--preload', default=1, type=int, help='Preload pattern files into RAM (1=enable [default], 0=stream from disk)')
+    parser.add_argument('--chunk_size', default=0x40000, action=acq400_hapi.intSIAction, decimal=False, 
+                        help='Chunk size for sendall (default: 256KB / 0x40000)')
+    parser.add_argument('--sock_buf', default=0x100000, action=acq400_hapi.intSIAction, decimal=False, 
+                        help='TCP SO_SNDBUF size in bytes (default: 1MB / 0x100000)')
     parser.add_argument('uuts', nargs='+', help="UUT targets (e.g. uut1:54207,uut2 or uut1 uut2)")
     return parser
 
 def run_main(args):
     files = resolve_files(args.file)
     print(f"Streaming {len(files)} file(s): {[os.path.basename(f) for f in files]}")
+
+    loaded_buffers = None
+    if args.preload:
+        print("Preloading files into RAM...")
+        loaded_buffers = []
+        for f in files:
+            with open(f, "rb") as fp:
+                loaded_buffers.append(fp.read())
+        total_mb = sum(len(b) for b in loaded_buffers) / (1024 * 1024)
+        print(f"Preloaded {total_mb:.2f} MB into memory (zero disk I/O streaming).")
 
     uut_targets = [uut for uut_arg in args.uuts for uut in uut_arg.split(',') if uut]
 
@@ -162,9 +209,12 @@ def run_main(args):
         t = UUTStreamer(
             target_spec=target,
             file_list=files,
+            loaded_buffers=loaded_buffers,
             repeat=repeat_flag,
             reps=args.reps,
-            soft_trigger=args.soft_trigger
+            soft_trigger=args.soft_trigger,
+            chunk_size=args.chunk_size,
+            sock_buf=args.sock_buf
         )
         streamers.append(t)
         t.start()
