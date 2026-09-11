@@ -27,8 +27,8 @@ Usage Examples:
     2: Acquire 100k samples per file up to a total of 1M samples:
         python acq400_stream_multi.py --filesamples=100k --totalsamples=1M uut1
 
-    3: Stream multiple UUTs concurrently, combining cycle files:
-        python acq400_stream_multi.py --filesamples=100k --combine=1 --runtime=30 uut1 uut2
+    3: Stream multiple UUTs concurrently (comma or space separated), combining cycle files:
+        python acq400_stream_multi.py --filesamples=100k --combine=1 --runtime=30 uut1,uut2
 
     4: Capture exactly 50 files of 50k samples each:
         python acq400_stream_multi.py --filesamples=50k --totalfiles=50 uut1
@@ -282,6 +282,7 @@ def wrapper(args, uut, halt, pipe, delay):
     streamer.run()
 
 def run_stream_run(args):
+    fixup_uuts(args)
     recvs = {}
     pss = {}
     delay = 2
@@ -344,7 +345,15 @@ def run_stream_run(args):
         print('Keyboard Interrupt')
     print('Done')
 
+def fixup_uuts(args):
+    if hasattr(args, 'uuts') and args.uuts:
+        if isinstance(args.uuts, str):
+            args.uuts = [args.uuts]
+        args.uuts = [u.strip() for item in args.uuts for u in item.split(',') if u.strip()]
+    return args
+
 def run_stream_prep(args):
+    fixup_uuts(args)
     remove_stale_data(args)
     if args.root and not os.path.exists(args.root):
         os.makedirs(args.root)
@@ -395,7 +404,7 @@ def get_parser(parser=None):
                                help="Render interactive status display")
 
     if is_client:
-        parser.add_argument('uuts', nargs='+', help="UUT hostname(s) or IP address(es)")
+        parser.add_argument('uuts', nargs='+', help="UUT hostname(s) or IP address(es) (space- or comma-separated)")
     return parser
 
 def run_stream(args):
