@@ -7,19 +7,19 @@
 
 ## Installation
 
-#### Requirements
-	python3
-		numpy
-		matplotlib
+### Requirements
+* python 3.9.0 or higher
+* numpy 2.0.0 or higher
+* matplotlib 1.15.0 or higher
 
-### recommended: Using Pip
+### recommended install method: Using Pip
   
 Clone/update latest version from GitHub, then install in-place using `pip` using a dedicated script
 
 ```bash
 
-$  git  clone  https://github.com/D-TACQ/acq400_hapi
-$  cd  acq400_hapi
+$  git clone https://github.com/D-TACQ/acq400_hapi
+$  cd acq400_hapi
 $  pip3 install -e .
 
 ```
@@ -30,19 +30,24 @@ Then whenever desired, run `git pull` in the source folder to update from git,
 
 no further installation step required.
 
-It's also possible to install a PIP from PYPI, however the package on PYPI will likely be out of date, so this is not recommended.
-
-### alternate: Using PythonPath
+#### alternate install method: Using PYTHONPATH
 ```bash
 
-$  git  clone  https://github.com/D-TACQ/acq400_hapi
-$  cd  acq400_hapi
+$  git clone https://github.com/D-TACQ/acq400_hapi
+$  cd acq400_hapi
 
 on Linux,   run: source ./setpath
 on Windows, run: SETPYTHONPATH.BAT # restart shell.
 
 ```
 
+### Install the dependencies
+```bash
+
+$ python3 -m pip install numpy
+$ python3 -m pip install matplotlib
+
+```
 ## Usage
 
 ```python
