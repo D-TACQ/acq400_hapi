@@ -1982,6 +1982,12 @@ class Mgt508(Acq400):
             buffer_count = max_buffers
         self.s0.buffer_count = buffer_count
 
+    def make_sa_sd_aliases(self):
+        """
+        Overriding parent class method because Mgt508 does not support aggregators or distributors.
+        """
+        pass
+
 
 class Acq2106_Mgtdram8(Acq2106):
     """Mgtdram8 specialization of Acq2106
