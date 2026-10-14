@@ -31,8 +31,8 @@ def is_comma_separated_hexes(input_string):
 
 def parse_voltages(input_string, encoding, vmin, vmax, bits):
     values = input_string.split(",")
+
     for idx, value in enumerate(values):
-        print(value)
         if value.lower().startswith("0x"):
             raise ValueError("Do not mix voltage floats and hex codes")
         values[idx] = _convert_voltage(value, encoding, vmin, vmax, bits)
@@ -44,7 +44,6 @@ def _convert_voltage(val, encoding, vmin, vmax, bits):
     defined voltage range and bit-depth."""
     # Clamp voltage to configured range
     v_val = max(vmin, min(vmax, float(val)))
-
     # Calculate normalized position (0.0 to 1.0)
     span = vmax - vmin
     norm = 0.0 if span == 0 else (v_val - vmin) / span
@@ -62,7 +61,6 @@ def _convert_voltage(val, encoding, vmin, vmax, bits):
         val = round(norm * max_val)
     else:
         raise ValueError(f"Unknown encoding: {encoding}")
-
     # Dynamically calculate hex width based on bits (e.g. 16-bit -> 4 hex char)
     hex_width = (bits + 3) // 4
     return f"0x{val:0{hex_width}X}"
@@ -122,7 +120,7 @@ def main(args):
         triggered = is_comma_separated_hexes(args.triggered_values)
         if not triggered:
             triggered = parse_voltages(
-                args.initial_values, args.encoding, args.vmin, args.vmax, args.bits
+                args.triggered_values, args.encoding, args.vmin, args.vmax, args.bits
             )
         print(f"Set Triggered: {triggered}")
         uut.s1.NOIMM_AO_ALL_UNIQUE = triggered
