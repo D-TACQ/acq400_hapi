@@ -11,6 +11,9 @@ Usage:
     # Plot and save cap data
     ./user_apps/analysis/bolo_demux.py --mode=CAP --chans=1-8 --save acq2106_123
 
+    # Save scaled cal data skipping plot
+    ./user_apps/analysis/bolo_demux.py --save_scaled --noplot acq2106_123
+
 """
 
 import argparse
