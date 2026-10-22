@@ -95,14 +95,15 @@ def get_parser():
 def main(args):
     """Sets up UUT, parses input values and programs the DACs awaiting trigger"""
     uut = acq400_hapi.factory(args.uutname)
+    ao_site = int(uut.awg_site)
 
     if args.triggered_values:
         # if triggered_values not empty
-        uut.s1.low_latency = 0
-        uut.s1.dac_enable = 0
-        uut.s1.__reset_fifo = 1
-        uut.s1.dac_enable = 1
-    elif not args.triggered_values and uut.s1.is_triggered == "0":
+        uut[ao_site].low_latency = 0
+        uut[ao_site].dac_enable = 0
+        uut[ao_site].__reset_fifo = 1
+        uut[ao_site].dac_enable = 1
+    elif not args.triggered_values and uut[ao_site].is_triggered == "0":
         # if triggered empty and not triggered
         print("Error: must run with triggered value before clear")
         return
@@ -114,7 +115,7 @@ def main(args):
                 args.initial_values, args.encoding, args.vmin, args.vmax, args.bits
             )
         print(f"Set Initial: {initial}")
-        uut.s1.NOIMM_AO_ALL_UNIQUE = initial
+        uut[ao_site].NOIMM_AO_ALL_UNIQUE = initial
 
     if args.triggered_values:
         triggered = is_comma_separated_hexes(args.triggered_values)
@@ -123,7 +124,7 @@ def main(args):
                 args.triggered_values, args.encoding, args.vmin, args.vmax, args.bits
             )
         print(f"Set Triggered: {triggered}")
-        uut.s1.NOIMM_AO_ALL_UNIQUE = triggered
+        uut[ao_site].NOIMM_AO_ALL_UNIQUE = triggered
         print("soft_trigger when ready")
 
 
