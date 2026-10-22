@@ -31,29 +31,14 @@ def main(args):
 
     dtype = []
     for chan in range(1, nchan + 1):
-        dtype.append((f'{chan}_MAG', np.int32))
-        dtype.append((f'{chan}_PHI', np.int32))
+        dtype.append((f'{chan:02d}_MAG', np.int32))
+        dtype.append((f'{chan:02d}_PHI', np.int32))
         if calibrated:
-            dtype.append((f'{chan}_OHI', np.int16))
-            dtype.append((f'{chan}_OHV', np.int16))
+            dtype.append((f'{chan:02d}_OHI', np.int16))
+            dtype.append((f'{chan:02d}_OHV', np.int16))
         else:
-            dtype.append((f'{chan}_PWR', np.int32))
+            dtype.append((f'{chan:02d}_PWR', np.int32))
     dtype = np.dtype(dtype)
-
-    data = uut.read_channels()
-    data = np.ascontiguousarray(data.T).view(dtype).reshape(-1)
-
-    print(f"[{uut.uut}]: Read {data.nbytes} Bytes {nchan} Chans")
-
-    if args.save:
-        mode = 'CAL' if calibrated else 'CAP'
-        os.makedirs(args.root, exist_ok=True)
-        for field in data.dtype.names:
-            filename = f"{uut.uut}.{field}.{mode}.dat"
-            filepath = os.path.join(args.root, filename)
-            print(f"Saving {field} to {filepath}")
-            data[field].tofile(filepath)
-
 
     row_names = ['MAG', 'PHI', 'OHI', 'OHV'] if calibrated else ['MAG', 'PHI', 'PWR']
 
@@ -85,6 +70,26 @@ def main(args):
         },
     }
 
+    data = uut.read_channels()
+    data = np.ascontiguousarray(data.T).view(dtype).reshape(-1)
+
+    print(f"[{uut.uut}]: Read {data.nbytes} Bytes {nchan} Chans")
+
+    if args.save or args.save_scaled:
+        mode = 'CAL' if calibrated else 'CAP'
+        os.makedirs(args.root, exist_ok=True)
+        
+        for field in data.dtype.names:
+            filename = f"{uut.uut}.{field}.{mode}.dat"
+            filepath = os.path.join(args.root, filename)
+            print(f"Saving {field} to {filepath}")
+            if args.save_scaled:
+                scaler = row_formats[field.split('_')[1]]['scaler'] 
+                (data[field] * scaler).tofile(filepath)
+            else:
+                data[field].tofile(filepath)
+    
+    if args.noplot: return
     fig, axes = plt.subplots(len(row_names), 1, sharex=True, figsize=(10, 8))
 
     x = np.arange(len(data))
@@ -100,7 +105,7 @@ def main(args):
         ax.set_title(format['title'])
         ax.set_ylabel(format['ylabel'])
         for chan in args.chans:
-            ax.plot(x, data[f'{chan}_{row_name}'][args.skip:] * format['scaler'], label=f'CH{chan}')
+            ax.plot(x, data[f'{chan:02d}_{row_name}'][args.skip:] * format['scaler'], label=f'CH{chan}')
         ax.legend(loc='upper right')
 
     axes[-1].set_xlabel(xlabel)
@@ -115,8 +120,11 @@ def get_parser():
     parser.add_argument('--chans', default=[1], type=ArgTypes.list_of_channels, help='Channels to plot')
     parser.add_argument('--skip', default=20, type=int, help='Skip samples from start of channel')
     parser.add_argument('--secs', action='store_true', help='Plot in seconds')
-    parser.add_argument('--save', action='store_true', help='Save data to disk')
+    save = parser.add_mutually_exclusive_group()
+    save.add_argument('--save', action='store_true', help='Save data to disk')
+    save.add_argument('--save_scaled', action='store_true', help='Save scaled data to disk')
     parser.add_argument('--root', default='BOLO_DATA', help='Save root')
+    parser.add_argument('--noplot', action='store_true', help='Do not plot data')
 
     parser.add_argument('--mag_sf', default=7.109e-05, type=float, help='Magnitude scaling factor')
     parser.add_argument('--phi_sf', default=1.8626e-09, type=float, help='Phase scaling factor')
