@@ -122,7 +122,7 @@ def init_arp_req(uut):
     uut.hudp.arp_request = 1
     uut.hudp.arp_request = 0
 
-    while uut.hudp.arp_mac_resp == '00:00:00:00:00:00:00:':
+    while uut.hudp.arp_mac_resp == '00:00:00:00:00:00:00':
         print("waiting for arp")
     print(f"arp_mac_resp: {uut.hudp.arp_mac_resp}")
 
