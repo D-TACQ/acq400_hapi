@@ -124,6 +124,7 @@ def init_arp_req(uut):
 
     while uut.hudp.arp_mac_resp == '00:00:00:00:00:00:00:':
         print("waiting for arp")
+    print(f"arp_mac_resp: {uut.hudp.arp_mac_resp}")
 
 def gt_reset(uut, state):
     try:
@@ -175,14 +176,17 @@ def config_tx_uut(txuut, args):
     txuut.hudp.tx_spp = args.spp
     tx_pkt_sz = tx_ssb*args.spp                         # compute tx pkt sz and check bounds
     if  tx_pkt_sz > MTU:
-        print("ERROR packet length {} exceeds MTU {}".format(tx_pkt_sz, MTU))
+        exit(f"ERROR: packet length ({tx_pkt_sz}) exceeds MTU ({MTU})")
     hudp_enable(txuut)
     init_arp_req(txuut)
     tx_calc_pkt_sz = int(txuut.hudp.tx_calc_pkt_sz)      # actual tx pkt sz computed by FPGA logic.
     if tx_pkt_sz != tx_calc_pkt_sz:
         print("ERROR: set tx_pkt_size {} actual tx_pkt_size {}".format(tx_pkt_sz, tx_calc_pkt_sz))    
     print("TX configured.")
-    print(f"ssb: {tx_ssb} spp: {args.spp} tx_pkt_size: {tx_pkt_sz} spad0: {get_count_column(txuut)} datarate: {txuut.get_data_rate() / args.hudp_decim:.2f} MBs")
+    spad0_column = get_count_column(txuut)
+    print(f"ssb: {tx_ssb} spp: {args.spp} tx_pkt_size: {tx_pkt_sz} spad0: {spad0_column} datarate: {txuut.get_data_rate() / args.hudp_decim:.2f} MBs")
+
+    print(f"CMD: sudo ./udprx -R 40 -p {tx_pkt_sz} --spp {args.spp} --ssb {tx_ssb} -c {spad0_column}")
 
 # rx: XO : AO, DO        
 def config_rx_uut(rxuut, args):
