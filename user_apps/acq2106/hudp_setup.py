@@ -148,6 +148,10 @@ MTU = 9038 - 66
 # tx: XI : AI, DI       
 def config_tx_uut(txuut, args):    
     print("txuut {}".format(txuut.uut))
+    try:
+         txuut.sA.pack24 = '1' if args.pack24 else '0'
+    except: pass
+
     if args.run0 != 'notouch':
         txuut.s0.run0 = args.run0
     hudp_init(args, txuut, args.tx_ip)
@@ -236,6 +240,7 @@ def get_parser():
     parser.add_argument("--spp",     default=1, type=int,     help="samples per packet")
     parser.add_argument("--hudp_decim", default=1, type=int,  help="hudp decimation, 1..16")
     parser.add_argument("--tx_ssb", default=None, type=int,  help="Override the SSB value from the TX UUT")
+    parser.add_argument("--pack24", action='store_true', help="Enable pack 24 mode")
     parser.add_argument("txuut", nargs=1,                     help=f"transmit uut (if it's a PC, type one of {PCSEL})")
     parser.add_argument("rxuut", nargs=1,                     help=f"rx uut (if it's a PC, type one of {PCSEL})")
     return parser
