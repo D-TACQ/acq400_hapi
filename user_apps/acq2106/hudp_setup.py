@@ -122,8 +122,9 @@ def init_arp_req(uut):
     uut.hudp.arp_request = 1
     uut.hudp.arp_request = 0
 
-    while uut.hudp.arp_mac_resp == '00:00:00:00:00:00:00:':
+    while uut.hudp.arp_mac_resp == '00:00:00:00:00:00:00':
         print("waiting for arp")
+    print(f"arp_mac_resp: {uut.hudp.arp_mac_resp}")
 
 def gt_reset(uut, state):
     try:
@@ -147,6 +148,10 @@ MTU = 9038 - 66
 # tx: XI : AI, DI       
 def config_tx_uut(txuut, args):    
     print("txuut {}".format(txuut.uut))
+    try:
+         txuut.sA.pack24 = '1' if args.pack24 else '0'
+    except: pass
+
     if args.run0 != 'notouch':
         txuut.s0.run0 = args.run0
     hudp_init(args, txuut, args.tx_ip)
@@ -175,14 +180,17 @@ def config_tx_uut(txuut, args):
     txuut.hudp.tx_spp = args.spp
     tx_pkt_sz = tx_ssb*args.spp                         # compute tx pkt sz and check bounds
     if  tx_pkt_sz > MTU:
-        print("ERROR packet length {} exceeds MTU {}".format(tx_pkt_sz, MTU))
+        exit(f"ERROR: packet length ({tx_pkt_sz}) exceeds MTU ({MTU})")
     hudp_enable(txuut)
     init_arp_req(txuut)
     tx_calc_pkt_sz = int(txuut.hudp.tx_calc_pkt_sz)      # actual tx pkt sz computed by FPGA logic.
     if tx_pkt_sz != tx_calc_pkt_sz:
         print("ERROR: set tx_pkt_size {} actual tx_pkt_size {}".format(tx_pkt_sz, tx_calc_pkt_sz))    
     print("TX configured.")
-    print(f"ssb: {tx_ssb} spp: {args.spp} tx_pkt_size: {tx_pkt_sz} spad0: {get_count_column(txuut)} datarate: {txuut.get_data_rate() / args.hudp_decim:.2f} MBs")
+    spad0_column = get_count_column(txuut)
+    print(f"ssb: {tx_ssb} spp: {args.spp} tx_pkt_size: {tx_pkt_sz} spad0: {spad0_column} datarate: {txuut.get_data_rate() / args.hudp_decim:.2f} MBs")
+
+    print(f"CMD: sudo ./udprx -R 40 -p {args.port} --spp {args.spp} --ssb {tx_ssb} -c {spad0_column}")
 
 # rx: XO : AO, DO        
 def config_rx_uut(rxuut, args):
@@ -232,6 +240,7 @@ def get_parser():
     parser.add_argument("--spp",     default=1, type=int,     help="samples per packet")
     parser.add_argument("--hudp_decim", default=1, type=int,  help="hudp decimation, 1..16")
     parser.add_argument("--tx_ssb", default=None, type=int,  help="Override the SSB value from the TX UUT")
+    parser.add_argument("--pack24", action='store_true', help="Enable pack 24 mode")
     parser.add_argument("txuut", nargs=1,                     help=f"transmit uut (if it's a PC, type one of {PCSEL})")
     parser.add_argument("rxuut", nargs=1,                     help=f"rx uut (if it's a PC, type one of {PCSEL})")
     return parser
